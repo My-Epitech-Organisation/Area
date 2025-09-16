@@ -1,15 +1,127 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
+
+type TranslateRequest struct {
+	Q      string `json:"q"`
+	Source string `json:"source"`
+	Target string `json:"target"`
+}
+
+type TranslateResponse struct {
+	TranslatedText string `json:"translatedText"`
+}
+
+func translateWithAPI(text string, sourceLang string, targetLang string) (string, error) {
+	apiURL := "https://libretranslate.com/translate"
+
+	log.Printf("Préparation de la requête à l'API de traduction: '%s' de '%s' vers '%s'", text, sourceLang, targetLang)
+
+	data := TranslateRequest{
+		Q:      text,
+		Source: sourceLang,
+		Target: targetLang,
+	}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return "", fmt.Errorf("erreur lors de la conversion en JSON: %v", err)
+	}
+
+	log.Printf("Envoi de la requête à %s", apiURL)
+
+	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return "", fmt.Errorf("erreur lors de la création de la requête: %v", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("erreur lors de l'envoi de la requête: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("erreur lors de la lecture de la réponse: %v", err)
+	}
+
+	log.Printf("Réponse de l'API: Code %d, Corps: %s", resp.StatusCode, string(body))
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("l'API a répondu avec le code %d: %s", resp.StatusCode, body)
+	}
+
+	var response TranslateResponse
+	if err := json.Unmarshal(body, &response); err != nil {
+		return "", fmt.Errorf("erreur lors de l'analyse de la réponse JSON: %v", err)
+	}
+
+	return response.TranslatedText, nil
+}
+
+func simulateTranslation(text string, targetLang string) string {
+	prefixes := map[string]string{
+		"en": "[English] ",
+		"es": "[Español] ",
+		"de": "[Deutsch] ",
+		"it": "[Italiano] ",
+		"fr": "[Français] ",
+	}
+
+	prefix, exists := prefixes[targetLang]
+	if !exists {
+		prefix = "[" + targetLang + "] "
+	}
+
+	basicTranslations := map[string]map[string]string{
+		"en": {
+			"bonjour": "hello",
+			"merci": "thank you",
+			"au revoir": "goodbye",
+		},
+		"es": {
+			"bonjour": "hola",
+			"merci": "gracias",
+			"au revoir": "adiós",
+		},
+		"de": {
+			"bonjour": "hallo",
+			"merci": "danke",
+			"au revoir": "auf wiedersehen",
+		},
+		"it": {
+			"bonjour": "ciao",
+			"merci": "grazie",
+			"au revoir": "arrivederci",
+		},
+	}
+
+	textLower := strings.ToLower(text)
+	if translations, exists := basicTranslations[targetLang]; exists {
+		if translation, exists := translations[textLower]; exists {
+			return translation
+		}
+	}
+
+	return prefix + text
+}
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
@@ -74,6 +186,50 @@ func main() {
 		})
 
 		log.Printf("Données météo simulées pour %s: %.1f°C, %s", city, temp, description)
+	})
+
+	r.POST("/api/translate", func(c *gin.Context) {
+		var request struct {
+			Text         string `json:"text"`
+			TargetLang   string `json:"targetLang"`
+		}
+
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Format de requête invalide"})
+			return
+		}
+
+		if request.Text == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Le texte à traduire est requis"})
+			return
+		}
+
+		if request.TargetLang == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "La langue cible est requise"})
+			return
+		}
+
+		log.Printf("Demande de traduction: '%s' vers '%s'", request.Text, request.TargetLang)
+
+		sourceLang := "fr"
+
+		log.Printf("Tentative de traduction avec l'API LibreTranslate...")
+		translatedText, err := translateWithAPI(request.Text, sourceLang, request.TargetLang)
+		if err != nil {
+			log.Printf("Erreur lors de l'utilisation de l'API: %v. Utilisation de la méthode de simulation.", err)
+			translatedText = simulateTranslation(request.Text, request.TargetLang)
+		} else {
+			log.Printf("Traduction via API réussie: '%s'", translatedText)
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"originalText": request.Text,
+			"translatedText": translatedText,
+			"targetLang": request.TargetLang,
+			"sourceLang": sourceLang,
+		})
+
+		log.Printf("Traduction effectuée: '%s' -> '%s'", request.Text, translatedText)
 	})
 
 	log.Println("Démarrage du serveur sur http://localhost:8080")
