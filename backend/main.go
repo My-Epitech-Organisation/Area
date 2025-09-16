@@ -76,51 +76,8 @@ func translateWithAPI(text string, sourceLang string, targetLang string) (string
 	return response.TranslatedText, nil
 }
 
-func simulateTranslation(text string, targetLang string) string {
-	prefixes := map[string]string{
-		"en": "[English] ",
-		"es": "[Español] ",
-		"de": "[Deutsch] ",
-		"it": "[Italiano] ",
-		"fr": "[Français] ",
-	}
-
-	prefix, exists := prefixes[targetLang]
-	if !exists {
-		prefix = "[" + targetLang + "] "
-	}
-
-	basicTranslations := map[string]map[string]string{
-		"en": {
-			"bonjour": "hello",
-			"merci": "thank you",
-			"au revoir": "goodbye",
-		},
-		"es": {
-			"bonjour": "hola",
-			"merci": "gracias",
-			"au revoir": "adiós",
-		},
-		"de": {
-			"bonjour": "hallo",
-			"merci": "danke",
-			"au revoir": "auf wiedersehen",
-		},
-		"it": {
-			"bonjour": "ciao",
-			"merci": "grazie",
-			"au revoir": "arrivederci",
-		},
-	}
-
-	textLower := strings.ToLower(text)
-	if translations, exists := basicTranslations[targetLang]; exists {
-		if translation, exists := translations[textLower]; exists {
-			return translation
-		}
-	}
-
-	return prefix + text
+func simulateTranslation(text string, targetLang string) (string, error) {
+	return "", fmt.Errorf("simulation de traduction désactivée, veuillez utiliser l'API")
 }
 
 func main() {
@@ -213,14 +170,29 @@ func main() {
 
 		sourceLang := "fr"
 
+		words := strings.Fields(request.Text)
+		if len(words) > 1 {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Pour des raisons de limitation de l'API, veuillez traduire un seul mot à la fois",
+				"originalText": request.Text,
+				"targetLang": request.TargetLang,
+			})
+			return
+		}
+
 		log.Printf("Tentative de traduction avec l'API LibreTranslate...")
 		translatedText, err := translateWithAPI(request.Text, sourceLang, request.TargetLang)
 		if err != nil {
-			log.Printf("Erreur lors de l'utilisation de l'API: %v. Utilisation de la méthode de simulation.", err)
-			translatedText = simulateTranslation(request.Text, request.TargetLang)
-		} else {
-			log.Printf("Traduction via API réussie: '%s'", translatedText)
+			log.Printf("Erreur lors de l'utilisation de l'API: %v.", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Erreur lors de la connexion à l'API de traduction: " + err.Error(),
+				"originalText": request.Text,
+				"targetLang": request.TargetLang,
+			})
+			return
 		}
+
+		log.Printf("Traduction via API réussie: '%s'", translatedText)
 
 		c.JSON(http.StatusOK, gin.H{
 			"originalText": request.Text,

@@ -53,6 +53,16 @@ function App() {
       return;
     }
 
+    const words = textToTranslate.trim().split(/\s+/);
+    if (words.length > 1) {
+      setTranslationResult({
+        error: 'Pour des raisons de limitation de l\'API, veuillez traduire un seul mot à la fois',
+        originalText: textToTranslate,
+        targetLang: targetLang
+      });
+      return;
+    }
+
     setTranslationLoading(true);
     try {
       const response = await fetch('http://localhost:8080/api/translate', {
@@ -158,6 +168,9 @@ function App() {
           <h2 className="text-xl font-bold text-indigo-600 mb-4">
             Traducteur
           </h2>
+          <p className="text-sm text-gray-500 mb-2">
+            Note: Pour des raisons de limitation de l'API, veuillez traduire un seul mot à la fois.
+          </p>
           <div className="mb-4">
             <textarea
               value={textToTranslate}
