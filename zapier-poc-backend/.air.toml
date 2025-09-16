@@ -1,0 +1,17 @@
+# Air config for Go hot reload
+root = "."
+
+[build]
+  cmd = "go build -o backend main.go"
+  bin = "./backend"
+  include_ext = [".go"]
+  exclude_dir = ["vendor"]
+  delay = 1000
+
+[log]
+  color = "auto"
+  time = true
+
+[serve]
+  cmd = "./backend"
+  restart = true

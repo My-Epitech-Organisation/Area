@@ -24,6 +24,7 @@ var actions = []Action{
 	{ID: "1", Name: "Send Email"},
 	{ID: "2", Name: "Log Message"},
 	{ID: "3", Name: "Webhook"},
+	{ID: "4", Name: "Create Record"},
 }
 
 func executeWorkflow(c *gin.Context) {

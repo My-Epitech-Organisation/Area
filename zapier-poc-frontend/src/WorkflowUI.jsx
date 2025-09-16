@@ -18,20 +18,21 @@ function WorkflowUI() {
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!name || !actions) return;
-    const wf = { name, actions: actions.split(",") };
-    await fetch("http://localhost:8080/workflows", {
+    const wf = { id: Date.now().toString(), name, actions: actions.split(",") };
+    const res = await fetch("http://localhost:8080/workflows", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(wf),
     });
-    setWorkflows((prev) => [...prev, wf]);
+    const created = await res.json();
+    setWorkflows((prev) => [...prev, created]);
     setName("");
     setActions("");
   };
 
   // Execute workflow
   const handleExecute = async (wf) => {
-    const res = await fetch(`http://localhost:8080/workflows/${wf.name}/execute`, {
+    const res = await fetch(`http://localhost:8080/workflows/${wf.id}/execute`, {
       method: "POST",
     });
     const data = await res.json();
