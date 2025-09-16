@@ -83,6 +83,7 @@ func main() {
 	r.GET("/users/sql", pocbacksql.GetUsersSQL)
 	r.PUT("/users/sql/:id", pocbacksql.UpdateUserSQL)
 	r.DELETE("/users/sql/:id", pocbacksql.DeleteUserSQL)
+	r.POST("/users/sql/test-add", pocbacksql.AddTestUsersSQL)
 
 	r.POST("/users/nosql", pocbacknosql.CreateUserNoSQL)
 	r.GET("/users/nosql", pocbacknosql.GetUsersNoSQL)

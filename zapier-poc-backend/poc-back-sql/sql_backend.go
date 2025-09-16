@@ -1,6 +1,7 @@
 package pocbacksql
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -71,4 +72,20 @@ func DeleteUserSQL(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"deleted": id})
+}
+
+// Handler pour ajouter 100 utilisateurs de test
+func AddTestUsersSQL(c *gin.Context) {
+	var users []User
+	for i := 1; i <= 100; i++ {
+		users = append(users, User{
+			ID:   fmt.Sprintf("test-%d", i),
+			Name: fmt.Sprintf("User %d", i),
+		})
+	}
+	if err := db.Create(&users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"added": 100})
 }
