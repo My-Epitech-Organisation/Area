@@ -1,24 +1,28 @@
 package pocbacksql
 
 import (
-	"database/sql"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/mattn/go-sqlite3"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 type User struct {
-	ID   string `json:"id"`
+	ID   string `gorm:"primaryKey" json:"id"`
 	Name string `json:"name"`
 }
 
-var db *sql.DB
+var db *gorm.DB
 
 // Fonction à appeler dans main.go pour initialiser la base
 func InitSQL() {
-	db, _ = sql.Open("sqlite3", "./users.db")
-	db.Exec("CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, name TEXT)")
+	var err error
+	db, err = gorm.Open(sqlite.Open("./users.db"), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
+	}
+	db.AutoMigrate(&User{})
 }
 
 // Handler exporté pour créer un utilisateur
@@ -28,8 +32,7 @@ func CreateUserSQL(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	_, err := db.Exec("INSERT INTO users (id, name) VALUES (?, ?)", user.ID, user.Name)
-	if err != nil {
+	if err := db.Create(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -38,12 +41,10 @@ func CreateUserSQL(c *gin.Context) {
 
 // Handler exporté pour lire tous les utilisateurs
 func GetUsersSQL(c *gin.Context) {
-	rows, _ := db.Query("SELECT id, name FROM users")
 	var users []User
-	for rows.Next() {
-		var user User
-		rows.Scan(&user.ID, &user.Name)
-		users = append(users, user)
+	if err := db.Find(&users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 	c.JSON(http.StatusOK, users)
 }
@@ -55,8 +56,7 @@ func UpdateUserSQL(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	_, err := db.Exec("UPDATE users SET name = ? WHERE id = ?", user.Name, id)
-	if err != nil {
+	if err := db.Model(&User{}).Where("id = ?", id).Update("name", user.Name).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -66,8 +66,7 @@ func UpdateUserSQL(c *gin.Context) {
 // Handler pour supprimer un utilisateur
 func DeleteUserSQL(c *gin.Context) {
 	id := c.Param("id")
-	_, err := db.Exec("DELETE FROM users WHERE id = ?", id)
-	if err != nil {
+	if err := db.Delete(&User{}, "id = ?", id).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
