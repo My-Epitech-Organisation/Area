@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route} from 'react-router-dom';
 import './App.css';
+import Navbar from './components/Navbar';
+import UserList from './components/UserList';
+import UserForm from './components/UserForm';
 
-function App() {
+function HomePage() {
   const [response, setResponse] = useState(null);
   const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -91,9 +95,9 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
-      <div className="w-full max-w-md p-8 mx-auto bg-white bg-opacity-90 backdrop-blur-sm rounded-xl shadow-2xl border border-white border-opacity-20">
-        <h1 className="text-3xl font-bold text-indigo-600 mb-8 text-center">
+    <div className="flex flex-col items-center h-[calc(100vh-64px)] overflow-hidden pt-8">
+      <div className="w-full max-w-md p-6 mx-auto bg-white bg-opacity-90 backdrop-blur-sm rounded-xl shadow-2xl border border-white border-opacity-20">
+        <h1 className="text-2xl font-bold text-indigo-600 mb-6 text-center">
           POC Action-Réaction
         </h1>
         <button
@@ -221,6 +225,24 @@ function App() {
         </div>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <div className="h-screen overflow-hidden bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
+        <Navbar />
+        <div className="h-[calc(100vh-64px)] overflow-hidden">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/users" element={<UserList />} />
+            <Route path="/users/add" element={<UserForm mode="add" />} />
+            <Route path="/users/edit/:id" element={<UserForm mode="edit" />} />
+          </Routes>
+        </div>
+      </div>
+    </Router>
   );
 }
 

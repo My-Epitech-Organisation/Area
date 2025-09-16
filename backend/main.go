@@ -1,6 +1,8 @@
 package main
 
 import (
+	"area/backend/api"
+	"area/backend/database"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -83,14 +85,23 @@ func simulateTranslation(text string, targetLang string) (string, error) {
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
+	db := database.InitDB()
+	defer db.Close()
+
+	err := database.CreateTables(db)
+	if err != nil {
+		log.Fatalf("Error creating tables: %v", err)
+	}
+
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST"},
-		AllowHeaders:     []string{"Origin", "Content-Type"},
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
+		AllowCredentials: false,
+		MaxAge:           12 * time.Hour,
 	}))
 
 	r.POST("/api/trigger", func(c *gin.Context) {
@@ -203,6 +214,8 @@ func main() {
 
 		log.Printf("Traduction effectuée: '%s' -> '%s'", request.Text, translatedText)
 	})
+
+	api.RegisterUserRoutes(r)
 
 	log.Println("Démarrage du serveur sur http://localhost:8080")
 	if err := r.Run(":8080"); err != nil {
