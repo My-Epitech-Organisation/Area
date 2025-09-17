@@ -10,7 +10,7 @@ import (
 )
 
 type User struct {
-	ID   string `gorm:"primaryKey" json:"id"`
+	ID   uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 	Name string `json:"name"`
 }
 
@@ -79,7 +79,6 @@ func AddTestUsersSQL(c *gin.Context) {
 	var users []User
 	for i := 1; i <= 100; i++ {
 		users = append(users, User{
-			ID:   fmt.Sprintf("test-%d", i),
 			Name: fmt.Sprintf("User %d", i),
 		})
 	}
