@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8">
+    <title>Titre de la page</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+  <h1>Liste des utilisateurs</h1>
+  <ul id="users-list"></ul>
+  <script>
+  fetch('http://localhost:8080/users/sql')
+    .then(response => response.json())
+    .then(users => {
+      const list = document.getElementById('users-list');
+      list.innerHTML = '';
+      users.forEach(user => {
+        const li = document.createElement('li');
+        li.textContent = user.name;
+        list.appendChild(li);
+      });
+    });
+  </script>
+  </body>
+</html>
