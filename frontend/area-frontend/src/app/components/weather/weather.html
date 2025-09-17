@@ -1,0 +1,69 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h2 class="text-center mb-0">API Météo</h2>
+        </div>
+        <div class="card-body">
+          <div class="form-group mb-4">
+            <label for="city">Entrez une ville :</label>
+            <div class="input-group">
+              <input
+                type="text"
+                class="form-control"
+                id="city"
+                placeholder="Paris, Londres, New York..."
+                #cityInput
+                [value]="city()"
+              >
+              <button
+                class="btn btn-primary"
+                type="button"
+                (click)="getWeather(cityInput.value)"
+              >
+                Rechercher
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="loading()" class="text-center">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+          </div>
+
+          <div *ngIf="weatherData() && !loading()" class="weather-data">
+            <div class="card">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <h3 class="card-title">{{ weatherData()?.city }}</h3>
+                    <p class="weather-temp">{{ weatherData()?.temperature }}°C</p>
+                    <p class="text-muted">Ressenti: {{ weatherData()?.feelsLike }}°C</p>
+                    <p class="weather-desc">{{ weatherData()?.description }}</p>
+                  </div>
+                  <div class="col-md-6 text-end">
+                    <img
+                      [src]="'https://openweathermap.org/img/wn/' + weatherData()?.icon + '@2x.png'" 
+                      alt="Weather icon"
+                      class="weather-icon"
+                    >
+                    <div class="weather-details mt-3">
+                      <p>Humidité: {{ weatherData()?.humidity }}%</p>
+                      <p>Vent: {{ weatherData()?.windSpeed }} m/s</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="error()" class="alert alert-danger mt-3">
+            {{ error() }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

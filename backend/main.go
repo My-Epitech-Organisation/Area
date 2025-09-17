@@ -96,11 +96,11 @@ func main() {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
+		AllowOrigins:     []string{"http://localhost:4201"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: false,
+		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
 
@@ -217,8 +217,8 @@ func main() {
 
 	api.RegisterUserRoutes(r)
 
-	log.Println("Démarrage du serveur sur http://localhost:8080")
-	if err := r.Run(":8080"); err != nil {
+	log.Println("Démarrage du serveur sur http://localhost:8081")
+	if err := r.Run(":8081"); err != nil {
 		log.Fatal("Erreur lors du démarrage du serveur:", err)
 	}
 }

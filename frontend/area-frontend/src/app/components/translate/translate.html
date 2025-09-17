@@ -1,0 +1,82 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header bg-info text-white">
+          <h2 class="text-center mb-0">API Traduction</h2>
+        </div>
+        <div class="card-body">
+          <form (ngSubmit)="translateText()">
+            <div class="mb-3">
+              <label for="textToTranslate" class="form-label">Texte à traduire :</label>
+              <input
+                type="text"
+                class="form-control"
+                id="textToTranslate"
+                placeholder="Entrez un mot à traduire"
+                [ngModel]="text()"
+                (ngModelChange)="text.set($event)"
+                name="text"
+                required
+              >
+              <small class="text-muted">Note: Pour des raisons de limitation de l'API, veuillez traduire un seul mot à la fois.</small>
+            </div>
+
+            <div class="mb-3">
+              <label for="targetLang" class="form-label">Langue cible :</label>
+              <select
+                class="form-select"
+                id="targetLang"
+                [ngModel]="targetLang()"
+                (ngModelChange)="targetLang.set($event)"
+                name="targetLang"
+                required
+              >
+                <option value="" disabled>Choisir une langue</option>
+                <option value="en">Anglais</option>
+                <option value="es">Espagnol</option>
+                <option value="de">Allemand</option>
+                <option value="it">Italien</option>
+                <option value="pt">Portugais</option>
+                <option value="ru">Russe</option>
+                <option value="ja">Japonais</option>
+                <option value="zh">Chinois</option>
+              </select>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="loading() || !text() || !targetLang()"
+              >
+                <span *ngIf="loading()" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Traduire
+              </button>
+            </div>
+          </form>
+
+          <div *ngIf="translation()" class="mt-4 translation-result">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Résultat de la traduction</h5>
+                <div class="row">
+                  <div class="col-md-6">
+                    <p><strong>Texte original ({{ translation()?.sourceLang }}):</strong> {{ translation()?.originalText }}</p>
+                  </div>
+                  <div class="col-md-6">
+                    <p><strong>Traduction ({{ translation()?.targetLang }}):</strong> {{ translation()?.translatedText }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="error()" class="alert alert-danger mt-3">
+            {{ error() }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

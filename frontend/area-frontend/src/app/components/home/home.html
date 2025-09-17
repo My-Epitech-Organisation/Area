@@ -1,0 +1,49 @@
+<div class="container mt-5">
+  <div class="jumbotron text-center">
+    <h1 class="display-4">Bienvenue sur AREA</h1>
+    <p class="lead">Application REAction - Un projet d'intégration d'API et d'automatisation</p>
+    <hr class="my-4">
+    <p>Ce projet vous permet d'interagir avec différentes API et de tester diverses fonctionnalités.</p>
+
+    <div class="mt-4">
+      <h3>API disponibles :</h3>
+      <div class="row mt-3">
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">API Météo</h5>
+              <p class="card-text">Vérifiez la météo pour n'importe quelle ville.</p>
+              <a routerLink="/weather" class="btn btn-primary">Consulter la météo</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">API Traduction</h5>
+              <p class="card-text">Traduisez du texte vers différentes langues.</p>
+              <a routerLink="/translate" class="btn btn-primary">Traduire du texte</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Gestion des utilisateurs</h5>
+              <p class="card-text">Interface pour gérer les utilisateurs.</p>
+              <a routerLink="/users" class="btn btn-primary">Gérer les utilisateurs</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-5">
+      <h3>Test d'action simple :</h3>
+      <button class="btn btn-success btn-lg" (click)="triggerAction()">Déclencher une action</button>
+      <div *ngIf="actionMessage()" class="alert alert-success mt-3">
+        {{ actionMessage() }}
+      </div>
+    </div>
+  </div>
+</div>

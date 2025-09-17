@@ -1,0 +1,57 @@
+/* You can add global styles to this file, and also import other style files */
+
+/* Global Styles */
+body {
+  background-color: #f8f9fa;
+  padding-bottom: 50px;
+}
+
+.container {
+  margin-top: 20px;
+}
+
+.card {
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.card-header {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.btn {
+  border-radius: 4px;
+}
+
+.table th {
+  font-weight: 600;
+}
+
+/* Navbar styling */
+.navbar {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+/* Badge styling */
+.badge {
+  padding: 0.5em 0.8em;
+}
+
+/* Form styling */
+.form-control:focus, .form-select:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Animation for alerts */
+.alert {
+  animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

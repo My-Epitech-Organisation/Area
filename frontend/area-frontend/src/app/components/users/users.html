@@ -1,0 +1,137 @@
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+          <h2 class="mb-0">Liste des Utilisateurs</h2>
+          <button class="btn btn-success btn-sm" (click)="toggleUserForm(); selectedUserId.set(null)">
+            <i class="bi bi-plus-circle"></i> Nouveau
+          </button>
+        </div>
+        <div class="card-body">
+          <div *ngIf="loading()" class="text-center p-3">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+          </div>
+
+          <div *ngIf="error()" class="alert alert-danger">
+            {{ error() }}
+          </div>
+
+          <table *ngIf="!loading() && users().length > 0" class="table table-hover">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nom d'utilisateur</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of users()">
+                <td>{{ user.id }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>
+                  <span
+                    [class]="user.role === 'admin' ? 'badge bg-danger' : 'badge bg-success'"
+                  >
+                    {{ user.role }}
+                  </span>
+                </td>
+                <td>
+                  <button class="btn btn-sm btn-primary me-1" (click)="editUser(user)">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-danger" (click)="deleteUser(user.id)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div *ngIf="!loading() && users().length === 0" class="alert alert-info">
+            Aucun utilisateur trouvé.
+          </div>
+
+          <button class="btn btn-primary mt-3" (click)="loadUsers()">
+            <i class="bi bi-arrow-clockwise"></i> Rafraîchir la liste
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4" *ngIf="showUserForm()">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h3 class="mb-0">{{ selectedUserId() ? 'Modifier' : 'Ajouter' }} un utilisateur</h3>
+        </div>
+        <div class="card-body">
+          <form (ngSubmit)="saveUser()">
+            <div class="mb-3">
+              <label for="username" class="form-label">Nom d'utilisateur:</label>
+              <input
+                type="text"
+                class="form-control"
+                id="username"
+                [ngModel]="userForm().username"
+                (ngModelChange)="updateUserForm('username', $event)"
+                name="username"
+                required
+              >
+            </div>
+
+            <div class="mb-3">
+              <label for="email" class="form-label">Email:</label>
+              <input
+                type="email"
+                class="form-control"
+                id="email"
+                [ngModel]="userForm().email"
+                (ngModelChange)="updateUserForm('email', $event)"
+                name="email"
+                required
+              >
+            </div>
+
+            <div class="mb-3">
+              <label for="role" class="form-label">Rôle:</label>
+              <select
+                class="form-select"
+                id="role"
+                [ngModel]="userForm().role"
+                (ngModelChange)="updateUserForm('role', $event)"
+                name="role"
+                required
+              >
+                <option value="user">Utilisateur</option>
+                <option value="admin">Administrateur</option>
+              </select>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button
+                type="submit"
+                class="btn btn-success"
+                [disabled]="formLoading()"
+              >
+                <span *ngIf="formLoading()" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                {{ selectedUserId() ? 'Mettre à jour' : 'Ajouter' }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                (click)="toggleUserForm()"
+              >
+                Annuler
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
