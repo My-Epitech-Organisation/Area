@@ -1,4 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+class User {
+  final int id;
+  final String name;
+  final String email;
+  final DateTime createdAt;
+
+  User({
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.createdAt,
+  });
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id'],
+      name: json['name'],
+      email: json['email'],
+      createdAt: DateTime.parse(json['created_at']),
+    );
+  }
+}
 
 void main() => runApp(const MyApp());
 
@@ -107,18 +132,84 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int counter = 0;
+  List<User> users = [];
+  bool isLoading = true;
+  String errorMessage = "";
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
 
-  void incrementCounter() {
-    setState(() {
-      counter++;
-    });
+  @override
+  void initState() {
+    super.initState();
+    fetchUsers();
   }
 
-  void resetCounter() {
-    setState(() {
-      counter = 0;
-    });
+  Future<void> fetchUsers() async {
+    try {
+      final response = await http.get(Uri.parse('http://10.0.2.2:8080/users'));
+      if (response.statusCode == 200) {
+        final List<dynamic> userData = json.decode(response.body);
+        setState(() {
+          users = userData.map((data) => User.fromJson(data)).toList();
+          isLoading = false;
+          errorMessage = "";
+        });
+      } else {
+        throw Exception('Failed to load users');
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = "Failed to load users: $e";
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> addUser() async {
+    if (nameController.text.isEmpty || emailController.text.isEmpty) return;
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:8080/users'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'name': nameController.text,
+          'email': emailController.text,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        nameController.clear();
+        emailController.clear();
+        fetchUsers(); // Refresh the list
+      } else {
+        final errorData = json.decode(response.body);
+        setState(() {
+          errorMessage = errorData['error'] ?? 'Failed to add user';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = "Failed to add user: $e";
+      });
+    }
+  }
+
+  Future<void> deleteUser(int id) async {
+    try {
+      final response = await http.delete(Uri.parse('http://10.0.2.2:8080/users/$id'));
+      if (response.statusCode == 200) {
+        fetchUsers(); // Refresh the list
+      } else {
+        setState(() {
+          errorMessage = "Failed to delete user";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = "Failed to delete user: $e";
+      });
+    }
   }
 
   @override
@@ -138,66 +229,146 @@ class _HomePageState extends State<HomePage> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             title: const Text(
-              "My AREA",
+              "AREA Users",
               style: TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple),
             ),
             centerTitle: true,
           ),
-          body: Center(
-            child: Card(
-              elevation: 8,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              margin: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-              child: Padding(
-                padding: const EdgeInsets.all(32.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'You have pushed the button this many times:',
-                      style: TextStyle(fontSize: 18, color: Colors.deepPurple),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 400),
-                      transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
-                      child: Text(
-                        '$counter',
-                        key: ValueKey<int>(counter),
-                        style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold, color: Colors.deepPurple),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+          body: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                // Add User Form
+                Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        const Text(
+                          "Add New User",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.deepPurple,
                           ),
-                          onPressed: incrementCounter,
-                          icon: const Icon(Icons.add, color: Colors.white),
-                          label: const Text('Increment', style: TextStyle(color: Colors.white)),
                         ),
-                        const SizedBox(width: 16),
-                        OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.deepPurple, width: 2),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: nameController,
+                          decoration: const InputDecoration(
+                            labelText: "Name",
+                            border: OutlineInputBorder(),
                           ),
-                          onPressed: resetCounter,
-                          icon: const Icon(Icons.refresh, color: Colors.deepPurple),
-                          label: const Text('Reset', style: TextStyle(color: Colors.deepPurple)),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: emailController,
+                          decoration: const InputDecoration(
+                            labelText: "Email",
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: addUser,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepPurple,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              "Add User",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+
+                const SizedBox(height: 20),
+
+                // Error Message
+                if (errorMessage.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      errorMessage,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+
+                const SizedBox(height: 20),
+
+                // Users List
+                Expanded(
+                  child: isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : users.isEmpty
+                      ? const Center(
+                          child: Text(
+                            "No users found.\nAdd your first user above!",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: users.length,
+                          itemBuilder: (context, index) {
+                            final user = users[index];
+                            return Card(
+                              elevation: 2,
+                              margin: const EdgeInsets.only(bottom: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.all(16),
+                                title: Text(
+                                  user.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurple,
+                                  ),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(user.email),
+                                    Text(
+                                      "Created: ${user.createdAt.toLocal().toString().split(' ')[0]}",
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () => deleteUser(user.id),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
             ),
           ),
         ),

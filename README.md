@@ -29,12 +29,20 @@ The application consists of the following components:
 
 ### Server
 - **Technology**: Node.js with TypeScript
-- **Framework**: Fastify
+- **Framework**: Express.js
 - **Dependencies**: BullMQ, ioredis, pg
 - **Purpose**: Provides REST API endpoints
 - **Port**: 8080
 - **Endpoints**:
-  - `GET /about.json`: Returns client information
+  - `GET /about.json`: Returns server information
+  - `GET /ping-redis`: Tests Redis connection
+  - `GET /test-db`: Tests database connection
+  - `POST /enqueue`: Adds job to queue
+  - `GET /users`: Get all users
+  - `GET /users/:id`: Get user by ID
+  - `POST /users`: Create new user
+  - `PUT /users/:id`: Update user
+  - `DELETE /users/:id`: Delete user
 
 ### Worker
 - **Technology**: Node.js with TypeScript
@@ -43,14 +51,24 @@ The application consists of the following components:
 
 ### Client Web
 - **Technology**: React with TypeScript
-- **Purpose**: Web interface that fetches data from the server and provides APK download
+- **Purpose**: Web interface for user management (list, add, delete users) and APK download
 - **Port**: 8081 (nginx)
+- **Features**:
+  - User listing with real-time updates
+  - Add new users
+  - Delete existing users
+  - Download mobile APK
 
 ### Client Mobile
 - **Technology**: Flutter with Dart
-- **Purpose**: Mobile application
+- **Purpose**: Mobile application for user management
 - **Dependencies**: http package
 - **Platforms**: Android, iOS, Linux, macOS, Windows, Web
+- **Features**:
+  - User listing
+  - Add new users
+  - Delete users
+  - Real-time API integration
 
 ### Shared Volume
 - **Purpose**: Shared storage between containers
@@ -116,6 +134,67 @@ flutter build apk  # Builds Android APK
 ## Docker
 
 Each component has its own Dockerfile for containerization. The `docker-compose.yml` orchestrates the entire stack.
+
+## API Documentation
+
+### User Management API
+
+The application provides a complete CRUD API for user management:
+
+#### Get All Users
+```
+GET /users
+```
+**Response**: Array of user objects
+
+#### Get User by ID
+```
+GET /users/:id
+```
+**Parameters**: `id` (integer) - User ID
+**Response**: User object or 404 if not found
+
+#### Create User
+```
+POST /users
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com"
+}
+```
+**Response**: Created user object (201) or error (400/409)
+
+#### Update User
+```
+PUT /users/:id
+Content-Type: application/json
+
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com"
+}
+```
+**Parameters**: `id` (integer) - User ID
+**Response**: Updated user object or 404 if not found
+
+#### Delete User
+```
+DELETE /users/:id
+```
+**Parameters**: `id` (integer) - User ID
+**Response**: Success message or 404 if not found
+
+### User Object Schema
+```json
+{
+  "id": 1,
+  "name": "John Doe",
+  "email": "john@example.com",
+  "created_at": "2025-01-22T10:30:00.000Z"
+}
+```
 
 ## Local Access URLs
 
