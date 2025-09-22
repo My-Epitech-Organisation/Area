@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: area
+      POSTGRES_PASSWORD: area
+      POSTGRES_DB: area
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  server:
+    build: ./server
+    command: sh -c "npm run dev"
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://area:area@db:5432/area
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build: ./worker
+    command: sh -c "npm run dev"
+    environment:
+      REDIS_URL: redis://redis:6379
+      TEST_MODE: "true"
+    depends_on:
+      - redis
+
+  client_mobile:
+    build: ./client_mobile
+    volumes:
+      - shared:/shared
+    depends_on:
+      - server
+
+  client_web:
+    build: ./client_web
+    ports:
+      - "8081:80"
+    volumes:
+      - shared:/shared
+    depends_on:
+      - server
+
+volumes:
+  shared:
