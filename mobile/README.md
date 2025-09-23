@@ -15,7 +15,12 @@ Make sure to:
 - Run `flutter doctor` to check for missing dependencies
 
 ```bash
-flutter doctor
+flutter doctor -v
+```
+
+To initialize a new Flutter project (if needed):
+```bash
+flutter create .
 ```
 
 ### 2. Android Setup
@@ -46,28 +51,27 @@ sudo gem install cocoapods
 
 ### 4. Run the Project
 
-Clone the repository and run:
+Clone the repository and navigate to the mobile directory:
+```bash
+git clone <repository_url>
+cd AREA/mobile
+```
+
+Run on Android emulator
+```bash
+flutter emulators --launch <emulator_id>
+```
+
+Run on iOS simulator (if macOS available)
+```bash
+open -a Simulator
+```
 
 ```bash
 flutter pub get
 flutter run
-```
-
-To specify a platform:
-
-```bash
-flutter run -d android   # Run on Android
-flutter run -d ios       # Run on iOS
-```
-
-### 6. Build the Project
-For Android:
-```bash
-flutter build apk
-```
-For iOS:
-```bash
-flutter build ios
+# Or specify device:
+flutter run -d <device_id>
 ```
 
 ## 🧪 Testing
@@ -87,21 +91,7 @@ flutter run                # Run the app
 flutter devices            # List connected devices
 flutter emulators         # List available emulators
 flutter emulators --launch <emulator_id>  # Launch a specific emulator
-flutter doctor             # Check environment setup
-```
-
-## 🎯 Deployment
-Run on Android emulator
-```bash
-flutter emulators --launch <emulator_id>
-```
-Run on iOS simulator (if macOS available)
-```bash
-open -a Simulator
-```
-Then run:
-```bash
-flutter run
+flutter doctor -v          # Check environment setup
 ```
 
 ## ⚠️ Common Issues
