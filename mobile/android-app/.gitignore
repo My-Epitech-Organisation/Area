@@ -1,0 +1,22 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android Studio/IDE
+.idea/
+*.iml
+.cxx/
+.externalNativeBuild/
+captures/
+local.properties
+
+# Outputs
+app/build/
+*.apk
+*.aab
+*.ap_ 
+
+# Keystores (debug keystore is fine to ignore too)
+*.jks
+*.keystore

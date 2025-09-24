@@ -59,3 +59,15 @@ coverage/
 
 # Mobile artifacts (if any)
 *.apk
+
+# Android / Gradle (mobile project)
+mobile/android-app/.gradle/
+mobile/android-app/.cxx/
+mobile/android-app/.idea/
+mobile/android-app/build/
+mobile/android-app/app/build/
+mobile/android-app/local.properties
+mobile/android-app/*.iml
+mobile/android-app/captures/
+mobile/android-app/.externalNativeBuild/
+*.keystore
