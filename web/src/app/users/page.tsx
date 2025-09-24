@@ -45,8 +45,8 @@ export default function UsersPage() {
   return (
     <main className="space-y-4">
       <h1 className="text-2xl font-semibold">Users</h1>
-      {error && <div className="text-red-600">Error: {error}</div>}
-      <form onSubmit={onCreate} className="card p-4 flex gap-2 items-end">
+  {error && <div className="text-red-600">Error: {error}</div>}
+  <form onSubmit={onCreate} className="rounded-lg border p-4 flex gap-2 items-end" style={{borderColor: 'var(--border)', background: 'var(--card)', color: 'var(--card-foreground)'}}>
         <input
           className="border p-2 rounded flex-1"
           placeholder="Name"
@@ -62,13 +62,13 @@ export default function UsersPage() {
           onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
           required
         />
-        <button className="btn btn-primary" type="submit">Create</button>
+        <button className="inline-flex items-center rounded-md border px-3 py-1.5 text-sm text-white" style={{ background: 'var(--accent)', borderColor: 'transparent' }} type="submit">Create</button>
       </form>
 
       {loading ? (
         <div>Loading…</div>
       ) : (
-        <div className="card p-0 overflow-hidden">
+  <div className="rounded-lg border overflow-hidden" style={{borderColor: 'var(--border)', background: 'var(--card)', color: 'var(--card-foreground)'}}>
           <table className="w-full text-sm">
             <thead>
               <tr style={{borderBottom: '1px solid var(--border)'}}>

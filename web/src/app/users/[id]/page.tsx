@@ -66,7 +66,7 @@ export default function EditUserPage({ params }: Props) {
   return (
     <main className="space-y-4 max-w-xl">
       <h1 className="text-2xl font-semibold">Edit User #{user.id}</h1>
-      <form onSubmit={onSave} className="card p-4 flex flex-col gap-2">
+      <form onSubmit={onSave} className="rounded-lg border p-4 flex flex-col gap-2" style={{borderColor: 'var(--border)', background: 'var(--card)', color: 'var(--card-foreground)'}}>
         <label className="flex flex-col">
           <span className="text-sm">Name</span>
           <input className="border p-2 rounded" value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} required />
@@ -76,8 +76,8 @@ export default function EditUserPage({ params }: Props) {
           <input className="border p-2 rounded" type="email" value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))} required />
         </label>
         <div className="flex gap-2 mt-2">
-          <button className="btn btn-primary" type="submit">Save</button>
-          <button className="btn" type="button" onClick={onDelete}>Delete</button>
+          <button className="inline-flex items-center rounded-md border px-3 py-1.5 text-sm text-white" style={{ background: 'var(--accent)', borderColor: 'transparent' }} type="submit">Save</button>
+          <button className="inline-flex items-center rounded-md border px-3 py-1.5 text-sm" style={{ borderColor: 'var(--border)' }} type="button" onClick={onDelete}>Delete</button>
         </div>
       </form>
     </main>

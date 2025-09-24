@@ -28,7 +28,12 @@ export default function ThemeToggle() {
   }
 
   return (
-    <button onClick={toggle} className="btn" aria-label="Toggle theme">
+    <button
+      onClick={toggle}
+      className="inline-flex items-center rounded-md border px-3 py-1.5 text-sm"
+      style={{ borderColor: 'var(--border)' }}
+      aria-label="Toggle theme"
+    >
       {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
     </button>
   );

@@ -13,7 +13,7 @@ export default async function AboutPage() {
   return (
     <main className="space-y-4">
       <h1 className="text-2xl font-semibold">About</h1>
-      <div className="card p-4 overflow-auto text-sm">
+      <div className="rounded-lg border p-4 overflow-auto text-sm" style={{borderColor: 'var(--border)', background: 'var(--card)', color: 'var(--card-foreground)'}}>
         <pre>{JSON.stringify(data, null, 2)}</pre>
       </div>
     </main>
