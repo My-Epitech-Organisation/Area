@@ -7,7 +7,7 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-16 flex items-center justify-between">
           <div className="flex items-center">
-            <Link to="/Homepage" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
+            <Link to="/homepage" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
               Area
             </Link>
           </div>
