@@ -1,0 +1,61 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python / Django
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+.eggs/
+.python-version
+.mypy_cache/
+.pytest_cache/
+.coverage*
+htmlcov/
+
+env/
+venv/
+.venv/
+
+# Django local files
+*.sqlite3
+media/
+staticfiles/
+
+# Env files (keep examples)
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# Logs
+*.log
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.npmrc
+
+# Next.js env files
+web/.env.local
+web/.env.development.local
+web/.env.test.local
+web/.env.production.local
+
+# Build artifacts
+/dist/
+coverage/
+
+# Docker
+**/.docker-volume/
+
+# Mobile artifacts (if any)
+*.apk
