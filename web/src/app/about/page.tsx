@@ -11,11 +11,11 @@ async function getAbout() {
 export default async function AboutPage() {
   const data = await getAbout();
   return (
-    <main className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-4">About</h1>
-      <pre className="bg-gray-100 p-4 rounded overflow-auto text-sm">
-        {JSON.stringify(data, null, 2)}
-      </pre>
+    <main className="space-y-4">
+      <h1 className="text-2xl font-semibold">About</h1>
+      <div className="card p-4 overflow-auto text-sm">
+        <pre>{JSON.stringify(data, null, 2)}</pre>
+      </div>
     </main>
   );
 }

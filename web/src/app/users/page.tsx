@@ -43,10 +43,10 @@ export default function UsersPage() {
   }
 
   return (
-    <main className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-4">Users</h1>
-      {error && <div className="text-red-600 mb-3">Error: {error}</div>}
-      <form onSubmit={onCreate} className="mb-6 flex gap-2">
+    <main className="space-y-4">
+      <h1 className="text-2xl font-semibold">Users</h1>
+      {error && <div className="text-red-600">Error: {error}</div>}
+      <form onSubmit={onCreate} className="card p-4 flex gap-2 items-end">
         <input
           className="border p-2 rounded flex-1"
           placeholder="Name"
@@ -62,34 +62,36 @@ export default function UsersPage() {
           onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
           required
         />
-        <button className="border px-4 rounded" type="submit">Create</button>
+        <button className="btn btn-primary" type="submit">Create</button>
       </form>
 
       {loading ? (
         <div>Loading…</div>
       ) : (
-        <table className="w-full border text-sm">
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="p-2 text-left">ID</th>
-              <th className="p-2 text-left">Name</th>
-              <th className="p-2 text-left">Email</th>
-              <th className="p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map(u => (
-              <tr key={u.id} className="border-t">
-                <td className="p-2">{u.id}</td>
-                <td className="p-2">{u.name}</td>
-                <td className="p-2">{u.email}</td>
-                <td className="p-2 text-center">
-                  <a className="underline mr-3" href={`/users/${u.id}`}>Edit</a>
-                </td>
+        <div className="card p-0 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{borderBottom: '1px solid var(--border)'}}>
+                <th className="p-2 text-left">ID</th>
+                <th className="p-2 text-left">Name</th>
+                <th className="p-2 text-left">Email</th>
+                <th className="p-2">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map(u => (
+                <tr key={u.id} style={{borderTop: '1px solid var(--border)'}}>
+                  <td className="p-2">{u.id}</td>
+                  <td className="p-2">{u.name}</td>
+                  <td className="p-2">{u.email}</td>
+                  <td className="p-2 text-center">
+                    <a className="underline mr-3" href={`/users/${u.id}`}>Edit</a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </main>
   );
