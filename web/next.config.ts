@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Next serves files from /public, we symlink /apk -> /public/apk in Dockerfile
 };
 
 export default nextConfig;
