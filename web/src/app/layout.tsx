@@ -45,6 +45,8 @@ export default function RootLayout({
               <a href="/">Home</a>
               <a href="/about">About</a>
               <a href="/users">Users</a>
+              <a href="/services">Services</a>
+              <a href="/areas">AREAs</a>
             </nav>
             <ThemeToggle />
           </div>
