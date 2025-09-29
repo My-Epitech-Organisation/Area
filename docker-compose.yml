@@ -1,5 +1,5 @@
 services:
-  postgres:
+  db:
     image: postgres:16
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
