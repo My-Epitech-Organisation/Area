@@ -1,2 +1,22 @@
 package-lock.json
 node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+
+# Environment
+backend/venv/
+backend/.env
+
+# Django
+*.log
+db.sqlite3
+/media/
+
+# IDEs
+.vscode/
+.idea/
