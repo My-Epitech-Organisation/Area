@@ -1,13 +1,20 @@
+import uuid
+from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
-# Create your models here.
+class User(AbstractUser):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    def __str__(self):
+        return self.username
+
 
 class ServiceToken(models.Model):
     """
     Stores OAuth2 tokens for a user connected to an external service.
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     service_name = models.CharField(max_length=100)
     access_token = models.TextField()
     refresh_token = models.TextField(blank=True, null=True)
