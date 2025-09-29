@@ -4,3 +4,6 @@
 
 # PoC folder
 Poc/
+
+package-lock.json
+node_modules/
