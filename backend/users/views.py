@@ -52,12 +52,12 @@ class SendEmailVerificationView(APIView):
             subject = "AREA - Email Verification"
             message = f"""
             Hello {user.username},
-            
+
             Please click the following link to verify your email address:
             http://localhost:8080/auth/verify-email/{token}/
-            
+
             If you didn't request this verification, please ignore this email.
-            
+
             Best regards,
             AREA Team
             """
