@@ -1,10 +1,11 @@
 services:
   db:
+    container_name: area_postgres
     image: postgres:16
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
     ports:
       - "${DB_PORT}:5432"
     volumes:
@@ -13,6 +14,7 @@ services:
       - area-net
 
   pgadmin:
+    container_name: area_pgadmin
     image: dpage/pgadmin4
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
@@ -25,6 +27,7 @@ services:
       - db
 
   redis:
+    container_name: area_redis
     image: redis:7
     volumes:
       - redis-data:/data
@@ -34,12 +37,13 @@ services:
       - area-net
 
   server:
+    container_name: area_server
     build: ./backend
     env_file:
       - .env
     environment:
-      - DJANGO_SETTINGS_MODULE=project.settings
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${DB_PORT}/${POSTGRES_DB}
+      - DJANGO_SETTINGS_MODULE=area_project.settings
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:${DB_PORT}/${DB_NAME}
       - REDIS_URL=redis://redis:${REDIS_PORT}/0
     depends_on:
       - db
@@ -52,10 +56,13 @@ services:
       - area-net
 
   worker:
+    container_name: area_worker
     build: ./backend
     env_file:
       - .env
-    command: ["bash", "-c", "celery -A project worker --loglevel=info"]
+    environment:
+      - PYTHONPATH=/app
+    command: ["bash", "-c", "celery -A area_project worker --loglevel=info"]
     depends_on:
       - redis
       - db
@@ -65,6 +72,7 @@ services:
       - area-net
 
   client_mobile:
+    container_name: area_client_mobile
     build: ./mobile
     volumes:
       - apk_shared:/shared
@@ -75,6 +83,7 @@ services:
       - area-net
 
   client_web:
+    container_name: area_client_web
     build: ./frontend
     ports:
       - "${FRONTEND_PORT}:80"
