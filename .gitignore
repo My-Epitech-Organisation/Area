@@ -1,3 +1,10 @@
+# Visual Studio Code
+.vscode/
+.history/
+
+# PoC folder
+Poc/
+
 package-lock.json
 node_modules/
 
@@ -20,3 +27,6 @@ db.sqlite3
 # IDEs
 .vscode/
 .idea/
+
+# PoC
+Poc/
