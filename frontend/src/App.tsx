@@ -1,5 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Homepage from "./pages/Homepage";
+import Services from "./pages/services";
+import About from "./pages/about";
+import Login from "./pages/login";
+import Signup from "./pages/signup";
 import Navbar from "./components/navbar";
 
 function App() {
@@ -8,7 +12,10 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/homepage" element={<Homepage />} />
-        <Route path="/*" element={<Homepage />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
       </Routes>
     </BrowserRouter>
   );
