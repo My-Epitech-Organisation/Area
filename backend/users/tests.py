@@ -134,3 +134,44 @@ class AuthTests(TestCase):
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('Invalid verification token', response.data['error'])
+
+    def test_complete_authentication_flow(self):
+        """Test complete flow: register → login → refresh → /users/me"""
+        # Step 1: Register
+        response = self.client.post(self.register_url, self.user_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertFalse(response.data['email_verified'])
+        
+        # Step 2: Login
+        login_data = {'username': 'testuser', 'password': 'StrongPassword123'}
+        login_response = self.client.post(self.login_url, login_data, format='json')
+        self.assertEqual(login_response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', login_response.data)
+        self.assertIn('refresh', login_response.data)
+        
+        # Store tokens
+        access_token = login_response.data['access']
+        refresh_token = login_response.data['refresh']
+        
+        # Step 3: Access protected endpoint with access token
+        detail_url = reverse('user_detail')
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+        me_response = self.client.get(detail_url)
+        self.assertEqual(me_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(me_response.data['username'], 'testuser')
+        self.assertEqual(me_response.data['email'], 'test@example.com')
+        self.assertFalse(me_response.data['email_verified'])
+        
+        # Step 4: Refresh token
+        refresh_url = reverse('token_refresh')
+        refresh_data = {'refresh': refresh_token}
+        refresh_response = self.client.post(refresh_url, refresh_data, format='json')
+        self.assertEqual(refresh_response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', refresh_response.data)
+        
+        # Step 5: Use new access token
+        new_access_token = refresh_response.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {new_access_token}')
+        me_response2 = self.client.get(detail_url)
+        self.assertEqual(me_response2.status_code, status.HTTP_200_OK)
+        self.assertEqual(me_response2.data['username'], 'testuser')
