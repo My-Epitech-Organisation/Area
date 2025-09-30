@@ -313,9 +313,9 @@ class ThrottlingTests(TestCase):
         # Test that a few failed attempts still work (within limits)
         login_data = {"username": "testuser", "password": "wrongpassword"}
 
-        for i in range(3):  # Make a few failed attempts
+        for _ in range(3):  # Make a few failed attempts
             response = self.client.post(self.login_url, login_data, format="json")
-            # Should still get 401 (unauthorized) not 429 (throttled) for reasonable number of attempts
+            # Should still get 401 (unauthorized) not 429 (throttled)
             self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
