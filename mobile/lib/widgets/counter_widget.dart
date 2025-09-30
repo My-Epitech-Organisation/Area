@@ -27,7 +27,7 @@ class _CounterWidgetState extends State<CounterWidget> {
     return Column(
       children: [
         const Text(
-          'Compteur :',
+          'Counter:',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         Text(
