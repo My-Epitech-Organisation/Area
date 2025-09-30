@@ -16,6 +16,9 @@ const Navbar: React.FC = () => {
               <Link to="/about" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
                 About Us
               </Link>
+              <Link to="/dashboard" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
+                Dashboard
+              </Link>
               <Link to="/login" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
                 Log In
               </Link>
