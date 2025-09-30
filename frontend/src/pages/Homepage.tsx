@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import VerticalNav from "../components/VerticalNav";
+import HomePageVerticalNav from "../components/HomepageVerticalNav";
 
 const quadrantTransforms = [
   "translate(0%, 0%)",
@@ -18,8 +18,8 @@ const Homepage: React.FC = () => {
   const fadeInRef = useRef<number | null>(null);
   const endRef = useRef<number | null>(null);
   const TOTAL_TRANSITION = 700;
-  const START_FADE_IN = Math.round(TOTAL_TRANSITION * 0.7);
   const END_FADE_IN = TOTAL_TRANSITION;
+  const START_FADE_IN = END_FADE_IN;
 
   useEffect(() => {
     return () => {
@@ -46,17 +46,21 @@ const Homepage: React.FC = () => {
 
   const nextQuad = () => animateTo((quad + 1) % 4);
 
+  const getOverlayOpacity = (index: number) => {
+    return index === quad ? (overlayVisible ? 1 : 0) : 0;
+  };
+
   return (
     <div className={`w-screen min-h-screen ${baseBgClass} flex flex-col items-center overflow-hidden`}>
       <main className="w-full flex-1 flex items-center justify-center relative">
-        <VerticalNav quad={quad} setQuad={animateTo} />
+        <HomePageVerticalNav quad={quad} setQuad={animateTo} />
         <div className="w-full h-[100vh] bg-transparent relative overflow-hidden">
           <div
             className="absolute left-0 top-0 w-[200%] h-[200%] grid grid-cols-2 grid-rows-2 transition-transform duration-700 ease-in-out"
             style={{ transform }}
           >
             <section className="w-full h-full flex items-center justify-center p-8 relative">
-              <div className="absolute inset-0" style={{ transition: 'opacity 210ms ease', opacity: overlayVisible ? 1 : 0 }}>
+              <div className="absolute inset-0" style={{ transition: 'opacity 210ms ease', opacity: getOverlayOpacity(0) }}>
                 <div className="w-full h-full bg-tl" />
               </div>
               <div className="relative z-10 text-center">
@@ -73,7 +77,7 @@ const Homepage: React.FC = () => {
               </div>
             </section>
             <section className="w-full h-full flex items-center justify-center p-8 relative">
-              <div className="absolute inset-0" style={{ transition: 'opacity 210ms ease', opacity: overlayVisible ? 1 : 0 }}>
+              <div className="absolute inset-0" style={{ transition: 'opacity 210ms ease', opacity: getOverlayOpacity(1) }}>
                 <div className="w-full h-full bg-tr" />
               </div>
               <div className="relative z-10 text-center">
@@ -118,7 +122,7 @@ const Homepage: React.FC = () => {
               </div>
             </section>
             <section className="w-full h-full flex items-center justify-center p-8 relative">
-              <div className="absolute inset-0" style={{ transition: 'opacity 210ms ease', opacity: overlayVisible ? 1 : 0 }}>
+              <div className="absolute inset-0" style={{ transition: 'opacity 210ms ease', opacity: getOverlayOpacity(2) }}>
                 <div className="w-full h-full bg-bl" />
               </div>
               <div className="relative z-10 text-center max-w-6xl">
@@ -139,7 +143,7 @@ const Homepage: React.FC = () => {
               </div>
             </section>
             <section className="w-full h-full flex items-center justify-center p-8 relative">
-              <div className="absolute inset-0" style={{ transition: 'opacity 210ms ease', opacity: overlayVisible ? 1 : 0 }}>
+              <div className="absolute inset-0" style={{ transition: 'opacity 210ms ease', opacity: getOverlayOpacity(3) }}>
                 <div className="w-full h-full bg-br" />
               </div>
               <div className="relative z-10 text-center max-w-4xl">
