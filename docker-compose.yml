@@ -22,7 +22,7 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
-      - postgres
+      - db
 
   redis:
     image: redis:7
@@ -42,7 +42,7 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${DB_PORT}/${POSTGRES_DB}
       - REDIS_URL=redis://redis:${REDIS_PORT}/0
     depends_on:
-      - postgres
+      - db
       - redis
     ports:
       - "${BACKEND_PORT}:8000"
@@ -58,7 +58,7 @@ services:
     command: ["bash", "-c", "celery -A project worker --loglevel=info"]
     depends_on:
       - redis
-      - postgres
+      - db
     volumes:
       - ./backend:/app
     networks:
