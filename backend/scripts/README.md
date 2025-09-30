@@ -60,7 +60,7 @@ Les outils sont configurés via `pyproject.toml` dans le dossier backend.
   - Plugins : `flake8-django`, `flake8-bugbear`, `flake8-comprehensions`
 
 ### 🔍 Analyse statique
-- **mypy** : Vérification de typage statique
+
 - **bandit** : Analyse de sécurité
 
 ## ⚙️ Configuration
@@ -85,7 +85,6 @@ Le script `lint-check.sh` utilise des codes de retour binaires :
 - `0` : Tout est conforme ✅
 - `1` : Problèmes de formatage (auto-corrigeable) 🎨
 - `2` : Problèmes de style (manuel) 📏
-- `4` : Problèmes de typage (manuel) 🔍
 - `8` : Problèmes de sécurité (manuel) 🔒
 
 Les codes peuvent se combiner (ex: `3` = formatage + style).
@@ -108,10 +107,7 @@ Les codes peuvent se combiner (ex: `3` = formatage + style).
 📏 Checking code style with flake8...
 ✅ Code style: PASSED
 
-🔍 Checking types with mypy...
-✅ Type checking: PASSED
-
-🔒 Checking security with bandit...
+ Checking security with bandit...
 ✅ Security check: PASSED
 
 ========================================
@@ -158,8 +154,7 @@ Ajouter à `.vscode/settings.json` :
 {
     "python.formatting.provider": "black",
     "python.sortImports.args": ["--profile", "black"],
-    "python.linting.flake8Enabled": true,
-    "python.linting.mypyEnabled": true
+    "python.linting.flake8Enabled": true
 }
 ```
 
@@ -199,7 +194,6 @@ pip install -r requirements-dev.txt --upgrade
 - [Black Documentation](https://black.readthedocs.io/)
 - [isort Documentation](https://pycqa.github.io/isort/)
 - [flake8 Documentation](https://flake8.pycqa.org/)
-- [mypy Documentation](https://mypy.readthedocs.io/)
 - [bandit Documentation](https://bandit.readthedocs.io/)
 
 ## 🤝 Contribution

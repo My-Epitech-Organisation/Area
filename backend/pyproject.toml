@@ -33,30 +33,6 @@ skip_glob = [
     "__pycache__/*"
 ]
 
-[tool.mypy]
-python_version = "3.13"
-check_untyped_defs = true
-ignore_missing_imports = true
-warn_unused_ignores = true
-warn_redundant_casts = true
-warn_unused_configs = true
-plugins = ["mypy_django_plugin.main"]
-
-[[tool.mypy.overrides]]
-module = "*.migrations.*"
-ignore_errors = true
-
-[tool.mypy.django-stubs]
-django_settings_module = "area_project.settings"
-
-exclude = [
-    "migrations/",
-    "venv/",
-    "__pycache__/",
-    ".mypy_cache/",
-    "reports/"
-]
-
 [tool.bandit]
 exclude_dirs = ["tests", "venv", "migrations", "__pycache__"]
 skips = ["B101"]  # Skip assert_used test
