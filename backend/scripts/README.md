@@ -1,97 +1,96 @@
-# Scripts de Linting Django
+# Django Linting Scripts
 
-Ce dossier contient les scripts pour maintenir la qualité du code dans le backend Django du projet AREA.
+This folder contains scripts to maintain code quality in the AREA project Django backend.
 
-## 📋 Contenu
+## 📋 Contents
 
-- `lint-check.sh` - Script de vérification (lecture seule)
-- `lint-fix.sh` - Script d'auto-correction
-- `README.md` - Cette documentation
+- `lint-check.sh` - Code verification script (read-only)
+- `lint-fix.sh` - Auto-correction script
+- `README.md` - This documentation
 
 ## 🚀 Installation
 
-### 1. Installer les dépendances de développement
+### 1. Install development dependencies
 
 ```bash
-# Depuis le dossier backend/
+# From the backend/ folder
 pip install -r requirements-dev.txt
 ```
 
-### 2. Vérifier la configuration
+### 2. Verify configuration
 
-Les outils sont configurés via `pyproject.toml` dans le dossier backend.
+Tools are configured via `.flake8` and `pyproject.toml` in the backend folder.
 
-## 🔧 Utilisation
+## 🔧 Usage
 
-### Vérification complète du code (lecture seule)
+### Complete code verification (read-only)
 
 ```bash
-# Vérifier tout le projet
+# Check entire project
 ./scripts/lint-check.sh
 
-# Vérifier un module spécifique
+# Check specific module
 ./scripts/lint-check.sh users/
 
-# Vérifier un fichier spécifique
+# Check specific file
 ./scripts/lint-check.sh users/models.py
 ```
 
-### Auto-correction du code
+### Auto-correction
 
 ```bash
-# Corriger tout le projet
+# Fix entire project
 ./scripts/lint-fix.sh
 
-# Corriger un module spécifique
+# Fix specific module
 ./scripts/lint-fix.sh automations/
 
-# Corriger un fichier spécifique
+# Fix specific file
 ./scripts/lint-fix.sh users/views.py
 ```
 
-## 🔍 Outils utilisés
+## 🔍 Tools Used
 
-### 🎨 Formatage automatique
-- **Black** : Formatage du code Python (PEP 8)
-- **isort** : Tri et organisation des imports
+### 🎨 Automatic Formatting
+- **Black**: Python code formatting (PEP 8)
+- **isort**: Import sorting and organization
 
-### 📏 Vérification de style
-- **flake8** : Vérification du style et détection d'erreurs
-  - Plugins : `flake8-django`, `flake8-bugbear`, `flake8-comprehensions`
+### 📏 Style Checking
+- **flake8**: Style checking and error detection
+  - Plugins: `flake8-django`, `flake8-bugbear`, `flake8-comprehensions`
 
-### 🔍 Analyse statique
-
-- **bandit** : Analyse de sécurité
+### 🔍 Static Analysis
+- **bandit**: Security analysis
 
 ## ⚙️ Configuration
 
-### Exclusions automatiques
-Les outils ignorent automatiquement :
-- `migrations/` - Fichiers générés par Django
-- `__pycache__/` - Cache Python
-- `venv/` - Environnement virtuel
-- `.mypy_cache/` - Cache mypy
-- `reports/` - Rapports générés
+### Automatic Exclusions
+Tools automatically ignore:
+- `migrations/` - Django-generated files
+- `__pycache__/` - Python cache
+- `venv/` - Virtual environment
+- `.mypy_cache/` - mypy cache
+- `reports/` - Generated reports
 
-### Paramètres principaux
-- **Longueur de ligne** : 88 caractères (standard Black)
-- **Version Python** : 3.13
-- **Profil isort** : Compatible Black
+### Main Settings
+- **Line length**: 88 characters (Black standard)
+- **Python version**: 3.13
+- **isort profile**: Black compatible
 
-## 🎯 Codes de retour
+## 🎯 Return Codes
 
-Le script `lint-check.sh` utilise des codes de retour binaires :
+The `lint-check.sh` script uses binary return codes:
 
-- `0` : Tout est conforme ✅
-- `1` : Problèmes de formatage (auto-corrigeable) 🎨
-- `2` : Problèmes de style (manuel) 📏
-- `8` : Problèmes de sécurité (manuel) 🔒
+- `0`: Everything compliant ✅
+- `1`: Formatting issues (auto-fixable) 🎨
+- `2`: Style issues (manual) 📏
+- `8`: Security issues (manual) 🔒
 
-Les codes peuvent se combiner (ex: `3` = formatage + style).
+Codes can combine (e.g., `3` = formatting + style).
 
-## 📊 Exemple de sortie
+## 📊 Example Output
 
-### Vérification réussie
+### Successful verification
 ```
 🔍 Django Backend Code Quality Check
 ========================================
@@ -107,14 +106,14 @@ Les codes peuvent se combiner (ex: `3` = formatage + style).
 📏 Checking code style with flake8...
 ✅ Code style: PASSED
 
- Checking security with bandit...
+🔒 Checking security with bandit...
 ✅ Security check: PASSED
 
 ========================================
 🎉 All checks passed! Your code is clean.
 ```
 
-### Vérification avec erreurs
+### Verification with errors
 ```
 ❌ Black formatting: FAILED
 Run './scripts/lint-fix.sh' to auto-format your code
@@ -126,30 +125,30 @@ Run './scripts/lint-fix.sh' to auto-sort your imports
 Please fix the style issues reported above
 ```
 
-## 🛠️ Dépannage
+## 🛠️ Troubleshooting
 
-### Erreur : "Virtual environment not found"
+### Error: "Virtual environment not found"
 ```bash
-# Créer et configurer le venv
+# Create and configure venv
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt -r requirements-dev.txt
 ```
 
-### Erreur : "Development dependencies not found"
-Le script installe automatiquement les dépendances manquantes.
+### Error: "Development dependencies not found"
+The script automatically installs missing dependencies.
 
-### Performance lente sur gros projets
+### Slow performance on large projects
 ```bash
-# Utiliser des chemins spécifiques
+# Use specific paths
 ./scripts/lint-check.sh users/models.py
 ./scripts/lint-fix.sh automations/
 ```
 
-## 🚀 Intégration IDE
+## 🚀 IDE Integration
 
 ### VS Code
-Ajouter à `.vscode/settings.json` :
+Add to `.vscode/settings.json`:
 ```json
 {
     "python.formatting.provider": "black",
@@ -160,45 +159,45 @@ Ajouter à `.vscode/settings.json` :
 
 ### PyCharm
 1. File → Settings → Tools → External Tools
-2. Ajouter les scripts comme outils externes
+2. Add scripts as external tools
 
-## 📝 Workflow recommandé
+## 📝 Recommended Workflow
 
-1. **Avant commit** :
+1. **Before commit**:
    ```bash
    ./scripts/lint-fix.sh
    ./scripts/lint-check.sh
    ```
 
-2. **Pendant développement** :
+2. **During development**:
    ```bash
-   # Auto-correction fréquente
+   # Frequent auto-correction
    ./scripts/lint-fix.sh users/
    ```
 
-3. **Avant push** :
+3. **Before push**:
    ```bash
-   # Vérification complète
+   # Complete verification
    ./scripts/lint-check.sh
    ```
 
-## 🔄 Mise à jour
+## 🔄 Updates
 
-Pour mettre à jour les outils :
+To update tools:
 ```bash
 pip install -r requirements-dev.txt --upgrade
 ```
 
-## 📚 Ressources
+## 📚 Resources
 
 - [Black Documentation](https://black.readthedocs.io/)
 - [isort Documentation](https://pycqa.github.io/isort/)
 - [flake8 Documentation](https://flake8.pycqa.org/)
 - [bandit Documentation](https://bandit.readthedocs.io/)
 
-## 🤝 Contribution
+## 🤝 Contributing
 
-Lors d'ajout de nouveaux modules Django :
-1. Ajouter le module à `known_first_party` dans `pyproject.toml`
-2. Tester avec `./scripts/lint-check.sh nom_module/`
-3. Ajuster les exclusions si nécessaire
+When adding new Django modules:
+1. Add module to `known_first_party` in `pyproject.toml`
+2. Test with `./scripts/lint-check.sh module_name/`
+3. Adjust exclusions in `.flake8` if necessary
