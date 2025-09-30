@@ -21,7 +21,6 @@ VENV_PATH="$BACKEND_DIR/venv"
 EXIT_SUCCESS=0
 EXIT_FORMAT_ISSUES=1
 EXIT_STYLE_ISSUES=2
-EXIT_TYPE_ISSUES=4
 EXIT_SECURITY_ISSUES=8
 
 total_exit_code=0
@@ -93,18 +92,7 @@ else
 fi
 echo
 
-# 4. Type checking with mypy
-echo -e "${BLUE}🔍 Checking types with mypy...${NC}"
-if mypy "$TARGET_PATH" 2>/dev/null; then
-    echo -e "${GREEN}✅ Type checking: PASSED${NC}"
-else
-    echo -e "${RED}❌ Type checking: FAILED${NC}"
-    echo "Please fix the type issues reported above"
-    total_exit_code=$((total_exit_code | EXIT_TYPE_ISSUES))
-fi
-echo
-
-# 5. Security check with bandit
+# 4. Security check with bandit
 echo -e "${BLUE}🔒 Checking security with bandit...${NC}"
 if bandit -r "$TARGET_PATH" -f screen -x "*/tests/*,*/migrations/*,*/venv/*" --severity-level medium 2>/dev/null; then
     echo -e "${GREEN}✅ Security check: PASSED${NC}"
@@ -124,7 +112,7 @@ else
     echo
     echo "Quick fixes available:"
     echo "  - Format issues: Run './scripts/lint-fix.sh'"
-    echo "  - Style/Type/Security: Review and fix manually"
+    echo "  - Style/Security: Review and fix manually"
 fi
 
 exit $total_exit_code

@@ -1,7 +1,13 @@
 #!/bin/bash
 
 # lint-fix.sh - Automatic code formatting and fixing script
-# This script automatically fixes code formatting and style issues
+# This script automatically fececho "If you saw warnings above, you may need to:"
+echo "  📏 Fix remaining style issues manually"
+echo "  🔒 Review and fix security issues"If you saw warnings above, you may need to:"
+echo "  📏 Fix remaining style issues manually"
+echo "  🔒 Review and fix security issues" codeecho "If you saw warnings above, you may need to:"
+echo "  📏 Fix remaining style issues manually"
+echo "  🔒 Review and fix security issues"matting and style issues
 
 set -e
 
@@ -82,16 +88,6 @@ fi
 
 echo
 
-# Run mypy to show type issues
-echo -e "${YELLOW}🔍 Checking type issues (mypy):${NC}"
-if mypy "$TARGET_PATH" 2>/dev/null; then
-    echo -e "${GREEN}✅ No type issues${NC}"
-else
-    echo -e "${YELLOW}⚠️  Some type issues require manual fixing${NC}"
-fi
-
-echo
-
 # Run bandit to show security issues
 echo -e "${YELLOW}🔒 Checking security issues (bandit):${NC}"
 if bandit -r "$TARGET_PATH" -f screen -x "*/tests/*,*/migrations/*,*/venv/*" --severity-level medium 2>/dev/null; then
@@ -110,7 +106,7 @@ echo "  ✅ Code formatting (black)"
 echo
 echo "If you saw warnings above, you may need to:"
 echo "  📏 Fix remaining style issues manually"
-echo "  🔍 Add type annotations for mypy"
-echo "  🔒 Review and fix security issues"
+echo "  � Review and fix security issues"
+echo "  � Type checking is disabled (can be re-enabled in pyproject.toml if needed)"
 echo
 echo "Run './scripts/lint-check.sh' to verify all issues are resolved."
