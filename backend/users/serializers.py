@@ -9,7 +9,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password', 'password2')
+        fields = ('username', 'email', 'password', 'password2', 'email_verified')
+        read_only_fields = ('email_verified',)
         extra_kwargs = {
             'email': {'required': True}
         }
@@ -29,4 +30,7 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop('password2')
         user = User.objects.create_user(**validated_data)
+        # Mark email as unverified by default
+        user.email_verified = False
+        user.save()
         return user

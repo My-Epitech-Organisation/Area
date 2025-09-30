@@ -69,5 +69,68 @@ class AuthTests(TestCase):
         refresh_url = reverse('token_refresh')
         invalid_refresh_data = {'refresh': 'invalid-token-123'}
         response = self.client.post(refresh_url, invalid_refresh_data, format='json')
-
+        
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_user_registration_email_unverified(self):
+        """Test that new users have email_verified=False by default"""
+        response = self.client.post(self.register_url, self.user_data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn('email_verified', response.data)
+        self.assertFalse(response.data['email_verified'])
+        
+        # Verify in database
+        user = User.objects.get(username='testuser')
+        self.assertFalse(user.email_verified)
+        self.assertIsNone(user.email_verification_token)
+
+    def test_send_verification_email(self):
+        """Test sending verification email to authenticated user"""
+        # Create and authenticate user
+        user = User.objects.create_user(
+            username='testverify',
+            email='test@example.com',
+            password='StrongPassword123'
+        )
+        self.client.force_authenticate(user=user)
+        
+        send_verification_url = reverse('send_verification_email')
+        response = self.client.post(send_verification_url, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('message', response.data)
+        
+        # Check that token was generated
+        user.refresh_from_db()
+        self.assertIsNotNone(user.email_verification_token)
+
+    def test_verify_email_with_valid_token(self):
+        """Test email verification with valid token"""
+        # Create user with verification token
+        user = User.objects.create_user(
+            username='testverify2',
+            email='test2@example.com',
+            password='StrongPassword123'
+        )
+        user.email_verification_token = 'valid-token-123'
+        user.save()
+        
+        verify_url = reverse('verify_email', kwargs={'token': 'valid-token-123'})
+        response = self.client.get(verify_url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('Email verified successfully', response.data['message'])
+        
+        # Check database
+        user.refresh_from_db()
+        self.assertTrue(user.email_verified)
+        self.assertIsNone(user.email_verification_token)
+
+    def test_verify_email_with_invalid_token(self):
+        """Test email verification with invalid token"""
+        verify_url = reverse('verify_email', kwargs={'token': 'invalid-token-456'})
+        response = self.client.get(verify_url)
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('Invalid verification token', response.data['error'])
