@@ -8,9 +8,9 @@ This `docker-compose.yml` file sets up a PostgreSQL database environment with a 
 
 - **Image**: `postgres:16`
 - **Environment variables**:
-  - `POSTGRES_USER`: Database username (`myuser`)
-  - `POSTGRES_PASSWORD`: User password (`secret_password`)
-  - `POSTGRES_DB`: Name of the database created at startup (`area_db`)
+  - `DB_USER`: Database username (`myuser`)
+  - `DB_PASSWORD`: User password (`secret_password`)
+  - `DB_NAME`: Name of the database created at startup (`area_db`)
 - **Exposed ports**:
   - `5432:5432` (access PostgreSQL from the host)
 - **Volumes**:
