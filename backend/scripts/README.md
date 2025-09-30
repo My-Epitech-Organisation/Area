@@ -52,20 +52,25 @@ Tools are configured via `.flake8` and `pyproject.toml` in the backend folder.
 ## 🔍 Tools Used
 
 ### 🎨 Automatic Formatting
+
 - **Black**: Python code formatting (PEP 8)
 - **isort**: Import sorting and organization
 
 ### 📏 Style Checking
+
 - **flake8**: Style checking and error detection
   - Plugins: `flake8-django`, `flake8-bugbear`, `flake8-comprehensions`
 
 ### 🔍 Static Analysis
+
 - **bandit**: Security analysis
 
 ## ⚙️ Configuration
 
 ### Automatic Exclusions
+
 Tools automatically ignore:
+
 - `migrations/` - Django-generated files
 - `__pycache__/` - Python cache
 - `venv/` - Virtual environment
@@ -73,6 +78,7 @@ Tools automatically ignore:
 - `reports/` - Generated reports
 
 ### Main Settings
+
 - **Line length**: 88 characters (Black standard)
 - **Python version**: 3.13
 - **isort profile**: Black compatible
@@ -91,6 +97,7 @@ Codes can combine (e.g., `3` = formatting + style).
 ## 📊 Example Output
 
 ### Successful verification
+
 ```
 🔍 Django Backend Code Quality Check
 ========================================
@@ -114,6 +121,7 @@ Codes can combine (e.g., `3` = formatting + style).
 ```
 
 ### Verification with errors
+
 ```
 ❌ Black formatting: FAILED
 Run './scripts/lint-fix.sh' to auto-format your code
@@ -128,6 +136,7 @@ Please fix the style issues reported above
 ## 🛠️ Troubleshooting
 
 ### Error: "Virtual environment not found"
+
 ```bash
 # Create and configure venv
 python -m venv venv
@@ -136,9 +145,11 @@ pip install -r requirements.txt -r requirements-dev.txt
 ```
 
 ### Error: "Development dependencies not found"
+
 The script automatically installs missing dependencies.
 
 ### Slow performance on large projects
+
 ```bash
 # Use specific paths
 ./scripts/lint-check.sh users/models.py
@@ -148,7 +159,9 @@ The script automatically installs missing dependencies.
 ## 🚀 IDE Integration
 
 ### VS Code
+
 Add to `.vscode/settings.json`:
+
 ```json
 {
     "python.formatting.provider": "black",
@@ -158,24 +171,28 @@ Add to `.vscode/settings.json`:
 ```
 
 ### PyCharm
+
 1. File → Settings → Tools → External Tools
 2. Add scripts as external tools
 
 ## 📝 Recommended Workflow
 
 1. **Before commit**:
+
    ```bash
    ./scripts/lint-fix.sh
    ./scripts/lint-check.sh
    ```
 
 2. **During development**:
+
    ```bash
    # Frequent auto-correction
    ./scripts/lint-fix.sh users/
    ```
 
 3. **Before push**:
+
    ```bash
    # Complete verification
    ./scripts/lint-check.sh
@@ -184,6 +201,7 @@ Add to `.vscode/settings.json`:
 ## 🔄 Updates
 
 To update tools:
+
 ```bash
 pip install -r requirements-dev.txt --upgrade
 ```
@@ -198,6 +216,7 @@ pip install -r requirements-dev.txt --upgrade
 ## 🤝 Contributing
 
 When adding new Django modules:
+
 1. Add module to `known_first_party` in `pyproject.toml`
 2. Test with `./scripts/lint-check.sh module_name/`
 3. Adjust exclusions in `.flake8` if necessary
