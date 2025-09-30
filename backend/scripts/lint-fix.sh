@@ -1,15 +1,6 @@
 #!/bin/bash
 
 # lint-fix.sh - Automatic code formatting and fixing script
-# This script automatically fececho "If you saw warnings above, you may need to:"
-echo "  📏 Fix remaining style issues manually"
-echo "  🔒 Review and fix security issues"If you saw warnings above, you may need to:"
-echo "  📏 Fix remaining style issues manually"
-echo "  🔒 Review and fix security issues" codeecho "If you saw warnings above, you may need to:"
-echo "  📏 Fix remaining style issues manually"
-echo "  🔒 Review and fix security issues"matting and style issues
-
-set -e
 
 # Colors for output
 RED='\033[0;31m'
@@ -57,7 +48,7 @@ echo
 
 # 1. Sort imports with isort
 echo -e "${BLUE}📚 Sorting imports with isort...${NC}"
-if isort "$TARGET_PATH" --diff; then
+if isort "$TARGET_PATH"; then
     echo -e "${GREEN}✅ Import sorting: COMPLETED${NC}"
 else
     echo -e "${YELLOW}⚠️  No import changes needed${NC}"
@@ -66,7 +57,7 @@ echo
 
 # 2. Format code with Black
 echo -e "${BLUE}🎨 Formatting code with Black...${NC}"
-if black "$TARGET_PATH" --diff; then
+if black "$TARGET_PATH"; then
     echo -e "${GREEN}✅ Code formatting: COMPLETED${NC}"
 else
     echo -e "${YELLOW}⚠️  No formatting changes needed${NC}"
@@ -106,7 +97,6 @@ echo "  ✅ Code formatting (black)"
 echo
 echo "If you saw warnings above, you may need to:"
 echo "  📏 Fix remaining style issues manually"
-echo "  � Review and fix security issues"
-echo "  � Type checking is disabled (can be re-enabled in pyproject.toml if needed)"
+echo "  🔒 Review and fix security issues"
 echo
 echo "Run './scripts/lint-check.sh' to verify all issues are resolved."
