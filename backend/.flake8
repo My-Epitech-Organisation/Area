@@ -1,3 +1,8 @@
+# flake8 configuration for Django AREA project
+# Comments explain Django-specific exclusions:
+# - E402 in settings.py: load_dotenv() before Django imports is OK
+# - F401 in admin/tests/views.py: Django default imports OK if unused
+
 [flake8]
 max-line-length = 88
 extend-ignore = E203,W503
