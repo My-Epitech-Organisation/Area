@@ -31,13 +31,34 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 try:
     SECRET_KEY = os.environ["SECRET_KEY"]
 except KeyError:
-    raise ImproperlyConfigured("Set the SECRET_KEY environment variable")
+    # Provide a clearly marked insecure dev fallback instead of crashing outright.
+    # In CI or production-like contexts you should set SECRET_KEY explicitly.
+    if os.getenv("CI"):
+        raise ImproperlyConfigured("Set the SECRET_KEY environment variable (missing in CI)")
+    SECRET_KEY = "__INSECURE_DEV_ONLY_CHANGE_ME__"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
+# Allowed hosts for development
+ALLOWED_HOSTS = [
+    'localhost',          # Pour le développement local
+    '127.0.0.1',         # Localhost IP
+    '10.0.2.2',          # Pour émulateur Android
+    '0.0.0.0',           # Pour écouter sur toutes les interfaces
+]
 
-ALLOWED_HOSTS = []
+# En production, limiter ALLOWED_HOSTS aux domaines spécifiques
+if not DEBUG:
+    # Filter out broad development hosts in production; replace with real domains.
+    production_hosts = [
+        h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",") if h.strip()
+    ]
+    if production_hosts:
+        ALLOWED_HOSTS = production_hosts
+    else:
+        # Safe default: keep only explicitly whitelisted production domain placeholders.
+        ALLOWED_HOSTS = ["your-production-domain.com"]
 
 
 # Application definition

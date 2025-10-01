@@ -10,7 +10,8 @@ from django.conf import settings
 from django.core.mail import send_mail
 
 from .models import User
-from .serializers import UserSerializer
+from .serializers import UserSerializer, EmailOrUsernameTokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 
 class RegisterView(generics.CreateAPIView):
@@ -107,3 +108,7 @@ class VerifyEmailView(APIView):
                 {"error": "Invalid verification token"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+class EmailOrUsernameTokenObtainPairView(TokenObtainPairView):
+    """Obtain JWT token pair using either username or email as credential."""
+    serializer_class = EmailOrUsernameTokenObtainPairSerializer
