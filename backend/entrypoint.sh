@@ -11,5 +11,5 @@ done
 python manage.py migrate --noinput
 python manage.py collectstatic --noinput
 
-# start gunicorn on port 8000
-gunicorn area_project.wsgi:application --bind 0.0.0.0:8000 --workers 3
+# start gunicorn on port 8080
+gunicorn area_project.wsgi:application --bind 0.0.0.0:8080 --workers 3
