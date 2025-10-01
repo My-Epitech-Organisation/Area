@@ -95,7 +95,7 @@ class VerifyEmailView(APIView):
 
             # Mark email as verified
             user.email_verified = True
-            user.email_verification_token = None  # Clear the token
+            user.email_verification_token = ""  # Clear the token
             user.save()
 
             return Response(
