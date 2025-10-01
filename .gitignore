@@ -2,8 +2,13 @@
 .vscode/
 .history/
 
-# PoC folder
-Poc/
+# Temp files
+*.log
+*.swp
+*.swo
+*.bak
+*.old
+*.tmp
 
 package-lock.json
 node_modules/
@@ -27,6 +32,10 @@ db.sqlite3
 # IDEs
 .vscode/
 .idea/
+
+# Environment variables
+*.env
+*.env.local
 
 # PoC
 Poc/
