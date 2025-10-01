@@ -158,6 +158,18 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = "/app/staticfiles"
 
+# Additional locations of static files
+STATICFILES_DIRS = [
+    # Add paths to static files directories here if needed
+    # BASE_DIR / "static",
+]
+
+# Static files finders
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
+
 # Media files
 MEDIA_URL = "/media/"
 MEDIA_ROOT = "/app/mediafiles"
