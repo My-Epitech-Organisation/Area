@@ -28,7 +28,7 @@ class UserSerializer(serializers.ModelSerializer):
         try:
             validate_password(attrs["password"], self.instance)
         except ValidationError as e:
-            raise serializers.ValidationError(e.messages)
+            raise serializers.ValidationError({"password": e.messages})
 
         return super().validate(attrs)
 
