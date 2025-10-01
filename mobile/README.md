@@ -1,60 +1,19 @@
 # 📱 AREA Mobile Client (Flutter)
 
-[![Flutter](https://img.shields.io/badge/Flutter-3.0+-02569B?logo=flutter)](https://flutter.dev/)
-[![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?logo=dart)](https://dart.dev/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
-Le client mobile **Flutter** pour le projet **AREA** (Automation and Reaction Engine), une plateforme d'automatisation inspirée d'IFTTT.  
-Cette app permet aux utilisateurs de créer des automatisations personnalisées en connectant des services (ex. : Gmail, Discord, etc.) via des applets.
-
-L'app fonctionne sur **Android** et **iOS**, et communique avec le backend via une API REST.
+This folder contains the **Flutter mobile client** for the AREA project.
+It runs on **Android** and **iOS**, and communicates with the backend via REST API.
 
 ---
 
-## � Table des Matières
-- [�🚀 Démarrage Rapide](#-démarrage-rapide)
-- [📋 Prérequis](#-prérequis)
-- [🛠️ Installation](#️-installation)
-- [🏗️ Architecture](#️-architecture)
-- [🧪 Tests](#-tests)
-- [📦 Build et Déploiement](#-build-et-déploiement)
-- [🛠️ Commandes Utiles](#️-commandes-utiles)
-- [⚠️ Problèmes Courants](#️-problèmes-courants)
-- [🤝 Contribution](#-contribution)
-- [📄 Licence](#-licence)
+## 🚀 Getting Started
 
----
+### 1. Install Flutter
+Follow the official guide: [Flutter Installation](https://docs.flutter.dev/get-started/install)
 
-## 🚀 Démarrage Rapide
+Make sure to:
+- Add Flutter to your PATH
+- Run `flutter doctor` to check for missing dependencies
 
-1. **Clonez le repo** :
-   ```bash
-   git clone <repository_url>
-   cd AREA/mobile
-   ```
-
-2. **Installez les dépendances** :
-   ```bash
-   flutter pub get
-   ```
-
-3. **Lancez sur un émulateur** :
-   ```bash
-   flutter run
-   ```
-
-   *(Assurez-vous qu'un émulateur Android ou iOS est lancé)*
-
----
-
-## 📋 Prérequis
-
-- **Flutter SDK** : Version 3.0+ ([Installation](https://docs.flutter.dev/get-started/install))
-- **Dart SDK** : Inclus avec Flutter
-- **Android Studio** (pour Android) ou **Xcode** (pour iOS)
-- **Git** pour le versioning
-
-Vérifiez votre setup :
 ```bash
 flutter doctor -v
 ```
