@@ -60,7 +60,7 @@ class AppState extends ChangeNotifier {
   Future<bool> login(String email, String password) async {
     try {
       _setLoading(true);
-      final result = await _apiService.login(email, password);
+      await _apiService.login(email, password);
       _isAuthenticated = true;
       await loadUserProfile();
       await loadApplets();
@@ -68,7 +68,10 @@ class AppState extends ChangeNotifier {
       _setLoading(false);
       return true;
     } catch (e) {
-      _setError('Login failed: ${e.toString()}');
+      final errorMessage = 'Login failed: ${e.toString()}';
+      _setError(errorMessage);
+      // ignore: avoid_print
+      print('[AppState] Login error: $errorMessage'); // Debug log
       return false;
     }
   }
@@ -76,13 +79,20 @@ class AppState extends ChangeNotifier {
   Future<bool> register(String email, String password, String name) async {
     try {
       _setLoading(true);
-      final result = await _apiService.register(email, password, name);
+      await _apiService.register(email, password, name);
+      // Après l'inscription, il faut se connecter pour obtenir les tokens
+      await _apiService.login(email, password);
       _isAuthenticated = true;
       await loadUserProfile();
+      await loadApplets();
+      await loadStatistics();
       _setLoading(false);
       return true;
     } catch (e) {
-      _setError('Registration failed: ${e.toString()}');
+      final errorMessage = 'Registration failed: ${e.toString()}';
+      _setError(errorMessage);
+      // ignore: avoid_print
+      print('[AppState] Registration error: $errorMessage'); // Debug log
       return false;
     }
   }
@@ -158,20 +168,20 @@ class AppState extends ChangeNotifier {
   Future<bool> createApplet({
     required String name,
     required String description,
-    required String triggerService,
-    required String actionService,
-    required Map<String, dynamic> triggerConfig,
+    required int actionId,
+    required int reactionId,
     required Map<String, dynamic> actionConfig,
+    required Map<String, dynamic> reactionConfig,
   }) async {
     try {
       _setLoading(true);
       final newApplet = await _apiService.createApplet(
         name: name,
         description: description,
-        triggerService: triggerService,
-        actionService: actionService,
-        triggerConfig: triggerConfig,
+        actionId: actionId,
+        reactionId: reactionId,
         actionConfig: actionConfig,
+        reactionConfig: reactionConfig,
       );
 
       // Optimistic update
@@ -191,26 +201,26 @@ class AppState extends ChangeNotifier {
   Future<bool> updateApplet(int id, {
     String? name,
     String? description,
-    bool? isActive,
-    Map<String, dynamic>? triggerConfig,
+    String? status,
     Map<String, dynamic>? actionConfig,
+    Map<String, dynamic>? reactionConfig,
   }) async {
     try {
       _setLoading(true);
       final updatedApplet = await _apiService.updateApplet(id,
         name: name,
         description: description,
-        isActive: isActive,
-        triggerConfig: triggerConfig,
+        status: status,
         actionConfig: actionConfig,
+        reactionConfig: reactionConfig,
       );
 
       // Update local state
       final index = _applets.indexWhere((a) => a.id == id);
       if (index != -1) {
         _applets[index] = updatedApplet;
-        notifyListeners();
       }
+      notifyListeners();
 
       _setLoading(false);
       return true;
@@ -285,7 +295,8 @@ class AppState extends ChangeNotifier {
   Map<String, int> get appletsByTriggerService {
     final map = <String, int>{};
     for (final applet in _applets) {
-      map[applet.triggerService] = (map[applet.triggerService] ?? 0) + 1;
+      final serviceName = applet.action.service.name;
+      map[serviceName] = (map[serviceName] ?? 0) + 1;
     }
     return map;
   }
@@ -293,7 +304,8 @@ class AppState extends ChangeNotifier {
   Map<String, int> get appletsByActionService {
     final map = <String, int>{};
     for (final applet in _applets) {
-      map[applet.actionService] = (map[applet.actionService] ?? 0) + 1;
+      final serviceName = applet.reaction.service.name;
+      map[serviceName] = (map[serviceName] ?? 0) + 1;
     }
     return map;
   }

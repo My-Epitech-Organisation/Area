@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../widgets/debug_config_widget.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -94,15 +95,17 @@ class _LoginPageState extends State<LoginPage> {
       }
     } else {
       setState(() {
-        _errorMessage = _isLogin ? 'Login failed' : 'Registration failed';
+        final error = appState.error;
+        _errorMessage = error ?? (_isLogin ? 'Login failed' : 'Registration failed');
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
+    return DebugConfigWidget(
+      child: Scaffold(
+        body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Form(
@@ -161,20 +164,20 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 16),
 
                 // Password field
-                Semantics(
-                  label: 'Password input field',
-                  hint: 'Enter your password',
+                  Semantics(
+                    label: 'Email / Username input field',
+                    hint: 'Enter your email or username',
                   child: TextFormField(
                     controller: _passwordController,
                     decoration: const InputDecoration(
-                      labelText: 'Password',
+                        labelText: 'Email or Username',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.lock),
                     ),
                     obscureText: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
+                          return 'Please enter your email or username';
                       }
                       if (value.length < 6) {
                         return 'Password must be at least 6 characters';
@@ -192,9 +195,9 @@ class _LoginPageState extends State<LoginPage> {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
+                        color: Colors.red.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.withOpacity(0.3)),
+                        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
                       ),
                       child: Text(
                         _errorMessage!,
@@ -262,6 +265,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ],
+            ),
             ),
           ),
         ),

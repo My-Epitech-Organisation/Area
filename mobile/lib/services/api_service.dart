@@ -2,11 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/applet.dart';
+import '../config/api_config.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://your-area-backend.com/api'; // Replace with your actual backend URL
-  static const int maxRetries = 3;
-  static const Duration timeout = Duration(seconds: 30);
+  // Configuration automatique selon la plateforme
 
   // Singleton pattern
   static final ApiService _instance = ApiService._internal();
@@ -19,6 +18,8 @@ class ApiService {
 
   // Auth token management
   String? _authToken;
+  String? _refreshToken;
+  
   Future<String?> get authToken async {
     if (_authToken == null) {
       final prefs = await SharedPreferences.getInstance();
@@ -27,16 +28,32 @@ class ApiService {
     return _authToken;
   }
 
+  Future<String?> get refreshToken async {
+    if (_refreshToken == null) {
+      final prefs = await SharedPreferences.getInstance();
+      _refreshToken = prefs.getString('refresh_token');
+    }
+    return _refreshToken;
+  }
+
   Future<void> setAuthToken(String token) async {
     _authToken = token;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
   }
 
+  Future<void> setRefreshToken(String token) async {
+    _refreshToken = token;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('refresh_token', token);
+  }
+
   Future<void> clearAuthToken() async {
     _authToken = null;
+    _refreshToken = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
+    await prefs.remove('refresh_token');
   }
 
   // HTTP headers with auth
@@ -48,23 +65,29 @@ class ApiService {
     };
   }
 
-  // Retry logic with exponential backoff
-  Future<http.Response> _retryRequest(Future<http.Response> Function() request) async {
-    int attempt = 0;
-    while (attempt < maxRetries) {
-      try {
-        final response = await request().timeout(timeout);
-        if (response.statusCode != 429 && response.statusCode < 500) {
-          return response;
-        }
-      } catch (e) {
-        if (attempt == maxRetries - 1) rethrow;
-      }
+  // Refresh access token
+  Future<bool> refreshAccessToken() async {
+    final refresh = await refreshToken;
+    if (refresh == null) return false;
 
-      attempt++;
-      await Future.delayed(Duration(seconds: attempt * 2)); // Exponential backoff
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfig.refreshUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'refresh': refresh}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['access'] != null) {
+          await setAuthToken(data['access']);
+          return true;
+        }
+      }
+    } catch (e) {
+      // Refresh failed
     }
-    throw Exception('Max retries exceeded');
+    return false;
   }
 
   // Cache helper
@@ -86,7 +109,36 @@ class ApiService {
     _cacheTimestamps[key] = DateTime.now();
   }
 
-  // Fetch the list of applets with caching
+  // Retry logic with exponential backoff and token refresh
+  Future<http.Response> _retryRequest(Future<http.Response> Function() request, {bool isRetry = false}) async {
+    int attempt = 0;
+    while (attempt < ApiConfig.maxRetries) {
+      try {
+        final response = await request().timeout(ApiConfig.timeout);
+        
+        // If we get 401 and haven't tried refreshing yet, try to refresh token
+        if (response.statusCode == 401 && !isRetry) {
+          final refreshed = await refreshAccessToken();
+          if (refreshed) {
+            // Retry the request with new token
+            return await _retryRequest(request, isRetry: true);
+          }
+        }
+        
+        if (response.statusCode != 429 && response.statusCode < 500) {
+          return response;
+        }
+      } catch (e) {
+        if (attempt == ApiConfig.maxRetries - 1) rethrow;
+      }
+
+      attempt++;
+      await Future.delayed(Duration(seconds: attempt * 2)); // Exponential backoff
+    }
+    throw Exception('Max retries exceeded');
+  }
+
+  // Fetch the list of areas (applets) - adapted for backend
   Future<List<Applet>> fetchApplets({bool forceRefresh = false}) async {
     const cacheKey = 'applets';
 
@@ -95,8 +147,8 @@ class ApiService {
       if (cached != null) return cached as List<Applet>;
     }
 
-    final response = await _retryRequest(() =>
-      http.get(Uri.parse('$baseUrl/applets'), headers: await _headers)
+    final response = await _retryRequest(() async =>
+      http.get(Uri.parse(ApiConfig.automationsUrl), headers: await _headers)
     );
 
     if (response.statusCode == 200) {
@@ -112,26 +164,26 @@ class ApiService {
     }
   }
 
-  // Create new applet
+  // Create new area (applet) - adapted for backend
   Future<Applet> createApplet({
     required String name,
     required String description,
-    required String triggerService,
-    required String actionService,
-    required Map<String, dynamic> triggerConfig,
+    required int actionId,
+    required int reactionId,
     required Map<String, dynamic> actionConfig,
+    required Map<String, dynamic> reactionConfig,
   }) async {
-    final response = await _retryRequest(() =>
+    final response = await _retryRequest(() async =>
       http.post(
-        Uri.parse('$baseUrl/applets'),
+        Uri.parse(ApiConfig.automationsUrl),
         headers: await _headers,
         body: json.encode({
           'name': name,
           'description': description,
-          'trigger_service': triggerService,
-          'action_service': actionService,
-          'trigger_config': triggerConfig,
+          'action': actionId,
+          'reaction': reactionId,
           'action_config': actionConfig,
+          'reaction_config': reactionConfig,
         }),
       )
     );
@@ -146,25 +198,25 @@ class ApiService {
     }
   }
 
-  // Update applet
+  // Update area (applet) - adapted for backend
   Future<Applet> updateApplet(int id, {
     String? name,
     String? description,
-    bool? isActive,
-    Map<String, dynamic>? triggerConfig,
+    String? status, // "active", "disabled", "paused"
     Map<String, dynamic>? actionConfig,
+    Map<String, dynamic>? reactionConfig,
   }) async {
     final updateData = {
       if (name != null) 'name': name,
       if (description != null) 'description': description,
-      if (isActive != null) 'is_active': isActive,
-      if (triggerConfig != null) 'trigger_config': triggerConfig,
+      if (status != null) 'status': status,
       if (actionConfig != null) 'action_config': actionConfig,
+      if (reactionConfig != null) 'reaction_config': reactionConfig,
     };
 
-    final response = await _retryRequest(() =>
+    final response = await _retryRequest(() async =>
       http.patch(
-        Uri.parse('$baseUrl/applets/$id'),
+        Uri.parse(ApiConfig.automationUrl(id)),
         headers: await _headers,
         body: json.encode(updateData),
       )
@@ -179,10 +231,10 @@ class ApiService {
     }
   }
 
-  // Delete applet
+  // Delete area (applet) - adapted for backend
   Future<void> deleteApplet(int id) async {
-    final response = await _retryRequest(() =>
-      http.delete(Uri.parse('$baseUrl/applets/$id'), headers: await _headers)
+    final response = await _retryRequest(() async =>
+      http.delete(Uri.parse(ApiConfig.automationUrl(id)), headers: await _headers)
     );
 
     if (response.statusCode == 204) {
@@ -192,11 +244,11 @@ class ApiService {
     }
   }
 
-  // Toggle applet active state
+  // Toggle area active state - adapted for backend
   Future<Applet> toggleApplet(int id) async {
-    final response = await _retryRequest(() =>
+    final response = await _retryRequest(() async =>
       http.post(
-        Uri.parse('$baseUrl/applets/$id/toggle'),
+        Uri.parse(ApiConfig.automationToggleUrl(id)),
         headers: await _headers,
       )
     );
@@ -210,15 +262,15 @@ class ApiService {
     }
   }
 
-  // Get available services
+  // Get available services - new backend endpoint
   Future<List<Map<String, dynamic>>> getAvailableServices() async {
     const cacheKey = 'services';
 
     final cached = _getCached(cacheKey);
     if (cached != null) return cached as List<Map<String, dynamic>>;
 
-    final response = await _retryRequest(() =>
-      http.get(Uri.parse('$baseUrl/services'), headers: await _headers)
+    final response = await _retryRequest(() async =>
+      http.get(Uri.parse(ApiConfig.servicesUrl), headers: await _headers)
     );
 
     if (response.statusCode == 200) {
@@ -231,14 +283,61 @@ class ApiService {
     }
   }
 
-  // Login
+  // Get actions for a specific service
+  Future<List<Map<String, dynamic>>> getServiceActions(int serviceId) async {
+    final cacheKey = 'actions_$serviceId';
+
+    final cached = _getCached(cacheKey);
+    if (cached != null) return cached as List<Map<String, dynamic>>;
+
+    final response = await _retryRequest(() async =>
+      http.get(Uri.parse(ApiConfig.serviceActionsUrl(serviceId)), headers: await _headers)
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body) as List<dynamic>;
+      final actions = data.map((item) => item as Map<String, dynamic>).toList();
+      _setCache(cacheKey, actions);
+      return actions;
+    } else {
+      throw Exception('Failed to load actions: ${response.statusCode}');
+    }
+  }
+
+  // Get reactions for a specific service
+  Future<List<Map<String, dynamic>>> getServiceReactions(int serviceId) async {
+    final cacheKey = 'reactions_$serviceId';
+
+    final cached = _getCached(cacheKey);
+    if (cached != null) return cached as List<Map<String, dynamic>>;
+
+    final response = await _retryRequest(() async =>
+      http.get(Uri.parse(ApiConfig.serviceReactionsUrl(serviceId)), headers: await _headers)
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body) as List<dynamic>;
+      final reactions = data.map((item) => item as Map<String, dynamic>).toList();
+      _setCache(cacheKey, reactions);
+      return reactions;
+    } else {
+      throw Exception('Failed to load reactions: ${response.statusCode}');
+    }
+  }
+
+  // Login - adapted for backend
   Future<Map<String, dynamic>> login(String email, String password) async {
-    final response = await _retryRequest(() =>
+    ApiConfig.debugPrint('Attempting login for: $email');
+    ApiConfig.debugPrint('Login URL: ${ApiConfig.loginUrl}');
+    // Accept either email or username in the same field; backend handles both
+    
+    final response = await _retryRequest(() async =>
       http.post(
-        Uri.parse('$baseUrl/auth/login'),
+        Uri.parse(ApiConfig.loginUrl),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'email': email,
+          // The backend custom serializer will interpret this as username OR email
+          'username': email,
           'password': password,
         }),
       )
@@ -246,49 +345,80 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      if (data['token'] != null) {
-        await setAuthToken(data['token']);
+      if (data['access'] != null) {
+        await setAuthToken(data['access']);
+      }
+      if (data['refresh'] != null) {
+        await setRefreshToken(data['refresh']);
       }
       return data;
     } else {
-      throw Exception('Login failed: ${response.statusCode}');
+      String msg = 'Login failed: ${response.statusCode}';
+      try {
+        final err = json.decode(response.body);
+        if (err is Map && err['detail'] != null) {
+          msg = 'Login failed: ' + err['detail'].toString();
+        }
+      } catch (_) {}
+      throw Exception(msg);
     }
   }
 
-  // Register
+  // Register - adapted for backend
   Future<Map<String, dynamic>> register(String email, String password, String name) async {
-    final response = await _retryRequest(() =>
+    ApiConfig.debugPrint('Attempting registration for: $email');
+    ApiConfig.debugPrint('Register URL: ${ApiConfig.registerUrl}');
+    
+    final response = await _retryRequest(() async =>
       http.post(
-        Uri.parse('$baseUrl/auth/register'),
+        Uri.parse(ApiConfig.registerUrl),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
+          'username': email, // Use email as username for simplicity
           'email': email,
           'password': password,
-          'name': name,
+          'password2': password, // Backend expects password2 for confirmation
+          'first_name': name,
         }),
       )
     );
 
     if (response.statusCode == 201) {
       final data = json.decode(response.body);
-      if (data['token'] != null) {
-        await setAuthToken(data['token']);
-      }
+      // Note: Registration might not return tokens immediately
+      // User might need to verify email first
       return data;
     } else {
-      throw Exception('Registration failed: ${response.statusCode}');
+      String errorMessage = 'Registration failed';
+      try {
+        final errorData = json.decode(response.body);
+        if (errorData is Map<String, dynamic>) {
+          final errors = <String>[];
+          errorData.forEach((key, value) {
+            if (value is List) {
+              errors.addAll(value.map((e) => '$key: $e'));
+            } else {
+              errors.add('$key: $value');
+            }
+          });
+          errorMessage = errors.join(', ');
+        }
+      } catch (e) {
+        errorMessage = 'Registration failed: ${response.statusCode}';
+      }
+      throw Exception(errorMessage);
     }
   }
 
-  // Get user profile
+  // Get user profile - adapted for backend
   Future<Map<String, dynamic>> getUserProfile() async {
     const cacheKey = 'user_profile';
 
     final cached = _getCached(cacheKey);
     if (cached != null) return cached as Map<String, dynamic>;
 
-    final response = await _retryRequest(() =>
-      http.get(Uri.parse('$baseUrl/auth/profile'), headers: await _headers)
+    final response = await _retryRequest(() async =>
+      http.get(Uri.parse(ApiConfig.profileUrl), headers: await _headers)
     );
 
     if (response.statusCode == 200) {
@@ -302,9 +432,9 @@ class ApiService {
 
   // Get applet execution logs
   Future<List<Map<String, dynamic>>> getAppletLogs(int appletId, {int limit = 50}) async {
-    final response = await _retryRequest(() =>
+    final response = await _retryRequest(() async =>
       http.get(
-        Uri.parse('$baseUrl/applets/$appletId/logs?limit=$limit'),
+        Uri.parse(ApiConfig.appletLogsUrl(appletId, limit: limit)),
         headers: await _headers,
       )
     );
@@ -324,8 +454,8 @@ class ApiService {
     final cached = _getCached(cacheKey);
     if (cached != null) return cached as Map<String, dynamic>;
 
-    final response = await _retryRequest(() =>
-      http.get(Uri.parse('$baseUrl/statistics'), headers: await _headers)
+    final response = await _retryRequest(() async =>
+      http.get(Uri.parse(ApiConfig.statisticsUrl), headers: await _headers)
     );
 
     if (response.statusCode == 200) {
@@ -334,6 +464,40 @@ class ApiService {
       return data;
     } else {
       throw Exception('Failed to load statistics: ${response.statusCode}');
+    }
+  }
+
+  // Get user statistics - new backend endpoint
+  Future<Map<String, dynamic>> getUserStatistics() async {
+    const cacheKey = 'user_stats';
+
+    final cached = _getCached(cacheKey);
+    if (cached != null) return cached as Map<String, dynamic>;
+
+    final response = await _retryRequest(() async =>
+      http.get(Uri.parse(ApiConfig.userStatisticsUrl), headers: await _headers)
+    );
+
+    if (response.statusCode == 200) {
+      final stats = json.decode(response.body) as Map<String, dynamic>;
+      _setCache(cacheKey, stats);
+      return stats;
+    } else {
+      throw Exception('Failed to load user statistics: ${response.statusCode}');
+    }
+  }
+
+  // Get applets by user ID - new backend endpoint
+  Future<List<Applet>> getAppletsByUser(int userId) async {
+    final response = await _retryRequest(() async =>
+      http.get(Uri.parse(ApiConfig.userAutomationsUrl(userId.toString())), headers: await _headers)
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body) as List<dynamic>;
+      return data.map((item) => Applet.fromJson(item as Map<String, dynamic>)).toList();
+    } else {
+      throw Exception('Failed to load user applets: ${response.statusCode}');
     }
   }
 }

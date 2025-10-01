@@ -49,7 +49,7 @@ class _EditAppletPageState extends State<EditAppletPage> {
       widget.applet.id,
       name: _nameController.text.trim(),
       description: _descriptionController.text.trim(),
-      isActive: _isActive,
+      status: _isActive ? 'active' : 'disabled',
     );
 
     setState(() {
@@ -263,9 +263,9 @@ class _EditAppletPageState extends State<EditAppletPage> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
+                      color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.withOpacity(0.3)),
+                      border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
                     ),
                     child: Text(
                       _errorMessage!,
@@ -319,9 +319,9 @@ class _EditAppletPageState extends State<EditAppletPage> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                    border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
                   ),
                   child: const Row(
                     children: [

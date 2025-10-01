@@ -4,8 +4,11 @@ import 'providers/app_state.dart';
 import 'pages/splash_page.dart';
 import 'pages/login_page.dart';
 import 'swipe_navigation_page.dart';
+import 'utils/debug_helper.dart';
 
 void main() {
+  // Affichage des informations de debug au démarrage
+  DebugHelper.printConfiguration();
   runApp(const MyApp());
 }
 
@@ -38,12 +41,12 @@ class MyApp extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             filled: true,
-            fillColor: Colors.grey.withOpacity(0.1),
+            fillColor: Colors.grey.withValues(alpha: 0.1),
           ),
-          cardTheme: CardTheme(
+          cardTheme: const CardThemeData(
             elevation: 4,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.all(Radius.circular(16)),
             ),
           ),
         ),
