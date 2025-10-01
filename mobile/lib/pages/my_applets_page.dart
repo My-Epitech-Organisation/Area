@@ -42,56 +42,94 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
+    return Semantics(
+      label: 'My applets page',
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
           children: [
-            const Text(
-              'My Applets:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Semantics(
+              header: true,
+              child: const Text(
+                'My Applets:',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
             ),
             const SizedBox(height: 10),
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Semantics(
+                      label: 'Loading applets',
+                      child: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
                   : _errorMessage != null
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text('Error: $_errorMessage'),
-                              ElevatedButton(
-                                onPressed: _fetchApplets,
-                                child: const Text('Retry'),
-                              ),
-                            ],
+                      ? Semantics(
+                          label: 'Error loading applets',
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text('Error: $_errorMessage'),
+                                const SizedBox(height: 16),
+                                Semantics(
+                                  button: true,
+                                  label: 'Retry loading applets',
+                                  hint: 'Tap to try loading applets again',
+                                  child: ElevatedButton(
+                                    onPressed: _fetchApplets,
+                                    style: ElevatedButton.styleFrom(
+                                      minimumSize: const Size(120, 48),
+                                    ),
+                                    child: const Text('Retry'),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         )
-                      : ListView.builder(
-                          itemCount: _applets.length,
-                          itemBuilder: (context, index) {
-                            final applet = _applets[index];
-                            return Card(
-                              child: ListTile(
-                                title: Text(applet.name),
-                                subtitle: Text('${applet.triggerService} → ${applet.actionService}\n${applet.description}'),
-                                trailing: Icon(
-                                  applet.isActive ? Icons.check_circle : Icons.cancel,
-                                  color: applet.isActive ? Colors.green : Colors.red,
+                      : Semantics(
+                          label: 'Applets list',
+                          hint: '${_applets.length} applets available',
+                          child: ListView.builder(
+                            itemCount: _applets.length,
+                            itemBuilder: (context, index) {
+                              final applet = _applets[index];
+                              return Semantics(
+                                label: '${applet.name} applet',
+                                hint: '${applet.isActive ? 'Active' : 'Inactive'} applet from ${applet.triggerService} to ${applet.actionService}. ${applet.description}',
+                                button: true,
+                                child: Card(
+                                  child: ListTile(
+                                    title: Text(applet.name),
+                                    subtitle: Text('${applet.triggerService} → ${applet.actionService}\n${applet.description}'),
+                                    trailing: Semantics(
+                                      label: applet.isActive ? 'Applet is active' : 'Applet is inactive',
+                                      child: Icon(
+                                        applet.isActive ? Icons.check_circle : Icons.cancel,
+                                        color: applet.isActive ? Colors.green : Colors.red,
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      // Action to edit or view details
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Applet: ${applet.name}'),
+                                          duration: const Duration(seconds: 2),
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ),
-                                onTap: () {
-                                  // Action pour éditer ou voir détails
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Applet: ${applet.name}')),
-                                  );
-                                },
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
             ),
           ],
         ),
-      );
+      ),
+    );
   }
 }

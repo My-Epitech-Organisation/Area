@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'home_page.dart';
 import 'pages/create_applet_page.dart';
 import 'pages/my_applets_page.dart';
-import 'pages/widget_examples_page.dart';
+import 'pages/user_page.dart';
 
 class SwipeNavigationPage extends StatefulWidget {
   const SwipeNavigationPage({super.key});
@@ -19,21 +19,21 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
     const MyHomePage(),
     const CreateAppletPage(),
     const MyAppletsPage(),
-    const WidgetExamplesPage(),
+    const UserPage(),
   ];
 
   final List<String> _pageTitles = [
     'Dashboard',
     'Create Applet',
     'My Applets',
-    'Learn Widgets',
+    'Profile',
   ];
 
   final List<IconData> _pageIcons = [
     Icons.home,
     Icons.add,
     Icons.list,
-    Icons.widgets,
+    Icons.person,
   ];
 
   void _onPageChanged(int index) {
@@ -64,18 +64,30 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           // Indicateurs de page (dots)
-          Row(
-            children: List.generate(
-              _pages.length,
-              (index) => Container(
-                margin: const EdgeInsets.symmetric(horizontal: 2),
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _currentPage == index
-                      ? Colors.white
-                      : Colors.white.withValues(alpha: 0.5),
+          Semantics(
+            label: 'Page indicators',
+            hint: 'Shows current page position. ${_currentPage + 1} of ${_pages.length} pages',
+            child: Row(
+              children: List.generate(
+                _pages.length,
+                (index) => Semantics(
+                  label: 'Page ${index + 1} indicator',
+                  hint: _currentPage == index ? 'Current page' : 'Tap to go to ${_pageTitles[index]} page',
+                  button: true,
+                  child: GestureDetector(
+                    onTap: () => _navigateToPage(index),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      width: 12, // Increased for better touch target
+                      height: 12, // Increased for better touch target
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _currentPage == index
+                            ? Colors.white
+                            : Colors.white.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -83,20 +95,28 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
           const SizedBox(width: 16),
         ],
       ),
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: _onPageChanged,
-        children: _pages,
+      body: Semantics(
+        label: 'Main navigation area',
+        hint: 'Swipe left or right to navigate between pages, or use bottom navigation buttons',
+        child: PageView(
+          controller: _pageController,
+          onPageChanged: _onPageChanged,
+          children: _pages,
+        ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentPage,
-        onTap: _navigateToPage,
-        type: BottomNavigationBarType.fixed,
-        items: List.generate(
-          _pages.length,
-          (index) => BottomNavigationBarItem(
-            icon: Icon(_pageIcons[index]),
-            label: _pageTitles[index],
+      bottomNavigationBar: Semantics(
+        label: 'Bottom navigation menu',
+        hint: 'Use these buttons to navigate between different sections of the app',
+        child: BottomNavigationBar(
+          currentIndex: _currentPage,
+          onTap: _navigateToPage,
+          type: BottomNavigationBarType.fixed,
+          items: List.generate(
+            _pages.length,
+            (index) => BottomNavigationBarItem(
+              icon: Icon(_pageIcons[index]),
+              label: _pageTitles[index],
+            ),
           ),
         ),
       ),
