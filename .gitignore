@@ -10,7 +10,7 @@
 *.old
 *.tmp
 
-package-lock.json
+# package-lock.json
 node_modules/
 
 # Python
