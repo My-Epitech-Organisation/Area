@@ -28,22 +28,28 @@ class _SplashPageState extends State<SplashPage> {
         // Small delay for smooth transition
         await Future.delayed(const Duration(milliseconds: 500));
 
-        if (appState.isAuthenticated) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const SwipeNavigationPage()),
-          );
-        } else {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const LoginPage()),
-          );
+        if (mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (appState.isAuthenticated) {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const SwipeNavigationPage()),
+              );
+            } else {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+              );
+            }
+          });
         }
       }
     } catch (e) {
       // On error, go to login
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginPage()),
-        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const LoginPage()),
+          );
+        });
       }
     }
   }
@@ -74,7 +80,7 @@ class _SplashPageState extends State<SplashPage> {
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
+                        color: Colors.black.withValues(alpha: 0.2),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
