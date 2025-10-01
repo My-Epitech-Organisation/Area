@@ -1,6 +1,6 @@
 # 📱 Mobile Client (Flutter)
 
-This folder contains the **Flutter mobile client** for the AREA project.  
+This folder contains the **Flutter mobile client** for the AREA project.
 It runs on **Android** and **iOS**, and communicates with the backend via REST API.
 
 ---
@@ -8,7 +8,7 @@ It runs on **Android** and **iOS**, and communicates with the backend via REST A
 ## 🚀 Getting Started
 
 ### 1. Install Flutter
-Follow the official guide: [Flutter Installation](https://docs.flutter.dev/get-started/install)  
+Follow the official guide: [Flutter Installation](https://docs.flutter.dev/get-started/install)
 
 Make sure to:
 - Add Flutter to your PATH
