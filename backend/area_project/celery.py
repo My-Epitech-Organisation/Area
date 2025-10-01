@@ -2,11 +2,12 @@ import os
 import sys
 from pathlib import Path
 
+from celery import Celery
+
 # Add the project root to the Python path
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR))
 
-from celery import Celery
 
 # Set the default Django settings module
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "area_project.settings")
