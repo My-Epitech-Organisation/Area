@@ -13,21 +13,6 @@ services:
     networks:
       - area-net
 
-  pgadmin:
-    container_name: area_pgadmin
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
-    ports:
-      - "${PGADMIN_PORT}:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    depends_on:
-      - db
-    networks:
-      - area-net
-
   redis:
     container_name: area_redis
     image: redis:7
@@ -51,7 +36,7 @@ services:
       - db
       - redis
     ports:
-      - "${BACKEND_PORT}:8000"
+      - "${BACKEND_PORT}:8080"
     volumes:
       - ./backend:/app
     networks:
@@ -99,7 +84,6 @@ services:
 
 volumes:
   pgdata:
-  pgadmin_data:
   redis-data:
   apk_shared:
 
