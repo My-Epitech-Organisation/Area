@@ -8,8 +8,8 @@ on:
     paths-ignore: [ "**/*.md", "docs/**" ]
 
   pull_request:
-    branches: [ "main", "master" ]
-    paths: [ "backend/**", "frontend/**", "mobile/**", "docker-compose.yml" ]
+    # branches: [ "main", "master" ]
+    # paths: [ "backend/**", "frontend/**", "mobile/**", "docker-compose.yml" ]
   workflow_dispatch:
 
 jobs:
