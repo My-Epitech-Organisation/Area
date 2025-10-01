@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'widgets/counter_widget.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -103,13 +102,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ],
             ),
-            const SizedBox(height: 30),
-            const Text(
-              'Demo:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            const CounterWidget(),
           ],
         ),
       ),
