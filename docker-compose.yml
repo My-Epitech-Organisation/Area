@@ -25,6 +25,8 @@ services:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
       - db
+    networks:
+      - area-net
 
   redis:
     container_name: area_redis
