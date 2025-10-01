@@ -2,11 +2,9 @@ asgiref==3.9.2
 Django==5.2.6
 djangorestframework==3.16.1
 djangorestframework-simplejwt==5.5.1
-dotenv==0.9.9
 future==1.0.0
 psycopg2-binary==2.9.10
 PyJWT==2.10.1
 python-dotenv==1.1.1
-serializers==0.2.4
 setuptools==80.9.0
 sqlparse==0.5.3
