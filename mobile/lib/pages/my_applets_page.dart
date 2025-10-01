@@ -42,20 +42,9 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Applets'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _fetchApplets,
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
           children: [
             const Text(
               'My Applets:',
@@ -103,14 +92,6 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/create_applet');
-        },
-        tooltip: 'Create Applet',
-        child: const Icon(Icons.add),
-      ),
-    );
+      );
   }
 }

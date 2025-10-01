@@ -5,12 +5,8 @@ class CreateAppletPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Applet'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: Padding(
+    return SingleChildScrollView(
+      child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,7 +61,7 @@ class CreateAppletPage extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Applet created!')),
                 );
-                Navigator.pop(context);
+                // Plus de navigation pop nécessaire avec PageView
               },
               child: const Text('Create Applet'),
             ),
