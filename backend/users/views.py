@@ -54,7 +54,7 @@ class SendEmailVerificationView(APIView):
             Hello {user.username},
 
             Please click the following link to verify your email address:
-            http://localhost:8080/auth/verify-email/{token}/
+            {request.build_absolute_uri(f"/auth/verify-email/{token}/")}
 
             If you didn't request this verification, please ignore this email.
 
