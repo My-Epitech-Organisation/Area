@@ -25,6 +25,7 @@ from . import health
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("auth/", include("users.urls")),
+    path("", include("automations.urls")),  # Include automations URLs at root
     # Health check endpoints
     path("health/", health.health_check, name="health_check"),
     path("ready/", health.readiness_check, name="readiness_check"),
