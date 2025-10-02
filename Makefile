@@ -13,11 +13,32 @@ help: ## Show this help message
 build: ## Build all Docker images
 	docker-compose build
 
+build-fast: ## Build only essential services (excludes mobile)
+	docker-compose build server client_web
+
 up: ## Start all services
 	docker-compose up -d
 
+up-fast: ## Start backend services only (no web/mobile - fastest startup)
+	docker-compose up -d db redis server worker beat flower
+
+up-web: ## Start all services except mobile (but includes web - mobile will build)
+	docker-compose up -d db redis server worker beat flower client_web
+
 up-logs: ## Start all services with logs
 	docker-compose up
+
+up-fast-logs: ## Start all services except mobile with logs (faster startup)
+	docker-compose up db redis server worker beat flower client_web
+
+up-mobile: ## Start mobile build service only
+	docker-compose up -d client_mobile
+
+up-web-logs: ## Start all services except mobile with logs (but mobile will build)
+	docker-compose up db redis server worker beat flower client_web
+
+up-backend-logs: ## Start backend services only with logs (fastest)
+	docker-compose up db redis server worker beat flower
 
 down: ## Stop all services
 	docker-compose down
