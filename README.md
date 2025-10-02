@@ -3,6 +3,7 @@
 This repository contains the Area project. The frontend is located in the `frontend` folder and uses Vite + React + TypeScript + Tailwind.
 
 ---
+
 ## Frontend
 
 Quick start (frontend)
