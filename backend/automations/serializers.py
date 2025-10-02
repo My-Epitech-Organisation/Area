@@ -68,18 +68,22 @@ class AreaSerializer(serializers.ModelSerializer):
     reaction_detail = ReactionSerializer(source='reaction', read_only=True)
     owner_username = serializers.CharField(source='owner.username', read_only=True)
 
+    # Convenience fields for easier access to action/reaction info
+    action_name = serializers.CharField(source='action.name', read_only=True)
+    reaction_name = serializers.CharField(source='reaction.name', read_only=True)
+    action_service = serializers.CharField(source='action.service.name', read_only=True)
+    reaction_service = serializers.CharField(source='reaction.service.name', read_only=True)
+
     class Meta:
         model = Area
         fields = [
             'id', 'name', 'status', 'created_at',
-            'action', 'action_detail', 'action_config',
-            'reaction', 'reaction_detail', 'reaction_config',
+            'action', 'action_detail', 'action_config', 'action_name', 'action_service',
+            'reaction', 'reaction_detail', 'reaction_config', 'reaction_name', 'reaction_service',
             'owner', 'owner_username'
         ]
-        read_only_fields = ['id', 'created_at', 'owner', 'owner_username', 'action_detail', 'reaction_detail']
-        extra_kwargs = {
-            'owner': {'write_only': True},
-        }
+        read_only_fields = ['id', 'created_at', 'owner', 'owner_username', 'action_detail', 'reaction_detail',
+                           'action_name', 'action_service', 'reaction_name', 'reaction_service']
 
     def validate_action_config(self, value):
         """Validate that action_config matches the action's schema."""
@@ -157,8 +161,9 @@ class AreaCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Area
-        fields = ['name', 'action', 'reaction', 'action_config', 'reaction_config', 'status']
+        fields = ['id', 'name', 'action', 'reaction', 'action_config', 'reaction_config', 'status']
         extra_kwargs = {
+            'id': {'read_only': True},
             'action_config': {'default': dict},
             'reaction_config': {'default': dict},
             'status': {'default': Area.Status.ACTIVE},
@@ -172,18 +177,28 @@ class AreaCreateSerializer(serializers.ModelSerializer):
         # Validation supplémentaire pour la création
         action = attrs.get('action')
         reaction = attrs.get('reaction')
+        action_config = attrs.get('action_config', {})
+        reaction_config = attrs.get('reaction_config', {})
+
+        if action:
+            # Validate action configuration against schema
+            try:
+                validate_action_config(action.name, action_config)
+            except serializers.ValidationError as e:
+                raise serializers.ValidationError({
+                    'action_config': str(e)
+                })
+
+        if reaction:
+            # Validate reaction configuration against schema
+            try:
+                validate_reaction_config(reaction.name, reaction_config)
+            except serializers.ValidationError as e:
+                raise serializers.ValidationError({
+                    'reaction_config': str(e)
+                })
 
         if action and reaction:
-            # Vérifier que l'utilisateur a accès aux services
-            # TODO: Implémenter la vérification des tokens OAuth si nécessaire
-
-            # S'assurer que l'action et la reaction sont de services différents
-            # (optionnel, selon les règles métier)
-            if action.service == reaction.service:
-                # Pour l'instant, on permet les actions/reactions du même service
-                # Cette règle peut être modifiée selon les besoins
-                pass
-
             # Validation de la compatibilité métier
             try:
                 validate_action_reaction_compatibility(action.name, reaction.name)
