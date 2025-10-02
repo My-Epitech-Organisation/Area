@@ -141,7 +141,7 @@ class AreaViewSet(viewsets.ModelViewSet):
     ordering_fields = ['name', 'created_at', 'status']
     ordering = ['-created_at']  # Most recent first
 
-    def get_queryset(self) -> QuerySet[Area]:
+    def get_queryset(self) -> QuerySet[Area]:  # type: ignore
         """
         Filter Areas to only show those owned by the current user.
         """
