@@ -1,6 +1,7 @@
 """Health check views for monitoring and Docker health checks."""
 
 import time
+
 from django.db import connections
 from django.http import JsonResponse
 from django.views.decorators.cache import never_cache
@@ -22,7 +23,7 @@ def health_check(request):
 
     # Check database connectivity
     try:
-        db_conn = connections['default']
+        db_conn = connections["default"]
         db_conn.cursor()
         health_status["services"]["database"] = "healthy"
     except Exception as e:
@@ -32,9 +33,10 @@ def health_check(request):
     # Check Redis connectivity (if configured)
     try:
         import redis
+
         from django.conf import settings
 
-        if hasattr(settings, 'REDIS_URL'):
+        if hasattr(settings, "REDIS_URL"):
             r = redis.from_url(settings.REDIS_URL)
             r.ping()
             health_status["services"]["redis"] = "healthy"
@@ -53,10 +55,12 @@ def readiness_check(request):
     Readiness check for Kubernetes/container orchestration.
     Returns 200 when the application is ready to serve traffic.
     """
-    return JsonResponse({
-        "status": "ready",
-        "timestamp": int(time.time()),
-    })
+    return JsonResponse(
+        {
+            "status": "ready",
+            "timestamp": int(time.time()),
+        }
+    )
 
 
 @never_cache
@@ -66,7 +70,9 @@ def liveness_check(request):
     Liveness check for Kubernetes/container orchestration.
     Returns 200 if the application is alive.
     """
-    return JsonResponse({
-        "status": "alive",
-        "timestamp": int(time.time()),
-    })
+    return JsonResponse(
+        {
+            "status": "alive",
+            "timestamp": int(time.time()),
+        }
+    )
