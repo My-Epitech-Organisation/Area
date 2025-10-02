@@ -167,6 +167,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Create .env file for testing
+        run: |
+          cat <<EOF > .env
+          DB_USER=area_user
+          DB_PASSWORD=secret_password
+          DB_NAME=area_db
+          DB_PORT=5432
+          REDIS_PORT=6379
+          BACKEND_PORT=8080
+          FRONTEND_PORT=80
+          EOF
+
       - name: Set up Docker Compose
         run: |
           docker --version
