@@ -1,6 +1,6 @@
 # Docker Compose Documentation
 
-This `docker-compose.yml` file sets up a PostgreSQL database environment with a PgAdmin administration interface.
+This `docker-compose.yml` file sets up a PostgreSQL database environment.
 
 ## Services
 
@@ -8,31 +8,19 @@ This `docker-compose.yml` file sets up a PostgreSQL database environment with a 
 
 - **Image**: `postgres:16`
 - **Environment variables**:
-  - `POSTGRES_USER`: Database username (`myuser`)
-  - `POSTGRES_PASSWORD`: User password (`secret_password`)
-  - `POSTGRES_DB`: Name of the database created at startup (`area_db`)
+  - `DB_USER`: Database username (`myuser`)
+  - `DB_PASSWORD`: User password (`secret_password`)
+  - `DB_NAME`: Name of the database created at startup (`area_db`)
 - **Exposed ports**:
   - `5432:5432` (access PostgreSQL from the host)
 - **Volumes**:
   - `pgdata:/var/lib/postgresql/data` (data persistence)
 
-### 2. pgadmin
-
-- **Image**: `dpage/pgadmin4`
-- **Environment variables**:
-  - `PGADMIN_DEFAULT_EMAIL`: Login email (`admin@example.com`)
-  - `PGADMIN_DEFAULT_PASSWORD`: Password (`admin_password`)
-- **Exposed ports**:
-  - `8080:80` (access PgAdmin via http://localhost:8080)
-- **Volumes**:
-  - `pgadmin_data:/var/lib/pgadmin` (PgAdmin data persistence)
-- **depends_on**:
-  - `postgres` (PgAdmin starts after PostgreSQL)
-
 ## Volumes
 
 - `pgdata`: Stores PostgreSQL data
-- `pgadmin_data`: Stores PgAdmin data
+- `redis-data`: Stores Redis data
+- `apk_shared`: Shared volume for APK files
 
 ## Start
 
@@ -43,7 +31,8 @@ docker-compose up -d
 ```
 
 - PostgreSQL access: `localhost:5432`
-- PgAdmin access: [http://localhost:8080](http://localhost:8080)
+- Redis access: `localhost:6379`
+- Frontend access: [http://localhost:8081](http://localhost:8081)
 
 ## Stop
 
