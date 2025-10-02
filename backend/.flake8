@@ -11,6 +11,7 @@ per-file-ignores =
     */admin.py:F401
     */tests.py:F401
     */views.py:F401
+    */routing.py:F401
 exclude =
     migrations,
     venv,
