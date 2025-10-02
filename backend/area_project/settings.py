@@ -64,6 +64,15 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+    "DEFAULT_FILTER_BACKENDS": [
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
@@ -270,7 +279,7 @@ LOGGING = {
         "file": {
             "level": os.getenv("LOG_LEVEL", "INFO"),
             "class": "logging.FileHandler",
-            "filename": os.getenv("DJANGO_LOG_FILE", "/app/logs/django.log"),
+            "filename": os.getenv("DJANGO_LOG_FILE", "./logs/django.log"),
             "formatter": "verbose",
         },
         "console": {
