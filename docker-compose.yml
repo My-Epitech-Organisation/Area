@@ -1,15 +1,155 @@
 services:
   db:
+    container_name: area_postgres
     image: postgres:16
     environment:
-      POSTGRES_DB: area_db
-      POSTGRES_USER: area_user
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - area-net
+
+  redis:
+    container_name: area_redis
+    image: redis:7
+    volumes:
+      - redis-data:/data
+    ports:
+      - "${REDIS_PORT}:6379"
+    networks:
+      - area-net
+
+  server:
+    container_name: area_server
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=area_project.settings
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - backend_static:/app/staticfiles
+      - backend_media:/app/mediafiles
+      - backend_logs:/app/logs
+    networks:
+      - area-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  worker:
+    container_name: area_worker
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=area_project.settings
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      - REDIS_URL=redis://redis:6379/0
+    command: ["celery", "-A", "area_project", "worker", "--loglevel=info"]
+    depends_on:
+      - redis
+      - db
+      - server
+    networks:
+      - area-net
+    restart: unless-stopped
+
+  beat:
+    container_name: area_beat
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=area_project.settings
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      - REDIS_URL=redis://redis:6379/0
+    command: ["celery", "-A", "area_project", "beat", "--loglevel=info", "--scheduler=django_celery_beat.schedulers:DatabaseScheduler"]
+    depends_on:
+      - redis
+      - db
+      - server
+    networks:
+      - area-net
+    restart: unless-stopped
+
+  flower:
+    container_name: area_flower
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=area_project.settings
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      - REDIS_URL=redis://redis:6379/0
+    command: ["celery", "-A", "area_project", "flower", "--port=5555"]
+    depends_on:
+      - redis
+      - db
+      - server
+    ports:
+      - "${FLOWER_PORT:-5555}:5555"
+    networks:
+      - area-net
+    restart: unless-stopped
+
+  client_mobile:
+    container_name: area_client_mobile
+    build: ./mobile
+    volumes:
+      - apk_shared:/shared
+      - ./mobile:/app
+    depends_on:
+      - server
+    networks:
+      - area-net
+
+  client_web:
+    container_name: area_client_web
+    build: ./frontend
+    ports:
+      - "${FRONTEND_PORT:-8081}:80"
+    volumes:
+      - apk_shared:/shared
+      - backend_static:/usr/share/nginx/html/static
+      - backend_media:/usr/share/nginx/html/media
+    depends_on:
+      - client_mobile
+      - server
+    networks:
+      - area-net
 
 volumes:
   pgdata:
+  redis-data:
+  apk_shared:
+  backend_static:
+  backend_media:
+  backend_logs:
 
+networks:
+  area-net:
