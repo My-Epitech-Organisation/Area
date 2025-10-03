@@ -8,6 +8,7 @@ and can be imported without database dependencies.
 
 import os
 import sys
+
 import django
 
 # Add the project root to Python path
@@ -15,7 +16,8 @@ project_root = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, project_root)
 
 # Setup Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'area_project.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "area_project.settings")
+
 
 def test_test_structure():
     """Test that test modules can be imported."""
@@ -31,16 +33,17 @@ def test_test_structure():
     # Test serializer tests import
     try:
         from automations.tests import test_serializers
+
         print("✅ test_serializers module imported successfully")
 
         # Check that test classes exist
         test_classes = [
-            'ServiceSerializerTest',
-            'ActionReactionSerializerTest',
-            'AreaSerializerTest',
-            'CompatibilityValidationTest',
-            'AboutServiceSerializerTest',
-            'ConfigurationValidationTest'
+            "ServiceSerializerTest",
+            "ActionReactionSerializerTest",
+            "AreaSerializerTest",
+            "CompatibilityValidationTest",
+            "AboutServiceSerializerTest",
+            "ConfigurationValidationTest",
         ]
 
         for test_class in test_classes:
@@ -57,18 +60,19 @@ def test_test_structure():
     # Test view tests import
     try:
         from automations.tests import test_views
+
         print("✅ test_views module imported successfully")
 
         # Check that test classes exist
         test_classes = [
-            'BaseAPITest',
-            'ServiceViewSetTest',
-            'ActionReactionViewSetTest',
-            'AreaViewSetTest',
-            'AreaCustomActionsTest',
-            'PaginationFilteringTest',
-            'AboutJsonEndpointTest',
-            'APIEndpointIntegrationTest'
+            "BaseAPITest",
+            "ServiceViewSetTest",
+            "ActionReactionViewSetTest",
+            "AreaViewSetTest",
+            "AreaCustomActionsTest",
+            "PaginationFilteringTest",
+            "AboutJsonEndpointTest",
+            "APIEndpointIntegrationTest",
         ]
 
         for test_class in test_classes:
@@ -84,14 +88,16 @@ def test_test_structure():
 
     return True
 
+
 def test_django_test_compatibility():
     """Test Django test framework compatibility."""
     print("\n2. Testing Django test framework compatibility...")
 
     try:
-        from django.test import TestCase, TransactionTestCase
-        from rest_framework.test import APITestCase, APIClient
+        from rest_framework.test import APIClient, APITestCase
+
         from django.contrib.auth import get_user_model
+        from django.test import TestCase, TransactionTestCase
 
         print("✅ Django test framework imports successful")
         print("✅ DRF test framework imports successful")
@@ -103,24 +109,35 @@ def test_django_test_compatibility():
         print(f"❌ Django test framework import failed: {e}")
         return False
 
+
 def test_model_imports():
     """Test that all required models can be imported."""
     print("\n3. Testing model imports...")
 
     try:
-        from automations.models import Service, Action, Reaction, Area
+        from automations.models import Action, Area, Reaction, Service
+
         print("✅ All automation models imported successfully")
 
         from automations.serializers import (
-            ServiceSerializer, ActionSerializer, ReactionSerializer,
-            AreaSerializer, AreaCreateSerializer, AboutServiceSerializer
+            AboutServiceSerializer,
+            ActionSerializer,
+            AreaCreateSerializer,
+            AreaSerializer,
+            ReactionSerializer,
+            ServiceSerializer,
         )
+
         print("✅ All serializers imported successfully")
 
         from automations.views import (
-            ServiceViewSet, ActionViewSet, ReactionViewSet, AreaViewSet,
-            about_json_view
+            ActionViewSet,
+            AreaViewSet,
+            ReactionViewSet,
+            ServiceViewSet,
+            about_json_view,
         )
+
         print("✅ All views imported successfully")
 
         return True
@@ -128,6 +145,7 @@ def test_model_imports():
     except ImportError as e:
         print(f"❌ Model/Serializer/View import failed: {e}")
         return False
+
 
 def test_url_configuration():
     """Test URL configuration for tests."""
@@ -141,6 +159,7 @@ def test_url_configuration():
 
         # Test our URL configuration
         from automations import urls
+
         print("✅ Automations URLs module imported")
 
         return True
@@ -148,6 +167,7 @@ def test_url_configuration():
     except ImportError as e:
         print(f"❌ URL configuration test failed: {e}")
         return False
+
 
 def main():
     """Run all validation tests."""
@@ -158,7 +178,7 @@ def main():
         test_test_structure,
         test_django_test_compatibility,
         test_model_imports,
-        test_url_configuration
+        test_url_configuration,
     ]
 
     results = []
@@ -171,7 +191,7 @@ def main():
             results.append(False)
 
     print("\n" + "=" * 50)
-    print(f"📊 Test structure validation completed!")
+    print("📊 Test structure validation completed!")
     print(f"✅ Passed: {sum(results)}/{len(results)} validation tests")
 
     if all(results):
@@ -184,5 +204,6 @@ def main():
         print("⚠️  Some validation tests failed. Check the output above.")
         return 1
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     sys.exit(main())

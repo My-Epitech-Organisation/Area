@@ -10,16 +10,18 @@ This script runs all unit tests for the AREA automation system:
 
 import os
 import sys
+
 import django
-from django.test.utils import get_runner
 from django.conf import settings
+from django.test.utils import get_runner
 
 # Add the project root to Python path
 project_root = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, project_root)
 
 # Setup Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'area_project.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "area_project.settings")
+
 
 def main():
     """Run all unit tests for the automations app."""
@@ -39,8 +41,8 @@ def main():
 
     # Define test modules to run
     test_modules = [
-        'automations.tests.test_serializers',
-        'automations.tests.test_views',
+        "automations.tests.test_serializers",
+        "automations.tests.test_views",
     ]
 
     print(f"📋 Running tests for modules: {', '.join(test_modules)}")
@@ -57,6 +59,7 @@ def main():
         print("🎉 All tests passed!")
         return 0
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     exit_code = main()
     sys.exit(exit_code)
