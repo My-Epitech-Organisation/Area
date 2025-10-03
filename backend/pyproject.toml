@@ -2,37 +2,96 @@
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.black]
+# ========================================
+# RUFF Configuration
+# ========================================
+[tool.ruff]
 line-length = 88
-target-version = ['py313']
-include = '\.pyi?$'
-extend-exclude = '''
-(
-  migrations/
-  | venv/
-  | __pycache__/
-  | \.mypy_cache/
-  | reports/
-)
-'''
-
-[tool.isort]
-profile = "black"
-line_length = 88
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-ensure_newline_before_comments = true
-known_django = "django"
-known_first_party = ["area_project", "users", "automations"]
-sections = ["FUTURE", "STDLIB", "THIRDPARTY", "DJANGO", "FIRSTPARTY", "LOCALFOLDER"]
-skip_glob = [
-    "*/migrations/*.py",
-    "venv/*",
-    "__pycache__/*"
+target-version = "py313"
+extend-exclude = [
+    "migrations",
+    "venv",
+    "__pycache__",
+    ".mypy_cache",
+    "reports",
 ]
 
+[tool.ruff.lint]
+# Select rules equivalent to your previous setup:
+# E,W = pycodestyle (like flake8 base)
+# F = Pyflakes (like flake8 base)
+# B = flake8-bugbear
+# C4 = flake8-comprehensions
+# SIM = flake8-simplify
+# DJ = flake8-django
+# I = isort import sorting
+# S = flake8-bandit security rules
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+    "DJ",  # flake8-django
+    "I",   # isort import sorting
+    "S",   # bandit security rules
+    "F401", # unused imports (was in your flake8 config)
+]
+
+# Preserve your specific ignores
+ignore = [
+    "E203",  # whitespace before ':' (Black compatibility)
+    # Note: W503 is deprecated in favor of W503 in newer versions
+    # Ruff handles line breaks differently than flake8
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Django migrations can be long and auto-generated
+"*/migrations/*.py" = ["E501", "DJ01", "S106", "S308"]
+
+# Tests can use assert statements and hardcoded passwords/tokens for testing
+"*/tests/*.py" = ["S101", "S106", "S105"]  # assert_used, hardcoded passwords in tests
+"**/test_*.py" = ["S101", "S106", "S105"]
+"**/tests.py" = ["S101", "S106", "S105"]
+
+# Django settings can bind to all interfaces (0.0.0.0) in development/Docker
+"*/settings/*.py" = ["E402", "S104"]  # imports after code, binding all interfaces
+"*/settings.py" = ["E402", "S104"]
+
+# Django-specific exclusions from .flake8 config
+"*/admin.py" = ["F401"]  # Django admin imports OK if unused
+"*/views.py" = ["F401"]  # Django views can have unused imports
+"*/routing.py" = ["F401"]  # Django routing files can have unused imports
+
+[tool.ruff.format]
+# Black-compatible formatting
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+# Preserve your exact isort configuration
+known-first-party = ["area_project", "users", "automations"]
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "django",
+    "first-party",
+    "local-folder"
+]
+combine-as-imports = true
+# Note: force-grid-wrap is not supported in Ruff isort, handled by formatter
+
+[tool.ruff.lint.isort.sections]
+# Custom Django section like your original config
+django = ["django"]
+
+# ========================================
+# BANDIT Configuration (keep for advanced security)
+# ========================================
 [tool.bandit]
 exclude_dirs = ["tests", "venv", "migrations", "__pycache__"]
 skips = ["B101"]  # Skip assert_used test
