@@ -1,8 +1,10 @@
 asgiref==3.9.2
 celery==5.4.0
 Django==5.2.6
+django-cors-headers==4.4.0
 djangorestframework==3.16.1
 djangorestframework-simplejwt==5.5.1
+django-filter==23.5
 future==1.0.0
 psycopg2-binary==2.9.10
 PyJWT==2.10.1
@@ -11,3 +13,10 @@ redis==5.0.1
 setuptools==80.9.0
 sqlparse==0.5.3
 gunicorn==23.0.0
+uvicorn[standard]==0.24.0
+channels==4.0.0
+channels-redis==4.2.0
+flower==2.0.1
+django-celery-beat==2.8.1
+jsonschema==4.25.1
+logging==0.4.9.6
