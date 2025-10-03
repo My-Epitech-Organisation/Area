@@ -1,16 +1,10 @@
 # Development dependencies for linting and code quality
-# Code formatting and linting
-black==25.9.0
-isort==6.0.1
-flake8==6.1.0
-flake8-django==1.4
+# Modern unified linter and formatter
+ruff==0.8.0
+
+# Use bandit for additional security checks that Ruff doesn't cover yet
 bandit==1.8.6
 
 # Testing and coverage
 pytest-django==4.11.1
 coverage==7.10.7
-
-# Additional flake8 plugins for better Django support
-flake8-bugbear==24.12.12
-flake8-comprehensions==3.17.0
-flake8-simplify==0.22.0

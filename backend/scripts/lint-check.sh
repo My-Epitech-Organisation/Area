@@ -43,7 +43,7 @@ echo -e "${BLUE}🐍 Activating virtual environment...${NC}"
 source "$VENV_PATH/bin/activate"
 
 # Check if dev dependencies are installed
-if ! python -c "import black" 2>/dev/null; then
+if ! python -c "import ruff" 2>/dev/null; then
     echo -e "${YELLOW}⚠️  Development dependencies not found. Installing...${NC}"
     pip install -r "$BACKEND_DIR/requirements-dev.txt"
 fi
@@ -57,44 +57,31 @@ TARGET_PATH=${1:-.}
 echo -e "${BLUE}📂 Checking: $TARGET_PATH${NC}"
 echo
 
-# 1. Black formatting check
-echo -e "${BLUE}🎨 Checking code formatting with Black...${NC}"
-if black --check --diff "$TARGET_PATH" 2>/dev/null; then
-    echo -e "${GREEN}✅ Black formatting: PASSED${NC}"
+# 1. Ruff linting check (replaces flake8, black --check, isort --check)
+echo -e "${BLUE}⚡ Checking code with Ruff (linting + formatting + imports)...${NC}"
+if ruff check "$TARGET_PATH" 2>/dev/null; then
+    echo -e "${GREEN}✅ Ruff linting: PASSED${NC}"
 else
-    echo -e "${RED}❌ Black formatting: FAILED${NC}"
+    echo -e "${RED}❌ Ruff linting: FAILED${NC}"
+    echo "Run './scripts/lint-fix.sh' to auto-fix your code"
+    total_exit_code=$((total_exit_code | EXIT_STYLE_ISSUES))
+fi
+echo
+
+# 2. Ruff formatting check
+echo -e "${BLUE}🎨 Checking code formatting with Ruff...${NC}"
+if ruff format --check --diff "$TARGET_PATH" 2>/dev/null; then
+    echo -e "${GREEN}✅ Ruff formatting: PASSED${NC}"
+else
+    echo -e "${RED}❌ Ruff formatting: FAILED${NC}"
     echo "Run './scripts/lint-fix.sh' to auto-format your code"
     total_exit_code=$((total_exit_code | EXIT_FORMAT_ISSUES))
 fi
 echo
 
-# 2. Import sorting check
-echo -e "${BLUE}📚 Checking import sorting with isort...${NC}"
-if isort --check-only --diff "$TARGET_PATH" 2>/dev/null; then
-    echo -e "${GREEN}✅ Import sorting: PASSED${NC}"
-else
-    echo -e "${RED}❌ Import sorting: FAILED${NC}"
-    echo "Run './scripts/lint-fix.sh' to auto-sort your imports"
-    total_exit_code=$((total_exit_code | EXIT_FORMAT_ISSUES))
-fi
-echo
-
-# 3. Flake8 style check
-echo -e "${BLUE}📏 Checking code style with flake8...${NC}"
-if flake8 "$TARGET_PATH" --max-line-length=88 --extend-ignore=E203,W503 \
-    --exclude=migrations,venv,__pycache__,.mypy_cache,reports \
-    --extend-select=B,C,S,F401; then
-    echo -e "${GREEN}✅ Code style: PASSED${NC}"
-else
-    echo -e "${RED}❌ Code style: FAILED${NC}"
-    echo "Please fix the style issues reported above"
-    total_exit_code=$((total_exit_code | EXIT_STYLE_ISSUES))
-fi
-echo
-
 # 4. Security check with bandit
 echo -e "${BLUE}🔒 Checking security with bandit...${NC}"
-if bandit -r "$TARGET_PATH" -f screen -x "*/tests/*,*/migrations/*,*/venv/*" --severity-level medium 2>/dev/null; then
+if bandit -r "$TARGET_PATH" -c pyproject.toml --severity-level medium 2>/dev/null; then
     echo -e "${GREEN}✅ Security check: PASSED${NC}"
 else
     echo -e "${RED}❌ Security check: FAILED${NC}"
