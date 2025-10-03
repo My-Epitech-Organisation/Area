@@ -5,9 +5,10 @@ This module contains settings specific to local development environment.
 Use this for running tests, development server, and debugging.
 """
 
-from .base import *
 import os
 import sys
+
+from .base import *
 
 # Override for local development
 DEBUG = True
@@ -46,6 +47,7 @@ REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 # Use local Redis if available, otherwise use in-memory channel layer
 try:
     import redis
+
     r = redis.Redis.from_url(REDIS_URL)
     r.ping()  # type: ignore
     # Redis is available
@@ -60,9 +62,7 @@ try:
 except Exception:
     # Fallback to in-memory channel layer for development
     CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels.layers.InMemoryChannelLayer"
-        },
+        "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"},
     }
 
 # Development-specific settings
@@ -100,24 +100,25 @@ LOGGING["loggers"]["django.db.backends"] = {
 }
 
 # Test-specific settings
-if 'test' in sys.argv or 'pytest' in sys.modules:
+if "test" in sys.argv or "pytest" in sys.modules:
     # Use in-memory SQLite for tests
-    DATABASES['default'] = {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',
+    DATABASES["default"] = {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": ":memory:",
     }
 
     # Disable migrations for faster tests
     MIGRATION_MODULES = {
-        'users': None,
-        'automations': None,
+        "users": None,
+        "automations": None,
     }
 
     # Simpler password hashing for tests
     PASSWORD_HASHERS = [
-        'django.contrib.auth.hashers.MD5PasswordHasher',
+        "django.contrib.auth.hashers.MD5PasswordHasher",
     ]
 
     # Disable logging during tests
     import logging
+
     logging.disable(logging.CRITICAL)

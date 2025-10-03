@@ -8,7 +8,9 @@ Environment-specific settings should be defined in separate modules.
 import os
 from datetime import timedelta
 from pathlib import Path
+
 from dotenv import load_dotenv
+
 from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -16,22 +18,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 PROJECT_ROOT = BASE_DIR.parent
 
 # Load environment variables from project root .env file
-env_path = PROJECT_ROOT / '.env'
+env_path = PROJECT_ROOT / ".env"
 if env_path.exists():
     load_dotenv(env_path)
 else:
     print(f"Warning: .env file not found at {env_path}")
 
 # Environment detection
-ENVIRONMENT = os.getenv('ENVIRONMENT', 'local')
-IS_DOCKER = os.path.exists('/.dockerenv')
+ENVIRONMENT = os.getenv("ENVIRONMENT", "local")
+IS_DOCKER = os.path.exists("/.dockerenv")
 
 # Create logs directory for local development
 if not IS_DOCKER:
-    LOGS_DIR = PROJECT_ROOT / 'logs'
+    LOGS_DIR = PROJECT_ROOT / "logs"
     LOGS_DIR.mkdir(exist_ok=True)
 else:
-    LOGS_DIR = Path('/app/logs')
+    LOGS_DIR = Path("/app/logs")
 
 # SECURITY WARNING: keep the secret key used in production secret!
 try:
@@ -196,7 +198,9 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
 # Email Configuration
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
