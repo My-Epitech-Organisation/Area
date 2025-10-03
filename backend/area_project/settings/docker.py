@@ -4,8 +4,9 @@ Docker/Production settings for AREA project.
 This module contains settings specific to Docker and production environments.
 """
 
-from .base import *
 import os
+
+from .base import *
 
 # Production settings
 DEBUG = os.getenv("DEBUG", "False") == "True"
@@ -22,7 +23,7 @@ DATABASES = {
         "CONN_MAX_AGE": 60,
         "OPTIONS": {
             "connect_timeout": 10,
-        }
+        },
     }
 }
 
@@ -44,7 +45,7 @@ CHANNEL_LAYERS = {
 # Production security settings
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
@@ -58,25 +59,25 @@ CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "False") == "True"
 if not CORS_ALLOW_ALL_ORIGINS:
     CORS_ALLOWED_ORIGINS = [
         f"http://{host}:8081" for host in ALLOWED_HOSTS if host not in ["*", "0.0.0.0"]
-    ] + [
-        f"https://{host}" for host in ALLOWED_HOSTS if host not in ["*", "0.0.0.0"]
-    ]
+    ] + [f"https://{host}" for host in ALLOWED_HOSTS if host not in ["*", "0.0.0.0"]]
 
 # Email settings for production
 if not DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 else:
-    EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+    EMAIL_BACKEND = os.getenv(
+        "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+    )
 
 # File logging for Docker
 if LOGS_DIR.exists() or IS_DOCKER:
     try:
         # Ensure logs directory exists in Docker
         if IS_DOCKER:
-            os.makedirs('/app/logs', exist_ok=True)
-            log_file = '/app/logs/django.log'
+            os.makedirs("/app/logs", exist_ok=True)
+            log_file = "/app/logs/django.log"
         else:
-            log_file = str(LOGS_DIR / 'django.log')
+            log_file = str(LOGS_DIR / "django.log")
 
         LOGGING["handlers"]["file"] = {
             "level": os.getenv("LOG_LEVEL", "INFO"),
@@ -106,7 +107,7 @@ if not DEBUG:
             "LOCATION": REDIS_URL,
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            }
+            },
         }
     }
 
