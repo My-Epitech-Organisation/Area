@@ -207,8 +207,6 @@ class AreaCreateSerializer(serializers.ModelSerializer):
 
         return attrs
 
-
-
     def create(self, validated_data):
         """Create Area with proper owner assignment."""
         # L'owner sera assigné dans la vue via perform_create
