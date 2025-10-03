@@ -154,8 +154,6 @@ class AreaSerializer(serializers.ModelSerializer):
         return attrs
 
 
-
-
 class AreaCreateSerializer(serializers.ModelSerializer):
     """Specialized serializer for Area creation with enhanced validation."""
 
