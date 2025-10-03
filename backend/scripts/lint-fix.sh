@@ -32,7 +32,7 @@ echo -e "${BLUE}🐍 Activating virtual environment...${NC}"
 source "$VENV_PATH/bin/activate"
 
 # Check if dev dependencies are installed
-if ! python -c "import black" 2>/dev/null; then
+if ! python -c "import ruff" 2>/dev/null; then
     echo -e "${YELLOW}⚠️  Development dependencies not found. Installing...${NC}"
     pip install -r "$BACKEND_DIR/requirements-dev.txt"
 fi
@@ -46,19 +46,19 @@ TARGET_PATH=${1:-.}
 echo -e "${BLUE}📂 Fixing: $TARGET_PATH${NC}"
 echo
 
-# 1. Sort imports with isort
-echo -e "${BLUE}📚 Sorting imports with isort...${NC}"
-if isort "$TARGET_PATH"; then
-    echo -e "${GREEN}✅ Import sorting: COMPLETED${NC}"
+# 1. Fix all auto-fixable issues with Ruff
+echo -e "${BLUE}⚡ Auto-fixing with Ruff (imports + style + formatting)...${NC}"
+if ruff check --fix "$TARGET_PATH"; then
+    echo -e "${GREEN}✅ Ruff linting fixes: COMPLETED${NC}"
 else
-    echo -e "${YELLOW}⚠️  No import changes needed${NC}"
+    echo -e "${YELLOW}⚠️  No linting changes needed${NC}"
 fi
 echo
 
-# 2. Format code with Black
-echo -e "${BLUE}🎨 Formatting code with Black...${NC}"
-if black "$TARGET_PATH"; then
-    echo -e "${GREEN}✅ Code formatting: COMPLETED${NC}"
+# 2. Format code with Ruff
+echo -e "${BLUE}🎨 Formatting code with Ruff...${NC}"
+if ruff format "$TARGET_PATH"; then
+    echo -e "${GREEN}✅ Ruff formatting: COMPLETED${NC}"
 else
     echo -e "${YELLOW}⚠️  No formatting changes needed${NC}"
 fi
@@ -67,14 +67,12 @@ echo
 # 3. Check remaining issues that can't be auto-fixed
 echo -e "${BLUE}🔍 Checking for remaining issues...${NC}"
 
-# Run flake8 to show remaining style issues
-echo -e "${YELLOW}📏 Checking remaining style issues (flake8):${NC}"
-if flake8 "$TARGET_PATH" --max-line-length=88 --extend-ignore=E203,W503 \
-    --exclude=migrations,venv,__pycache__,.mypy_cache,reports \
-    --extend-select=B,C,S,F401 2>/dev/null; then
-    echo -e "${GREEN}✅ No remaining style issues${NC}"
+# Run ruff check to show remaining unfixable issues
+echo -e "${YELLOW}📏 Checking remaining issues (Ruff):${NC}"
+if ruff check "$TARGET_PATH" 2>/dev/null; then
+    echo -e "${GREEN}✅ No remaining issues${NC}"
 else
-    echo -e "${YELLOW}⚠️  Some style issues require manual fixing${NC}"
+    echo -e "${YELLOW}⚠️  Some issues require manual fixing${NC}"
 fi
 
 echo
@@ -92,11 +90,12 @@ echo "=================================="
 echo -e "${GREEN}🎉 Auto-fixing completed!${NC}"
 echo
 echo "What was fixed automatically:"
-echo "  ✅ Import sorting (isort)"
-echo "  ✅ Code formatting (black)"
+echo "  ✅ Import sorting (Ruff I rules)"
+echo "  ✅ Code formatting (Ruff formatter)"
+echo "  ✅ Style issues (Ruff auto-fixes)"
 echo
 echo "If you saw warnings above, you may need to:"
-echo "  📏 Fix remaining style issues manually"
-echo "  🔒 Review and fix security issues"
+echo "  📏 Fix remaining style/security issues manually"
+echo "  🔒 Review and fix security issues (run bandit separately if needed)"
 echo
 echo "Run './scripts/lint-check.sh' to verify all issues are resolved."
