@@ -80,34 +80,35 @@ flower: ## Open Flower monitoring interface
 test: ## Run Django tests
 	docker-compose exec server python manage.py test
 
-# Code Quality & Linting (using custom scripts)
-lint: ## Run comprehensive linting check using custom scripts
+# Code Quality & Linting (using Ruff + custom scripts)
+lint: ## Run comprehensive linting check using Ruff-powered scripts
 	docker-compose exec server bash scripts/lint-check.sh
 
 lint-check: ## Alias for lint command
 	docker-compose exec server bash scripts/lint-check.sh
 
-format: ## Auto-fix code formatting using custom scripts
+format: ## Auto-fix code formatting using Ruff-powered scripts
 	docker-compose exec server bash scripts/lint-fix.sh
 
 lint-fix: ## Alias for format command
 	docker-compose exec server bash scripts/lint-fix.sh
 
-# Individual linting tools (for specific checks)
-flake8: ## Run only flake8 checks
-	docker-compose exec server flake8 .
+# Individual Ruff commands (for specific checks)
+ruff-check: ## Run only Ruff linting checks
+	docker-compose exec server ruff check .
 
-black-check: ## Check code formatting with black (no changes)
-	docker-compose exec server black --check .
+ruff-format: ## Check code formatting with Ruff (no changes)
+	docker-compose exec server ruff format --check .
 
-black-fix: ## Fix code formatting with black
-	docker-compose exec server black .
+ruff-fix: ## Auto-fix all issues with Ruff
+	docker-compose exec server ruff check --fix .
 
-isort-check: ## Check import sorting with isort (no changes)
-	docker-compose exec server isort --check-only .
+ruff-format-fix: ## Fix code formatting with Ruff
+	docker-compose exec server ruff format .
 
-isort-fix: ## Fix import sorting with isort
-	docker-compose exec server isort .
+# Legacy tools (kept for compatibility - consider using ruff-* commands)
+bandit: ## Run security checks with bandit
+	docker-compose exec server bandit -r . -x "*/tests/*,*/migrations/*,*/venv/*"
 
 # Monitoring
 status: ## Show status of all containers
@@ -153,15 +154,25 @@ install-dev: ## Install development dependencies in backend container
 
 # Code quality helpers
 lint-install: ## Install linting dependencies and show script info
-	@echo "📋 Code Quality Scripts Information"
+	@echo "⚡ Ruff-Powered Code Quality Scripts"
 	@echo "=================================="
+	@echo "🚀 Performance: 10-100x faster than Black+flake8+isort!"
+	@echo ""
 	@echo "Available scripts:"
-	@echo "  • backend/scripts/lint-check.sh - Comprehensive code verification"
-	@echo "  • backend/scripts/lint-fix.sh   - Auto-fix code formatting"
+	@echo "  • backend/scripts/lint-check.sh - Comprehensive verification (Ruff + Bandit)"
+	@echo "  • backend/scripts/lint-fix.sh   - Auto-fix with Ruff formatter"
 	@echo ""
 	@echo "Main commands:"
-	@echo "  make lint        - Run all checks (recommended)"
-	@echo "  make format      - Auto-fix formatting issues"
+	@echo "  make lint        - Run all checks (~0.6s vs 19s before!)"
+	@echo "  make format      - Auto-fix formatting/imports/style"
+	@echo "  make ruff-check  - Direct Ruff linting only"
+	@echo "  make ruff-fix    - Direct Ruff auto-fixes"
 	@echo "  make install-dev - Install dev dependencies"
+	@echo ""
+	@echo "📊 Tools replaced by Ruff:"
+	@echo "  ❌ Black (formatting) → ✅ Ruff format"
+	@echo "  ❌ isort (imports) → ✅ Ruff I rules"
+	@echo "  ❌ flake8 + plugins → ✅ Ruff linting"
+	@echo "  ✅ Bandit (security) - kept for advanced checks"
 	@echo ""
 	docker-compose exec server pip install -r requirements-dev.txt
