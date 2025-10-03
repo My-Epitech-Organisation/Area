@@ -81,7 +81,7 @@ echo
 
 # 4. Security check with bandit
 echo -e "${BLUE}🔒 Checking security with bandit...${NC}"
-if bandit -r "$TARGET_PATH" -f screen -x "*/tests/*,*/migrations/*,*/venv/*" --severity-level medium 2>/dev/null; then
+if bandit -r "$TARGET_PATH" -c pyproject.toml --severity-level medium 2>/dev/null; then
     echo -e "${GREEN}✅ Security check: PASSED${NC}"
 else
     echo -e "${RED}❌ Security check: FAILED${NC}"
