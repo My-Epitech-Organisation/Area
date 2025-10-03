@@ -1,8 +1,8 @@
 # Development dependencies for linting and code quality
-# Modern unified linter and formatter (replaces black, isort, flake8, bandit)
+# Modern unified linter and formatter
 ruff==0.8.0
 
-# Keep bandit for additional security checks that Ruff doesn't cover yet
+# Use bandit for additional security checks that Ruff doesn't cover yet
 bandit==1.8.6
 
 # Testing and coverage
