@@ -79,7 +79,7 @@ echo
 
 # Run bandit to show security issues
 echo -e "${YELLOW}🔒 Checking security issues (bandit):${NC}"
-if bandit -r "$TARGET_PATH" -f screen -x "*/tests/*,*/migrations/*,*/venv/*" --severity-level medium 2>/dev/null; then
+if bandit -r "$TARGET_PATH" -c pyproject.toml --severity-level medium 2>/dev/null; then
     echo -e "${GREEN}✅ No security issues${NC}"
 else
     echo -e "${YELLOW}⚠️  Some security issues require manual review${NC}"
