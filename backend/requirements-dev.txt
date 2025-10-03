@@ -8,8 +8,3 @@ bandit==1.8.6
 # Testing and coverage
 pytest-django==4.11.1
 coverage==7.10.7
-
-# Note: flake8 plugins now integrated in Ruff
-# flake8-bugbear -> ruff B rules
-# flake8-comprehensions -> ruff C4 rules  
-# flake8-simplify -> ruff SIM rules

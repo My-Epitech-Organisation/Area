@@ -1,7 +1,5 @@
 # Django Code Quality Scripts (Ruff-Powered)
 
-⚡ **Ultra-fast code quality scripts** using Ruff - **10-100x faster** than traditional tools!
-
 ## 📋 Contents
 
 - `lint-check.sh` - Lightning-fast code verification (Ruff + Bandit)
@@ -54,14 +52,14 @@ All tools are configured via `pyproject.toml` in the backend folder.
 ### 🚀 **Ruff** - The Ultra-Fast Python Linter & Formatter
 
 **Ruff replaces multiple tools in one:**
-- ✅ **Formatting** (replaces Black)
-- ✅ **Import sorting** (replaces isort)  
-- ✅ **Linting** (replaces flake8 + plugins)
+- ✅ **Formatting**
+- ✅ **Import sorting**
+- ✅ **Linting**
 - ✅ **700+ rules** built-in
 
 **Performance:** ~0.6 seconds vs 19+ seconds with old tools!
 
-### � **Bandit** - Security Analysis
+### 🔒 **Bandit** - Security Analysis
 
 - Advanced security issue detection
 - Complements Ruff's security rules (S*)
@@ -217,7 +215,6 @@ pip install -r requirements-dev.txt --upgrade
 - [Ruff Documentation](https://docs.astral.sh/ruff/) - Main tool
 - [Ruff Rules Reference](https://docs.astral.sh/ruff/rules/) - All available rules
 - [Bandit Documentation](https://bandit.readthedocs.io/) - Security analysis
-- [Migration Guide](https://docs.astral.sh/ruff/formatter/#black-compatibility) - From Black/flake8
 
 ## 🤝 Contributing
 
@@ -226,10 +223,3 @@ When adding new Django modules:
 1. Add module to `known_first_party` in `pyproject.toml` (Ruff isort section)
 2. Test with `./scripts/lint-check.sh module_name/`
 3. Adjust per-file ignores in `pyproject.toml` if necessary
-
-### Performance Benefits
-
-- **Before Ruff**: Black (8s) + isort (2s) + flake8 (9s) = **19+ seconds**
-- **With Ruff**: All checks in **~0.6 seconds** ⚡
-
-Major Python projects using Ruff: FastAPI, pandas, Apache Airflow, pydantic
