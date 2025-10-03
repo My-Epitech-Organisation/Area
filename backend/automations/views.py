@@ -7,6 +7,7 @@ This module provides Django REST Framework ViewSets for:
 - Area CRUD operations with proper permissions and filtering
 """
 
+import time
 from typing import Any, Type
 
 from rest_framework import filters, permissions, status, viewsets
@@ -267,7 +268,7 @@ def about_json_view(request):
     about_data = {
         "client": {"host": request.get_host()},
         "server": {
-            "current_time": int(__import__("time").time()),
+            "current_time": time.time(),
             "services": serializer.data,
         },
     }
