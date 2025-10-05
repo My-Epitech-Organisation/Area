@@ -15,7 +15,7 @@ class ApiService {
 
   String? _authToken;
   String? _refreshToken;
-  
+
   Future<String?> get authToken async {
     if (_authToken == null) {
       final prefs = await SharedPreferences.getInstance();
@@ -106,14 +106,14 @@ class ApiService {
     while (attempt < ApiConfig.maxRetries) {
       try {
         final response = await request().timeout(ApiConfig.timeout);
-        
+
         if (response.statusCode == 401 && !isRetry) {
           final refreshed = await refreshAccessToken();
           if (refreshed) {
             return await _retryRequest(request, isRetry: true);
           }
         }
-        
+
         if (response.statusCode != 429 && response.statusCode < 500) {
           return response;
         }
@@ -318,7 +318,7 @@ class ApiService {
     ApiConfig.debugPrint('Attempting login for: $email');
     ApiConfig.debugPrint('Login URL: ${ApiConfig.loginUrl}');
     // Accept either email or username in the same field; backend handles both
-    
+
     final response = await _retryRequest(() async =>
       http.post(
         Uri.parse(ApiConfig.loginUrl),
@@ -345,7 +345,7 @@ class ApiService {
       try {
         final err = json.decode(response.body);
         if (err is Map && err['detail'] != null) {
-          msg = 'Login failed: ' + err['detail'].toString();
+          msg = 'Login failed: ' + ${err['detail']};
         }
       } catch (_) {}
       throw Exception(msg);
@@ -356,7 +356,7 @@ class ApiService {
   Future<Map<String, dynamic>> register(String email, String password, String name) async {
     ApiConfig.debugPrint('Attempting registration for: $email');
     ApiConfig.debugPrint('Register URL: ${ApiConfig.registerUrl}');
-    
+
     final response = await _retryRequest(() async =>
       http.post(
         Uri.parse(ApiConfig.registerUrl),
