@@ -14,8 +14,6 @@ class ConnectivityTester {
       
       ApiConfig.debugPrint('Connection test result: ${response.statusCode}');
       
-      // Status 405 (Method Not Allowed) signifie que le serveur répond 
-      // mais que GET n'est pas autorisé sur ce endpoint (normal)
       return response.statusCode == 405 || response.statusCode == 200;
     } catch (e) {
       ApiConfig.debugPrint('Connection test failed: $e');
@@ -27,7 +25,6 @@ class ConnectivityTester {
     try {
       ApiConfig.debugPrint('Testing auth with: ${ApiConfig.loginUrl}');
       
-      // Test avec des credentials invalides pour voir si le serveur répond
       final response = await http.post(
         Uri.parse(ApiConfig.loginUrl),
         headers: {'Content-Type': 'application/json'},

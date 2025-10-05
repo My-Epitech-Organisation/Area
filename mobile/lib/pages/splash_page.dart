@@ -25,7 +25,6 @@ class _SplashPageState extends State<SplashPage> {
       await appState.initialize();
 
       if (mounted) {
-        // Small delay for smooth transition
         await Future.delayed(const Duration(milliseconds: 500));
 
         if (mounted) {

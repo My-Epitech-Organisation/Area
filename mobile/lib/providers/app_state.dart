@@ -71,7 +71,7 @@ class AppState extends ChangeNotifier {
       final errorMessage = 'Login failed: ${e.toString()}';
       _setError(errorMessage);
       // ignore: avoid_print
-      print('[AppState] Login error: $errorMessage'); // Debug log
+      print('[AppState] Login error: $errorMessage');
       return false;
     }
   }
@@ -80,7 +80,6 @@ class AppState extends ChangeNotifier {
     try {
       _setLoading(true);
       await _apiService.register(email, password, name);
-      // Après l'inscription, il faut se connecter pour obtenir les tokens
       await _apiService.login(email, password);
       _isAuthenticated = true;
       await loadUserProfile();
@@ -92,7 +91,7 @@ class AppState extends ChangeNotifier {
       final errorMessage = 'Registration failed: ${e.toString()}';
       _setError(errorMessage);
       // ignore: avoid_print
-      print('[AppState] Registration error: $errorMessage'); // Debug log
+      print('[AppState] Registration error: $errorMessage');
       return false;
     }
   }

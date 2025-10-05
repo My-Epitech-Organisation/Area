@@ -88,10 +88,9 @@ class CreateAppletPage extends StatelessWidget {
                         duration: Duration(seconds: 2),
                       ),
                     );
-                    // Plus de navigation pop nécessaire avec PageView
                   },
                   style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 48), // Taille minimale pour accessibilité
+                    minimumSize: const Size(double.infinity, 48),
                   ),
                   child: const Text(
                     'Create Applet',

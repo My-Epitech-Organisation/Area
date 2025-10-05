@@ -32,18 +32,18 @@ class _DebugConfigWidgetState extends State<DebugConfigWidget> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Configuration API Debug'),
+        title: const Text('API Debug Configuration'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('URL actuelle (effective): ${ApiConfig.baseUrl}'),
+            Text('Current effective URL: ${ApiConfig.baseUrl}'),
             const SizedBox(height: 4),
-            Text('Astuce: ${ApiConfig.physicalDeviceHint('192.168.x.x')}'),
+            Text('Tip: ${ApiConfig.physicalDeviceHint('192.168.x.x')}'),
             const SizedBox(height: 16),
             TextField(
               controller: _urlController,
               decoration: const InputDecoration(
-                labelText: 'URL personnalisée',
+                labelText: 'Custom URL',
                 hintText: 'http://localhost:8080',
                 border: OutlineInputBorder(),
               ),
@@ -55,7 +55,7 @@ class _DebugConfigWidgetState extends State<DebugConfigWidget> {
                   Expanded(
                     child: CheckboxListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Forcer localhost (Android)'),
+                      title: const Text('Force localhost (Android)'),
                       value: _forceAndroidLocalhost,
                       onChanged: (val) {
                         setState(() {
@@ -95,7 +95,7 @@ class _DebugConfigWidgetState extends State<DebugConfigWidget> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
@@ -105,7 +105,7 @@ class _DebugConfigWidgetState extends State<DebugConfigWidget> {
               }
               Navigator.pop(context);
             },
-            child: const Text('Appliquer'),
+            child: const Text('Apply'),
           ),
         ],
       ),
@@ -116,7 +116,6 @@ class _DebugConfigWidgetState extends State<DebugConfigWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: widget.child,
-      // Bouton debug flottant (seulement en mode debug)
       floatingActionButton: ApiConfig.isDebug
           ? Column(
               mainAxisSize: MainAxisSize.min,

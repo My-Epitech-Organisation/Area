@@ -5,18 +5,14 @@ import '../models/applet.dart';
 import '../config/api_config.dart';
 
 class ApiService {
-  // Configuration automatique selon la plateforme
-
   // Singleton pattern
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
   ApiService._internal();
 
-  // Cache management
   final Map<String, dynamic> _cache = {};
   final Map<String, DateTime> _cacheTimestamps = {};
 
-  // Auth token management
   String? _authToken;
   String? _refreshToken;
   
@@ -56,7 +52,6 @@ class ApiService {
     await prefs.remove('refresh_token');
   }
 
-  // HTTP headers with auth
   Future<Map<String, String>> get _headers async {
     final token = await authToken;
     return {
@@ -65,7 +60,6 @@ class ApiService {
     };
   }
 
-  // Refresh access token
   Future<bool> refreshAccessToken() async {
     final refresh = await refreshToken;
     if (refresh == null) return false;
@@ -85,12 +79,10 @@ class ApiService {
         }
       }
     } catch (e) {
-      // Refresh failed
     }
     return false;
   }
 
-  // Cache helper
   dynamic _getCached(String key) {
     if (_cache.containsKey(key)) {
       final timestamp = _cacheTimestamps[key];
@@ -109,18 +101,15 @@ class ApiService {
     _cacheTimestamps[key] = DateTime.now();
   }
 
-  // Retry logic with exponential backoff and token refresh
   Future<http.Response> _retryRequest(Future<http.Response> Function() request, {bool isRetry = false}) async {
     int attempt = 0;
     while (attempt < ApiConfig.maxRetries) {
       try {
         final response = await request().timeout(ApiConfig.timeout);
         
-        // If we get 401 and haven't tried refreshing yet, try to refresh token
         if (response.statusCode == 401 && !isRetry) {
           final refreshed = await refreshAccessToken();
           if (refreshed) {
-            // Retry the request with new token
             return await _retryRequest(request, isRetry: true);
           }
         }
@@ -133,12 +122,11 @@ class ApiService {
       }
 
       attempt++;
-      await Future.delayed(Duration(seconds: attempt * 2)); // Exponential backoff
+      await Future.delayed(Duration(seconds: attempt * 2));
     }
     throw Exception('Max retries exceeded');
   }
 
-  // Fetch the list of areas (applets) - adapted for backend
   Future<List<Applet>> fetchApplets({bool forceRefresh = false}) async {
     const cacheKey = 'applets';
 

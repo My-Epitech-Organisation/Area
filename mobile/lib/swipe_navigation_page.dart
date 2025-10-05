@@ -99,7 +99,6 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
         if (context.mounted) {
           // Close loading dialog
           Navigator.of(context).pop();
-          // Navigate to login page and clear the navigation stack
           Navigator.of(context).pushNamedAndRemoveUntil(
             '/login',
             (route) => false,
@@ -134,7 +133,6 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
         title: Text(_pageTitles[_currentPage]),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
-          // Indicateurs de page (dots)
           Semantics(
             label: 'Page indicators',
             hint: 'Shows current page position. ${_currentPage + 1} of ${_pages.length} pages',
@@ -149,8 +147,8 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
                     onTap: () => _navigateToPage(index),
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 2),
-                      width: 12, // Increased for better touch target
-                      height: 12, // Increased for better touch target
+                      width: 12,
+                      height: 12,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: _currentPage == index
@@ -164,7 +162,6 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
             ),
           ),
           const SizedBox(width: 8),
-          // Menu popup avec déconnexion
           PopupMenuButton<String>(
             onSelected: (value) async {
               if (value == 'logout') {
