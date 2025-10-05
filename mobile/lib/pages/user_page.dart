@@ -52,7 +52,6 @@ class UserPage extends StatelessWidget {
         if (context.mounted) {
           // Close loading dialog
           Navigator.of(context).pop();
-          // Navigate to login page and clear the navigation stack
           Navigator.of(context).pushNamedAndRemoveUntil(
             '/login',
             (route) => false,
@@ -86,7 +85,6 @@ class UserPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header avec avatar et info utilisateur
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -156,7 +154,6 @@ class UserPage extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                // Statistiques
                 const Text(
                   'Statistics',
                   style: TextStyle(
@@ -211,7 +208,6 @@ class UserPage extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                // Settings
                 const Text(
                   'Settings',
                   style: TextStyle(
@@ -268,7 +264,6 @@ class UserPage extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                // Sign Out Button
                 SizedBox(
                   width: double.infinity,
                   height: 56,

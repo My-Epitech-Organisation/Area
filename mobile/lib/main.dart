@@ -7,7 +7,6 @@ import 'swipe_navigation_page.dart';
 import 'utils/debug_helper.dart';
 
 void main() {
-  // Affichage des informations de debug au démarrage
   DebugHelper.printConfiguration();
   runApp(const MyApp());
 }
@@ -26,7 +25,6 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,
-          // Enhanced theme for better UX
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
               elevation: 2,
