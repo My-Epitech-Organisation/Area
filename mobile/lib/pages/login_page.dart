@@ -165,19 +165,19 @@ class _LoginPageState extends State<LoginPage> {
 
                 // Password field
                   Semantics(
-                    label: 'Email / Username input field',
-                    hint: 'Enter your email or username',
+                    label: 'Password input field',
+                    hint: 'Enter your password',
                   child: TextFormField(
                     controller: _passwordController,
                     decoration: const InputDecoration(
-                        labelText: 'Email or Username',
+                        labelText: 'Password',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.lock),
                     ),
                     obscureText: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                          return 'Please enter your email or username';
+                          return 'Please enter your password';
                       }
                       if (value.length < 6) {
                         return 'Password must be at least 6 characters';
