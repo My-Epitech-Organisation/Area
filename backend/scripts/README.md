@@ -1,11 +1,9 @@
-# Django Linting Scripts
-
-This folder contains scripts to maintain code quality in the AREA project Django backend.
+# Django Code Quality Scripts (Ruff-Powered)
 
 ## 📋 Contents
 
-- `lint-check.sh` - Code verification script (read-only)
-- `lint-fix.sh` - Auto-correction script
+- `lint-check.sh` - Lightning-fast code verification (Ruff + Bandit)
+- `lint-fix.sh` - Instant auto-correction with Ruff
 - `README.md` - This documentation
 
 ## 🚀 Installation
@@ -19,7 +17,7 @@ pip install -r requirements-dev.txt
 
 ### 2. Verify configuration
 
-Tools are configured via `.flake8` and `pyproject.toml` in the backend folder.
+All tools are configured via `pyproject.toml` in the backend folder.
 
 ## 🔧 Usage
 
@@ -49,27 +47,28 @@ Tools are configured via `.flake8` and `pyproject.toml` in the backend folder.
 ./scripts/lint-fix.sh users/views.py
 ```
 
-## 🔍 Tools Used
+## ⚡ Tools Used
 
-### 🎨 Automatic Formatting
+### 🚀 **Ruff** - The Ultra-Fast Python Linter & Formatter
 
-- **Black**: Python code formatting (PEP 8)
-- **isort**: Import sorting and organization
+**Ruff replaces multiple tools in one:**
+- ✅ **Formatting**
+- ✅ **Import sorting**
+- ✅ **Linting**
+- ✅ **700+ rules** built-in
 
-### 📏 Style Checking
+**Performance:** ~0.6 seconds vs 19+ seconds with old tools!
 
-- **flake8**: Style checking and error detection
-  - Plugins: `flake8-django`, `flake8-bugbear`, `flake8-comprehensions`
+### 🔒 **Bandit** - Security Analysis
 
-### 🔍 Static Analysis
-
-- **bandit**: Security analysis
+- Advanced security issue detection
+- Complements Ruff's security rules (S*)
 
 ## ⚙️ Configuration
 
 ### Automatic Exclusions
 
-Tools automatically ignore:
+Ruff automatically ignores:
 
 - `migrations/` - Django-generated files
 - `__pycache__/` - Python cache
@@ -77,11 +76,12 @@ Tools automatically ignore:
 - `.mypy_cache/` - mypy cache
 - `reports/` - Generated reports
 
-### Main Settings
+### Main Settings (pyproject.toml)
 
-- **Line length**: 88 characters (Black standard)
+- **Line length**: 88 characters
 - **Python version**: 3.13
-- **isort profile**: Black compatible
+- **Rules**: E, W, F, B, C4, SIM, DJ, I, S
+- **Django-specific ignores**: S104 (binding), S106 (test passwords), F401 (admin imports)
 
 ## 🎯 Return Codes
 
@@ -104,14 +104,12 @@ Codes can combine (e.g., `3` = formatting + style).
 🐍 Activating virtual environment...
 📂 Checking: .
 
-🎨 Checking code formatting with Black...
-✅ Black formatting: PASSED
+⚡ Checking code with Ruff (linting + formatting + imports)...
+All checks passed!
+✅ Ruff linting: PASSED
 
-📚 Checking import sorting with isort...
-✅ Import sorting: PASSED
-
-📏 Checking code style with flake8...
-✅ Code style: PASSED
+🎨 Checking code formatting with Ruff...
+✅ Ruff formatting: PASSED
 
 🔒 Checking security with bandit...
 ✅ Security check: PASSED
@@ -122,15 +120,14 @@ Codes can combine (e.g., `3` = formatting + style).
 
 ### Verification with errors
 
-```
-❌ Black formatting: FAILED
+```bash
+❌ Ruff linting: FAILED
+Run './scripts/lint-fix.sh' to auto-fix your code
+
+❌ Ruff formatting: FAILED
 Run './scripts/lint-fix.sh' to auto-format your code
 
-❌ Import sorting: FAILED
-Run './scripts/lint-fix.sh' to auto-sort your imports
-
-❌ Code style: FAILED
-Please fix the style issues reported above
+⚠️  Some issues require manual fixing
 ```
 
 ## 🛠️ Troubleshooting
@@ -164,11 +161,18 @@ Add to `.vscode/settings.json`:
 
 ```json
 {
-    "python.formatting.provider": "black",
-    "python.sortImports.args": ["--profile", "black"],
-    "python.linting.flake8Enabled": true
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": true,
+            "source.organizeImports.ruff": true
+        },
+        "editor.defaultFormatter": "charliermarsh.ruff"
+    }
 }
 ```
+
+Install the **Ruff extension** by Astral Software.
 
 ### PyCharm
 
@@ -208,15 +212,14 @@ pip install -r requirements-dev.txt --upgrade
 
 ## 📚 Resources
 
-- [Black Documentation](https://black.readthedocs.io/)
-- [isort Documentation](https://pycqa.github.io/isort/)
-- [flake8 Documentation](https://flake8.pycqa.org/)
-- [bandit Documentation](https://bandit.readthedocs.io/)
+- [Ruff Documentation](https://docs.astral.sh/ruff/) - Main tool
+- [Ruff Rules Reference](https://docs.astral.sh/ruff/rules/) - All available rules
+- [Bandit Documentation](https://bandit.readthedocs.io/) - Security analysis
 
 ## 🤝 Contributing
 
 When adding new Django modules:
 
-1. Add module to `known_first_party` in `pyproject.toml`
+1. Add module to `known_first_party` in `pyproject.toml` (Ruff isort section)
 2. Test with `./scripts/lint-check.sh module_name/`
-3. Adjust exclusions in `.flake8` if necessary
+3. Adjust per-file ignores in `pyproject.toml` if necessary

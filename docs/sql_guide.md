@@ -1,8 +1,8 @@
 # PostgreSQL & Query Tool Guide
 
-> **Prerequisite**: You can launch both PostgreSQL and pgAdmin using Docker Compose. See `docker-compose.md` for setup instructions.
+> **Prerequisite**: You can launch both PostgreSQL using Docker Compose. See `docker-compose.md` for setup instructions.
 
-This document provides a concise reference for working with your **AREA** database schema in PostgreSQL, using both **psql** (CLI) and the **Query Tool** in a graphical client like pgAdmin.
+This document provides a concise reference for working with your **AREA** database schema in PostgreSQL, using both **psql** (CLI) and the **Query Tool**.
 
 ## 1. Connecting to the Database
 
@@ -17,7 +17,6 @@ docker-compose up -d
 This brings up:
 
 - PostgreSQL on port **5432**
-- pgAdmin on port **8080**
 
 ### 1.2 Via psql
 
@@ -26,21 +25,6 @@ psql -h localhost -U myuser -d area_db
 ```
 
 - Enter **secret_password** when prompted.
-
-### 1.3 Via Query Tool (pgAdmin)
-
-1. Open your browser at `http://localhost:8080`.
-2. Log in with:
-   - Email: `admin@example.com`
-   - Password: `admin_password`
-3. Register a new server:
-   - **Name**: AreaDB
-   - **Host**: `postgres` (Docker network) or `localhost`
-   - **Port**: `5432`
-   - **Maintenance DB**: `area_db`
-   - **Username**: `myuser`
-   - **Password**: `secret_password`
-4. Click **Save** and then **Connect**.
 
 ## 2. Basic psql Commands
 
@@ -70,7 +54,7 @@ psql -h localhost -U myuser -d area_db
 
 ## 3. Query Tool Workflow
 
-1. **Open Query Tool**: In pgAdmin, select AreaDB and click the Query Tool icon.
+1. **Open Query Tool**: In your SQL client, select the AreaDB connection and open the Query Tool.
 2. **Write SQL**: Use the editor pane to type your queries.
 3. **Execute**: Click ▶️ or press **F5**.
 4. **View Results**: Results appear in the grid below.
@@ -175,7 +159,7 @@ Place your `seed.sql` in the project folder, then:
 
 ## 6. Exploring & Editing Data
 
-- In pgAdmin, under **Schemas → public → Tables**, right-click a table → **View/Edit Data → All Rows**.
+- In your SQL client, under **Schemas → public → Tables**, right-click a table → **View/Edit Data → All Rows**.
 - Modify values directly in the grid and click Save.
 
 ## 7. ERD Diagram

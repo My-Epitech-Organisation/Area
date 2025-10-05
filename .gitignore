@@ -9,6 +9,7 @@
 *.bak
 *.old
 *.tmp
+*.ref
 
 package-lock.json
 node_modules/
@@ -36,3 +37,6 @@ db.sqlite3
 # Environment variables
 *.env
 *.env.local
+
+# PoC
+Poc/
