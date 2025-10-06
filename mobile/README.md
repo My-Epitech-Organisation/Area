@@ -1,4 +1,4 @@
-# 📱 Mobile Client (Flutter)
+# 📱 AREA Mobile Client (Flutter)
 
 This folder contains the **Flutter mobile client** for the AREA project.
 It runs on **Android** and **iOS**, and communicates with the backend via REST API.
@@ -18,96 +18,180 @@ Make sure to:
 flutter doctor -v
 ```
 
-To initialize a new Flutter project (if needed):
+---
+
+## 🛠️ Installation
+
+### 1. Flutter Setup
+
+Follow the official guide: [Flutter Installation](https://docs.flutter.dev/get-started/install)
+
+Add Flutter to your PATH and verify:
 ```bash
-flutter create .
+flutter --version
 ```
 
-### 2. Android Setup
-Install Android Studio from [here](https://developer.android.com/studio)
+### 2. Android Configuration
 
-Open Android Studio and install the required SDKs and emulators via the SDK Manager.
+- Install [Android Studio](https://developer.android.com/studio)
+- Open SDK Manager and install required SDKs
+- Environment variables:
+  ```bash
+  export ANDROID_HOME=$HOME/Android/Sdk
+  export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
+  ```
 
-Ensure environment variables are set:
-```bash
-export ANDROID_HOME=$HOME/Android/Sdk
-export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
-```
+### 3. iOS Configuration (macOS only)
 
-### 3. iOS Setup (macOS only)
-Install Xcode from the App Store or [here](https://developer.apple.com/xcode/).
-
-Accept licenses and install command line tools:
-
-```bash
-sudo xcode-select --install
-sudo xcodebuild -license accept
-```
-
-Install CocoaPods (if not already installed):
-```bash
-sudo gem install cocoapods
-```
+- Install [Xcode](https://developer.apple.com/xcode/)
+- Accept licenses:
+  ```bash
+  sudo xcode-select --install
+  sudo xcodebuild -license accept
+  ```
+- Install CocoaPods:
+  ```bash
+  sudo gem install cocoapods
+  ```
 
 ### 4. Run the Project
 
-Clone the repository and navigate to the mobile directory:
 ```bash
-git clone <repository_url>
 cd AREA/mobile
-```
-
-Run on Android emulator
-```bash
-flutter emulators --launch <emulator_id>
-```
-
-Run on iOS simulator (if macOS available)
-```bash
-open -a Simulator
-```
-
-```bash
 flutter pub get
 flutter run
-# Or specify device:
+```
+
+To run on a specific device:
+```bash
+flutter devices  # List available devices
 flutter run -d <device_id>
 ```
 
-## 🧪 Testing
-- Unit tests: not required at this stage
-- Manual tests:
-    - Run on Android emulator
-    - Run on iOS simulator (if macOS available)
+---
 
-## 🛠️ Common Commands
-```bash
-flutter clean               # Clean the project
-flutter pub get            # Get dependencies
-flutter analyze            # Analyze the code
-flutter build apk          # Build Android APK
-flutter build ios          # Build iOS app
-flutter run                # Run the app
-flutter devices            # List connected devices
-flutter emulators         # List available emulators
-flutter emulators --launch <emulator_id>  # Launch a specific emulator
-flutter doctor -v          # Check environment setup
+## 🏗️ Architecture
+
+### File Structure
+
+```text
+lib/
+├── main.dart              # App entry point
+├── home_page.dart         # Main page
+├── widgets/               # Reusable widgets
+│   └── counter_widget.dart
+├── models/                # Data models (to be added)
+├── services/              # API services (to be added)
+└── utils/                 # Utilities (to be added)
 ```
+
+### Key Features
+
+- **Authentication**: User login
+- **Applets**: Creation and management of automations
+- **Services**: Integration with external APIs (Gmail, Discord, etc.)
+- **Responsive UI**: Adaptive design for mobile
+
+### Backend Communication
+
+- API REST via `http` package
+- Endpoints: `/auth`, `/applets`, `/services`
+- Error handling and loading states management
+
+---
+
+## 🧪 Testing
+
+### Unit Tests
+
+```bash
+flutter test
+```
+
+### Integration Tests
+
+- Manual testing on emulator/simulator
+- Verify features: login, applet creation, etc.
+
+### Device Testing
+
+- Android: Emulator or physical device
+- iOS: Simulator or physical device (macOS required)
+
+---
+
+## 📦 Build and Deployment
+
+### Build Android APK
+
+```bash
+flutter build apk --release
+# Generated file: build/app/outputs/flutter-apk/app-release.apk
+```
+
+### Build iOS (macOS)
+
+```bash
+flutter build ios --release
+# Open Xcode to archive and deploy
+```
+
+### Deployment
+
+- **Play Store**: Use Google Play Console
+- **App Store**: Use Xcode and App Store Connect
+
+---
+
+## 🛠️ Useful Commands
+
+| Command | Description |
+|----------|-------------|
+| `flutter clean` | Clean project cache |
+| `flutter pub get` | Download dependencies |
+| `flutter analyze` | Static code analysis |
+| `flutter run` | Run app in debug mode |
+| `flutter build apk` | Build Android APK |
+| `flutter build ios` | Build iOS app |
+| `flutter devices` | List connected devices |
+| `flutter emulators` | List available emulators |
+| `flutter doctor` | Check environment |
+
+---
 
 ## ⚠️ Common Issues
-❌ Emulator not found → Make sure Android Studio or Xcode is properly installed.
 
-❌ CocoaPods errors on iOS → Run pod install in the ios directory.
+| Issue | Solution |
+|----------|----------|
+| ❌ Emulator not found | Check Android Studio/Xcode installation |
+| ❌ CocoaPods errors | `cd ios && pod install` |
+| ❌ Permissions | Check `ANDROID_HOME` and `PATH` variables |
+| ❌ Build fails | `flutter clean && flutter pub get` |
+| ❌ Hot Reload not working | Restart the app |
 
-❌ Permission issues → Check that environment variables are set correctly.
+---
 
-📖 Contributing
-If you add a new dependency, run:
+## 🤝 Contributing
 
-```bash
-flutter pub get
-```
+1. **Fork** the repository
+2. **Create a branch**: `git checkout -b feature/new-feature`
+3. **Commit**: `git commit -m 'Add new feature'`
+4. **Push**: `git push origin feature/new-feature`
+5. **Open a PR**
 
-and commit the updated `pubspec.lock`.
+### Guidelines
 
-Update this `README.md` with any additional setup instructions if needed.
+- Follow Dart/Flutter conventions
+- Add tests for new features
+- Update this README if necessary
+- For dependencies: `flutter pub add <package>` then commit `pubspec.lock`
+
+---
+
+## 📄 License
+
+This project is under MIT license. See [LICENSE](../LICENSE) for more details.
+
+---
+
+Developed with ❤️ in Flutter for Epitech AREA Project
