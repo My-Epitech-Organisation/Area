@@ -175,7 +175,8 @@ class OAuthCallbackView(APIView):
 
             if not is_valid:
                 logger.warning(
-                    f"Invalid OAuth2 state for user {request.user.username}: {error_msg}"
+                    f"Invalid OAuth2 state for user "
+                    f"{request.user.username}: {error_msg}"
                 )
                 return Response(
                     {"error": "invalid_state", "message": error_msg},
