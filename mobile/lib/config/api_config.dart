@@ -2,6 +2,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class ApiConfig {
+  static String get appletsUrl => '$baseUrl/applets/';
+
+  static String get googleLoginUrl => '$authBaseUrl/google-login/';
   static String? _overrideBaseUrl;
   static String? _autoDetectedBase;
 

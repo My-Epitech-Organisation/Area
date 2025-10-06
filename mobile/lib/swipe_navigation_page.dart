@@ -3,8 +3,9 @@ import 'package:provider/provider.dart';
 import 'home_page.dart';
 import 'pages/create_applet_page.dart';
 import 'pages/my_applets_page.dart';
-import 'pages/user_page.dart';
+import 'providers/auth_provider.dart';
 import 'providers/app_state.dart';
+import 'pages/user_page.dart';
 
 class SwipeNavigationPage extends StatefulWidget {
   const SwipeNavigationPage({super.key});
@@ -95,8 +96,12 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
       );
 
       try {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final appState = Provider.of<AppState>(context, listen: false);
-        await appState.logout();
+        
+        // Logout and clear all data
+        await authProvider.logout();
+        appState.clear();
 
         if (context.mounted) {
           // Close loading dialog

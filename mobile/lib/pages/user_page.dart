@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../providers/auth_provider.dart';
 
 class UserPage extends StatelessWidget {
   const UserPage({super.key});
@@ -48,8 +49,12 @@ class UserPage extends StatelessWidget {
       );
 
       try {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final appState = Provider.of<AppState>(context, listen: false);
-        await appState.logout();
+        
+        // Logout and clear all data
+        await authProvider.logout();
+        appState.clear();
 
         if (context.mounted) {
           // Close loading dialog

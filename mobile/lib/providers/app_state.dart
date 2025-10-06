@@ -5,10 +5,7 @@ import '../services/api_service.dart';
 class AppState extends ChangeNotifier {
   final ApiService _apiService = ApiService();
 
-  // Auth state
-  bool _isAuthenticated = false;
-  bool get isAuthenticated => _isAuthenticated;
-
+  // User profile state
   Map<String, dynamic>? _userProfile;
   Map<String, dynamic>? get userProfile => _userProfile;
 
@@ -43,66 +40,22 @@ class AppState extends ChangeNotifier {
   String? _error;
   String? get error => _error;
 
-  // Initialize app state
+  // Initialize app state (called after successful authentication)
   Future<void> initialize() async {
-    final token = await _apiService.authToken;
-    if (token != null) {
-      _isAuthenticated = true;
-      await loadUserProfile();
-      await loadApplets();
-      await loadStatistics();
-      await loadAvailableServices();
-    }
+    await loadUserProfile();
+    await loadApplets();
+    await loadStatistics();
+    await loadAvailableServices();
     notifyListeners();
   }
 
-  // Authentication methods
-  Future<bool> login(String email, String password) async {
-    try {
-      _setLoading(true);
-      await _apiService.login(email, password);
-      _isAuthenticated = true;
-      await loadUserProfile();
-      await loadApplets();
-      await loadStatistics();
-      _setLoading(false);
-      return true;
-    } catch (e) {
-      final errorMessage = 'Login failed: ${e.toString()}';
-      _setError(errorMessage);
-      // ignore: avoid_print
-      print('[AppState] Login error: $errorMessage');
-      return false;
-    }
-  }
-
-  Future<bool> register(String email, String password, String name) async {
-    try {
-      _setLoading(true);
-      await _apiService.register(email, password, name);
-      await _apiService.login(email, password);
-      _isAuthenticated = true;
-      await loadUserProfile();
-      await loadApplets();
-      await loadStatistics();
-      _setLoading(false);
-      return true;
-    } catch (e) {
-      final errorMessage = 'Registration failed: ${e.toString()}';
-      _setError(errorMessage);
-      // ignore: avoid_print
-      print('[AppState] Registration error: $errorMessage');
-      return false;
-    }
-  }
-
-  Future<void> logout() async {
-    await _apiService.clearAuthToken();
-    _isAuthenticated = false;
+  // Clear all data on logout
+  void clear() {
     _userProfile = null;
     _applets.clear();
     _statistics = null;
     _availableServices.clear();
+    _error = null;
     notifyListeners();
   }
 

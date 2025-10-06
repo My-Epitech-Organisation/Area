@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/app_state.dart';
 import 'login_page.dart';
 import '../swipe_navigation_page.dart';
@@ -19,22 +20,28 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Future<void> _initializeApp() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final appState = Provider.of<AppState>(context, listen: false);
 
     try {
-      await appState.initialize();
+      // Check if user is already authenticated
+      await authProvider.checkAuthStatus();
 
       if (mounted) {
         await Future.delayed(const Duration(milliseconds: 500));
 
         if (mounted) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (appState.isAuthenticated) {
-              Navigator.of(context).pushReplacement(
+          final navigator = Navigator.of(context);
+          final isAuth = authProvider.isAuthenticated;
+
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (isAuth) {
+              await appState.initialize();
+              navigator.pushReplacement(
                 MaterialPageRoute(builder: (_) => const SwipeNavigationPage()),
               );
             } else {
-              Navigator.of(context).pushReplacement(
+              navigator.pushReplacement(
                 MaterialPageRoute(builder: (_) => const LoginPage()),
               );
             }

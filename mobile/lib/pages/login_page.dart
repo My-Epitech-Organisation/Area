@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/app_state.dart';
 import '../widgets/debug_config_widget.dart';
+import '../widgets/google_sign_in_button.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,6 +13,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  // Ajout d'un indicateur de chargement pour Google
+  bool _isGoogleLoading = false;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -34,70 +38,39 @@ class _LoginPageState extends State<LoginPage> {
       _errorMessage = null;
     });
 
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final appState = Provider.of<AppState>(context, listen: false);
+    
     bool success;
-
     if (_isLogin) {
-      success = await appState.login(
+      success = await authProvider.login(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
     } else {
-      // For registration, we need a name field
-      final nameController = TextEditingController();
-      final name = await showDialog<String>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Enter your name'),
-          content: TextField(
-            controller: nameController,
-            decoration: const InputDecoration(
-              labelText: 'Full Name',
-              hintText: 'Enter your full name',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(nameController.text),
-              child: const Text('Continue'),
-            ),
-          ],
-        ),
-      );
-
-      if (name == null || name.isEmpty) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'Name is required for registration';
-        });
-        return;
-      }
-
-      success = await appState.register(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-        name.trim(),
-      );
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Registration not implemented yet.';
+      });
+      return;
     }
 
+    if (!mounted) return;
+    
     setState(() {
       _isLoading = false;
     });
 
     if (success) {
+      // Initialize app data after successful login
+      await appState.initialize();
+      
       if (mounted) {
-        // Navigate to main app
         Navigator.of(context).pushReplacementNamed('/home');
       }
     } else {
       setState(() {
-        final error = appState.error;
-        _errorMessage =
-            error ?? (_isLogin ? 'Login failed' : 'Registration failed');
+        _errorMessage = authProvider.error ?? 'Login failed';
       });
     }
   }
@@ -187,6 +160,34 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
+                    // Bouton Google Sign-In (refacto)
+                    const SizedBox(height: 16),
+                    Consumer<AuthProvider>(
+                      builder: (context, authProvider, _) {
+                        final appState = Provider.of<AppState>(context, listen: false);
+                        
+                        return GoogleSignInButton(
+                          isLoading: _isGoogleLoading,
+                          onPressed: () async {
+                            final navigator = Navigator.of(context);
+                            setState(() => _isGoogleLoading = true);
+                            final success = await authProvider.loginWithGoogle();
+                            if (!mounted) return;
+                            setState(() => _isGoogleLoading = false);
+                            
+                            if (success) {
+                              // Initialize app data after successful Google login
+                              await appState.initialize();
+                              navigator.pushReplacementNamed('/home');
+                            } else {
+                              setState(() {
+                                _errorMessage = authProvider.error ?? 'Google sign-in failed';
+                              });
+                            }
+                          },
+                        );
+                      },
+                    ),
 
                   // Error message
                   if (_errorMessage != null)
