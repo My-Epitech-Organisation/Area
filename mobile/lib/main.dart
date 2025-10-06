@@ -17,9 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AppState()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => AppState())],
       child: MaterialApp(
         title: 'AREA Mobile',
         theme: ThemeData(
@@ -35,9 +33,7 @@ class MyApp extends StatelessWidget {
             ),
           ),
           inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: Colors.grey.withValues(alpha: 0.1),
           ),

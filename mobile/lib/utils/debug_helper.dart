@@ -31,7 +31,13 @@ class DebugHelper {
     }
   }
 
-  static void printApiCall(String method, String url, {String? body, int? statusCode, String? response}) {
+  static void printApiCall(
+    String method,
+    String url, {
+    String? body,
+    int? statusCode,
+    String? response,
+  }) {
     if (kDebugMode) {
       print('\n=== API Call ===');
       print('$method $url');
@@ -42,7 +48,9 @@ class DebugHelper {
         print('Status: $statusCode');
       }
       if (response != null) {
-        print('Response: ${response.length > 200 ? '${response.substring(0, 200)}...' : response}');
+        print(
+          'Response: ${response.length > 200 ? '${response.substring(0, 200)}...' : response}',
+        );
       }
       print('================\n');
     }

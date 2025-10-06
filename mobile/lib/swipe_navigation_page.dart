@@ -57,7 +57,9 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirm Sign Out'),
-        content: const Text('Are you sure you want to sign out of your account?'),
+        content: const Text(
+          'Are you sure you want to sign out of your account?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -95,18 +97,17 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
       try {
         final appState = Provider.of<AppState>(context, listen: false);
         await appState.logout();
-        
+
         if (context.mounted) {
           // Close loading dialog
           Navigator.of(context).pop();
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            '/login',
-            (route) => false,
-          );
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil('/login', (route) => false);
         }
       } catch (e) {
         if (context.mounted) {
-          // Close loading dialog  
+          // Close loading dialog
           Navigator.of(context).pop();
           // Show error message
           ScaffoldMessenger.of(context).showSnackBar(
@@ -135,13 +136,16 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
         actions: [
           Semantics(
             label: 'Page indicators',
-            hint: 'Shows current page position. ${_currentPage + 1} of ${_pages.length} pages',
+            hint:
+                'Shows current page position. ${_currentPage + 1} of ${_pages.length} pages',
             child: Row(
               children: List.generate(
                 _pages.length,
                 (index) => Semantics(
                   label: 'Page ${index + 1} indicator',
-                  hint: _currentPage == index ? 'Current page' : 'Tap to go to ${_pageTitles[index]} page',
+                  hint: _currentPage == index
+                      ? 'Current page'
+                      : 'Tap to go to ${_pageTitles[index]} page',
                   button: true,
                   child: GestureDetector(
                     onTap: () => _navigateToPage(index),
@@ -189,7 +193,8 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
       ),
       body: Semantics(
         label: 'Main navigation area',
-        hint: 'Swipe left or right to navigate between pages, or use bottom navigation buttons',
+        hint:
+            'Swipe left or right to navigate between pages, or use bottom navigation buttons',
         child: PageView(
           controller: _pageController,
           onPageChanged: _onPageChanged,
@@ -198,7 +203,8 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
       ),
       bottomNavigationBar: Semantics(
         label: 'Bottom navigation menu',
-        hint: 'Use these buttons to navigate between different sections of the app',
+        hint:
+            'Use these buttons to navigate between different sections of the app',
         child: BottomNavigationBar(
           currentIndex: _currentPage,
           onTap: _navigateToPage,

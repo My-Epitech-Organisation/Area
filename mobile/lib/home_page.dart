@@ -43,8 +43,17 @@ class _MyHomePageState extends State<MyHomePage> {
                           children: const [
                             Icon(Icons.apps, size: 40, color: Colors.blue),
                             SizedBox(height: 8),
-                            Text('5 Applets', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                            Text('Active', style: TextStyle(color: Colors.grey)),
+                            Text(
+                              '5 Applets',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Active',
+                              style: TextStyle(color: Colors.grey),
+                            ),
                           ],
                         ),
                       ),
@@ -61,10 +70,23 @@ class _MyHomePageState extends State<MyHomePage> {
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
                           children: const [
-                            Icon(Icons.check_circle, size: 40, color: Colors.green),
+                            Icon(
+                              Icons.check_circle,
+                              size: 40,
+                              color: Colors.green,
+                            ),
                             SizedBox(height: 8),
-                            Text('3 Active', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                            Text('Running', style: TextStyle(color: Colors.grey)),
+                            Text(
+                              '3 Active',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Running',
+                              style: TextStyle(color: Colors.grey),
+                            ),
                           ],
                         ),
                       ),

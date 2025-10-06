@@ -25,7 +25,9 @@ class _EditAppletPageState extends State<EditAppletPage> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.applet.name);
-    _descriptionController = TextEditingController(text: widget.applet.description);
+    _descriptionController = TextEditingController(
+      text: widget.applet.description,
+    );
     _isActive = widget.applet.isActive;
   }
 
@@ -81,7 +83,9 @@ class _EditAppletPageState extends State<EditAppletPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_isActive ? 'Applet activated' : 'Applet deactivated'),
+            content: Text(
+              _isActive ? 'Applet activated' : 'Applet deactivated',
+            ),
           ),
         );
       }
@@ -130,9 +134,13 @@ class _EditAppletPageState extends State<EditAppletPage> {
                           children: [
                             Semantics(
                               label: 'Applet status indicator',
-                              hint: _isActive ? 'Applet is currently active' : 'Applet is currently inactive',
+                              hint: _isActive
+                                  ? 'Applet is currently active'
+                                  : 'Applet is currently inactive',
                               child: Icon(
-                                _isActive ? Icons.play_circle : Icons.pause_circle,
+                                _isActive
+                                    ? Icons.play_circle
+                                    : Icons.pause_circle,
                                 color: _isActive ? Colors.green : Colors.orange,
                                 size: 24,
                               ),
@@ -148,11 +156,14 @@ class _EditAppletPageState extends State<EditAppletPage> {
                             const Spacer(),
                             Semantics(
                               label: 'Toggle applet active status',
-                              hint: 'Tap to ${_isActive ? 'deactivate' : 'activate'} this applet',
+                              hint:
+                                  'Tap to ${_isActive ? 'deactivate' : 'activate'} this applet',
                               button: true,
                               child: Switch(
                                 value: _isActive,
-                                onChanged: _isLoading ? null : (_) => _toggleActive(),
+                                onChanged: _isLoading
+                                    ? null
+                                    : (_) => _toggleActive(),
                               ),
                             ),
                           ],
@@ -160,7 +171,10 @@ class _EditAppletPageState extends State<EditAppletPage> {
                         const SizedBox(height: 8),
                         Text(
                           'ID: ${widget.applet.id}',
-                          style: const TextStyle(color: Colors.grey, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -265,7 +279,9 @@ class _EditAppletPageState extends State<EditAppletPage> {
                     decoration: BoxDecoration(
                       color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: Colors.red.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Text(
                       _errorMessage!,
@@ -300,7 +316,9 @@ class _EditAppletPageState extends State<EditAppletPage> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
                         : const Text(
@@ -321,7 +339,9 @@ class _EditAppletPageState extends State<EditAppletPage> {
                   decoration: BoxDecoration(
                     color: Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: Colors.blue.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: const Row(
                     children: [

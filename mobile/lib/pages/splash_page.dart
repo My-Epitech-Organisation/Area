@@ -85,11 +85,7 @@ class _SplashPageState extends State<SplashPage> {
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.apps,
-                    size: 60,
-                    color: Colors.blue,
-                  ),
+                  child: const Icon(Icons.apps, size: 60, color: Colors.blue),
                 ),
               ),
 
@@ -112,10 +108,7 @@ class _SplashPageState extends State<SplashPage> {
 
               const Text(
                 'Automate your tasks',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white70,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.white70),
               ),
 
               const SizedBox(height: 48),
@@ -132,10 +125,7 @@ class _SplashPageState extends State<SplashPage> {
 
               const Text(
                 'Initializing...',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.white70, fontSize: 14),
               ),
             ],
           ),

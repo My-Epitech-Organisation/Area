@@ -60,7 +60,9 @@ class _DebugConfigWidgetState extends State<DebugConfigWidget> {
                       onChanged: (val) {
                         setState(() {
                           _forceAndroidLocalhost = val ?? false;
-                          ApiConfig.forceAndroidLocalhost(_forceAndroidLocalhost);
+                          ApiConfig.forceAndroidLocalhost(
+                            _forceAndroidLocalhost,
+                          );
                         });
                       },
                     ),
@@ -136,7 +138,9 @@ class _DebugConfigWidgetState extends State<DebugConfigWidget> {
                       DebugHelper.printConfiguration();
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Debug info printed. URL: ${ApiConfig.baseUrl}'),
+                          content: Text(
+                            'Debug info printed. URL: ${ApiConfig.baseUrl}',
+                          ),
                           duration: const Duration(seconds: 3),
                         ),
                       );
