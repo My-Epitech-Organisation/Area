@@ -310,4 +310,8 @@ class OAuthManager:
             return False
 
         config = settings.OAUTH2_PROVIDERS.get(provider_name, {})
-        return bool(config.get("client_id") and config.get("client_secret"))
+        return bool(
+            config.get("client_id")
+            and config.get("client_secret")
+            and config.get("redirect_uri")
+        )
