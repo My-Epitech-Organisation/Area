@@ -14,12 +14,11 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from celery import shared_task
-from celery.exceptions import MaxRetriesExceededError
 
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 from django.utils import timezone
 
-from .models import Action, Area, Execution, Reaction
+from .models import Area, Execution
 
 logger = logging.getLogger(__name__)
 
@@ -85,9 +84,7 @@ def get_active_areas(action_names: list[str]) -> list[Area]:
         QuerySet of active Areas with prefetched relations
     """
     return (
-        Area.objects.filter(
-            action__name__in=action_names, status=Area.Status.ACTIVE
-        )
+        Area.objects.filter(action__name__in=action_names, status=Area.Status.ACTIVE)
         .select_related(
             "action",
             "reaction",
@@ -99,7 +96,9 @@ def get_active_areas(action_names: list[str]) -> list[Area]:
     )
 
 
-def validate_timer_config(action_name: str, action_config: dict) -> tuple[bool, Optional[str]]:
+def validate_timer_config(
+    action_name: str, action_config: dict
+) -> tuple[bool, Optional[str]]:
     """
     Validate timer action configuration.
 
@@ -133,7 +132,10 @@ def validate_timer_config(action_name: str, action_config: dict) -> tuple[bool, 
         if day_of_week is None:
             return False, "day_of_week is required for timer_weekly"
         if not isinstance(day_of_week, int) or not (0 <= day_of_week <= 6):
-            return False, f"day_of_week must be an integer between 0 and 6, got {day_of_week}"
+            return (
+                False,
+                f"day_of_week must be an integer between 0 and 6, got {day_of_week}",
+            )
 
     return True, None
 
@@ -165,9 +167,7 @@ def should_trigger_timer(area: Area, current_time: datetime) -> bool:
         target_hour = action_config.get("hour", 0)
         target_minute = action_config.get("minute", 0)
 
-        return (
-            current_time.hour == target_hour and current_time.minute == target_minute
-        )
+        return current_time.hour == target_hour and current_time.minute == target_minute
 
     elif action_name == "timer_weekly":
         # Check day of week (0=Monday, 6=Sunday) and time
@@ -595,9 +595,8 @@ def collect_execution_metrics():
     Returns:
         dict: Collected metrics
     """
-    from django.db.models import Count, Avg, Q
+    from django.db.models import Count, Q
     from django.utils import timezone
-    from datetime import timedelta
 
     now = timezone.now()
     last_hour = now - timedelta(hours=1)
@@ -670,7 +669,6 @@ def cleanup_old_executions():
         dict: Cleanup statistics
     """
     from django.utils import timezone
-    from datetime import timedelta
 
     now = timezone.now()
     success_cutoff = now - timedelta(days=30)

@@ -417,4 +417,3 @@ class ExecutionViewSet(viewsets.ReadOnlyModelViewSet):
 
         serializer = ExecutionListSerializer(queryset, many=True)
         return Response(serializer.data)
-

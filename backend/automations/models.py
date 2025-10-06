@@ -92,9 +92,7 @@ class Execution(models.Model):
         SKIPPED = "skipped", "Skipped"
 
     # Core relationships
-    area = models.ForeignKey(
-        Area, related_name="executions", on_delete=models.CASCADE
-    )
+    area = models.ForeignKey(Area, related_name="executions", on_delete=models.CASCADE)
 
     # Idempotency key - prevents duplicate executions for the same external event
     external_event_id = models.CharField(
@@ -114,7 +112,9 @@ class Execution(models.Model):
         null=True, blank=True, help_text="When the execution actually started"
     )
     completed_at = models.DateTimeField(
-        null=True, blank=True, help_text="When the execution completed (success or failed)"
+        null=True,
+        blank=True,
+        help_text="When the execution completed (success or failed)",
     )
 
     # Execution data

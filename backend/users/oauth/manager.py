@@ -11,7 +11,7 @@ from django.utils import timezone
 
 from users.models import ServiceToken
 
-from .exceptions import InvalidProviderError, InvalidTokenError, TokenRefreshError
+from .exceptions import InvalidProviderError, TokenRefreshError
 from .github import GitHubOAuthProvider
 from .google import GoogleOAuthProvider
 
@@ -277,9 +277,7 @@ class OAuthManager:
             return True
 
         except ServiceToken.DoesNotExist:
-            logger.warning(
-                f"No token to revoke for {user.username}/{service_name}"
-            )
+            logger.warning(f"No token to revoke for {user.username}/{service_name}")
             return False
         except Exception as e:
             logger.error(f"Error revoking token: {e}")

@@ -184,7 +184,9 @@ class GoogleOAuthProvider(BaseOAuthProvider):
             if success:
                 logger.info("Successfully revoked Google token")
             else:
-                logger.warning(f"Google token revocation returned {response.status_code}")
+                logger.warning(
+                    f"Google token revocation returned {response.status_code}"
+                )
 
             return success
 

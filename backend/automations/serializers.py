@@ -228,19 +228,26 @@ class AreaCreateSerializer(serializers.ModelSerializer):
 
             # Check if this service requires OAuth2 connection
             from django.conf import settings
+
             if service_name in settings.OAUTH2_PROVIDERS:
                 # Verify user has a valid token for this service
                 from users.oauth.manager import OAuthManager
 
-                user = self.context.get('request').user if self.context.get('request') else None
+                user = (
+                    self.context.get("request").user
+                    if self.context.get("request")
+                    else None
+                )
                 if user:
                     token = OAuthManager.get_valid_token(user, service_name)
 
                     if not token:
-                        raise serializers.ValidationError({
-                            'action': f'You must connect your {action.service.name} account before creating '
-                                     f'an area with this action. Please visit /auth/oauth/{service_name}/ to connect.'
-                        })
+                        raise serializers.ValidationError(
+                            {
+                                "action": f"You must connect your {action.service.name} account before creating "
+                                f"an area with this action. Please visit /auth/oauth/{service_name}/ to connect."
+                            }
+                        )
 
             # Validate action configuration against schema
             try:
@@ -253,19 +260,26 @@ class AreaCreateSerializer(serializers.ModelSerializer):
 
             # Check if this service requires OAuth2 connection
             from django.conf import settings
+
             if service_name in settings.OAUTH2_PROVIDERS:
                 # Verify user has a valid token for this service
                 from users.oauth.manager import OAuthManager
 
-                user = self.context.get('request').user if self.context.get('request') else None
+                user = (
+                    self.context.get("request").user
+                    if self.context.get("request")
+                    else None
+                )
                 if user:
                     token = OAuthManager.get_valid_token(user, service_name)
 
                     if not token:
-                        raise serializers.ValidationError({
-                            'reaction': f'You must connect your {reaction.service.name} account before creating '
-                                       f'an area with this reaction. Please visit /auth/oauth/{service_name}/ to connect.'
-                        })
+                        raise serializers.ValidationError(
+                            {
+                                "reaction": f"You must connect your {reaction.service.name} account before creating "
+                                f"an area with this reaction. Please visit /auth/oauth/{service_name}/ to connect."
+                            }
+                        )
 
             # Validate reaction configuration against schema
             try:
@@ -425,4 +439,3 @@ class ExecutionStatsSerializer(serializers.Serializer):
     skipped = serializers.IntegerField()
     by_area = serializers.DictField(child=serializers.IntegerField())
     recent_failures = ExecutionListSerializer(many=True, read_only=True)
-
