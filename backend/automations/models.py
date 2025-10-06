@@ -98,7 +98,10 @@ class Execution(models.Model):
     external_event_id = models.CharField(
         max_length=255,
         db_index=True,
-        help_text="Unique identifier for the external event (e.g., webhook event ID, timer timestamp)",
+        help_text=(
+            "Unique identifier for the external event "
+            "(e.g., webhook event ID, timer timestamp)"
+        ),
     )
 
     # Execution status and timing
