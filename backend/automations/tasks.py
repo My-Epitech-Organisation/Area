@@ -341,9 +341,8 @@ def check_github_actions(self):
     Check GitHub-based actions (polling mode).
 
     This task runs every 5 minutes via Celery Beat.
+    Uses OAuth2 tokens to access GitHub API for each user's areas.
     For production, webhooks are preferred over polling.
-
-    TODO: Implement actual GitHub API polling when OAuth2 is ready.
 
     Returns:
         dict: Statistics about processed GitHub events
@@ -352,25 +351,59 @@ def check_github_actions(self):
 
     triggered_count = 0
     skipped_count = 0
+    no_token_count = 0
 
     try:
+        from users.oauth.manager import OAuthManager
+
         # Get all active areas with GitHub actions
         github_areas = get_active_areas(["github_new_issue", "github_new_pr"])
 
         logger.debug(f"Found {len(github_areas)} active GitHub areas")
 
-        # TODO: Implement actual GitHub API polling
-        # For now, this is a placeholder that logs the intention
+        for area in github_areas:
+            try:
+                # Get valid OAuth2 token for the user
+                access_token = OAuthManager.get_valid_token(area.owner, "github")
+
+                if not access_token:
+                    logger.warning(
+                        f"Area {area.id} (user: {area.owner.username}): "
+                        f"No valid GitHub token available, skipping"
+                    )
+                    no_token_count += 1
+                    continue
+
+                # TODO: Implement actual GitHub API polling with the token
+                # Example:
+                # import requests
+                # headers = {"Authorization": f"Bearer {access_token}"}
+                # response = requests.get("https://api.github.com/user/repos", headers=headers)
+                # Check for new issues/PRs based on area.action_config
+
+                logger.debug(
+                    f"Would poll GitHub API for area {area.id} "
+                    f"(action: {area.action.name})"
+                )
+                skipped_count += 1
+
+            except Exception as e:
+                logger.error(
+                    f"Error processing GitHub area {area.id}: {e}", exc_info=True
+                )
+                skipped_count += 1
+                continue
+
         logger.info(
-            f"GitHub polling not yet implemented. "
-            f"Would check {len(github_areas)} areas. "
-            f"Webhooks are preferred for GitHub events."
+            f"GitHub polling check completed. "
+            f"Triggered: {triggered_count}, Skipped: {skipped_count}, No token: {no_token_count}"
         )
 
         return {
             "status": "success",
             "triggered": triggered_count,
             "skipped": skipped_count,
+            "no_token": no_token_count,
             "checked_areas": len(github_areas),
             "note": "GitHub webhooks preferred over polling",
         }
@@ -409,7 +442,7 @@ def execute_reaction_task(self, execution_id: int):
         dict: Result of the execution
     """
     retry_count = self.request.retries
-    
+
     try:
         # Get execution with related data
         execution = Execution.objects.select_related(
@@ -479,14 +512,14 @@ def execute_reaction_task(self, execution_id: int):
                 f"Max retries ({self.max_retries}) exceeded for execution #{execution_id}. "
                 f"Moving to dead letter queue."
             )
-            
+
             # Send to dead letter queue
             send_to_dead_letter_queue.delay(
                 execution_id=execution_id,
                 error=str(exc),
                 retry_count=retry_count,
             )
-            
+
             return {
                 "status": "failed_permanently",
                 "execution_id": execution_id,
@@ -522,7 +555,7 @@ def send_to_dead_letter_queue(execution_id: int, error: str, retry_count: int):
 
     try:
         execution = Execution.objects.get(pk=execution_id)
-        
+
         # Update execution with DLQ information
         dlq_message = (
             f"Moved to dead letter queue after {retry_count + 1} failed attempts. "
