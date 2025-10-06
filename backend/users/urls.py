@@ -35,21 +35,21 @@ urlpatterns = [
         name="send_verification_email",
     ),
     path("verify-email/<str:token>/", VerifyEmailView.as_view(), name="verify_email"),
-    # Password reset endpoints
+    # Password management endpoints
     path(
-        "forgot-password/",
+        "password-reset/",
         ForgotPasswordView.as_view(),
-        name="forgot_password",
+        name="password_reset_request",
     ),
     path(
-        "reset-password/",
+        "password-reset/confirm/",
         ResetPasswordView.as_view(),
-        name="reset_password",
+        name="password_reset_confirm",
     ),
     path(
-        "change-password/",
+        "password/change/",
         ChangePasswordView.as_view(),
-        name="change_password",
+        name="password_change",
     ),
     # OAuth2 endpoints
     path(
