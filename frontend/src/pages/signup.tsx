@@ -107,13 +107,12 @@ const Signup: React.FC = () => {
               {loading ? 'Registering…' : 'Register'}
             </button>
 
-            <button
-              type="button"
-              onClick={() => (window.location.href = '/login')}
-              className="mt-2 text-sm text-gray-300 underline"
+            <a
+              href="/login"
+              className="mt-2 text-sm text-gray-300 underline text-center block"
             >
               Already have an account? Log in
-            </button>
+            </a>
           </div>
         </form>
       </main>
