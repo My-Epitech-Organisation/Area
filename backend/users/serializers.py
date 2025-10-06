@@ -54,6 +54,7 @@ class EmailOrUsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
         # Original input before parent validation may normalize username
         login_value = attrs.get("username") or self.initial_data.get("email") or ""
         from django.contrib.auth import get_user_model
+
         UserModel = get_user_model()
 
         candidate_user = None
