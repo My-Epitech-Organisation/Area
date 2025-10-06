@@ -364,7 +364,7 @@ def webhook_receiver(request: Request, service: str) -> Response:
 
     # Validate signature
     headers_dict = {k: v for k, v in request.headers.items()}
-    
+
     if not validate_webhook_signature(service, raw_body, headers_dict, webhook_secret):
         logger.warning(f"Invalid webhook signature for service: {service}")
         return Response(
