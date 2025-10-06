@@ -14,6 +14,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 from django.core.exceptions import ImproperlyConfigured
@@ -182,6 +183,74 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = os.getenv("CELERY_TIMEZONE", TIME_ZONE)
 CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "False") == "True"
+
+# Celery Beat Schedule - Periodic Tasks
+CELERY_BEAT_SCHEDULE = {
+    # Check timer actions every minute
+    "check-timer-actions": {
+        "task": "automations.check_timer_actions",
+        "schedule": timedelta(minutes=1),
+        "options": {"queue": "timers"},
+    },
+    # Check GitHub actions every 5 minutes (polling fallback)
+    "check-github-actions": {
+        "task": "automations.check_github_actions",
+        "schedule": timedelta(minutes=5),
+        "options": {"queue": "github"},
+    },
+    # Check Gmail actions every 10 minutes
+    "check-gmail-actions": {
+        "task": "automations.check_gmail_actions",
+        "schedule": timedelta(minutes=10),
+        "options": {"queue": "gmail"},
+    },
+    # Collect execution metrics every hour
+    "collect-execution-metrics": {
+        "task": "automations.collect_execution_metrics",
+        "schedule": timedelta(hours=1),
+        "options": {"queue": "monitoring"},
+    },
+    # Cleanup old executions daily at 2 AM
+    "cleanup-old-executions": {
+        "task": "automations.cleanup_old_executions",
+        "schedule": crontab(hour="2", minute="0"),
+        "options": {"queue": "maintenance"},
+    },
+}
+
+# Celery Task Routes - Queue per service
+CELERY_TASK_ROUTES = {
+    # Timer tasks
+    "automations.check_timer_actions": {"queue": "timers"},
+    # GitHub tasks
+    "automations.check_github_actions": {"queue": "github"},
+    # Gmail tasks
+    "automations.check_gmail_actions": {"queue": "gmail"},
+    # Reaction execution - high priority queue
+    "automations.execute_reaction_task": {"queue": "reactions"},
+    "automations.execute_reaction": {"queue": "reactions"},  # Backward compatibility
+    # Dead letter queue
+    "automations.send_to_dead_letter_queue": {"queue": "dlq"},
+    # Monitoring tasks
+    "automations.collect_execution_metrics": {"queue": "monitoring"},
+    # Maintenance tasks
+    "automations.cleanup_old_executions": {"queue": "maintenance"},
+    # Test/admin tasks
+    "automations.test_execution_flow": {"queue": "reactions"},
+}
+
+# Celery Task Retry Configuration
+CELERY_TASK_ACKS_LATE = True  # Ack after task completion, not before
+CELERY_TASK_REJECT_ON_WORKER_LOST = True  # Requeue if worker dies
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1  # Fetch one task at a time (better for long tasks)
+
+# Webhook Configuration
+# Secrets for validating HMAC signatures from external services
+WEBHOOK_SECRETS = {
+    "github": os.getenv("GITHUB_WEBHOOK_SECRET", "dev_secret_github_123"),
+    "gmail": os.getenv("GMAIL_WEBHOOK_SECRET", "dev_secret_gmail_123"),
+    "webhook": os.getenv("WEBHOOK_SECRET", "dev_secret_webhook_123"),
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
