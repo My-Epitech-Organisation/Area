@@ -1,20 +1,117 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../config/api_config.dart';
+import 'token_service.dart';
+import 'cache_service.dart';
+
+/// Custom exception for authentication errors
+class AuthException implements Exception {
+  final String message;
+  final int? statusCode;
+
+  AuthException(this.message, {this.statusCode});
+
+  @override
+  String toString() => message;
+}
 
 /// Service responsible for authentication operations
-/// Handles email/password login and Google Sign-In
 class AuthService {
-  static const String _authTokenKey = 'auth_token';
-  static const String _refreshTokenKey = 'refresh_token';
-
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final TokenService _tokenService = TokenService();
+  final CacheService _cache = CacheService();
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
   bool _isGoogleSignInInitialized = false;
 
+  // Singleton pattern
+  static final AuthService _instance = AuthService._internal();
+  factory AuthService() => _instance;
+  AuthService._internal();
+
+  // ============================================
+  // EMAIL/PASSWORD AUTHENTICATION
+  // ============================================
+
+  /// Login with email and password
+  Future<Map<String, dynamic>> loginWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final payload = <String, String>{
+        'username': email,
+        'password': password,
+      };
+
+      if (email.contains('@')) {
+        payload['email'] = email;
+      }
+
+      final response = await http.post(
+        Uri.parse(ApiConfig.loginUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(payload),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        await _storeTokensFromResponse(data);
+        return data;
+      }
+
+      final errorMessage = _parseErrorResponse(response);
+      throw AuthException(
+        errorMessage,
+        statusCode: response.statusCode,
+      );
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException('Connection error: ${e.toString()}');
+    }
+  }
+
+  /// Register with email and password
+  Future<Map<String, dynamic>> registerWithEmail({
+    required String username,
+    required String email,
+    required String password,
+    required String confirmPassword,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfig.registerUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'username': username,
+          'email': email,
+          'password': password,
+          'password2': confirmPassword,
+        }),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = json.decode(response.body);
+        await _storeTokensFromResponse(data);
+        return data;
+      }
+
+      final errorMessage = _parseErrorResponse(response);
+      throw AuthException(
+        errorMessage,
+        statusCode: response.statusCode,
+      );
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException('Registration error: ${e.toString()}');
+    }
+  }
+
+  // ============================================
+  // GOOGLE AUTHENTICATION
+  // ============================================
+
+  /// Initialize Google Sign-In
   Future<void> _ensureGoogleSignInInitialized() async {
     if (!_isGoogleSignInInitialized) {
       await _googleSignIn.initialize();
@@ -22,48 +119,7 @@ class AuthService {
     }
   }
 
-  // Token management
-  Future<String?> getAuthToken() async {
-    return await _secureStorage.read(key: _authTokenKey);
-  }
-
-  Future<void> setAuthToken(String token) async {
-    await _secureStorage.write(key: _authTokenKey, value: token);
-  }
-
-  Future<String?> getRefreshToken() async {
-    return await _secureStorage.read(key: _refreshTokenKey);
-  }
-
-  Future<void> setRefreshToken(String token) async {
-    await _secureStorage.write(key: _refreshTokenKey, value: token);
-  }
-
-  Future<void> clearAuthToken() async {
-    await _secureStorage.delete(key: _authTokenKey);
-    await _secureStorage.delete(key: _refreshTokenKey);
-  }
-
-  // Email/Password authentication
-  Future<Map<String, dynamic>?> loginWithEmail(String email, String password) async {
-    try {
-      final response = await http.post(
-        Uri.parse(ApiConfig.loginUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'email': email, 'password': password}),
-      );
-
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      }
-
-      throw Exception('Login failed with status: ${response.statusCode}');
-    } catch (e) {
-      throw Exception('Login error: $e');
-    }
-  }
-
-  // Google Sign-In authentication
+  /// Login with Google account
   Future<Map<String, dynamic>?> loginWithGoogle() async {
     try {
       await _ensureGoogleSignInInitialized();
@@ -76,10 +132,9 @@ class AuthService {
       final String? idToken = auth.idToken;
 
       if (idToken == null) {
-        throw Exception('No Google ID token received');
+        throw AuthException('No Google ID token received');
       }
 
-      // Exchange Google token for API token
       final response = await http.post(
         Uri.parse(ApiConfig.googleLoginUrl),
         headers: {'Content-Type': 'application/json'},
@@ -87,18 +142,134 @@ class AuthService {
       );
 
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        final data = json.decode(response.body);
+        await _storeTokensFromResponse(data);
+        return data;
       }
 
-      throw Exception('Google login failed with status: ${response.statusCode}');
+      final errorMessage = _parseErrorResponse(response);
+      throw AuthException(errorMessage, statusCode: response.statusCode);
     } catch (e) {
-      throw Exception('Google sign-in error: $e');
+      if (e is AuthException) rethrow;
+      throw AuthException('Google sign-in error: ${e.toString()}');
     }
   }
 
-  // Sign out from Google
+  /// Sign out from Google
   Future<void> signOutGoogle() async {
     await _ensureGoogleSignInInitialized();
     await _googleSignIn.signOut();
+  }
+
+  // ============================================
+  // LOGOUT
+  // ============================================
+
+  /// Logout user and clear all data
+  Future<void> logout() async {
+    await _tokenService.clearTokens();
+    _cache.clearAll();
+
+    try {
+      await signOutGoogle();
+    } catch (_) {
+      // Ignore Google sign-out errors
+    }
+  }
+
+  // ============================================
+  // TOKEN MANAGEMENT
+  // ============================================
+
+  /// Check if user is authenticated
+  Future<bool> isAuthenticated() async {
+    return await _tokenService.hasValidTokens();
+  }
+
+  /// Get current auth token
+  Future<String?> getAuthToken() async {
+    return await _tokenService.getAuthToken();
+  }
+
+  // ============================================
+  // HELPER METHODS
+  // ============================================
+
+  /// Store tokens from API response
+  Future<void> _storeTokensFromResponse(Map<String, dynamic> response) async {
+    final accessToken = response['access'] ?? response['token'];
+    final refreshToken = response['refresh'];
+
+    if (accessToken != null && refreshToken != null) {
+      await _tokenService.setTokens(
+        authToken: accessToken,
+        refreshToken: refreshToken,
+      );
+    } else if (accessToken != null) {
+      await _tokenService.setAuthToken(accessToken);
+    }
+  }
+
+  /// Parse error response from API
+  String _parseErrorResponse(http.Response response) {
+    try {
+      final errorData = json.decode(response.body);
+
+      // Format: {"detail": "message"}
+      if (errorData is Map && errorData['detail'] != null) {
+        return errorData['detail'].toString();
+      }
+
+      // Format: {"field": ["error1", "error2"]}
+      if (errorData is Map<String, dynamic>) {
+        final errors = <String>[];
+        errorData.forEach((key, value) {
+          if (value is List && value.isNotEmpty) {
+            final cleanError = _cleanErrorMessage(key, value.first.toString());
+            errors.add(cleanError);
+          } else if (value is String) {
+            final cleanError = _cleanErrorMessage(key, value);
+            errors.add(cleanError);
+          }
+        });
+
+        if (errors.isNotEmpty) {
+          return errors.join('\n');
+        }
+      }
+    } catch (_) {
+      // Ignore parsing errors
+    }
+
+    return 'An error occurred (${response.statusCode})';
+  }
+
+  /// Clean and make error messages user-friendly
+  String _cleanErrorMessage(String field, String message) {
+    final Map<String, Map<String, String>> friendlyMessages = {
+      'username': {
+        'A user with that username already exists.':
+            'This email is already registered. Please login instead.',
+        'already exists': 'This email is already registered.',
+      },
+      'email': {
+        'Enter a valid email address.': 'Please enter a valid email address.',
+        'already exists': 'This email is already registered.',
+      },
+      'password': {
+        'This password is too short.': 'Password must be at least 8 characters.',
+        'This password is too common.': 'Please choose a stronger password.',
+      },
+    };
+
+    if (friendlyMessages.containsKey(field)) {
+      for (var entry in friendlyMessages[field]!.entries) {
+        if (message.contains(entry.key)) {
+          return entry.value;
+        }
+      }
+    }
+
+    return message;
   }
 }
