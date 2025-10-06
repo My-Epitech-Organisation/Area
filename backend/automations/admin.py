@@ -174,6 +174,4 @@ class ExecutionAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return True
         # Only allow deletion of terminal executions
-        if obj and obj.is_terminal:
-            return True
-        return False
+        return bool(obj and obj.is_terminal)
