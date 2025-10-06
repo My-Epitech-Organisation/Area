@@ -327,7 +327,7 @@ def check_timer_actions(self):
     except Exception as exc:
         logger.error(f"Fatal error in check_timer_actions: {exc}", exc_info=True)
         # Retry the task
-        raise self.retry(exc=exc, countdown=60)
+        raise self.retry(exc=exc, countdown=60) from None
 
 
 @shared_task(
@@ -378,7 +378,10 @@ def check_github_actions(self):
                 # Example:
                 # import requests
                 # headers = {"Authorization": f"Bearer {access_token}"}
-                # response = requests.get("https://api.github.com/user/repos", headers=headers)
+                # response = requests.get(
+                #     "https://api.github.com/user/repos",
+                #     headers=headers
+                # )
                 # Check for new issues/PRs based on area.action_config
 
                 logger.debug(
@@ -396,7 +399,8 @@ def check_github_actions(self):
 
         logger.info(
             f"GitHub polling check completed. "
-            f"Triggered: {triggered_count}, Skipped: {skipped_count}, No token: {no_token_count}"
+            f"Triggered: {triggered_count}, Skipped: {skipped_count}, "
+            f"No token: {no_token_count}"
         )
 
         return {
@@ -410,7 +414,7 @@ def check_github_actions(self):
 
     except Exception as exc:
         logger.error(f"Error in check_github_actions: {exc}", exc_info=True)
-        raise self.retry(exc=exc, countdown=300)
+        raise self.retry(exc=exc, countdown=300) from None
 
 
 @shared_task(
@@ -451,7 +455,8 @@ def execute_reaction_task(self, execution_id: int):
 
         logger.info(
             f"Executing reaction for execution #{execution_id}, "
-            f"area '{execution.area.name}' (attempt {retry_count + 1}/{self.max_retries + 1})"
+            f"area '{execution.area.name}' "
+            f"(attempt {retry_count + 1}/{self.max_retries + 1})"
         )
 
         # Mark execution as started
@@ -509,8 +514,8 @@ def execute_reaction_task(self, execution_id: int):
         # Check if we've exhausted retries
         if retry_count >= self.max_retries:
             logger.error(
-                f"Max retries ({self.max_retries}) exceeded for execution #{execution_id}. "
-                f"Moving to dead letter queue."
+                f"Max retries ({self.max_retries}) exceeded for "
+                f"execution #{execution_id}. Moving to dead letter queue."
             )
 
             # Send to dead letter queue
