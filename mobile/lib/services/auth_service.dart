@@ -178,6 +178,70 @@ class AuthService {
   }
 
   // ============================================
+  // PASSWORD RESET
+  // ============================================
+
+  /// Request password reset email
+  Future<Map<String, dynamic>> requestPasswordReset({
+    required String email,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfig.forgotPasswordUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'email': email}),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = json.decode(response.body);
+        return data;
+      }
+
+      final errorMessage = _parseErrorResponse(response);
+      throw AuthException(
+        errorMessage,
+        statusCode: response.statusCode,
+      );
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException('Connection error: ${e.toString()}');
+    }
+  }
+
+  /// Reset password with token/code
+  Future<Map<String, dynamic>> resetPassword({
+    required String token,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfig.resetPasswordUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'token': token,
+          'new_password': newPassword,
+          'confirm_password': confirmPassword,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = json.decode(response.body);
+        return data;
+      }
+
+      final errorMessage = _parseErrorResponse(response);
+      throw AuthException(
+        errorMessage,
+        statusCode: response.statusCode,
+      );
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException('Connection error: ${e.toString()}');
+    }
+  }
+
+  // ============================================
   // TOKEN MANAGEMENT
   // ============================================
 

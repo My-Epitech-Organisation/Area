@@ -56,6 +56,11 @@ class ApiConfig {
   static String get registerUrl => '$authBaseUrl/register/';
   static String get refreshUrl => '$authBaseUrl/login/refresh/';
   static String get profileUrl => '$authBaseUrl/me/';
+
+  // Password Reset URLs
+  static String get forgotPasswordUrl => '$authBaseUrl/password-reset/';
+  static String get resetPasswordUrl => '$authBaseUrl/password-reset/confirm/';
+
   static String get automationsUrl => '$authBaseUrl/automations/';
   static String get servicesUrl => '$authBaseUrl/services/';
   static String get statisticsUrl => '$authBaseUrl/statistics';
