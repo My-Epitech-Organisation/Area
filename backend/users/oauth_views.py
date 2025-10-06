@@ -89,7 +89,7 @@ class OAuthInitiateView(APIView):
             serializer = OAuthInitiateResponseSerializer(response_data)
 
             logger.info(
-                f"User {request.user.username} initiated OAuth2 flow for {provider}"
+                f"User {request.user.email} initiated OAuth2 flow for {provider}"
             )
 
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -176,7 +176,7 @@ class OAuthCallbackView(APIView):
             if not is_valid:
                 logger.warning(
                     f"Invalid OAuth2 state for user "
-                    f"{request.user.username}: {error_msg}"
+                    f"{request.user.email}: {error_msg}"
                 )
                 return Response(
                     {"error": "invalid_state", "message": error_msg},
@@ -204,7 +204,7 @@ class OAuthCallbackView(APIView):
             )
 
             action = "connected" if created else "reconnected"
-            logger.info(f"User {request.user.username} {action} to {provider}")
+            logger.info(f"User {request.user.email} {action} to {provider}")
 
             return Response(
                 {
@@ -334,7 +334,7 @@ class ServiceDisconnectView(APIView):
             # Delete token from database
             service_token.delete()
 
-            logger.info(f"User {request.user.username} disconnected from {provider}")
+            logger.info(f"User {request.user.email} disconnected from {provider}")
 
             response_data = {
                 "message": f"Successfully disconnected from {provider}",
