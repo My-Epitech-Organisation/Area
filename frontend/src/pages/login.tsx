@@ -6,11 +6,38 @@ const Login: React.FC = () => {
   const [usernameOrEmail, setUsernameOrEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, any> | null>(null);
+  const [generalError, setGeneralError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+
+  const parseErrors = (errBody: any): { message: string; fields?: Record<string, string[]> } => {
+    if (!errBody)
+      return { message: 'An error occurred' };
+    if (typeof errBody === 'string')
+      return { message: errBody };
+    if (errBody.detail)
+      return { message: String(errBody.detail) };
+    if (typeof errBody === 'object') {
+      const fields: Record<string, string[]> = {};
+      const parts: string[] = [];
+      for (const k of Object.keys(errBody)) {
+        const v = errBody[k];
+        if (Array.isArray(v)) {
+          fields[k] = v.map((s) => String(s));
+          parts.push(`${k}: ${v.join(' ')}`);
+        } else if (typeof v === 'string') {
+          fields[k] = [v];
+          parts.push(`${k}: ${v}`);
+        }
+      }
+      return { message: parts.join(' — '), fields };
+    }
+    return { message: 'An error occurred' };
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrors(null);
+    setGeneralError(null);
+    setFieldErrors({});
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/auth/login/`, {
@@ -20,16 +47,16 @@ const Login: React.FC = () => {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        if (data.access)
-          localStorage.setItem('access', data.access);
-        if (data.refresh)
-          localStorage.setItem('refresh', data.refresh);
+        if (data.access) localStorage.setItem('access', data.access);
+        if (data.refresh) localStorage.setItem('refresh', data.refresh);
         window.location.href = '/dashboard';
-      } else {
-        setErrors(data || { detail: 'Login failed' });
+        return;
       }
+      const parsed = parseErrors(data);
+      setGeneralError(parsed.message || 'Login failed');
+      setFieldErrors(parsed.fields || {});
     } catch (err) {
-      setErrors({ detail: 'Network error' });
+      setGeneralError('Network error');
     } finally {
       setLoading(false);
     }
@@ -46,6 +73,10 @@ const Login: React.FC = () => {
           className="w-full max-w-md bg-white/5 p-8 rounded-xl backdrop-blur-sm border border-white/10"
         >
           <div className="flex flex-col gap-4">
+            {generalError && (
+              <div className="text-red-400 text-sm p-3 bg-red-900/20 rounded">{generalError}</div>
+            )}
+
             <label className="text-sm text-gray-300">Username or email</label>
             <input
               value={usernameOrEmail}
@@ -54,6 +85,12 @@ const Login: React.FC = () => {
               className="px-4 py-3 rounded-md bg-transparent border border-white/20 text-white"
               placeholder="username or email"
             />
+            {fieldErrors.username && (
+              <div className="text-red-400 text-sm">{fieldErrors.username.join(' ')}</div>
+            )}
+            {fieldErrors.email && (
+              <div className="text-red-400 text-sm">{fieldErrors.email.join(' ')}</div>
+            )}
 
             <label className="text-sm text-gray-300">Password</label>
             <input
@@ -64,11 +101,8 @@ const Login: React.FC = () => {
               className="px-4 py-3 rounded-md bg-transparent border border-white/20 text-white"
               placeholder="password"
             />
-
-            {errors && (
-              <div className="text-red-400 text-sm">
-                {typeof errors === 'string' ? errors : JSON.stringify(errors)}
-              </div>
+            {fieldErrors.password && (
+              <div className="text-red-400 text-sm">{fieldErrors.password.join(' ')}</div>
             )}
 
             <button
