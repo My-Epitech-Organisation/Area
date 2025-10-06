@@ -8,6 +8,11 @@ from .oauth_views import (
     ServiceConnectionListView,
     ServiceDisconnectView,
 )
+from .password_views import (
+    ChangePasswordView,
+    ForgotPasswordView,
+    ResetPasswordView,
+)
 from .views import (
     EmailOrUsernameTokenObtainPairView,
     RegisterView,
@@ -30,6 +35,22 @@ urlpatterns = [
         name="send_verification_email",
     ),
     path("verify-email/<str:token>/", VerifyEmailView.as_view(), name="verify_email"),
+    # Password reset endpoints
+    path(
+        "forgot-password/",
+        ForgotPasswordView.as_view(),
+        name="forgot_password",
+    ),
+    path(
+        "reset-password/",
+        ResetPasswordView.as_view(),
+        name="reset_password",
+    ),
+    path(
+        "change-password/",
+        ChangePasswordView.as_view(),
+        name="change_password",
+    ),
     # OAuth2 endpoints
     path(
         "oauth/<str:provider>/",
