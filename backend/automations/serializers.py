@@ -222,7 +222,26 @@ class AreaCreateSerializer(serializers.ModelSerializer):
         action_config = attrs.get("action_config", {})
         reaction_config = attrs.get("reaction_config", {})
 
+        # OAuth2 Validation: Check if user has connected required services
         if action:
+            service_name = action.service.name.lower()
+
+            # Check if this service requires OAuth2 connection
+            from django.conf import settings
+            if service_name in settings.OAUTH2_PROVIDERS:
+                # Verify user has a valid token for this service
+                from users.oauth.manager import OAuthManager
+
+                user = self.context.get('request').user if self.context.get('request') else None
+                if user:
+                    token = OAuthManager.get_valid_token(user, service_name)
+
+                    if not token:
+                        raise serializers.ValidationError({
+                            'action': f'You must connect your {action.service.name} account before creating '
+                                     f'an area with this action. Please visit /auth/oauth/{service_name}/ to connect.'
+                        })
+
             # Validate action configuration against schema
             try:
                 validate_action_config(action.name, action_config)
@@ -230,6 +249,24 @@ class AreaCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"action_config": str(e)})
 
         if reaction:
+            service_name = reaction.service.name.lower()
+
+            # Check if this service requires OAuth2 connection
+            from django.conf import settings
+            if service_name in settings.OAUTH2_PROVIDERS:
+                # Verify user has a valid token for this service
+                from users.oauth.manager import OAuthManager
+
+                user = self.context.get('request').user if self.context.get('request') else None
+                if user:
+                    token = OAuthManager.get_valid_token(user, service_name)
+
+                    if not token:
+                        raise serializers.ValidationError({
+                            'reaction': f'You must connect your {reaction.service.name} account before creating '
+                                       f'an area with this reaction. Please visit /auth/oauth/{service_name}/ to connect.'
+                        })
+
             # Validate reaction configuration against schema
             try:
                 validate_reaction_config(reaction.name, reaction_config)
