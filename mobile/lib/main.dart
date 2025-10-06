@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
+import 'package:app_links/app_links.dart';
 import 'providers/providers.dart';
 import 'pages/splash_page.dart';
 import 'pages/login_page.dart';
+import 'pages/reset_password_page.dart';
 import 'swipe_navigation_page.dart';
 import 'utils/debug_helper.dart';
 
@@ -11,8 +14,69 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  late AppLinks _appLinks;
+  StreamSubscription? _sub;
+
+  @override
+  void initState() {
+    super.initState();
+    _appLinks = AppLinks();
+    _initDeepLinkListener();
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initDeepLinkListener() async {
+    // Handle initial link (app was opened from a link)
+    try {
+      final initialUri = await _appLinks.getInitialLink();
+      if (initialUri != null) {
+        _handleDeepLink(initialUri);
+      }
+    } catch (e) {
+      debugPrint('Error getting initial link: $e');
+    }
+
+    // Handle links while app is running
+    _sub = _appLinks.uriLinkStream.listen((Uri? uri) {
+      if (uri != null) {
+        _handleDeepLink(uri);
+      }
+    }, onError: (err) {
+      debugPrint('Error listening to link stream: $err');
+    });
+  }
+
+  void _handleDeepLink(Uri uri) {
+    // Handle password reset deep link: area://reset-password?token=abc123
+    if (uri.scheme == 'area' && uri.host == 'reset-password') {
+      final token = uri.queryParameters['token'];
+      
+      if (token != null && token.isNotEmpty) {
+        // Navigate to reset password page with token
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (context) => ResetPasswordPage(token: token),
+          ),
+        );
+      } else {
+        debugPrint('Reset password link missing token');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +88,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ServiceCatalogProvider()),
       ],
       child: MaterialApp(
+        navigatorKey: navigatorKey,
         title: 'AREA Mobile',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
