@@ -66,7 +66,8 @@ class OAuthManager:
         missing_fields = [field for field in required_fields if not config.get(field)]
         if missing_fields:
             raise InvalidProviderError(
-                f"Provider '{provider_name}' is missing configuration: {', '.join(missing_fields)}"
+                f"Provider '{provider_name}' is missing configuration: "
+                f"{', '.join(missing_fields)}"
             )
 
         # Get provider class
@@ -145,7 +146,8 @@ class OAuthManager:
 
                 except TokenRefreshError as e:
                     logger.error(
-                        f"Failed to refresh token for {user.username}/{service_name}: {e}"
+                        f"Failed to refresh token for "
+                        f"{user.username}/{service_name}: {e}"
                     )
                     return None
                 except NotImplementedError:
