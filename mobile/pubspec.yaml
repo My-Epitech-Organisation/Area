@@ -40,6 +40,7 @@ dependencies:
   provider: ^6.1.1  # Pour la gestion d'état
   flutter_secure_storage: ^9.2.4
   google_sign_in: ^7.2.0
+  app_links: ^6.3.3  # Pour les deep links
 
 dev_dependencies:
   flutter_test:
