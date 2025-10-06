@@ -11,7 +11,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 
 from .models import User
-from .serializers import EmailOrUsernameTokenObtainPairSerializer, UserSerializer
+from .serializers import EmailTokenObtainPairSerializer, UserSerializer
 
 
 class RegisterView(generics.CreateAPIView):
@@ -52,7 +52,7 @@ class SendEmailVerificationView(APIView):
         try:
             subject = "AREA - Email Verification"
             message = f"""
-            Hello {user.username},
+            Hello,
 
             Please click the following link to verify your email address:
             {request.build_absolute_uri(f"/auth/verify-email/{token}/")}
@@ -96,7 +96,7 @@ class VerifyEmailView(APIView):
 
             # Mark email as verified
             user.email_verified = True
-            user.email_verification_token = None  # Clear the token
+            user.email_verification_token = ""  # Clear the token
             user.save()
 
             return Response(
@@ -110,7 +110,7 @@ class VerifyEmailView(APIView):
             )
 
 
-class EmailOrUsernameTokenObtainPairView(TokenObtainPairView):
-    """Obtain JWT token pair using either username or email as credential."""
+class EmailTokenObtainPairView(TokenObtainPairView):
+    """Obtain JWT token pair using email as credential."""
 
-    serializer_class = EmailOrUsernameTokenObtainPairSerializer
+    serializer_class = EmailTokenObtainPairSerializer
