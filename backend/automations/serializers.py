@@ -9,6 +9,8 @@ This module provides Django REST Framework serializers for:
 
 from rest_framework import serializers
 
+from users.oauth.manager import OAuthManager
+
 from .models import Action, Area, Execution, Reaction, Service
 from .validators import (
     validate_action_config,
@@ -231,7 +233,6 @@ class AreaCreateSerializer(serializers.ModelSerializer):
 
             if service_name in settings.OAUTH2_PROVIDERS:
                 # Verify user has a valid token for this service
-                from users.oauth.manager import OAuthManager
 
                 user = (
                     self.context.get("request").user
@@ -263,7 +264,6 @@ class AreaCreateSerializer(serializers.ModelSerializer):
 
             if service_name in settings.OAUTH2_PROVIDERS:
                 # Verify user has a valid token for this service
-                from users.oauth.manager import OAuthManager
 
                 user = (
                     self.context.get("request").user
