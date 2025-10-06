@@ -45,13 +45,16 @@ class CreateAppletPage extends StatelessWidget {
                   decoration: const InputDecoration(
                     labelText: 'Trigger Service',
                     border: OutlineInputBorder(),
-                    helperText: 'Choose the service that will start the automation',
+                    helperText:
+                        'Choose the service that will start the automation',
                   ),
                   items: ['Gmail', 'Discord', 'GitHub', 'Timer']
-                      .map((service) => DropdownMenuItem(
-                            value: service,
-                            child: Text(service),
-                          ))
+                      .map(
+                        (service) => DropdownMenuItem(
+                          value: service,
+                          child: Text(service),
+                        ),
+                      )
                       .toList(),
                   onChanged: (value) {},
                 ),
@@ -64,13 +67,16 @@ class CreateAppletPage extends StatelessWidget {
                   decoration: const InputDecoration(
                     labelText: 'Action',
                     border: OutlineInputBorder(),
-                    helperText: 'Choose what the applet should do when triggered',
+                    helperText:
+                        'Choose what the applet should do when triggered',
                   ),
                   items: ['Send message', 'Create task', 'Notify']
-                      .map((action) => DropdownMenuItem(
-                            value: action,
-                            child: Text(action),
-                          ))
+                      .map(
+                        (action) => DropdownMenuItem(
+                          value: action,
+                          child: Text(action),
+                        ),
+                      )
                       .toList(),
                   onChanged: (value) {},
                 ),

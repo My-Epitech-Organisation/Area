@@ -10,7 +10,9 @@ class UserPage extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirm Sign Out'),
-        content: const Text('Are you sure you want to sign out of your account?'),
+        content: const Text(
+          'Are you sure you want to sign out of your account?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -48,14 +50,13 @@ class UserPage extends StatelessWidget {
       try {
         final appState = Provider.of<AppState>(context, listen: false);
         await appState.logout();
-        
+
         if (context.mounted) {
           // Close loading dialog
           Navigator.of(context).pop();
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            '/login',
-            (route) => false,
-          );
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil('/login', (route) => false);
         }
       } catch (e) {
         if (context.mounted) {
@@ -78,7 +79,7 @@ class UserPage extends StatelessWidget {
     return Consumer<AppState>(
       builder: (context, appState, child) {
         final userProfile = appState.userProfile;
-        
+
         return SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -132,15 +133,26 @@ class UserPage extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
-                                color: (userProfile?['email_verified'] == true ? Colors.green : Colors.orange).withValues(alpha: 0.1),
+                                color:
+                                    (userProfile?['email_verified'] == true
+                                            ? Colors.green
+                                            : Colors.orange)
+                                        .withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
-                                userProfile?['email_verified'] == true ? 'Verified User' : 'Unverified User',
+                                userProfile?['email_verified'] == true
+                                    ? 'Verified User'
+                                    : 'Unverified User',
                                 style: TextStyle(
-                                  color: userProfile?['email_verified'] == true ? Colors.green : Colors.orange,
+                                  color: userProfile?['email_verified'] == true
+                                      ? Colors.green
+                                      : Colors.orange,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -156,10 +168,7 @@ class UserPage extends StatelessWidget {
 
                 const Text(
                   'Statistics',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -198,9 +207,13 @@ class UserPage extends StatelessWidget {
                     Expanded(
                       child: _buildStatCard(
                         'Status',
-                        userProfile?['email_verified'] == true ? 'Verified' : 'Unverified',
+                        userProfile?['email_verified'] == true
+                            ? 'Verified'
+                            : 'Unverified',
                         Icons.check_circle,
-                        userProfile?['email_verified'] == true ? Colors.green : Colors.orange,
+                        userProfile?['email_verified'] == true
+                            ? Colors.green
+                            : Colors.orange,
                       ),
                     ),
                   ],
@@ -210,10 +223,7 @@ class UserPage extends StatelessWidget {
 
                 const Text(
                   'Settings',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 Container(
@@ -289,7 +299,12 @@ class UserPage extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -306,11 +321,7 @@ class UserPage extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(
-            icon,
-            size: 32,
-            color: color,
-          ),
+          Icon(icon, size: 32, color: color),
           const SizedBox(height: 8),
           Text(
             value,
@@ -323,10 +334,7 @@ class UserPage extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             title,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             textAlign: TextAlign.center,
           ),
         ],
@@ -341,17 +349,12 @@ class UserPage extends StatelessWidget {
     VoidCallback onTap,
   ) {
     return ListTile(
-      leading: Icon(
-        icon,
-        color: Colors.grey[600],
-      ),
+      leading: Icon(icon, color: Colors.grey[600]),
       title: Text(title),
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
 }

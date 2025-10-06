@@ -5,7 +5,6 @@ class ApiConfig {
   static String? _overrideBaseUrl;
   static String? _autoDetectedBase;
 
-
   static void setBaseUrl(String url) {
     _overrideBaseUrl = url.trim();
     debugPrint('Base URL override set to: $_overrideBaseUrl');
@@ -60,12 +59,16 @@ class ApiConfig {
   static String get userStatisticsUrl => '$authBaseUrl/users/statistics/';
 
   static String automationUrl(int id) => '$authBaseUrl/automations/$id/';
-  static String automationToggleUrl(int id) => '$authBaseUrl/automations/$id/toggle/';
-  static String serviceActionsUrl(int serviceId) => '$authBaseUrl/services/$serviceId/actions/';
-  static String serviceReactionsUrl(int serviceId) => '$authBaseUrl/services/$serviceId/reactions/';
-  static String appletLogsUrl(int appletId, {int limit = 50}) => '$authBaseUrl/applets/$appletId/logs?limit=$limit';
-  static String userAutomationsUrl(String userId) => '$authBaseUrl/users/$userId/automations/';
-
+  static String automationToggleUrl(int id) =>
+      '$authBaseUrl/automations/$id/toggle/';
+  static String serviceActionsUrl(int serviceId) =>
+      '$authBaseUrl/services/$serviceId/actions/';
+  static String serviceReactionsUrl(int serviceId) =>
+      '$authBaseUrl/services/$serviceId/reactions/';
+  static String appletLogsUrl(int appletId, {int limit = 50}) =>
+      '$authBaseUrl/applets/$appletId/logs?limit=$limit';
+  static String userAutomationsUrl(String userId) =>
+      '$authBaseUrl/users/$userId/automations/';
 
   static const int maxRetries = 3;
   static const Duration timeout = Duration(seconds: 30);

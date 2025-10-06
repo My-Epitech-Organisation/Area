@@ -197,7 +197,8 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateApplet(int id, {
+  Future<bool> updateApplet(
+    int id, {
     String? name,
     String? description,
     String? status,
@@ -206,7 +207,8 @@ class AppState extends ChangeNotifier {
   }) async {
     try {
       _setLoading(true);
-      final updatedApplet = await _apiService.updateApplet(id,
+      final updatedApplet = await _apiService.updateApplet(
+        id,
         name: name,
         description: description,
         status: status,
@@ -289,7 +291,8 @@ class AppState extends ChangeNotifier {
   int get totalAppletsCount => _applets.length;
 
   List<Applet> get activeApplets => _applets.where((a) => a.isActive).toList();
-  List<Applet> get inactiveApplets => _applets.where((a) => !a.isActive).toList();
+  List<Applet> get inactiveApplets =>
+      _applets.where((a) => !a.isActive).toList();
 
   Map<String, int> get appletsByTriggerService {
     final map = <String, int>{};

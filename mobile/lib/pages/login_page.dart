@@ -96,7 +96,8 @@ class _LoginPageState extends State<LoginPage> {
     } else {
       setState(() {
         final error = appState.error;
-        _errorMessage = error ?? (_isLogin ? 'Login failed' : 'Registration failed');
+        _errorMessage =
+            error ?? (_isLogin ? 'Login failed' : 'Registration failed');
       });
     }
   }
@@ -106,166 +107,170 @@ class _LoginPageState extends State<LoginPage> {
     return DebugConfigWidget(
       child: Scaffold(
         body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Logo/Title
-                Semantics(
-                  header: true,
-                  child: const Text(
-                    'AREA',
-                    style: TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Logo/Title
+                  Semantics(
+                    header: true,
+                    child: const Text(
+                      'AREA',
+                      style: TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Automate your tasks',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Automate your tasks',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 48),
+                  const SizedBox(height: 48),
 
-                // Email field
-                Semantics(
-                  label: 'Email address input field',
-                  hint: 'Enter your email address',
-                  child: TextFormField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.email),
+                  // Email field
+                  Semantics(
+                    label: 'Email address input field',
+                    hint: 'Enter your email address',
+                    child: TextFormField(
+                      controller: _emailController,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.email),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your email';
+                        }
+                        if (!RegExp(
+                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                        ).hasMatch(value)) {
+                          return 'Please enter a valid email';
+                        }
+                        return null;
+                      },
                     ),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
                   ),
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                // Password field
+                  // Password field
                   Semantics(
                     label: 'Password input field',
                     hint: 'Enter your password',
-                  child: TextFormField(
-                    controller: _passwordController,
-                    decoration: const InputDecoration(
+                    child: TextFormField(
+                      controller: _passwordController,
+                      decoration: const InputDecoration(
                         labelText: 'Password',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.lock),
-                    ),
-                    obscureText: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.lock),
+                      ),
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
                           return 'Please enter your password';
-                      }
-                      if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Error message
-                if (_errorMessage != null)
-                  Semantics(
-                    label: 'Error message',
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
-                      ),
-                      child: Text(
-                        _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
-                        textAlign: TextAlign.center,
-                      ),
+                        }
+                        if (value.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
+                        return null;
+                      },
                     ),
                   ),
+                  const SizedBox(height: 24),
 
-                const SizedBox(height: 24),
-
-                // Submit button
-                Semantics(
-                  label: '${_isLogin ? 'Login' : 'Register'} button',
-                  hint: 'Tap to ${_isLogin ? 'sign in' : 'create account'}',
-                  button: true,
-                  child: SizedBox(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _submit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  // Error message
+                  if (_errorMessage != null)
+                    Semantics(
+                      label: 'Error message',
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.red.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(color: Colors.red),
+                          textAlign: TextAlign.center,
                         ),
                       ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+
+                  const SizedBox(height: 24),
+
+                  // Submit button
+                  Semantics(
+                    label: '${_isLogin ? 'Login' : 'Register'} button',
+                    hint: 'Tap to ${_isLogin ? 'sign in' : 'create account'}',
+                    button: true,
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                _isLogin ? 'Sign In' : 'Create Account',
+                                style: const TextStyle(fontSize: 16),
                               ),
-                            )
-                          : Text(
-                              _isLogin ? 'Sign In' : 'Create Account',
-                              style: const TextStyle(fontSize: 16),
-                            ),
+                      ),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                // Toggle between login/register
-                Semantics(
-                  label: 'Switch to ${_isLogin ? 'register' : 'login'} mode',
-                  hint: 'Tap to ${_isLogin ? 'create a new account' : 'sign in to existing account'}',
-                  button: true,
-                  child: TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _isLogin = !_isLogin;
-                        _errorMessage = null;
-                      });
-                    },
-                    child: Text(
-                      _isLogin
-                          ? "Don't have an account? Sign Up"
-                          : 'Already have an account? Sign In',
-                      style: const TextStyle(color: Colors.blue),
+                  // Toggle between login/register
+                  Semantics(
+                    label: 'Switch to ${_isLogin ? 'register' : 'login'} mode',
+                    hint:
+                        'Tap to ${_isLogin ? 'create a new account' : 'sign in to existing account'}',
+                    button: true,
+                    child: TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _isLogin = !_isLogin;
+                          _errorMessage = null;
+                        });
+                      },
+                      child: Text(
+                        _isLogin
+                            ? "Don't have an account? Sign Up"
+                            : 'Already have an account? Sign In',
+                        style: const TextStyle(color: Colors.blue),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
             ),
           ),
         ),
