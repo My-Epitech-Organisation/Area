@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/applet.dart';
 import '../config/api_config.dart';
 
 class ApiService {
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   // Singleton pattern
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
@@ -18,38 +19,33 @@ class ApiService {
 
   Future<String?> get authToken async {
     if (_authToken == null) {
-      final prefs = await SharedPreferences.getInstance();
-      _authToken = prefs.getString('auth_token');
+      _authToken = await _secureStorage.read(key: 'auth_token');
     }
     return _authToken;
   }
 
   Future<String?> get refreshToken async {
     if (_refreshToken == null) {
-      final prefs = await SharedPreferences.getInstance();
-      _refreshToken = prefs.getString('refresh_token');
+      _refreshToken = await _secureStorage.read(key: 'refresh_token');
     }
     return _refreshToken;
   }
 
   Future<void> setAuthToken(String token) async {
-    _authToken = token;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('auth_token', token);
+  _authToken = token;
+  await _secureStorage.write(key: 'auth_token', value: token);
   }
 
   Future<void> setRefreshToken(String token) async {
-    _refreshToken = token;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('refresh_token', token);
+  _refreshToken = token;
+  await _secureStorage.write(key: 'refresh_token', value: token);
   }
 
   Future<void> clearAuthToken() async {
-    _authToken = null;
-    _refreshToken = null;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
-    await prefs.remove('refresh_token');
+  _authToken = null;
+  _refreshToken = null;
+  await _secureStorage.delete(key: 'auth_token');
+  await _secureStorage.delete(key: 'refresh_token');
   }
 
   Future<Map<String, String>> get _headers async {
