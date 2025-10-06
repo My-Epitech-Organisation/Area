@@ -272,7 +272,7 @@ class CheckTimerActionsTest(TestCase):
 
     def test_check_timer_actions_skips_disabled_areas(self):
         """Test that disabled areas are not processed."""
-        area = Area.objects.create(
+        Area.objects.create(
             owner=self.user,
             name="Disabled Area",
             action=self.action,
@@ -362,7 +362,7 @@ class ExecuteReactionTest(TestCase):
         )
 
         # Execute reaction (will retry in background)
-        with self.assertRaises(Exception):
+        with self.assertRaises((RuntimeError, ValueError)):
             execute_reaction(execution.pk)
 
         # Verify execution marked as failed
