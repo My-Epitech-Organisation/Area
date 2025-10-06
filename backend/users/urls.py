@@ -14,7 +14,7 @@ from .password_views import (
     ResetPasswordView,
 )
 from .views import (
-    EmailOrUsernameTokenObtainPairView,
+    EmailTokenObtainPairView,
     RegisterView,
     SendEmailVerificationView,
     UserDetailView,
@@ -25,7 +25,7 @@ urlpatterns = [
     # Authentication endpoints
     path("register/", RegisterView.as_view(), name="auth_register"),
     path(
-        "login/", EmailOrUsernameTokenObtainPairView.as_view(), name="token_obtain_pair"
+        "login/", EmailTokenObtainPairView.as_view(), name="token_obtain_pair"
     ),
     path("login/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("me/", UserDetailView.as_view(), name="user_detail"),
