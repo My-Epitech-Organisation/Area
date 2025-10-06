@@ -41,14 +41,14 @@ class UserManager(BaseUserManager):
 
 class User(AbstractUser):
     """Custom user model with email as login and username as display name.
-    
+
     - Email is the unique identifier for authentication (USERNAME_FIELD)
     - Username is a simple display name (can have duplicates)
     - ID is a UUID for better security and scalability
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
+
     # Override email to make it unique and required
     email = models.EmailField(
         verbose_name="email address",
@@ -57,7 +57,7 @@ class User(AbstractUser):
             "unique": "A user with that email already exists.",
         },
     )
-    
+
     # Override username to make it non-unique (just a display name)
     username = models.CharField(
         verbose_name="display name",
@@ -65,7 +65,7 @@ class User(AbstractUser):
         blank=True,
         help_text="Optional display name (not unique, not used for login)",
     )
-    
+
     email_verified = models.BooleanField(default=False)
     email_verification_token = models.CharField(max_length=64, blank=True, default="")
 
@@ -73,7 +73,7 @@ class User(AbstractUser):
     USERNAME_FIELD = "email"
     # Fields required when creating a superuser (excluding USERNAME_FIELD and password)
     REQUIRED_FIELDS = []  # username is now optional
-    
+
     # Use our custom manager
     objects = UserManager()
 

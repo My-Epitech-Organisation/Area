@@ -47,11 +47,11 @@ class UserSerializer(serializers.ModelSerializer):
 
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Custom token serializer that uses email for authentication.
-    
+
     Since our User model now uses email as USERNAME_FIELD, we override to accept
     'email' in the input and map it to the 'username' field expected by SimpleJWT.
     """
-    
+
     username_field = "email"  # Tell DRF to use 'email' as the input field name
 
     def validate(self, attrs):  # type: ignore[override]
@@ -59,5 +59,5 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
         # since SimpleJWT expects 'username' internally but our USERNAME_FIELD is 'email'
         if "email" in attrs:
             attrs[User.USERNAME_FIELD] = attrs.pop("email")
-        
+
         return super().validate(attrs)
