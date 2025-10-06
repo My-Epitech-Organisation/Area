@@ -74,6 +74,7 @@ class GitHubOAuthProvider(BaseOAuthProvider):
                     "code": code,
                     "redirect_uri": self.redirect_uri,
                 },
+                timeout=30,
             )
 
             response.raise_for_status()
@@ -96,7 +97,7 @@ class GitHubOAuthProvider(BaseOAuthProvider):
 
         except requests.exceptions.RequestException as e:
             logger.error(f"GitHub token exchange failed: {str(e)}")
-            raise TokenExchangeError(f"Failed to exchange GitHub code: {str(e)}")
+            raise TokenExchangeError(f"Failed to exchange GitHub code: {str(e)}") from e
 
     def refresh_access_token(self, refresh_token: str) -> Dict:
         """
@@ -134,6 +135,7 @@ class GitHubOAuthProvider(BaseOAuthProvider):
                     "Accept": "application/vnd.github+json",
                     "X-GitHub-Api-Version": "2022-11-28",
                 },
+                timeout=30,
             )
 
             response.raise_for_status()
@@ -157,7 +159,7 @@ class GitHubOAuthProvider(BaseOAuthProvider):
 
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to fetch GitHub user info: {str(e)}")
-            raise ProviderAPIError(f"Failed to get GitHub user info: {str(e)}")
+            raise ProviderAPIError(f"Failed to get GitHub user info: {str(e)}") from e
 
     def _get_primary_email(self, access_token: str) -> str:
         """
@@ -176,6 +178,7 @@ class GitHubOAuthProvider(BaseOAuthProvider):
                     "Authorization": f"Bearer {access_token}",
                     "Accept": "application/vnd.github+json",
                 },
+                timeout=30,
             )
 
             response.raise_for_status()
@@ -213,6 +216,7 @@ class GitHubOAuthProvider(BaseOAuthProvider):
                 f"https://api.github.com/applications/{self.client_id}/token",
                 auth=(self.client_id, self.client_secret),
                 json={"access_token": token},
+                timeout=30,
             )
 
             success = response.status_code == 204
