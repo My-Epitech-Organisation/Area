@@ -29,7 +29,7 @@ class UserAdmin(BaseUserAdmin):
 
     # Fields to search (email first as it's the primary identifier)
     search_fields = ("email", "username", "first_name", "last_name")
-    
+
     # Use email for ordering
     ordering = ("email",)
 
