@@ -13,14 +13,31 @@ import logging
 from datetime import datetime, timedelta
 from typing import Optional
 
+import requests
 from celery import shared_task
 
-from django.db import IntegrityError
+from django.db import IntegrityError, OperationalError
 from django.utils import timezone
 
 from .models import Area, Execution
 
 logger = logging.getLogger(__name__)
+
+
+# ==================== Recoverable Exceptions ====================
+# These are transient errors that are safe to retry
+
+RECOVERABLE_EXCEPTIONS = (
+    # Network and HTTP errors
+    requests.exceptions.RequestException,
+    requests.exceptions.ConnectionError,
+    requests.exceptions.Timeout,
+    requests.exceptions.HTTPError,
+    # Database temporary errors
+    OperationalError,  # Database connection issues
+    IntegrityError,  # Concurrent inserts (idempotency)
+    # Add more as needed
+)
 
 
 # ==================== Helper Functions ====================
@@ -421,7 +438,7 @@ def check_github_actions(self):
     name="automations.execute_reaction_task",
     bind=True,
     max_retries=3,
-    autoretry_for=(Exception,),  # Auto-retry on any exception
+    autoretry_for=RECOVERABLE_EXCEPTIONS,  # Only retry transient errors
     retry_backoff=True,  # Enable exponential backoff
     retry_backoff_max=900,  # Max 15 minutes backoff
     retry_jitter=True,  # Add random jitter to prevent thundering herd
