@@ -345,7 +345,7 @@ class ApiService {
       try {
         final err = json.decode(response.body);
         if (err is Map && err['detail'] != null) {
-          msg = 'Login failed: ' + ${err['detail']};
+          msg = 'Login failed: ' + err['detail'];
         }
       } catch (_) {}
       throw Exception(msg);
