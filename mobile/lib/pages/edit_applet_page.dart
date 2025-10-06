@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/applet.dart';
-import '../providers/app_state.dart';
+import '../providers/applet_provider.dart';
 
 class EditAppletPage extends StatefulWidget {
   final Applet applet;
@@ -46,8 +46,8 @@ class _EditAppletPageState extends State<EditAppletPage> {
       _errorMessage = null;
     });
 
-    final appState = Provider.of<AppState>(context, listen: false);
-    final success = await appState.updateApplet(
+    final appletProvider = Provider.of<AppletProvider>(context, listen: false);
+    final success = await appletProvider.updateApplet(
       widget.applet.id,
       name: _nameController.text.trim(),
       description: _descriptionController.text.trim(),
@@ -73,8 +73,8 @@ class _EditAppletPageState extends State<EditAppletPage> {
   }
 
   Future<void> _toggleActive() async {
-    final appState = Provider.of<AppState>(context, listen: false);
-    final success = await appState.toggleApplet(widget.applet.id);
+    final appletProvider = Provider.of<AppletProvider>(context, listen: false);
+    final success = await appletProvider.toggleApplet(widget.applet.id);
 
     if (success) {
       setState(() {

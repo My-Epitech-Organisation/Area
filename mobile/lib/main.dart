@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'providers/app_state.dart';
-import 'providers/auth_provider.dart';
+import 'providers/providers.dart';
 import 'pages/splash_page.dart';
 import 'pages/login_page.dart';
 import 'swipe_navigation_page.dart';
@@ -19,8 +18,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AppState()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => AppletProvider()),
+        ChangeNotifierProvider(create: (_) => ServiceCatalogProvider()),
       ],
       child: MaterialApp(
         title: 'AREA Mobile',

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/app_state.dart';
+import '../providers/provider_manager.dart';
 import 'login_page.dart';
 import '../swipe_navigation_page.dart';
 
@@ -20,33 +20,30 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Future<void> _initializeApp() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final appState = Provider.of<AppState>(context, listen: false);
-
     try {
-      // Check if user is already authenticated
-      await authProvider.checkAuthStatus();
+      // Initialize app with ProviderManager
+      await ProviderManager.initializeApp(context);
+
+      if (!mounted) return;
+
+      await Future.delayed(const Duration(milliseconds: 500));
 
       if (mounted) {
-        await Future.delayed(const Duration(milliseconds: 500));
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final navigator = Navigator.of(context);
+        final isAuth = authProvider.isAuthenticated;
 
-        if (mounted) {
-          final navigator = Navigator.of(context);
-          final isAuth = authProvider.isAuthenticated;
-
-          WidgetsBinding.instance.addPostFrameCallback((_) async {
-            if (isAuth) {
-              await appState.initialize();
-              navigator.pushReplacement(
-                MaterialPageRoute(builder: (_) => const SwipeNavigationPage()),
-              );
-            } else {
-              navigator.pushReplacement(
-                MaterialPageRoute(builder: (_) => const LoginPage()),
-              );
-            }
-          });
-        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (isAuth) {
+            navigator.pushReplacement(
+              MaterialPageRoute(builder: (_) => const SwipeNavigationPage()),
+            );
+          } else {
+            navigator.pushReplacement(
+              MaterialPageRoute(builder: (_) => const LoginPage()),
+            );
+          }
+        });
       }
     } catch (e) {
       // On error, go to login
