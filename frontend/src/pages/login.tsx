@@ -90,13 +90,12 @@ const Login: React.FC = () => {
               {loading ? 'Logging in…' : 'Log in'}
             </button>
 
-            <button
-              type="button"
-              onClick={() => (window.location.href = '/signup')}
-              className="mt-2 text-sm text-gray-300 underline"
+            <a
+              href="/signup"
+              className="mt-2 text-sm text-gray-300 underline block text-center"
             >
               Don't have an account? Sign up
-            </button>
+            </a>
           </div>
         </form>
       </main>
