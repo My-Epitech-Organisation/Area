@@ -11,7 +11,7 @@ from django.conf import settings
 
 from .models import ServiceToken
 from .oauth import OAuthManager
-from .oauth.exceptions import OAuthError, InvalidProviderError
+from .oauth.exceptions import InvalidProviderError, OAuthError
 from .oauth_serializers import (
     OAuthCallbackSerializer,
     OAuthInitiateResponseSerializer,
@@ -104,7 +104,10 @@ class OAuthInitiateView(APIView):
         except Exception as e:
             logger.error(f"Error initiating OAuth2 flow: {str(e)}", exc_info=True)
             return Response(
-                {"error": "internal_error", "message": "Failed to initiate OAuth2 flow"},
+                {
+                    "error": "internal_error",
+                    "message": "Failed to initiate OAuth2 flow",
+                },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
@@ -151,12 +154,8 @@ class OAuthCallbackView(APIView):
 
         # Check for OAuth error
         if validated_data.get("error"):
-            error_msg = validated_data.get(
-                "error_description", validated_data["error"]
-            )
-            logger.warning(
-                f"OAuth2 callback error for {provider}: {error_msg}"
-            )
+            error_msg = validated_data.get("error_description", validated_data["error"])
+            logger.warning(f"OAuth2 callback error for {provider}: {error_msg}")
             return Response(
                 {
                     "error": validated_data["error"],
@@ -204,9 +203,7 @@ class OAuthCallbackView(APIView):
             )
 
             action = "connected" if created else "reconnected"
-            logger.info(
-                f"User {request.user.username} {action} to {provider}"
-            )
+            logger.info(f"User {request.user.username} {action} to {provider}")
 
             return Response(
                 {
@@ -230,7 +227,10 @@ class OAuthCallbackView(APIView):
                 f"Unexpected error in OAuth2 callback: {str(e)}", exc_info=True
             )
             return Response(
-                {"error": "internal_error", "message": "Failed to complete OAuth2 flow"},
+                {
+                    "error": "internal_error",
+                    "message": "Failed to complete OAuth2 flow",
+                },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
@@ -328,16 +328,12 @@ class ServiceDisconnectView(APIView):
                     service_token.access_token
                 )
             except Exception as e:
-                logger.warning(
-                    f"Failed to revoke token at {provider}: {str(e)}"
-                )
+                logger.warning(f"Failed to revoke token at {provider}: {str(e)}")
 
             # Delete token from database
             service_token.delete()
 
-            logger.info(
-                f"User {request.user.username} disconnected from {provider}"
-            )
+            logger.info(f"User {request.user.username} disconnected from {provider}")
 
             response_data = {
                 "message": f"Successfully disconnected from {provider}",

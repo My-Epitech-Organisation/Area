@@ -242,7 +242,9 @@ CELERY_TASK_ROUTES = {
 # Celery Task Retry Configuration
 CELERY_TASK_ACKS_LATE = True  # Ack after task completion, not before
 CELERY_TASK_REJECT_ON_WORKER_LOST = True  # Requeue if worker dies
-CELERY_WORKER_PREFETCH_MULTIPLIER = 1  # Fetch one task at a time (better for long tasks)
+CELERY_WORKER_PREFETCH_MULTIPLIER = (
+    1  # Fetch one task at a time (better for long tasks)
+)
 
 # Webhook Configuration
 # Secrets for validating HMAC signatures from external services

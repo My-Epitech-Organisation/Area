@@ -12,9 +12,10 @@ Tests cover:
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
+from freezegun import freeze_time
+
 from django.test import TestCase, override_settings
 from django.utils import timezone
-from freezegun import freeze_time
 
 from automations.models import Action, Area, Execution, Reaction, Service
 from automations.tasks import (

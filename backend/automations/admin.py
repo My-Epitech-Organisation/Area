@@ -177,4 +177,3 @@ class ExecutionAdmin(admin.ModelAdmin):
         if obj and obj.is_terminal:
             return True
         return False
-

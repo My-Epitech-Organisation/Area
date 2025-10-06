@@ -15,11 +15,12 @@ import hmac
 import json
 from unittest.mock import MagicMock, patch
 
+from rest_framework import status
+from rest_framework.test import APIClient
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from rest_framework import status
-from rest_framework.test import APIClient
 
 from automations.models import Action, Area, Execution, Reaction, Service
 from automations.webhooks import (
@@ -392,11 +393,14 @@ class WebhookReceiverAPITest(TestCase):
 
         # The endpoint should either reject invalid JSON (400) or process it (200/401)
         # Depending on how DRF's test client handles the data
-        self.assertIn(response.status_code, [
-            status.HTTP_400_BAD_REQUEST,
-            status.HTTP_401_UNAUTHORIZED,
-            status.HTTP_200_OK
-        ])
+        self.assertIn(
+            response.status_code,
+            [
+                status.HTTP_400_BAD_REQUEST,
+                status.HTTP_401_UNAUTHORIZED,
+                status.HTTP_200_OK,
+            ],
+        )
 
     @patch("automations.webhooks.execute_reaction")
     def test_webhook_idempotency(self, mock_execute):

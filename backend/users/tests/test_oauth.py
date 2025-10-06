@@ -153,9 +153,7 @@ class OAuthViewsTestCase(APITestCase):
 
         # Create mock provider
         mock_provider = Mock()
-        mock_provider.get_authorization_url.return_value = (
-            "https://accounts.google.com/o/oauth2/v2/auth?client_id=test&state=test_state_123"
-        )
+        mock_provider.get_authorization_url.return_value = "https://accounts.google.com/o/oauth2/v2/auth?client_id=test&state=test_state_123"
         mock_manager.get_provider.return_value = mock_provider
 
         response = self.client.get("/auth/oauth/google/")
@@ -268,6 +266,4 @@ class GoogleOAuthProviderTestCase(TestCase):
 
         expected_expiry = timezone.now() + timedelta(seconds=3600)
         # Allow 2 seconds tolerance for test execution time
-        self.assertAlmostEqual(
-            expiry.timestamp(), expected_expiry.timestamp(), delta=2
-        )
+        self.assertAlmostEqual(expiry.timestamp(), expected_expiry.timestamp(), delta=2)

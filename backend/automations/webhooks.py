@@ -26,7 +26,6 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from django.conf import settings
-from django.db import transaction
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
@@ -36,7 +35,9 @@ from .tasks import create_execution_safe, execute_reaction, get_active_areas
 logger = logging.getLogger(__name__)
 
 
-def validate_github_signature(payload_body: bytes, signature_header: str, secret: str) -> bool:
+def validate_github_signature(
+    payload_body: bytes, signature_header: str, secret: str
+) -> bool:
     """
     Validate GitHub webhook signature using HMAC-SHA256.
 
@@ -90,7 +91,9 @@ def validate_webhook_signature(
         True if signature is valid, False otherwise
     """
     if service_name == "github":
-        signature = headers.get("X-Hub-Signature-256") or headers.get("x-hub-signature-256")
+        signature = headers.get("X-Hub-Signature-256") or headers.get(
+            "x-hub-signature-256"
+        )
         return validate_github_signature(payload_body, signature, secret)
 
     elif service_name == "gmail":
@@ -394,7 +397,9 @@ def webhook_receiver(request: Request, service: str) -> Response:
         return Response(result, status=status.HTTP_200_OK)
 
     except Exception as e:
-        logger.error(f"Error processing webhook {service}/{event_type}: {e}", exc_info=True)
+        logger.error(
+            f"Error processing webhook {service}/{event_type}: {e}", exc_info=True
+        )
         return Response(
             {"error": "Internal server error processing webhook"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
