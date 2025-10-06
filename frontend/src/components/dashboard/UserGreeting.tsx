@@ -10,11 +10,11 @@ import type { UserGreetingProps } from "../../types";
 
 const UserGreeting: React.FC<UserGreetingProps> = ({ user }) => {
   return (
-    <div className="w-full flex items-center justify-center">
+    <div className="user-greeting">
       {user ? (
-        <p className="text-3xl font-semibold text-indigo-300 mt-2 animate-fade-in">Welcome {user.name}!</p>
+        <p className="user-greeting-welcome">Welcome {user.name}!</p>
       ) : (
-        <p className="text-2xl font-semibold text-red-400 mt-2">
+        <p className="user-greeting-error">
           You must be logged in to view this page.
         </p>
       )}

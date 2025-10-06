@@ -10,6 +10,7 @@ import type { Service, User } from "../types";
 import { mockServices } from "../data/mockServices";
 import { getStoredUser } from "../utils/helper";
 import { UserGreeting, ServiceSelector, ServiceDetails, KPIPlaceHolder } from "../components";
+import "../styles/dashboard/dashboard.css";
 
 const Dashboard: React.FC = () => {
   // Example state to represent user data
@@ -25,9 +26,9 @@ const Dashboard: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-screen min-h-screen bg-gradient-to-br from-black/90 via-gray-900/80 to-indigo-950 flex flex-col items-center">
-      <header className="w-full flex flex-col pt-20 items-center mb-8">
-        <h1 className="text-6xl font-bold text-center mb-4">Dashboard</h1>
+    <div className="dashboard-container">
+      <header className="dashboard-header">
+        <h1 className="dashboard-title">Dashboard</h1>
         <UserGreeting user={user} />
       </header>
 
