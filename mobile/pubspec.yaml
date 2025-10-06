@@ -38,6 +38,7 @@ dependencies:
   http: ^1.2.0  # Pour les appels API
   shared_preferences: ^2.2.2  # Pour le cache local et tokens
   provider: ^6.1.1  # Pour la gestion d'état
+  flutter_secure_storage: ^9.2.4
 
 dev_dependencies:
   flutter_test:
