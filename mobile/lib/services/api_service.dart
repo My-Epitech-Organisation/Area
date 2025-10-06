@@ -18,16 +18,12 @@ class ApiService {
   String? _refreshToken;
 
   Future<String?> get authToken async {
-    if (_authToken == null) {
-      _authToken = await _secureStorage.read(key: 'auth_token');
-    }
+    _authToken ??= await _secureStorage.read(key: 'auth_token');
     return _authToken;
   }
 
   Future<String?> get refreshToken async {
-    if (_refreshToken == null) {
-      _refreshToken = await _secureStorage.read(key: 'refresh_token');
-    }
+    _refreshToken ??= await _secureStorage.read(key: 'refresh_token');
     return _refreshToken;
   }
 
