@@ -22,45 +22,49 @@ flutter doctor -v
 
 ## 🛠️ Installation
 
-### 1. Installer Flutter
-Suivez le guide officiel : [Flutter Installation](https://docs.flutter.dev/get-started/install)
+### 1. Flutter Setup
 
-Ajoutez Flutter à votre PATH et vérifiez :
+Follow the official guide: [Flutter Installation](https://docs.flutter.dev/get-started/install)
+
+Add Flutter to your PATH and verify:
 ```bash
 flutter --version
 ```
 
-### 2. Configuration Android
-- Installez [Android Studio](https://developer.android.com/studio)
-- Ouvrez le SDK Manager et installez les SDKs requis
-- Variables d'environnement :
+### 2. Android Configuration
+
+- Install [Android Studio](https://developer.android.com/studio)
+- Open SDK Manager and install required SDKs
+- Environment variables:
   ```bash
   export ANDROID_HOME=$HOME/Android/Sdk
   export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
   ```
 
-### 3. Configuration iOS (macOS uniquement)
-- Installez [Xcode](https://developer.apple.com/xcode/)
-- Acceptez les licences :
+### 3. iOS Configuration (macOS only)
+
+- Install [Xcode](https://developer.apple.com/xcode/)
+- Accept licenses:
   ```bash
   sudo xcode-select --install
   sudo xcodebuild -license accept
   ```
-- Installez CocoaPods :
+- Install CocoaPods:
   ```bash
   sudo gem install cocoapods
   ```
 
-### 4. Lancer le Projet
+### 4. Run the Project
+
 ```bash
 cd AREA/mobile
 flutter pub get
 flutter run
 ```
 
-Pour lancer sur un device spécifique :
+To run on a specific device:
 ```bash
-flutter devices  # Liste des devices
+flutter devices  # List available devices
 flutter run -d <device_id>
 ```
 
@@ -68,116 +72,126 @@ flutter run -d <device_id>
 
 ## 🏗️ Architecture
 
-### Structure des Fichiers
-```
+### File Structure
+
+```text
 lib/
-├── main.dart              # Point d'entrée de l'app
-├── home_page.dart         # Page principale
-├── widgets/               # Widgets réutilisables
+├── main.dart              # App entry point
+├── home_page.dart         # Main page
+├── widgets/               # Reusable widgets
 │   └── counter_widget.dart
-├── models/                # Modèles de données (à ajouter)
-├── services/              # Services API (à ajouter)
-└── utils/                 # Utilitaires (à ajouter)
+├── models/                # Data models (to be added)
+├── services/              # API services (to be added)
+└── utils/                 # Utilities (to be added)
 ```
 
-### Fonctionnalités Clés
-- **Authentification** : Connexion utilisateur
-- **Applets** : Création et gestion d'automatisations
-- **Services** : Intégration avec APIs externes (Gmail, Discord, etc.)
-- **UI Responsive** : Design adaptatif pour mobile
+### Key Features
 
-### Communication avec le Backend
+- **Authentication**: User login
+- **Applets**: Creation and management of automations
+- **Services**: Integration with external APIs (Gmail, Discord, etc.)
+- **Responsive UI**: Adaptive design for mobile
+
+### Backend Communication
+
 - API REST via `http` package
-- Endpoints : `/auth`, `/applets`, `/services`
-- Gestion des erreurs et états de chargement
+- Endpoints: `/auth`, `/applets`, `/services`
+- Error handling and loading states management
 
 ---
 
-## 🧪 Tests
+## 🧪 Testing
 
-### Tests Unitaires
+### Unit Tests
+
 ```bash
 flutter test
 ```
 
-### Tests d'Intégration
-- Tests manuels sur émulateur/simulateur
-- Vérifiez les fonctionnalités : connexion, création d'applets, etc.
+### Integration Tests
 
-### Tests sur Devices
-- Android : Émulateur ou device physique
-- iOS : Simulateur ou device physique (macOS requis)
+- Manual testing on emulator/simulator
+- Verify features: login, applet creation, etc.
+
+### Device Testing
+
+- Android: Emulator or physical device
+- iOS: Simulator or physical device (macOS required)
 
 ---
 
-## � Build et Déploiement
+## 📦 Build and Deployment
 
 ### Build Android APK
+
 ```bash
 flutter build apk --release
-# Fichier généré : build/app/outputs/flutter-apk/app-release.apk
+# Generated file: build/app/outputs/flutter-apk/app-release.apk
 ```
 
 ### Build iOS (macOS)
+
 ```bash
 flutter build ios --release
-# Ouvrez Xcode pour archiver et déployer
+# Open Xcode to archive and deploy
 ```
 
-### Déploiement
-- **Play Store** : Utilisez Google Play Console
-- **App Store** : Utilisez Xcode et App Store Connect
+### Deployment
+
+- **Play Store**: Use Google Play Console
+- **App Store**: Use Xcode and App Store Connect
 
 ---
 
-## 🛠️ Commandes Utiles
+## 🛠️ Useful Commands
 
-| Commande | Description |
+| Command | Description |
 |----------|-------------|
-| `flutter clean` | Nettoie le cache du projet |
-| `flutter pub get` | Télécharge les dépendances |
-| `flutter analyze` | Analyse statique du code |
-| `flutter run` | Lance l'app en mode debug |
-| `flutter build apk` | Build APK Android |
-| `flutter build ios` | Build app iOS |
-| `flutter devices` | Liste des devices connectés |
-| `flutter emulators` | Liste des émulateurs |
-| `flutter doctor` | Vérifie l'environnement |
+| `flutter clean` | Clean project cache |
+| `flutter pub get` | Download dependencies |
+| `flutter analyze` | Static code analysis |
+| `flutter run` | Run app in debug mode |
+| `flutter build apk` | Build Android APK |
+| `flutter build ios` | Build iOS app |
+| `flutter devices` | List connected devices |
+| `flutter emulators` | List available emulators |
+| `flutter doctor` | Check environment |
 
 ---
 
-## ⚠️ Problèmes Courants
+## ⚠️ Common Issues
 
-| Problème | Solution |
+| Issue | Solution |
 |----------|----------|
-| ❌ Émulateur non trouvé | Vérifiez Android Studio/Xcode installé |
-| ❌ Erreurs CocoaPods | `cd ios && pod install` |
-| ❌ Permissions | Vérifiez variables `ANDROID_HOME` et `PATH` |
-| ❌ Build échoue | `flutter clean && flutter pub get` |
-| ❌ Hot Reload ne marche pas | Redémarrez l'app |
+| ❌ Emulator not found | Check Android Studio/Xcode installation |
+| ❌ CocoaPods errors | `cd ios && pod install` |
+| ❌ Permissions | Check `ANDROID_HOME` and `PATH` variables |
+| ❌ Build fails | `flutter clean && flutter pub get` |
+| ❌ Hot Reload not working | Restart the app |
 
 ---
 
-## 🤝 Contribution
+## 🤝 Contributing
 
-1. **Fork** le repo
-2. **Créez une branche** : `git checkout -b feature/nouvelle-fonction`
-3. **Commitez** : `git commit -m 'Ajout nouvelle fonctionnalité'`
-4. **Push** : `git push origin feature/nouvelle-fonction`
-5. **Ouvrez une PR**
+1. **Fork** the repository
+2. **Create a branch**: `git checkout -b feature/new-feature`
+3. **Commit**: `git commit -m 'Add new feature'`
+4. **Push**: `git push origin feature/new-feature`
+5. **Open a PR**
 
 ### Guidelines
-- Suivez les conventions Dart/Flutter
-- Ajoutez des tests pour nouvelles fonctionnalités
-- Mettez à jour ce README si nécessaire
-- Pour dépendances : `flutter pub add <package>` puis commit `pubspec.lock`
+
+- Follow Dart/Flutter conventions
+- Add tests for new features
+- Update this README if necessary
+- For dependencies: `flutter pub add <package>` then commit `pubspec.lock`
 
 ---
 
-## 📄 Licence
+## 📄 License
 
-Ce projet est sous licence MIT. Voir [LICENSE](../LICENSE) pour plus de détails.
+This project is under MIT license. See [LICENSE](../LICENSE) for more details.
 
 ---
 
-*Développé avec ❤️ en Flutter pour Epitech AREA Project*
+Developed with ❤️ in Flutter for Epitech AREA Project
