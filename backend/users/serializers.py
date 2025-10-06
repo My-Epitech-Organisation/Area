@@ -17,7 +17,10 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ("username", "email", "password", "password2", "email_verified")
         read_only_fields = ("email_verified",)
-        extra_kwargs = {"email": {"required": True}}
+        extra_kwargs = {
+            "email": {"required": True},
+            "username": {"required": False},  # Username is now optional (display name)
+        }
 
     def validate(self, attrs):
         if attrs["password"] != attrs["password2"]:
@@ -42,39 +45,19 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
-class EmailOrUsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """Custom token serializer that allows authentication with username OR email.
-
-    The incoming credential can be supplied in either the 'username' field (default SimpleJWT
-    expectation) or an 'email' field. If the value contains an '@', we first try to match
-    against the email field; otherwise we attempt username. Case-insensitive lookups are used.
+class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """Custom token serializer that uses email for authentication.
+    
+    Since our User model now uses email as USERNAME_FIELD, we override to accept
+    'email' in the input and map it to the 'username' field expected by SimpleJWT.
     """
+    
+    username_field = "email"  # Tell DRF to use 'email' as the input field name
 
     def validate(self, attrs):  # type: ignore[override]
-        # Original input before parent validation may normalize username
-        login_value = attrs.get("username") or self.initial_data.get("email") or ""
-        from django.contrib.auth import get_user_model
-
-        UserModel = get_user_model()
-
-        candidate_user = None
-
-        # Try email if it looks like one
-        if "@" in login_value:
-            try:
-                candidate_user = UserModel.objects.get(email__iexact=login_value)
-            except UserModel.DoesNotExist:
-                candidate_user = None
-
-        # Fallback to username
-        if candidate_user is None:
-            try:
-                candidate_user = UserModel.objects.get(username__iexact=login_value)
-            except UserModel.DoesNotExist:
-                candidate_user = None
-
-        if candidate_user is not None:
-            # Force the canonical username into attrs so parent validation succeeds
-            attrs["username"] = getattr(candidate_user, UserModel.USERNAME_FIELD)
-
+        # Map 'email' from attrs to 'username' for parent validation
+        # since SimpleJWT expects 'username' internally but our USERNAME_FIELD is 'email'
+        if "email" in attrs:
+            attrs[User.USERNAME_FIELD] = attrs.pop("email")
+        
         return super().validate(attrs)
