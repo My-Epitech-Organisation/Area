@@ -367,12 +367,6 @@ LOGGING = {
     },
 }
 
-# OAuth2 Settings (for future external services integration)
-GOOGLE_OAUTH2_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
-GOOGLE_OAUTH2_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
-GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID", "")
-GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET", "")
-
 # OAuth2 Provider Configuration
 OAUTH2_PROVIDERS = {
     "google": {
