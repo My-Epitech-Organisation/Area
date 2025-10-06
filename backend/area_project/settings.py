@@ -198,12 +198,6 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": timedelta(minutes=5),
         "options": {"queue": "github"},
     },
-    # Check Gmail actions every 10 minutes
-    "check-gmail-actions": {
-        "task": "automations.check_gmail_actions",
-        "schedule": timedelta(minutes=10),
-        "options": {"queue": "gmail"},
-    },
     # Collect execution metrics every hour
     "collect-execution-metrics": {
         "task": "automations.collect_execution_metrics",
