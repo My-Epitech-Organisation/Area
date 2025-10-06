@@ -89,7 +89,7 @@ class GoogleOAuthProvider(BaseOAuthProvider):
 
         except Exception as e:
             logger.error(f"Google token exchange failed: {str(e)}")
-            raise TokenExchangeError(f"Failed to exchange Google code: {str(e)}")
+            raise TokenExchangeError(f"Failed to exchange Google code: {str(e)}") from e
 
     def refresh_access_token(self, refresh_token: str) -> Dict:
         """
@@ -114,6 +114,7 @@ class GoogleOAuthProvider(BaseOAuthProvider):
                     "client_secret": self.client_secret,
                 },
                 headers={"Content-Type": "application/x-www-form-urlencoded"},
+                timeout=30,
             )
 
             response.raise_for_status()
@@ -128,7 +129,7 @@ class GoogleOAuthProvider(BaseOAuthProvider):
 
         except requests.exceptions.RequestException as e:
             logger.error(f"Google token refresh failed: {str(e)}")
-            raise TokenRefreshError(f"Failed to refresh Google token: {str(e)}")
+            raise TokenRefreshError(f"Failed to refresh Google token: {str(e)}") from e
 
     def get_user_info(self, access_token: str) -> Dict:
         """
@@ -147,6 +148,7 @@ class GoogleOAuthProvider(BaseOAuthProvider):
             response = requests.get(
                 self.userinfo_endpoint,
                 headers={"Authorization": f"Bearer {access_token}"},
+                timeout=30,
             )
 
             response.raise_for_status()
@@ -161,7 +163,7 @@ class GoogleOAuthProvider(BaseOAuthProvider):
 
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to fetch Google user info: {str(e)}")
-            raise ProviderAPIError(f"Failed to get Google user info: {str(e)}")
+            raise ProviderAPIError(f"Failed to get Google user info: {str(e)}") from e
 
     def revoke_token(self, token: str) -> bool:
         """
@@ -178,6 +180,7 @@ class GoogleOAuthProvider(BaseOAuthProvider):
                 "https://oauth2.googleapis.com/revoke",
                 data={"token": token},
                 headers={"Content-Type": "application/x-www-form-urlencoded"},
+                timeout=30,
             )
 
             success = response.status_code == 200
