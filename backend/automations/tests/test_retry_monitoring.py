@@ -211,9 +211,9 @@ class CleanupOldExecutionsTest(TestCase):
         self.assertEqual(result["deleted"]["total"], 0)
 
     def test_cleanup_old_successful_executions(self):
-        """Test cleanup of old successful executions (>30 days)."""   
+        """Test cleanup of old successful executions (>30 days)."""
         from freezegun import freeze_time
-        
+
         # Create execution 31 days ago
         past_date = timezone.now() - timedelta(days=31)
         with freeze_time(past_date):
@@ -222,7 +222,7 @@ class CleanupOldExecutionsTest(TestCase):
                 trigger_data={},
                 status="success",
             )
-        
+
         result = cleanup_old_executions()
         self.assertEqual(result["deleted"]["successful"], 1)
         self.assertEqual(result["deleted"]["total"], 1)
