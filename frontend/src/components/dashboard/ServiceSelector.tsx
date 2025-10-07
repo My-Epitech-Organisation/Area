@@ -23,6 +23,7 @@ const ServiceSelector: React.FC<ServiceSelectorProps> = ({
           const isActive = selectedService?.name === service.name;
           return (
             <button
+              type="button"
               key={service.name}
               onClick={() => onSelect(service)}
               className={`service-selector-button ${isActive ? 'active' : ''}`}
