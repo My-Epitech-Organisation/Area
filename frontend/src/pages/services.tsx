@@ -11,14 +11,19 @@ type AboutService = {
 
 const Services: React.FC = () => {
   const wheelRef = useRef<HTMLDivElement>(null);
+  const carouselContainerRef = useRef<HTMLDivElement | null>(null);
+  const historyContainerRef = useRef<HTMLDivElement | null>(null);
   const [wheelRotation, setWheelRotation] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [currentX, setCurrentX] = useState(0);
   const [isAutoRotating, setIsAutoRotating] = useState(false);
+  const [flatMode, setFlatMode] = useState(false);
+  const flatListRef = useRef<HTMLDivElement | null>(null);
+  const [mounted, setMounted] = useState(false);
   const rotationSpeed = 5;
   const radius = 350;
 
-  const imageModules = import.meta.glob("../assets/*.{png,jpg,jpeg,svg,gif}", { eager: true }) as Record<string, { default: string }>; 
+  const imageModules = import.meta.glob("../assets/*.{png,jpg,jpeg,svg,gif}", { eager: true }) as Record<string, { default: string }>;
   const imagesByName: Record<string, string> = {};
   Object.keys(imageModules).forEach((p) => {
     const parts = p.split("/");
@@ -97,6 +102,11 @@ const Services: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const id = setTimeout(() => setMounted(true), 50);
+    return () => clearTimeout(id);
+  }, []);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q)
@@ -166,15 +176,105 @@ const Services: React.FC = () => {
     };
   }, [isDragging, isAutoRotating]);
 
+  const [hoverCarousel, setHoverCarousel] = useState(false);
+  const [hoverHistory, setHoverHistory] = useState(false);
+  const [hoverFlat, setHoverFlat] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: WheelEvent) => {
+      if (hoverCarousel) {
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          e.preventDefault();
+          setWheelRotation((prev) => prev + (e.deltaY * 0.2));
+        }
+      }
+      else if (hoverHistory) {
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          e.preventDefault();
+          const el = historyContainerRef.current;
+          if (el) el.scrollLeft += e.deltaY;
+        }
+      }
+    };
+
+    document.addEventListener('wheel', handler as EventListener, { passive: false, capture: true });
+    return () => document.removeEventListener('wheel', handler as EventListener, true);
+  }, [hoverCarousel, hoverHistory]);
+
+  useEffect(() => {
+    const wheelEl = wheelRef.current;
+    const historyEl = historyContainerRef.current;
+    const flatEl = flatListRef.current;
+
+    const onWheelCarousel = (e: WheelEvent) => {
+      try {
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          e.preventDefault();
+          setWheelRotation((prev) => prev + (e.deltaY * 0.2));
+        }
+      } catch (err) {
+      }
+    };
+
+    const onWheelHistory = (e: WheelEvent) => {
+      try {
+        const el = (historyContainerRef.current as HTMLDivElement) ?? (e.currentTarget as HTMLDivElement);
+        if (!el) return;
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          e.preventDefault();
+          el.scrollLeft += e.deltaY;
+        }
+      } catch (err) {
+      }
+    };
+
+    const onWheelFlat = (e: WheelEvent) => {
+      try {
+        const el = (flatListRef.current as HTMLDivElement) ?? (e.currentTarget as HTMLDivElement);
+        if (!el) return;
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          e.preventDefault();
+          el.scrollLeft += e.deltaY;
+        }
+      } catch (err) {
+      }
+    };
+
+    if (wheelEl) wheelEl.addEventListener('wheel', onWheelCarousel as EventListener, { passive: false });
+    if (historyEl) historyEl.addEventListener('wheel', onWheelHistory as EventListener, { passive: false });
+    if (flatEl) flatEl.addEventListener('wheel', onWheelFlat as EventListener, { passive: false });
+
+    return () => {
+      if (wheelEl) wheelEl.removeEventListener('wheel', onWheelCarousel as EventListener);
+      if (historyEl) historyEl.removeEventListener('wheel', onWheelHistory as EventListener);
+      if (flatEl) flatEl.removeEventListener('wheel', onWheelFlat as EventListener);
+    };
+  }, [flatMode]);
+
+  useEffect(() => {
+    if (!flatMode) return;
+    const el = flatListRef.current;
+    if (!el) return;
+
+    let rafId = 0;
+
+    const step = () => {
+      if (!el) return;
+      if (!hoverFlat) {
+        el.scrollLeft = el.scrollLeft + 0.6;
+        if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 1) {
+          el.scrollTo({ left: 0 });
+        }
+      }
+      rafId = requestAnimationFrame(step);
+    };
+
+    rafId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafId);
+  }, [flatMode, hoverFlat]);
+
   const stopAutoRotation = () => {
     setIsAutoRotating(false);
-  };
-
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    stopAutoRotation();
-    const newRotation = wheelRotation + (e.deltaY * 0.2);
-    setWheelRotation(newRotation);
-    e.preventDefault();
   };
 
   const [momentum, setMomentum] = useState(0);
@@ -285,35 +385,33 @@ const Services: React.FC = () => {
 
   const calculatePosition = (index: number, total: number) => {
     const angleStep = (2 * Math.PI) / total;
-
     const angleInRadians = (index * angleStep) + (wheelRotation * Math.PI / 180);
-
     const x = Math.sin(angleInRadians) * radius;
     const z = Math.cos(angleInRadians) * radius;
-
     const rotationY = (angleInRadians * 180 / Math.PI);
-
     const normalizedZ = (z + radius) / (radius * 2);
-
     const isVisible = z > -radius * 0.7;
-
     const opacity = isVisible ? Math.pow(normalizedZ, 0.8) * 0.7 + 0.3 : 0;
-
     const scale = isVisible ? normalizedZ * 0.4 + 0.6 : 0.6;
-
     const elevationY = isVisible ? Math.sin(normalizedZ * Math.PI) * 20 : 0;
 
     return { x, z, rotationY, elevationY, isVisible, opacity, scale };
   };
 
   return (
-    <div className="w-screen min-h-screen bg-gradient-to-br from-black/90 via-gray-900/80 to-indigo-950 flex flex-col items-center p-6">
+    <div className="w-screen min-h-screen bg-page-services flex flex-col items-center p-6">
       <header className="w-full pt-20 flex flex-col items-center">
         <h1 className="text-5xl font-bold text-white">Services</h1>
         <p className="text-gray-300 mt-3">Explore available action → reaction services</p>
       </header>
 
       <main className="w-full max-w-7xl mt-10">
+        <div className="flex items-center justify-end gap-4 mb-4">
+          <label className="flex items-center gap-2 text-sm text-gray-300">
+            <input type="checkbox" checked={flatMode} onChange={(e) => setFlatMode(e.target.checked)} className="h-4 w-4" />
+            Display as flat list
+          </label>
+        </div>
         <div className="flex items-center gap-4 mb-6">
           <input
             aria-label="Search services"
@@ -335,8 +433,8 @@ const Services: React.FC = () => {
           </div>
         ) : (
           <>
-            <div className="w-full h-[600px] relative overflow-hidden my-10 group"
-                 style={{ perspective: '1800px' }}>
+      <div className="w-full h-[600px] relative overflow-hidden my-10 group"
+        style={{ perspective: '1800px' }}>
               <div className="absolute top-1/2 left-4 transform -translate-y-1/2 text-white/30 text-4xl animate-pulse pointer-events-none z-50">
                 &lt;
               </div>
@@ -344,26 +442,55 @@ const Services: React.FC = () => {
                 &gt;
               </div>
               <div
+                ref={carouselContainerRef}
                 className="absolute w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing"
-                onWheel={handleWheel}
+                onMouseEnter={() => setHoverCarousel(true)}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseLeave}
+                onMouseLeave={() => { setHoverCarousel(false); handleMouseLeave(); }}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
               >
-                <div
-                  ref={wheelRef}
-                  className="relative w-[700px] h-[700px]"
-                  style={{
-                    transformStyle: 'preserve-3d',
-                    willChange: 'transform',
-                    transform: `rotateX(10deg)`,
-                    transition: isDragging ? 'none' : 'transform 0.5s ease-out',
-                  }}
-                >
+                {flatMode ? (
+                  <div
+                    ref={flatListRef}
+                    onMouseEnter={() => setHoverFlat(true)}
+                    onMouseLeave={() => setHoverFlat(false)}
+                    className="w-full flex gap-6 items-center justify-start overflow-x-auto pb-4 px-1 scrollbar-thin scrollbar-thumb-indigo-500/50 scrollbar-track-transparent scrollbar-visible snap-x snap-mandatory"
+                    style={{ overscrollBehavior: 'none' }}
+                  >
+                    {filtered.map((s, idx) => (
+                      <Link
+                        to={`/services/${s.id}`}
+                        key={`flat-${s.id}`}
+                        onClick={() => pushHistory(s)}
+                        className="snap-start min-w-[220px] h-[260px] flex-shrink-0 group rounded-lg bg-gradient-to-br from-white/30 to-white/12 p-4 transition-colors duration-200 hover:bg-indigo-700/20"
+                        style={{ animationDelay: `${mounted ? idx * 70 : 0}ms` }}
+                      >
+                        <div className={`flex flex-col items-center gap-3 h-full ${mounted ? 'animate-appear' : 'opacity-0'}`}>
+                          <div className="w-28 h-28 rounded-xl bg-white/28 flex items-center justify-center overflow-hidden">
+                            {s.logo ? <img src={s.logo} alt={`${s.Name} logo`} className="w-full h-full object-contain" /> : <div className="text-2xl font-semibold text-white/80">{(s.Name || '?').charAt(0)}</div>}
+                          </div>
+                          <div className="text-center mt-2">
+                            <div className="text-sm font-medium text-white group-hover:text-indigo-200 transition-colors">{s.Name}</div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div
+                    ref={wheelRef}
+                    className="relative w-[700px] h-[700px]"
+                    style={{
+                      transformStyle: 'preserve-3d',
+                      willChange: 'transform',
+                      transform: `rotateX(10deg)`,
+                      transition: isDragging ? 'none' : 'transform 0.5s ease-out',
+                    }}
+                  >
                   <div
                     className="absolute w-[800px] h-[800px] rounded-full -bottom-[150px] left-1/2 transform -translate-x-1/2 bg-gradient-radial from-indigo-900/20 to-transparent" 
                     style={{
@@ -390,16 +517,17 @@ const Services: React.FC = () => {
                         title={s.description || s.Name}
                       >
                         <div
-                          className="w-full h-full rounded-xl bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-sm p-5 flex flex-col items-center justify-center shadow-xl border border-white/10 overflow-hidden group hover:from-indigo-500/20 hover:to-white/10 transition-colors duration-300"
+                          className={`w-full h-full rounded-xl bg-gradient-to-br from-white/30 to-white/18 backdrop-blur-sm p-5 flex flex-col items-center justify-center shadow-2xl overflow-hidden group hover:from-blue-300/30 hover:to-white/10 transition-colors duration-300 ${mounted ? 'animate-appear' : 'opacity-0'}`}
                           style={{
                             transformStyle: 'preserve-3d',
                             transform: `rotateY(${-rotationY}deg)`,
+                            animationDelay: `${mounted ? index * 60 : 0}ms`,
                             boxShadow: z > 0
                               ? '0 10px 30px -5px rgba(0, 0, 0, 0.3), 0 0 15px -3px rgba(255, 255, 255, 0.1), inset 0 0 10px rgba(255, 255, 255, 0.1)'
                               : 'none',
                           }}
                         >
-                          <div className="w-24 h-24 rounded-xl bg-white/10 mb-3 flex items-center justify-center overflow-hidden">
+                          <div className="w-24 h-24 rounded-xl bg-white/28 mb-3 flex items-center justify-center overflow-hidden">
                             {s.logo ? (
                               <img
                                 src={s.logo}
@@ -420,7 +548,7 @@ const Services: React.FC = () => {
                               {s.description}
                             </p>
                           }
-                          <div className="mt-3 px-4 py-1.5 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-medium transform transition-all duration-300 group-hover:bg-indigo-600/40 group-hover:text-indigo-100 group-hover:scale-110">
+                          <div className="mt-3 px-4 py-1.5 rounded-full bg-blue-300/30 text-blue-100 text-xs font-medium transform transition-all duration-300 group-hover:bg-blue-400/60 group-hover:text-white group-hover:scale-110">
                             Explorer
                           </div>
                         </div>
@@ -428,6 +556,7 @@ const Services: React.FC = () => {
                     );
                   })}
                 </div>
+                )}
               </div>
             </div>
 
@@ -436,16 +565,22 @@ const Services: React.FC = () => {
               {history.length === 0 ? (
                 <div className="py-8 px-6 rounded-lg bg-white/5 text-center text-gray-300">Aucun service visité récemment.</div>
               ) : (
-                <div className="flex gap-4 overflow-x-auto pb-4 px-1 scrollbar-thin scrollbar-thumb-indigo-500/50 scrollbar-track-transparent snap-x snap-mandatory">
-                  {history.map((h) => (
+                <div
+                  ref={historyContainerRef}
+                  onMouseEnter={() => setHoverHistory(true)}
+                  onMouseLeave={() => setHoverHistory(false)}
+                  className="flex gap-4 overflow-x-auto pb-4 px-1 scrollbar-thin scrollbar-thumb-indigo-500/50 scrollbar-track-transparent scrollbar-visible snap-x snap-mandatory"
+                  style={{ overscrollBehavior: 'none' }}
+                >
+                  {history.map((h, idx) => (
                     <Link
                       key={`hist-${h.id}`}
                       to={`/services/${h.id}`}
                       onClick={() => pushHistory(h)}
-                      className="snap-start min-w-[220px] flex-shrink-0 group rounded-lg bg-white/5 p-4 hover:bg-white/10 transition transform hover:scale-105 hover:-translate-y-1 duration-200"
+                      className="snap-start min-w-[240px] h-[260px] flex-shrink-0 group rounded-lg bg-gradient-to-br from-white/18 to-indigo-700/6 p-4 hover:from-white/24 hover:to-indigo-700/8 transition transform hover:scale-105 hover:-translate-y-1 duration-200 backdrop-blur-sm"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center overflow-hidden">
+                      <div className={`${mounted ? 'animate-appear' : 'opacity-0'} flex flex-col items-center gap-3 h-full`} style={{ animationDelay: `${mounted ? idx * 70 : 0}ms` }}>
+                        <div className="w-28 h-28 rounded-xl bg-white/36 flex items-center justify-center overflow-hidden">
                           {h.logo ? (
                             <img
                               src={h.logo}
@@ -455,14 +590,15 @@ const Services: React.FC = () => {
                               decoding="async"
                             />
                           ) : (
-                            <div className="text-lg font-semibold text-white/80">{(h.Name || "?").charAt(0)}</div>
+                            <div className="text-2xl font-semibold text-white/80">{(h.Name || "?").charAt(0)}</div>
                           )}
                         </div>
 
-                        <div>
+                        <div className="text-center mt-2">
                           <div className="text-sm font-medium text-white group-hover:text-indigo-200 transition-colors">{h.Name}</div>
-                          {h.description && <div className="text-xs text-gray-400 line-clamp-2">{h.description}</div>}
+                          {h.description && <div className="text-xs text-gray-400 line-clamp-3 mt-2">{h.description}</div>}
                         </div>
+                        <div className="mt-auto text-xs text-gray-400">Visité récemment</div>
                       </div>
                     </Link>
                   ))}
