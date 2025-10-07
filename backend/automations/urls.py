@@ -1,3 +1,10 @@
+##
+## EPITECH PROJECT, 2025
+## Area
+## File description:
+## urls
+##
+
 """
 URL routing for the AREA automation API.
 
@@ -16,6 +23,17 @@ from django.urls import include, path
 from . import views
 from .webhooks import webhook_receiver
 
+from rest_framework.routers import DefaultRouter
+
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
+from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
+
+from users.views import ItemViewSet
+
 # Create router and register viewsets
 router = DefaultRouter()
 router.register(r"services", views.ServiceViewSet, basename="service")
@@ -23,10 +41,21 @@ router.register(r"actions", views.ActionViewSet, basename="action")
 router.register(r"reactions", views.ReactionViewSet, basename="reaction")
 router.register(r"areas", views.AreaViewSet, basename="area")
 router.register(r"executions", views.ExecutionViewSet, basename="execution")
+router.register(r"items", ItemViewSet, basename="item")
 
 app_name = "automations"
 
 urlpatterns = [
+        # JWT authentication endpoints
+    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+
+    # API schema and documentation
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    # Swagger UI
+    path("docs/", SpectacularSwaggerView.as_view(url_name="automations:schema"), name="swagger-ui"),
+    path("redoc/", SpectacularRedocView.as_view(url_name="automations:schema"), name="redoc"),
+
     # API endpoints
     path("api/", include(router.urls)),
     # Special endpoint for service discovery
