@@ -1,3 +1,10 @@
+##
+## EPITECH PROJECT, 2025
+## Area
+## File description:
+## oauth_views
+##
+
 """API views for OAuth2 authentication flow."""
 
 import logging
@@ -7,7 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from django.conf import settings
+from drf_spectacular.utils import extend_schema
 
 from .models import ServiceToken
 from .oauth import OAuthManager
@@ -44,6 +51,7 @@ class OAuthInitiateView(APIView):
     """
 
     permission_classes = [IsAuthenticated]
+    serializer_class = OAuthInitiateResponseSerializer
 
     def get(self, request, provider: str):
         """Generate OAuth2 authorization URL."""
@@ -138,6 +146,7 @@ class OAuthCallbackView(APIView):
     """
 
     permission_classes = [IsAuthenticated]
+    serializer_class = OAuthCallbackSerializer
 
     def get(self, request, provider: str):
         """Process OAuth2 callback and exchange code for token."""
@@ -252,6 +261,7 @@ class ServiceConnectionListView(APIView):
     """
 
     permission_classes = [IsAuthenticated]
+    serializer_class = ServiceConnectionListSerializer
 
     def get(self, request):
         """List connected services."""
@@ -303,7 +313,12 @@ class ServiceDisconnectView(APIView):
     """
 
     permission_classes = [IsAuthenticated]
+    serializer_class = ServiceDisconnectSerializer
 
+    @extend_schema(
+        request=None,
+        responses={200: ServiceDisconnectSerializer}
+    )
     def delete(self, request, provider: str):
         """Disconnect a service."""
         try:

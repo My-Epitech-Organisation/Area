@@ -1,3 +1,10 @@
+##
+## EPITECH PROJECT, 2025
+## Area
+## File description:
+## webhooks
+##
+
 """
 Webhook receiver for external service events.
 
@@ -24,6 +31,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
+
+from drf_spectacular.utils import extend_schema
 
 from django.conf import settings
 from django.utils import timezone
@@ -298,6 +307,10 @@ def process_webhook_event(
 @csrf_exempt
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@extend_schema(
+    request=None,  # No specific request serializer
+    responses={200: None}  # Generic response
+)
 def webhook_receiver(request: Request, service: str) -> Response:
     """
     Universal webhook receiver endpoint.
