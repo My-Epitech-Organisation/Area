@@ -9,6 +9,7 @@ import 'pages/login_page.dart';
 import 'pages/reset_password_page.dart';
 import 'swipe_navigation_page.dart';
 import 'utils/debug_helper.dart';
+import 'utils/oauth_deep_link_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,18 +30,42 @@ class _MyAppState extends State<MyApp> {
   late AppLinks _appLinks;
   StreamSubscription? _sub;
   bool _initialLinkHandled = false;
+  late OAuthDeepLinkHandler _oauthHandler;
 
   @override
   void initState() {
     super.initState();
     _appLinks = AppLinks();
+    _oauthHandler = OAuthDeepLinkHandler();
+    _oauthHandler.onOAuthComplete = _handleOAuthComplete;
     _initDeepLinkListener();
+    _initOAuthHandler();
   }
 
   @override
   void dispose() {
     _sub?.cancel();
+    _oauthHandler.dispose();
     super.dispose();
+  }
+
+  Future<void> _initOAuthHandler() async {
+    await _oauthHandler.initialize();
+  }
+
+  void _handleOAuthComplete(String provider, bool success, String? message) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = navigatorKey.currentContext;
+      if (context != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message ?? 'OAuth completed for $provider'),
+            backgroundColor: success ? Colors.green : Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    });
   }
 
   Future<void> _initDeepLinkListener() async {
@@ -70,11 +95,11 @@ class _MyAppState extends State<MyApp> {
 
   void _handleDeepLink(Uri uri) {
     debugPrint('Handling deep link: $uri');
-    
+
     // Handle password reset deep link: area://reset-password?token=abc123
     if (uri.scheme == 'area' && uri.host == 'reset-password') {
       final token = uri.queryParameters['token'];
-      
+
       if (token != null && token.isNotEmpty) {
         // Wait for navigator to be ready before pushing
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -88,49 +113,6 @@ class _MyAppState extends State<MyApp> {
         });
       } else {
         debugPrint('Reset password link missing token');
-      }
-    }
-    
-    // Handle OAuth deep link: myapp://auth/oauth/{provider}/callback?code=xxx&state=yyy
-    if (uri.scheme == 'myapp' && uri.host == 'auth') {
-      final pathSegments = uri.pathSegments;
-      
-      if (pathSegments.length >= 3 && 
-          pathSegments[0] == 'oauth' && 
-          pathSegments[2] == 'callback') {
-        
-        final provider = pathSegments[1];
-        final code = uri.queryParameters['code'];
-        final state = uri.queryParameters['state'];
-        final error = uri.queryParameters['error'];
-        
-        String message;
-        bool success;
-        
-        if (error != null) {
-          success = false;
-          message = uri.queryParameters['error_description'] ?? error;
-        } else if (code != null && state != null) {
-          success = true;
-          message = 'Successfully connected to $provider';
-        } else {
-          success = false;
-          message = 'Invalid OAuth callback parameters';
-        }
-        
-        // Show snackbar notification
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          final context = navigatorKey.currentContext;
-          if (context != null && context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(message),
-                backgroundColor: success ? Colors.green : Colors.red,
-                duration: const Duration(seconds: 4),
-              ),
-            );
-          }
-        });
       }
     }
   }
