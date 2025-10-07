@@ -40,8 +40,7 @@ class UserProfileSection extends StatelessWidget {
     return Consumer<UserProvider>(
       builder: (context, userProvider, child) {
         final userProfile = userProvider.profile;
-        
-        // Si on est en train de charger et qu'on n'a pas encore de profil
+
         if (userProvider.isLoadingProfile && userProfile == null) {
           return Container(
             padding: const EdgeInsets.all(20),
@@ -51,8 +50,7 @@ class UserProfileSection extends StatelessWidget {
             ),
           );
         }
-        
-        // Si il y a une erreur
+
         if (userProvider.error != null && userProfile == null) {
           return Container(
             padding: const EdgeInsets.all(20),
@@ -387,7 +385,10 @@ class SettingItem extends StatelessWidget {
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap ?? () {
-        // TODO: Implement navigation to settings
+        // TODO: Implement navigation to settings pages
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$title feature coming soon!')),
+        );
       },
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
