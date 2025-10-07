@@ -27,12 +27,15 @@ except ImportError:
     # Fallback if django-filter is not installed
     DjangoFilterBackend = None
 
-from .models import Action, Area, Reaction, Service
+from .models import Action, Area, Execution, Reaction, Service
 from .serializers import (
     AboutServiceSerializer,
     ActionSerializer,
     AreaCreateSerializer,
     AreaSerializer,
+    ExecutionListSerializer,
+    ExecutionSerializer,
+    ExecutionStatsSerializer,
     ReactionSerializer,
     ServiceSerializer,
 )
@@ -274,3 +277,143 @@ def about_json_view(request):
     }
 
     return JsonResponse(about_data)
+
+
+class ExecutionViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Read-only ViewSet for Execution journaling and monitoring.
+
+    Provides list and retrieve operations for execution history.
+    Users can only view executions from their own Areas.
+
+    Supports filtering by:
+    - area: Filter by specific Area ID
+    - status: Filter by execution status (pending, running, success, failed, skipped)
+    - created_after: Filter executions created after this date (ISO format)
+    - created_before: Filter executions created before this date (ISO format)
+
+    Supports search on:
+    - area name
+    - external_event_id
+
+    Supports ordering by:
+    - created_at (default: most recent first)
+    - started_at
+    - completed_at
+    - status
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter] + (
+        [DjangoFilterBackend] if DjangoFilterBackend else []
+    )
+    filterset_fields = ["area", "status"]
+    search_fields = ["area__name", "external_event_id"]
+    ordering_fields = ["created_at", "started_at", "completed_at", "status"]
+    ordering = ["-created_at"]  # Most recent first
+
+    def get_queryset(self) -> QuerySet[Execution]:  # type: ignore
+        """
+        Filter Executions to only show those from Areas owned by the current user.
+        Optimized with select_related to avoid N+1 queries.
+        """
+        queryset = Execution.objects.filter(
+            area__owner=self.request.user
+        ).select_related(
+            "area",
+            "area__action",
+            "area__reaction",
+            "area__action__service",
+            "area__reaction__service",
+        )
+
+        # Date range filtering
+        created_after = self.request.query_params.get("created_after")
+        created_before = self.request.query_params.get("created_before")
+
+        if created_after:
+            queryset = queryset.filter(created_at__gte=created_after)
+        if created_before:
+            queryset = queryset.filter(created_at__lte=created_before)
+
+        return queryset
+
+    def get_serializer_class(self) -> Type[Any]:
+        """
+        Use ExecutionListSerializer for list views (optimized),
+        ExecutionSerializer for detail views (full data).
+        """
+        if self.action == "list":
+            return ExecutionListSerializer
+        return ExecutionSerializer
+
+    @action(detail=False, methods=["get"])
+    def stats(self, request):
+        """
+        Get statistics about user's executions.
+
+        Returns:
+        - total: Total number of executions
+        - pending/running/success/failed/skipped: Count by status
+        - by_area: Count grouped by area name
+        - recent_failures: Last 10 failed executions
+        """
+        queryset = self.get_queryset()
+
+        stats_data = {
+            "total": queryset.count(),
+            "pending": queryset.filter(status=Execution.Status.PENDING).count(),
+            "running": queryset.filter(status=Execution.Status.RUNNING).count(),
+            "success": queryset.filter(status=Execution.Status.SUCCESS).count(),
+            "failed": queryset.filter(status=Execution.Status.FAILED).count(),
+            "skipped": queryset.filter(status=Execution.Status.SKIPPED).count(),
+            "by_area": {},
+            "recent_failures": [],
+        }
+
+        # Group by area name
+        for execution in queryset.select_related("area"):
+            area_name = execution.area.name
+            if area_name not in stats_data["by_area"]:
+                stats_data["by_area"][area_name] = 0
+            stats_data["by_area"][area_name] += 1
+
+        # Get recent failures
+        recent_failures = (
+            queryset.filter(status=Execution.Status.FAILED)
+            .order_by("-created_at")[:10]
+            .select_related("area", "area__action", "area__reaction")
+        )
+        stats_data["recent_failures"] = ExecutionListSerializer(
+            recent_failures, many=True
+        ).data
+
+        serializer = ExecutionStatsSerializer(stats_data)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["get"], url_path="by-area/(?P<area_id>[^/.]+)")
+    def by_area(self, request, area_id=None):
+        """
+        List executions for a specific area.
+
+        URL: /executions/by-area/{area_id}/
+        """
+        # Verify the area belongs to the user
+        try:
+            area = Area.objects.get(id=area_id, owner=request.user)
+        except Area.DoesNotExist:
+            return Response(
+                {"detail": "Area not found or access denied."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        queryset = self.get_queryset().filter(area=area)
+
+        # Apply pagination
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = ExecutionListSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = ExecutionListSerializer(queryset, many=True)
+        return Response(serializer.data)
