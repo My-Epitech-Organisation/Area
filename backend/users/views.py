@@ -20,20 +20,6 @@ from django.core.mail import send_mail
 from .models import User
 from .serializers import EmailTokenObtainPairSerializer, UserSerializer
 
-from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
-
-@extend_schema(
-    tags=["Items"],
-    parameters=[
-        OpenApiParameter(
-            name="id",
-            type=int,
-            location=OpenApiParameter.PATH,
-            description="Item ID",
-        )
-    ]
-)
-
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
