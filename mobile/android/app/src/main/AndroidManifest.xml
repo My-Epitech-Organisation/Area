@@ -32,8 +32,9 @@
                 <!-- Handles links like: area://reset-password?token=abc123 -->
                 <data android:scheme="area" android:host="reset-password"/>
             </intent-filter>
-            
+
             <!-- Deep Link for OAuth2 Callbacks -->
+            <!-- NOTE: scheme and host must match AppConfig.urlScheme and AppConfig.authHost -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>

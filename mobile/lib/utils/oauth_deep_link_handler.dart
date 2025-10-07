@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import '../services/oauth_service.dart';
+import '../config/app_config.dart';
 
 /// Handler for OAuth2 deep link callbacks
 class OAuthDeepLinkHandler {
@@ -45,12 +46,12 @@ class OAuthDeepLinkHandler {
 
     // Check if this is an OAuth callback
     // Expected format: myapp://auth/oauth/{provider}/callback?code=xxx&state=yyy
-    if (uri.scheme == 'myapp' && uri.host == 'auth') {
+    if (uri.scheme == AppConfig.urlScheme && uri.host == AppConfig.authHost) {
       final pathSegments = uri.pathSegments;
 
       if (pathSegments.length >= 3 &&
-          pathSegments[0] == 'oauth' &&
-          pathSegments[2] == 'callback') {
+          pathSegments[0] == AppConfig.oauthPath &&
+          pathSegments[2] == AppConfig.callbackPath) {
 
         final provider = pathSegments[1];
         final code = uri.queryParameters['code'];
