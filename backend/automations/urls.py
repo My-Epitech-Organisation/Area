@@ -16,21 +16,18 @@ This module defines the API endpoints for:
 - Webhook receiver
 """
 
-from rest_framework.routers import DefaultRouter
-
-from django.urls import include, path
-
-from . import views
-from .webhooks import webhook_receiver
-
-from rest_framework.routers import DefaultRouter
-
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
-from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
+from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+from django.urls import include, path
+
+from . import views
+from .webhooks import webhook_receiver
 
 # Create router and register viewsets
 router = DefaultRouter()
@@ -46,13 +43,19 @@ urlpatterns = [
     # JWT authentication endpoints
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-
     # API schema and documentation
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     # Swagger UI
-    path("docs/", SpectacularSwaggerView.as_view(url_name="automations:schema"), name="swagger-ui"),
-    path("redoc/", SpectacularRedocView.as_view(url_name="automations:schema"), name="redoc"),
-
+    path(
+        "docs/",
+        SpectacularSwaggerView.as_view(url_name="automations:schema"),
+        name="swagger-ui",
+    ),
+    path(
+        "redoc/",
+        SpectacularRedocView.as_view(url_name="automations:schema"),
+        name="redoc",
+    ),
     # API endpoints
     path("api/", include(router.urls)),
     # Special endpoint for service discovery

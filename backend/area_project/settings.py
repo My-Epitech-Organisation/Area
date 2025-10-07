@@ -69,7 +69,7 @@ INSTALLED_APPS = [
     "automations",
     # Documentation
     "drf_spectacular",
-    "drf_spectacular_sidecar"
+    "drf_spectacular_sidecar",
 ]
 
 REST_FRAMEWORK = {
@@ -104,7 +104,7 @@ SPECTACULAR_SETTINGS = {
             "type": "http",
             "scheme": "bearer",
             "bearerFormat": "JWT",
-            "description": "Use 'Bearer <token>' obtained via /api/token/obtain/ (simplejwt)"
+            "description": "Use 'Bearer <token>' obtained via /api/token/obtain/ (simplejwt)",
         }
     },
 }
