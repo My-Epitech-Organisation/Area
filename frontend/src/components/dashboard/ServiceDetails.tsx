@@ -9,12 +9,13 @@ import React from "react";
 import type { ServiceCardProps } from "../../types";
 
 const ServiceDetails: React.FC<ServiceCardProps> = ({ service }) => {
-    if (!service)
-    return (
-        <div className="service-details service-details-no-service">
-            No service selected
-        </div>
-    );
+    if (!service) {
+      return (
+          <div className="service-details service-details-no-service">
+              No service selected
+          </div>
+      );
+    }
 
     return (
     <div className="service-details">
