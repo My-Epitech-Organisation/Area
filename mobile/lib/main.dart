@@ -13,7 +13,20 @@ import 'utils/oauth_deep_link_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: "assets/.env");
+  
+  // Try to load .env file from different possible locations
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint('Could not load .env from root: $e');
+    try {
+      await dotenv.load(fileName: "../.env");
+    } catch (e2) {
+      debugPrint('Could not load .env from parent: $e2');
+      // Continue without .env - app will use fallback values
+    }
+  }
+  
   DebugHelper.printConfiguration();
   runApp(const MyApp());
 }
