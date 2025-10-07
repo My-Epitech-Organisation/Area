@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Action, Area, Reaction, Service
+from .models import Action, Area, Execution, Reaction, Service
 
 
 @admin.register(Service)
@@ -72,3 +72,106 @@ class AreaAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = ("created_at",)
+
+
+@admin.register(Execution)
+class ExecutionAdmin(admin.ModelAdmin):
+    """Admin configuration for Execution model."""
+
+    list_display = (
+        "id",
+        "area",
+        "status",
+        "external_event_id",
+        "created_at",
+        "duration_display",
+        "retry_count",
+    )
+
+    list_filter = (
+        "status",
+        "created_at",
+        "area__action__service",
+        "area__reaction__service",
+    )
+
+    search_fields = (
+        "external_event_id",
+        "area__name",
+        "area__owner__username",
+        "error_message",
+    )
+
+    date_hierarchy = "created_at"
+    list_per_page = 50
+
+    fieldsets = (
+        (
+            "Execution Information",
+            {
+                "fields": (
+                    "area",
+                    "external_event_id",
+                    "status",
+                    "retry_count",
+                )
+            },
+        ),
+        (
+            "Timing",
+            {
+                "fields": ("created_at", "started_at", "completed_at"),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Data",
+            {
+                "fields": ("trigger_data", "result_data"),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Error Information",
+            {
+                "fields": ("error_message",),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    readonly_fields = (
+        "area",
+        "external_event_id",
+        "status",
+        "created_at",
+        "started_at",
+        "completed_at",
+        "trigger_data",
+        "result_data",
+        "error_message",
+        "retry_count",
+    )
+
+    def duration_display(self, obj):
+        """Display execution duration in a human-readable format."""
+        duration = obj.duration
+        if duration is None:
+            return "-"
+        if duration < 1:
+            return f"{duration * 1000:.0f}ms"
+        return f"{duration:.2f}s"
+
+    duration_display.short_description = "Duration"
+
+    def has_add_permission(self, request):
+        """Disable manual creation of executions in admin."""
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        """Only allow deletion of old/completed executions."""
+        # Allow superusers to delete anything
+        if request.user.is_superuser:
+            return True
+        # Only allow deletion of terminal executions
+        return bool(obj and obj.is_terminal)
