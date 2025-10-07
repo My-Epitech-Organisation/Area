@@ -256,7 +256,9 @@ class ValidationTests(TestCase):
     def test_login_invalid_credentials(self):
         """Test login with invalid credentials"""
         # Create user
-        User.objects.create_user(email="testuser@example.com", password="correctpassword")
+        User.objects.create_user(
+            email="testuser@example.com", password="correctpassword"
+        )
 
         # Try with wrong password
         login_data = {"email": "testuser@example.com", "password": "wrongpassword"}
@@ -457,8 +459,7 @@ class EdgeCaseTests(TestCase):
         # Django email lookups can be case-insensitive depending on DB
         # This test documents the current behavior
         self.assertIn(
-            response.status_code,
-            [status.HTTP_200_OK, status.HTTP_401_UNAUTHORIZED]
+            response.status_code, [status.HTTP_200_OK, status.HTTP_401_UNAUTHORIZED]
         )
 
     def test_multiple_sessions_same_user(self):
