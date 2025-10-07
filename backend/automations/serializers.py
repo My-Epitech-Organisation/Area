@@ -11,6 +11,8 @@ from rest_framework import serializers
 
 from users.oauth.manager import OAuthManager
 
+from drf_spectacular.utils import extend_schema_field
+
 from .models import Action, Area, Execution, Reaction, Service
 from .validators import (
     validate_action_config,
@@ -44,10 +46,12 @@ class ServiceSerializer(serializers.ModelSerializer):
             "reactions_count",
         ]
 
+    @extend_schema_field(int)
     def get_actions_count(self, obj):
         """Return the number of available actions for this service."""
         return obj.actions.count()
 
+    @extend_schema_field(int)
     def get_reactions_count(self, obj):
         """Return the number of available reactions for this service."""
         return obj.reactions.count()
@@ -387,6 +391,7 @@ class ExecutionSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
+    @extend_schema_field(float)
     def get_duration_seconds(self, obj):
         """Return execution duration in seconds."""
         return obj.duration
@@ -423,6 +428,7 @@ class ExecutionListSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
+    @extend_schema_field(float)
     def get_duration_seconds(self, obj):
         """Return execution duration in seconds."""
         return obj.duration
