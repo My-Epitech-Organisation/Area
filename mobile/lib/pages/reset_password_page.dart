@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/services.dart';
 
 class ResetPasswordPage extends StatefulWidget {
-  final String? token; // Token si passé depuis un deep link
+  final String? token;
 
   const ResetPasswordPage({super.key, this.token});
 
@@ -118,7 +118,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-            
+
             // New Password Field
             TextFormField(
               controller: _passwordController,
@@ -159,7 +159,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
               },
             ),
             const SizedBox(height: 16),
-            
+
             // Confirm Password Field
             TextFormField(
               controller: _confirmPasswordController,
@@ -192,7 +192,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 return null;
               },
             ),
-            
+
             if (_errorMessage != null) ...[
               const SizedBox(height: 16),
               Container(
@@ -216,7 +216,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 ),
               ),
             ],
-            
+
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _isLoading ? null : _handleSubmit,
@@ -282,7 +282,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         const SizedBox(height: 32),
         ElevatedButton(
           onPressed: () {
-            // Retour à la page de login (pop jusqu'à la racine)
             Navigator.of(context).popUntil((route) => route.isFirst);
           },
           style: ElevatedButton.styleFrom(
