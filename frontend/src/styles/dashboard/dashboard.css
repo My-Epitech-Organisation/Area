@@ -1,0 +1,216 @@
+/*
+** EPITECH PROJECT, 2025
+** Area
+** File description:
+** dashboard
+*/
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===============================
+   DASHBOARD PAGE STYLES
+   =============================== */
+
+.dashboard-container {
+  width: 100vw;
+  min-height: 100vh;
+  background: linear-gradient(to bottom right, rgba(0, 0, 0, 0.9), rgba(5, 5, 5, 0.8), rgba(9, 0, 184, 0.95));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dashboard-header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-top: 5rem;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.dashboard-title {
+  font-size: 3.75rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* ===============================
+   USER GREETING COMPONENT
+   =============================== */
+
+.user-greeting {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-greeting-welcome {
+  font-size: 1.875rem;
+  font-weight: 600;
+  color: #a5b4fc;
+  margin-top: 0.5rem;
+  animation: fade-in 1s ease-in-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.user-greeting-error {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #f87171;
+  margin-top: 0.5rem;
+}
+
+/* ===============================
+   KPI PLACEHOLDER COMPONENT
+   =============================== */
+
+.kpi-placeholder {
+  width: 75%;
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.kpi-placeholder-div {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 2.5rem;
+  color: #9ca3af;
+  font-size: 1.125rem;
+  font-style: italic;
+}
+
+.kpi-placeholder-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  color: #a5b4fc;
+}
+
+/* ===============================
+   SERVICE SELECTOR COMPONENT
+   =============================== */
+
+.service-selector {
+  width: 80%;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2.5rem;
+}
+
+.service-selector-title {
+  font-size: 1.875rem;
+  margin-bottom: 1.5rem;
+  color: #818cf8;
+  font-weight: 600;
+  text-align: center;
+}
+
+.service-selector-list {
+  width: 100%;
+  overflow-x: auto;
+  display: flex;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.service-selector-button {
+  min-width: 200px;
+  padding: 1.5rem 2rem;
+  font-size: 1.25rem;
+  border-radius: 1rem;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.3s ease-in-out;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #d1d5db;
+  border: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.service-selector-button:hover {
+  background-color: rgba(129, 140, 248, 0.2);
+  transform: scale(1.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+}
+
+.service-selector-button.active {
+  background-color: #4f46e5;
+  color: white;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  transform: scale(1.05);
+}
+
+.service-selector-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #818cf8;
+  border-radius: 0.25rem 0.25rem 0 0;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ===============================
+   SERVICE DETAILS COMPONENT
+   =============================== */
+
+.service-details {
+  width: 75%;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  color: white;
+}
+
+.service-details-no-service {
+  text-align: center;
+  color: #9ca3af;
+}
+
+.service-details-title {
+  text-align: center;
+  font-size: 1.875rem;
+  margin-bottom: 1rem;
+  font-weight: bold;
+  color: #818cf8;
+}
+
+.service-details-section {
+  margin-bottom: 1.5rem;
+}
+
+.service-details-section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #a5b4fc;
+  margin-bottom: 0.5rem;
+}
+
+.service-details-list {
+  font-size: 1.25rem;
+  list-style: disc inside;
+  color: #d1d5db;
+}
+
