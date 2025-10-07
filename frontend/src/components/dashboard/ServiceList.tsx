@@ -16,8 +16,8 @@ interface ServiceListProps {
 const ServiceList: React.FC<ServiceListProps> = ({ services }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {services.map((service, idx) => (
-        <ServiceCard key={idx} service={service} />
+      {services.map((service) => (
+        <ServiceCard key={service.name} service={service} />
       ))}
     </div>
   );
