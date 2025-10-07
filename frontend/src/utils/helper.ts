@@ -9,5 +9,11 @@ import type { User } from "../types";
 
 export const getStoredUser = (): User | null => {
   const stored = localStorage.getItem("user");
-  return stored ? JSON.parse(stored) : null;
+  if (!stored)
+    return null;
+  try {
+    return JSON.parse(stored) as User;
+  } catch (e) {
+    return null;
+  }
 };
