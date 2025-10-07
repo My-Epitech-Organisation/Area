@@ -426,7 +426,8 @@ class OAuthManager:
         """
         if not github_id and not email:
             raise ValueError(
-                "Either github_id or email is required to create or retrieve a GitHub user"
+                "Either github_id or email is required to \
+                create or retrieve a GitHub user"
             )
 
         created = False
@@ -479,6 +480,7 @@ class OAuthManager:
             user.save()
             created = True
 
-            logger.info(f"New user created via GitHub authentication: {user.username}")
+            logger.info(f"New user created via GitHub \
+                authentication: {user.username}")
 
         return user, created
