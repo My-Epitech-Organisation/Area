@@ -61,6 +61,9 @@ INSTALLED_APPS = [
     # Local apps
     "users",
     "automations",
+    # API documentation
+    "drf_spectacular",
+    "drf_spectacular_sidecar"
 ]
 
 REST_FRAMEWORK = {
@@ -81,6 +84,20 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {"anon": "100/day", "user": "1000/day"},
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "AREA API",
+    "DESCRIPTION": "API documentation for the AREA project",
+    "VERSION": "1.0.0",
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SERVE_INCLUDE_SCHEMA": False,
+    "ENUM_NAME_OVERRIDES": {
+        "AreaStatusEnum": "automations.models.Area.Status",
+        "ServiceStatusEnum": "automations.models.Service.Status",
+        "ExecutionStatusEnum": "automations.models.Execution.Status",
+    },
 }
 
 MIDDLEWARE = [
