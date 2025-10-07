@@ -188,9 +188,9 @@ class OAuthService {
   Future<ServiceToken?> getServiceToken(String provider) async {
     try {
       final services = await getConnectedServices();
-      return services.connectedServices.firstWhere(
-        (s) => s.serviceName.toLowerCase() == provider.toLowerCase(),
-      );
+      final matchingServices = services.connectedServices
+          .where((s) => s.serviceName.toLowerCase() == provider.toLowerCase());
+      return matchingServices.isNotEmpty ? matchingServices.first : null;
     } catch (e) {
       return null;
     }
