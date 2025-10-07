@@ -1,3 +1,10 @@
+/*
+** EPITECH PROJECT, 2025
+** Area
+** File description:
+** Homepage
+*/
+
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import HomePageVerticalNav from "../components/HomepageVerticalNav";
 
