@@ -23,10 +23,6 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Automation'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
       body: Semantics(
         label: 'Create new automation page',
         child: Container(
@@ -47,8 +43,6 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header Card
-                  const HeaderCard(),
 
                   const SizedBox(height: 24),
 
