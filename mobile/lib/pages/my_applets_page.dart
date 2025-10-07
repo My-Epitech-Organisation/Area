@@ -6,8 +6,8 @@ class MyAppletsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('My Applets')),
-      body: Center(child: Text('List of my applets here')),
+      appBar: AppBar(title: const Text('My Automations')),
+      body: const Center(child: Text('List of my automations here')),
     );
   }
 }

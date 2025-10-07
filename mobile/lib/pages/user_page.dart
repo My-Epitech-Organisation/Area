@@ -5,26 +5,38 @@ import '../providers/applet_provider.dart';
 import '../providers/provider_manager.dart';
 import 'service_connections_page.dart';
 
-class UserPage extends StatelessWidget {
+class UserPage extends StatefulWidget {
   const UserPage({super.key});
 
   @override
+  State<UserPage> createState() => _UserPageState();
+}
+
+class _UserPageState extends State<UserPage> {
+  Future<void> _refreshData() async {
+    await ProviderManager.refreshAll(context);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              UserProfileSection(),
-              SizedBox(height: 24),
-              StatisticsSection(),
-              SizedBox(height: 24),
-              SettingsSection(),
-              SizedBox(height: 24),
-              LogoutSection(),
-            ],
+        child: RefreshIndicator(
+          onRefresh: _refreshData,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const UserProfileSection(),
+                const SizedBox(height: 24),
+                const StatisticsSection(),
+                const SizedBox(height: 24),
+                const SettingsSection(),
+                const SizedBox(height: 24),
+                const LogoutSection(),
+              ],
+            ),
           ),
         ),
       ),
@@ -32,8 +44,25 @@ class UserPage extends StatelessWidget {
   }
 }
 
-class UserProfileSection extends StatelessWidget {
+class UserProfileSection extends StatefulWidget {
   const UserProfileSection({super.key});
+
+  @override
+  State<UserProfileSection> createState() => _UserProfileSectionState();
+}
+
+class _UserProfileSectionState extends State<UserProfileSection> {
+  @override
+  void initState() {
+    super.initState();
+    // Load profile if not already loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      if (userProvider.profile == null && !userProvider.isLoadingProfile) {
+        userProvider.loadProfile();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +216,7 @@ class StatisticsSection extends StatelessWidget {
               children: [
                 Expanded(
                   child: _buildStatCard(
-                    'Active Applets',
+                    'Active Automations',
                     '$activeCount',
                     Icons.play_arrow,
                     Colors.blue,
@@ -196,7 +225,7 @@ class StatisticsSection extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatCard(
-                    'Total Applets',
+                    'Total Automations',
                     '$totalCount',
                     Icons.flash_on,
                     Colors.orange,

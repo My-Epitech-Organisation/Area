@@ -25,8 +25,8 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
 
   final List<String> _pageTitles = [
     'Dashboard',
-    'Create Applet',
-    'My Applets',
+    'Create Automation',
+    'My Automations',
     'Profile',
   ];
 
@@ -46,8 +46,8 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
   void _navigateToPage(int index) {
     _pageController.animateToPage(
       index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOutCubic,
     );
   }
 
@@ -131,32 +131,39 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_pageTitles[_currentPage]),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.black87,
+        surfaceTintColor: Colors.transparent,
         actions: [
           Semantics(
             label: 'Page indicators',
             hint:
                 'Shows current page position. ${_currentPage + 1} of ${_pages.length} pages',
-            child: Row(
-              children: List.generate(
-                _pages.length,
-                (index) => Semantics(
-                  label: 'Page ${index + 1} indicator',
-                  hint: _currentPage == index
-                      ? 'Current page'
-                      : 'Tap to go to ${_pageTitles[index]} page',
-                  button: true,
-                  child: GestureDetector(
-                    onTap: () => _navigateToPage(index),
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 2),
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _currentPage == index
-                            ? Colors.white
-                            : Colors.white.withValues(alpha: 0.5),
+            child: SizedBox(
+              width: 60, // Constrain width to prevent overflow
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  _pages.length,
+                  (index) => Semantics(
+                    label: 'Page ${index + 1} indicator',
+                    hint: _currentPage == index
+                        ? 'Current page'
+                        : 'Tap to go to ${_pageTitles[index]} page',
+                    button: true,
+                    child: GestureDetector(
+                      onTap: () => _navigateToPage(index),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        width: 8, // Reduced size to fit better
+                        height: 8, // Reduced size to fit better
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _currentPage == index
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.grey.withAlpha(77), // Use withAlpha instead of withOpacity
+                        ),
                       ),
                     ),
                   ),
@@ -164,29 +171,25 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
           PopupMenuButton<String>(
             onSelected: (value) async {
               if (value == 'logout') {
                 await _showLogoutConfirmation(context);
               }
             },
+            icon: const Icon(Icons.more_vert, color: Colors.grey),
             itemBuilder: (context) => [
               const PopupMenuItem(
                 value: 'logout',
                 child: Row(
                   children: [
-                    Icon(Icons.logout, color: Colors.red),
+                    Icon(Icons.logout, color: Colors.red, size: 20),
                     SizedBox(width: 8),
-                    Text('Sign Out'),
+                    Text('Sign Out', style: TextStyle(color: Colors.red)),
                   ],
                 ),
               ),
             ],
-            child: const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Icon(Icons.more_vert),
-            ),
           ),
         ],
       ),
@@ -197,6 +200,7 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
         child: PageView(
           controller: _pageController,
           onPageChanged: _onPageChanged,
+          physics: const BouncingScrollPhysics(),
           children: _pages,
         ),
       ),
@@ -204,13 +208,12 @@ class _SwipeNavigationPageState extends State<SwipeNavigationPage> {
         label: 'Bottom navigation menu',
         hint:
             'Use these buttons to navigate between different sections of the app',
-        child: BottomNavigationBar(
-          currentIndex: _currentPage,
-          onTap: _navigateToPage,
-          type: BottomNavigationBarType.fixed,
-          items: List.generate(
+        child: NavigationBar(
+          selectedIndex: _currentPage,
+          onDestinationSelected: _navigateToPage,
+          destinations: List.generate(
             _pages.length,
-            (index) => BottomNavigationBarItem(
+            (index) => NavigationDestination(
               icon: Icon(_pageIcons[index]),
               label: _pageTitles[index],
             ),
