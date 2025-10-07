@@ -25,6 +25,7 @@ class _MyAppState extends State<MyApp> {
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   late AppLinks _appLinks;
   StreamSubscription? _sub;
+  bool _initialLinkHandled = false;
 
   @override
   void initState() {
@@ -41,9 +42,13 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _initDeepLinkListener() async {
     // Handle initial link (app was opened from a link)
+    // Only handle it once to avoid issues during hot restart
     try {
       final initialUri = await _appLinks.getInitialLink();
-      if (initialUri != null) {
+      if (initialUri != null && !_initialLinkHandled) {
+        _initialLinkHandled = true;
+        // Add delay to ensure navigation is ready
+        await Future.delayed(const Duration(milliseconds: 500));
         _handleDeepLink(initialUri);
       }
     } catch (e) {
@@ -66,12 +71,16 @@ class _MyAppState extends State<MyApp> {
       final token = uri.queryParameters['token'];
       
       if (token != null && token.isNotEmpty) {
-        // Navigate to reset password page with token
-        navigatorKey.currentState?.push(
-          MaterialPageRoute(
-            builder: (context) => ResetPasswordPage(token: token),
-          ),
-        );
+        // Wait for navigator to be ready before pushing
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (navigatorKey.currentState?.mounted ?? false) {
+            navigatorKey.currentState?.push(
+              MaterialPageRoute(
+                builder: (context) => ResetPasswordPage(token: token),
+              ),
+            );
+          }
+        });
       } else {
         debugPrint('Reset password link missing token');
       }
