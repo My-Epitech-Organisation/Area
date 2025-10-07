@@ -130,7 +130,9 @@ services:
 
   client_web:
     container_name: area_client_web
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
     ports:
       - "${FRONTEND_PORT:-8081}:80"
     volumes:
