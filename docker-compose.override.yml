@@ -1,0 +1,15 @@
+services:
+  client_web_dev:
+    container_name: area_client_web_dev
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "${FRONTEND_DEV_PORT:-5173}:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - server
+    networks:
+      - area-net
