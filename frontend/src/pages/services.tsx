@@ -54,7 +54,7 @@ const Services: React.FC = () => {
     const fetchAbout = async () => {
       setLoading(true);
       try {
-        const res = await fetch("/about.json");
+        const res = await fetch("http://localhost:8080/about.json");
         if (!res.ok)
           throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -561,9 +561,9 @@ const Services: React.FC = () => {
             </div>
 
             <section className="mt-16">
-              <h2 className="text-2xl font-semibold text-white mb-4">Historique</h2>
+              <h2 className="text-2xl font-semibold text-white mb-4">History</h2>
               {history.length === 0 ? (
-                <div className="py-8 px-6 rounded-lg bg-white/5 text-center text-gray-300">Aucun service visité récemment.</div>
+                <div className="py-8 px-6 rounded-lg bg-white/5 text-center text-gray-300">No services visited recently.</div>
               ) : (
                 <div
                   ref={historyContainerRef}
@@ -598,7 +598,7 @@ const Services: React.FC = () => {
                           <div className="text-sm font-medium text-white group-hover:text-indigo-200 transition-colors">{h.Name}</div>
                           {h.description && <div className="text-xs text-gray-400 line-clamp-3 mt-2">{h.description}</div>}
                         </div>
-                        <div className="mt-auto text-xs text-gray-400">Visité récemment</div>
+                        <div className="mt-auto text-xs text-gray-400">Recently visited</div>
                       </div>
                     </Link>
                   ))}
