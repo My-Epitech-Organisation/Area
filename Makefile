@@ -1,3 +1,10 @@
+##
+## EPITECH PROJECT, 2025
+## Area
+## File description:
+## Makefile
+##
+
 # AREA Project Makefile
 # Simplified Docker operations
 
@@ -8,6 +15,17 @@ help: ## Show this help message
 	@echo "AREA Project - Available commands:"
 	@echo
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
+
+# Quick dev mode
+dev: ## Launch project in development mode (backend + dev frontend with hot reload)
+	@echo "Starting AREA in development mode..."
+	@echo "Frontend: http://localhost:5173"
+	$(MAKE) up-dev
+
+prod: ## Launch project in production mode (backend + prod frontend)
+	@echo "Starting AREA in production mode..."
+	@echo "Frontend: http://localhost:8081"
+	$(MAKE) up-web
 
 # Docker operations
 build: ## Build all Docker images
@@ -24,6 +42,12 @@ up-fast: ## Start backend services only (no web/mobile - fastest startup)
 
 up-web: ## Start all services except mobile (but includes web - mobile will build)
 	docker-compose up -d db redis server worker beat flower client_web
+
+up-dev: ## Start all services with dev frontend (hot reload)
+	docker-compose up -d --remove-orphans db redis server worker beat flower client_web_dev
+
+up-dev-logs: ## Start all services with dev frontend and logs
+	docker-compose up --remove-orphans db redis server worker beat flower client_web_dev
 
 up-logs: ## Start all services with logs
 	docker-compose up
@@ -61,6 +85,12 @@ migrate: ## Run Django migrations
 
 makemigrations: ## Create new Django migrations
 	docker-compose exec server python manage.py makemigrations
+
+init-db: ## Initialize database with default services/actions/reactions
+	docker-compose exec server python manage.py init_services
+
+init-db-reset: ## Reset and reinitialize database (WARNING: deletes all services)
+	docker-compose exec server python manage.py init_services --reset
 
 superuser: ## Create Django superuser
 	docker-compose exec server python manage.py createsuperuser

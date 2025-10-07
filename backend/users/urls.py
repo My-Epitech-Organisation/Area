@@ -2,6 +2,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from django.urls import path
 
+from .oauth.google_signin import GoogleLoginView
 from .oauth_views import (
     OAuthCallbackView,
     OAuthInitiateView,
@@ -26,6 +27,7 @@ urlpatterns = [
     path("register/", RegisterView.as_view(), name="auth_register"),
     path("login/", EmailTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("login/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("google-login/", GoogleLoginView.as_view(), name="google_login"),
     path("me/", UserDetailView.as_view(), name="user_detail"),
     path(
         "send-verification-email/",
