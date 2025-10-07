@@ -8,6 +8,9 @@ const Navbar: React.FC = () => {
         <div className="h-16 flex items-center justify-center">
           <div className="flex items-center space-x-8">
             <Link to="/homepage" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
+              Home
+            </Link>
+            <Link to="/Areaction" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
               Area
             </Link>
             <Link to="/services" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
