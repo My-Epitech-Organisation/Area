@@ -397,7 +397,7 @@ OAUTH2_PROVIDERS = {
         "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
         "client_secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
         "redirect_uri": os.getenv(
-            "GOOGLE_REDIRECT_URI", "http://localhost:8080/auth/oauth/google/callback/"
+            "GOOGLE_REDIRECT_URI", "http://localhost:8080/auth/google/callback"
         ),
         "authorization_endpoint": "https://accounts.google.com/o/oauth2/v2/auth",
         "token_endpoint": "https://oauth2.googleapis.com/token",

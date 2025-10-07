@@ -1,3 +1,4 @@
+# Production Dockerfile for React/Vite frontend
 # build stage
 FROM node:20-alpine AS build
 

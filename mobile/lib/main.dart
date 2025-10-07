@@ -1,24 +1,146 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'providers/app_state.dart';
+import 'dart:async';
+import 'package:app_links/app_links.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'providers/providers.dart';
 import 'pages/splash_page.dart';
 import 'pages/login_page.dart';
+import 'pages/reset_password_page.dart';
 import 'swipe_navigation_page.dart';
 import 'utils/debug_helper.dart';
+import 'utils/oauth_deep_link_handler.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Try to load .env file from different possible locations
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint('Could not load .env from root: $e');
+    try {
+      await dotenv.load(fileName: "../.env");
+    } catch (e2) {
+      debugPrint('Could not load .env from parent: $e2');
+      // Continue without .env - app will use fallback values
+    }
+  }
+  
   DebugHelper.printConfiguration();
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  late AppLinks _appLinks;
+  StreamSubscription? _sub;
+  bool _initialLinkHandled = false;
+  late OAuthDeepLinkHandler _oauthHandler;
+
+  @override
+  void initState() {
+    super.initState();
+    _appLinks = AppLinks();
+    _oauthHandler = OAuthDeepLinkHandler();
+    _oauthHandler.onOAuthComplete = _handleOAuthComplete;
+    _initDeepLinkListener();
+    _initOAuthHandler();
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    _oauthHandler.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initOAuthHandler() async {
+    await _oauthHandler.initialize();
+  }
+
+  void _handleOAuthComplete(String provider, bool success, String? message) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = navigatorKey.currentContext;
+      if (context != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message ?? 'OAuth completed for $provider'),
+            backgroundColor: success ? Colors.green : Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    });
+  }
+
+  Future<void> _initDeepLinkListener() async {
+    // Handle initial link (app was opened from a link)
+    // Only handle it once to avoid issues during hot restart
+    try {
+      final initialUri = await _appLinks.getInitialLink();
+      if (initialUri != null && !_initialLinkHandled) {
+        _initialLinkHandled = true;
+        // Add delay to ensure navigation is ready
+        await Future.delayed(const Duration(milliseconds: 500));
+        _handleDeepLink(initialUri);
+      }
+    } catch (e) {
+      debugPrint('Error getting initial link: $e');
+    }
+
+    // Handle links while app is running
+    _sub = _appLinks.uriLinkStream.listen((Uri? uri) {
+      if (uri != null) {
+        _handleDeepLink(uri);
+      }
+    }, onError: (err) {
+      debugPrint('Error listening to link stream: $err');
+    });
+  }
+
+  void _handleDeepLink(Uri uri) {
+    debugPrint('Handling deep link: $uri');
+
+    // Handle password reset deep link: area://reset-password?token=abc123
+    if (uri.scheme == 'area' && uri.host == 'reset-password') {
+      final token = uri.queryParameters['token'];
+
+      if (token != null && token.isNotEmpty) {
+        // Wait for navigator to be ready before pushing
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (navigatorKey.currentState?.mounted ?? false) {
+            navigatorKey.currentState?.push(
+              MaterialPageRoute(
+                builder: (context) => ResetPasswordPage(token: token),
+              ),
+            );
+          }
+        });
+      } else {
+        debugPrint('Reset password link missing token');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => AppState())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => AppletProvider()),
+        ChangeNotifierProvider(create: (_) => ServiceCatalogProvider()),
+      ],
       child: MaterialApp(
+        navigatorKey: navigatorKey,
         title: 'AREA Mobile',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),

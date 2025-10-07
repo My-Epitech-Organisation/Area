@@ -45,5 +45,19 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Deep Link Configuration for Password Reset -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.area.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>area</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
