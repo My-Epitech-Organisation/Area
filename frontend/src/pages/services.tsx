@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 
 type AboutService = {
@@ -96,6 +96,61 @@ const Services: React.FC = () => {
     return services.filter((s) => (s.Name || s.name || "").toLowerCase().includes(q));
   }, [services, query]);
 
+  // Refs and transform state for circular 3D wheel
+  const carouselRef = useRef<HTMLDivElement | null>(null);
+  const wheelRef = useRef<HTMLDivElement | null>(null);
+  const cardRefs = useRef<Array<HTMLAnchorElement | null>>([]);
+  const rafRef = useRef<number | null>(null);
+  const [rotationDeg, setRotationDeg] = useState(0);
+
+  const updateWheel = useCallback(() => {
+    const container = carouselRef.current;
+    const wheel = wheelRef.current;
+    if (!container || !wheel) return;
+    // compute rotation from scroll and update each card transform so the wheel appears to spin
+    const cardCount = Math.max(1, filtered.length);
+    const angleStep = 360 / cardCount;
+    const cardWidth = 360;
+    const radius = Math.max(900, (cardWidth / 2) / Math.tan(Math.PI / cardCount));
+
+    const maxScroll = Math.max(1, container.scrollWidth - container.clientWidth);
+    const scrollLeft = container.scrollLeft || 0;
+    const rotation = (scrollLeft / maxScroll) * 360; // degrees
+    // store rotation in state so we can compute depth/sort at render time
+    setRotationDeg(rotation);
+    // update transforms quickly for any existing refs (best-effort)
+    cardRefs.current.forEach((el, idx) => {
+      if (!el) return;
+      const base = idx * angleStep;
+      const ang = base + rotation;
+      const transform = `rotateY(${ang}deg) translateZ(${radius}px) translateX(-50%) translateY(-50%)`;
+      (el as HTMLElement).style.transform = transform;
+      (el as HTMLElement).style.zIndex = `${Math.round(1000 - Math.abs(((ang + 180) % 360) - 180))}`;
+    });
+  }, [filtered.length]);
+
+  const onScroll = useCallback(() => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => updateWheel());
+  }, [updateWheel]);
+
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    // center initial scroll so wheel starts near middle
+    try {
+      el.scrollLeft = Math.max(0, Math.floor((el.scrollWidth - el.clientWidth) / 2));
+    } catch {}
+    updateWheel();
+    el.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [onScroll, updateWheel]);
+
   const HISTORY_KEY = "area_service_history";
   const [history, setHistory] = useState<AboutService[]>(() => {
     try {
@@ -160,35 +215,111 @@ const Services: React.FC = () => {
           </div>
           ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {filtered.map((s) => (
-                <Link
-                  to={`/services/${s.id}`}
-                  key={s.id}
-                  onClick={() => pushHistory(s)}
-                  className="group block rounded-xl bg-white/5 p-4 hover:bg-white/6 transition"
-                  title={s.description || s.Name}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
-                        {s.logo ? (
-                          <img src={s.logo} alt={`${s.Name} logo`} className="w-full h-full object-contain" />
-                        ) : (
-                          <div className="text-2xl font-bold text-white/80">{(s.Name || "?").charAt(0)}</div>
-                        )}
-                      </div>
+            <div className="relative w-full" style={{ height: 560, perspective: 1400 }}>
+              {/* scrollable spacer - controls rotation (keeps wheel fixed) */}
+              <div
+                ref={carouselRef}
+                className="w-full overflow-x-auto overflow-y-hidden py-12"
+                style={{ height: 560 }}
+              >
+                <div style={{ width: Math.max(2000, filtered.length * 420), height: 1 }} />
+              </div>
 
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-white group-hover:text-indigo-300">
-                        {s.Name}
-                      </h3>
-                      {s.description && <p className="text-sm text-gray-400 mt-1 line-clamp-2">{s.description}</p>}
-                    </div>
+              {/* wheel overlay fixed inside wrapper so it doesn't move with scroll */}
+              <div
+                ref={wheelRef}
+                className="absolute inset-0 pointer-events-none"
+                style={{ height: 560, transformStyle: 'preserve-3d' }}
+              >
+                <div className="relative w-full h-full flex items-center justify-center" style={{ height: 560 }}>
+                  {
+                    // compute transforms and depth for each card, then render back-to-front
+                    (() => {
+                      const cardCount = Math.max(1, filtered.length);
+                      const angleStep = 360 / cardCount;
+                      const cardWidth = 360; // match min-w
+                      const radius = Math.max(900, (cardWidth / 2) / Math.tan(Math.PI / cardCount));
+                      type RenderItem = { s: AboutService; idx: number; ang: number; depth: number; transform: string };
+                      const items: RenderItem[] = filtered.map((svc, idx) => {
+                        const base = idx * angleStep;
+                        const ang = base + rotationDeg;
+                        const transform = `rotateY(${ang}deg) translateZ(${radius}px) translateX(-50%) translateY(-50%)`;
+                        // depth: z component approximation based on cos(angle)
+                        const rad = (ang % 360) * (Math.PI / 180);
+                        const depth = Math.cos(rad) * radius;
+                        return { s: svc, idx, ang, depth, transform };
+                      });
 
-                    <div className="text-gray-400">›</div>
-                  </div>
-                </Link>
-              ))}
+                      // sort by depth ascending so farthest render first
+                      items.sort((a, b) => a.depth - b.depth);
+
+                      return items.map(({ s, idx, ang, transform }) => (
+                        <Link
+                          to={`/services/${s.id}`}
+                          key={s.id}
+                          onClick={() => pushHistory(s)}
+                          ref={(el: HTMLAnchorElement | null) => { cardRefs.current[idx] = el; }}
+                          className="card-3d min-w-[360px] h-[320px] absolute rounded-xl bg-white/5 p-6 transition-transform duration-200"
+                          title={s.description || s.Name}
+                          style={{
+                            left: '50%',
+                            top: '50%',
+                            transformStyle: 'preserve-3d',
+                            pointerEvents: 'auto',
+                            transform,
+                            // help browser composite and painting order
+                            willChange: 'transform, opacity',
+                            transformOrigin: '50% 50% 0px',
+                            zIndex: `${Math.round(1000 - Math.abs(((ang + 180) % 360) - 180))}`
+                          }}
+                        >
+                          <div style={{ position: 'relative', width: '100%', height: '100%', transformStyle: 'preserve-3d' }}>
+                            {/* front face */}
+                            <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                              <div className="flex items-center gap-4">
+                                <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
+                                  {s.logo ? (
+                                    <img src={s.logo} alt={`${s.Name} logo`} className="w-full h-full object-contain" />
+                                  ) : (
+                                    <div className="text-3xl font-bold text-white/80">{(s.Name || "?").charAt(0)}</div>
+                                  )}
+                                </div>
+
+                                <div className="flex-1">
+                                  <h3 className="text-2xl font-semibold text-white group-hover:text-indigo-300">{s.Name}</h3>
+                                  {s.description && <p className="text-sm text-gray-400 mt-1 line-clamp-2">{s.description}</p>}
+                                </div>
+                              </div>
+
+                              <div className="text-gray-400 text-right">›</div>
+                            </div>
+
+                            {/* back face (rotated 180deg so its content is readable when card is flipped) */}
+                            <div style={{ position: 'absolute', inset: 0, transform: 'rotateY(180deg)', backfaceVisibility: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                              <div className="flex items-center gap-4">
+                                <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
+                                  {s.logo ? (
+                                    <img src={s.logo} alt={`${s.Name} logo`} className="w-full h-full object-contain" />
+                                  ) : (
+                                    <div className="text-3xl font-bold text-white/80">{(s.Name || "?").charAt(0)}</div>
+                                  )}
+                                </div>
+
+                                <div className="flex-1">
+                                  <h3 className="text-2xl font-semibold text-white group-hover:text-indigo-300">{s.Name}</h3>
+                                  {s.description && <p className="text-sm text-gray-400 mt-1 line-clamp-2">{s.description}</p>}
+                                </div>
+                              </div>
+
+                              <div className="text-gray-400 text-right">›</div>
+                            </div>
+                          </div>
+                        </Link>
+                      ));
+                    })()
+                  }
+                </div>
+              </div>
             </div>
 
             <section className="mt-10">
