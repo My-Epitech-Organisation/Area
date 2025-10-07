@@ -1,7 +1,14 @@
+##
+## EPITECH PROJECT, 2025
+## Area
+## File description:
+## views
+##
+
 import secrets
 import string
 
-from rest_framework import generics, status
+from rest_framework import generics, status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,8 +18,51 @@ from django.conf import settings
 from django.core.mail import send_mail
 
 from .models import User
-from .serializers import EmailTokenObtainPairSerializer, UserSerializer
+from .serializers import EmailTokenObtainPairSerializer, UserSerializer, ItemSerializer
 
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
+
+@extend_schema_view(
+    list=extend_schema(
+        summary="List Items",
+        description="Retrieve a list of items.",
+        responses=ItemSerializer(many=True),
+    ),
+    retrieve=extend_schema(
+        summary="Retrieve Item",
+        description="Retrieve a specific item by ID.",
+        responses=ItemSerializer(),
+    ),
+)
+
+@extend_schema(
+    tags=["Items"],
+    parameters=[
+        OpenApiParameter(
+            name="id",
+            type=int,
+            location=OpenApiParameter.PATH,
+            description="Item ID",
+        )
+    ]
+)
+class ItemViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # For schema generation, return empty queryset
+        if getattr(self, "swagger_fake_view", False):
+            return []
+        return []  # This is a simple example ViewSet
+
+    def list(self, request):
+        data = [
+            {"id": 1, "name": "Item 1", "price": "9.99"}
+        ]
+        return Response(data)
+    def retrieve(self, request, pk=None):
+        item = {"id": int(pk), "name": f"Item {pk}", "price": "9.99"}
+        return Response(item)
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -22,6 +72,7 @@ class RegisterView(generics.CreateAPIView):
 
 class UserDetailView(APIView):
     permission_classes = (IsAuthenticated,)
+    serializer_class = UserSerializer
 
     def get(self, request):
         serializer = UserSerializer(request.user)
@@ -30,6 +81,7 @@ class UserDetailView(APIView):
 
 class SendEmailVerificationView(APIView):
     permission_classes = (IsAuthenticated,)
+    serializer_class = None  # No serializer needed for this endpoint
 
     def post(self, request):
         user = request.user
@@ -84,6 +136,7 @@ class SendEmailVerificationView(APIView):
 
 class VerifyEmailView(APIView):
     permission_classes = (AllowAny,)
+    serializer_class = None  # No serializer needed for this endpoint
 
     def get(self, request, token):
         try:
