@@ -51,6 +51,10 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
+class GoogleLoginSerializer(serializers.Serializer):
+    id_token = serializers.CharField(required=True, help_text="Google ID token from mobile app")
+
+
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Custom token serializer that uses email for authentication.
 
