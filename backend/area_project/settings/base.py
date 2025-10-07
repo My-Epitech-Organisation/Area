@@ -63,7 +63,7 @@ INSTALLED_APPS = [
     "automations",
     # API documentation
     "drf_spectacular",
-    "drf_spectacular_sidecar"
+    "drf_spectacular_sidecar",
 ]
 
 REST_FRAMEWORK = {

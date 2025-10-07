@@ -13,6 +13,7 @@ from django.core.exceptions import ValidationError
 
 from .models import User
 
+
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
     password2 = serializers.CharField(
@@ -52,7 +53,9 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class GoogleLoginSerializer(serializers.Serializer):
-    id_token = serializers.CharField(required=True, help_text="Google ID token from mobile app")
+    id_token = serializers.CharField(
+        required=True, help_text="Google ID token from mobile app"
+    )
 
 
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):

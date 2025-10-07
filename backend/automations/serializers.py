@@ -7,11 +7,10 @@ This module provides Django REST Framework serializers for:
 - Area CRUD operations with validation
 """
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from users.oauth.manager import OAuthManager
-
-from drf_spectacular.utils import extend_schema_field
 
 from .models import Action, Area, Execution, Reaction, Service
 from .validators import (

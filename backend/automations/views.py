@@ -17,12 +17,11 @@ This module provides Django REST Framework ViewSets for:
 import time
 from typing import Any, Type
 
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
-
-from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from django.db.models import Q, QuerySet
 from django.http import JsonResponse
@@ -152,7 +151,7 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
             location=OpenApiParameter.PATH,
             description="Area ID",
         )
-    ]
+    ],
 )
 class AreaViewSet(viewsets.ModelViewSet):
     """
@@ -193,7 +192,7 @@ class AreaViewSet(viewsets.ModelViewSet):
         # For schema generation, return an empty queryset to avoid user filtering issues
         if getattr(self, "swagger_fake_view", False):
             return Area.objects.none()
-        
+
         return Area.objects.filter(owner=self.request.user).select_related(
             "action", "reaction", "action__service", "reaction__service"
         )
@@ -317,8 +316,8 @@ def about_json_view(request):
             type=int,
             location=OpenApiParameter.QUERY,
             description="Filter by Area ID",
-        )
-    ]
+        ),
+    ],
 )
 class ExecutionViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -361,7 +360,7 @@ class ExecutionViewSet(viewsets.ReadOnlyModelViewSet):
         # For schema generation, return an empty queryset to avoid user filtering issues
         if getattr(self, "swagger_fake_view", False):
             return Execution.objects.none()
-        
+
         queryset = Execution.objects.filter(
             area__owner=self.request.user
         ).select_related(
