@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
 import 'package:app_links/app_links.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'providers/providers.dart';
 import 'pages/splash_page.dart';
 import 'pages/login_page.dart';
@@ -9,7 +10,9 @@ import 'pages/reset_password_page.dart';
 import 'swipe_navigation_page.dart';
 import 'utils/debug_helper.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: "assets/.env");
   DebugHelper.printConfiguration();
   runApp(const MyApp());
 }
