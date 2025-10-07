@@ -242,7 +242,4 @@ class OAuthService {
     }
   }
 
-  // Provider metadata methods moved to ServiceProviderConfig
-  // Use ServiceProviderConfig.getDisplayName() instead of getProviderDisplayName()
-  // Use ServiceProviderConfig.getDescription() instead of getProviderDescription()
 }
