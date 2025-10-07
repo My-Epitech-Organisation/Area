@@ -20,6 +20,15 @@
 	--bl-mid: #000000;
 	--bl-end: #1b9b73; /* emerald-600 */
 
+	/* signup / login - background */
+	--auth-signup-start: #0d05a3; /* indigo-600 */
+	--auth-signup-mid: #000000;
+	--auth-signup-end: #097191; /* violet-600 */
+
+	--auth-login-start: #066d4c; /* emerald-600 / teal */
+	--auth-login-mid: #000000;
+	--auth-login-end: #5a22a3; /* indigo-600 */
+
 	/* typography */
 	--text-primary: #ffffff;
 	--text-muted: #d1d5db; /* gray-300 */
@@ -39,6 +48,9 @@
 .bg-tr { background: linear-gradient(to bottom right, var(--tr-start), var(--tr-mid), var(--tr-end)); }
 .bg-br { background: linear-gradient(to bottom right, var(--br-start), var(--br-mid), var(--br-end)); }
 .bg-bl { background: linear-gradient(to bottom right, var(--bl-start), var(--bl-mid), var(--bl-end)); }
+
+.bg-auth-signup { background: linear-gradient(135deg, var(--auth-signup-start) 0%, var(--auth-signup-mid) 40%, var(--auth-signup-end) 100%); }
+.bg-auth-login { background: linear-gradient(135deg, var(--auth-login-start) 0%, var(--auth-login-mid) 40%, var(--auth-login-end) 100%); }
 
 .text-primary { color: var(--text-primary) !important; }
 .text-muted { color: var(--text-muted) !important; }

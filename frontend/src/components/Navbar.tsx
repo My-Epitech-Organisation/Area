@@ -5,28 +5,31 @@ const Navbar: React.FC = () => {
   return (
     <nav className="w-full fixed top-0 left-0 z-50 bg-black/50 backdrop-blur-sm border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-16 flex items-center justify-between">
-            <div className="flex flex-1 justify-center items-center space-x-8">
-              <Link to="/homepage" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
-                Area
-              </Link>
-              <Link to="/services" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
-                Services
-              </Link>
-              <Link to="/about" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
-                About Us
-              </Link>
-              <Link to="/dashboard" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
-                Dashboard
-              </Link>
-              <Link to="/login" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
-                Log In
-              </Link>
-              <Link to="/signup" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
-                Sign Up
-              </Link>
-            </div>
+        <div className="h-16 flex items-center justify-center">
+          <div className="flex items-center space-x-8">
+            <Link to="/homepage" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
+              Area
+            </Link>
+            <Link to="/services" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
+              Services
+            </Link>
+            <Link to="/about" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
+              About Us
+            </Link>
+            <Link to="/dashboard" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
+              Dashboard
+            </Link>
+          </div>
         </div>
+      </div>
+
+      <div className="absolute right-4 top-0 h-16 flex items-center space-x-8">
+        <Link to="/login" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
+          Log In
+        </Link>
+        <Link to="/signup" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
+          Sign Up
+        </Link>
       </div>
     </nav>
   );

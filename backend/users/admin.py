@@ -8,10 +8,10 @@ from .models import ServiceToken, User
 class UserAdmin(BaseUserAdmin):
     """Admin configuration for custom User model."""
 
-    # Fields to display in the user list
+    # Fields to display in the user list (email first as it's the primary identifier)
     list_display = (
-        "username",
         "email",
+        "username",
         "email_verified",
         "is_staff",
         "is_active",
@@ -27,8 +27,11 @@ class UserAdmin(BaseUserAdmin):
         "date_joined",
     )
 
-    # Fields to search
-    search_fields = ("username", "email", "first_name", "last_name")
+    # Fields to search (email first as it's the primary identifier)
+    search_fields = ("email", "username", "first_name", "last_name")
+
+    # Use email for ordering
+    ordering = ("email",)
 
     # Add custom fields to the user edit form
     fieldsets = list(BaseUserAdmin.fieldsets) + [
@@ -50,7 +53,7 @@ class ServiceTokenAdmin(admin.ModelAdmin):
 
     list_filter = ("service_name", "created_at", "expires_at")
 
-    search_fields = ("user__username", "user__email", "service_name")
+    search_fields = ("user__email", "user__username", "service_name")
 
     # Make tokens read-only for security
     readonly_fields = ("access_token", "refresh_token", "created_at")
