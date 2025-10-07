@@ -1,0 +1,118 @@
+{
+  "client": { "host": "10.101.53.35" },
+  "server": {
+    "current_time": 1531680780,
+    "services": [
+      {
+        "name": "facebook",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png",
+        "actions": [
+          { "name": "new_message_in_group", "description": "A new message is posted in the group" },
+          { "name": "new_message_in_inbox", "description": "A new private message is received by the user" },
+          { "name": "new_like", "description": "The user gains a like from one of their messages" }
+        ],
+        "reactions": [ { "name": "like_message", "description": "The user likes a message" } ]
+      },
+      {
+        "name": "google",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Google_Favicon_2025.svg",
+        "actions": [
+          { "name": "new_search", "description": "A new search is performed" }
+        ],
+        "reactions": [
+          { "name": "save_result", "description": "Save a search result" }
+        ]
+      },
+      {
+        "name": "gmail",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Gmail_Icon.svg",
+        "actions": [
+          { "name": "new_email_received", "description": "A new email is received" }
+        ],
+        "reactions": [
+          { "name": "send_email", "description": "Send an email" }
+        ]
+      },
+      {
+        "name": "google_calendar",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/7/74/Google_Calendar_icon_%282020%29.svg",
+        "actions": [
+          { "name": "event_created", "description": "A new calendar event is created" }
+        ],
+        "reactions": [
+          { "name": "create_event", "description": "Create an event in calendar" }
+        ]
+      },
+      {
+        "name": "teams",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/4/4d/Microsoft_TEAMS_%282019-present%29.svg",
+        "actions": [
+          { "name": "new_message_in_channel", "description": "A new message in a channel" }
+        ],
+        "reactions": [
+          { "name": "post_message", "description": "Post a message to a channel" }
+        ]
+      },
+      {
+        "name": "instagram",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg",
+        "actions": [
+          { "name": "new_post", "description": "A new post is published" }
+        ],
+        "reactions": [
+          { "name": "like_post", "description": "Like a post" }
+        ]
+      },
+      {
+        "name": "tiktok",
+        "logo": "https://upload.wikimedia.org/wikipedia/en/6/69/TikTok_logo.svg",
+        "actions": [
+          { "name": "new_video", "description": "A new video is uploaded" }
+        ],
+        "reactions": [
+          { "name": "share_video", "description": "Share a video" }
+        ]
+      },
+      {
+        "name": "x",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Twitter_Logo_2012.png",
+        "actions": [
+          { "name": "new_tweet", "description": "A new tweet is posted" }
+        ],
+        "reactions": [
+          { "name": "retweet", "description": "Retweet a post" }
+        ]
+      },
+      {
+        "name": "github",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg",
+        "actions": [
+          { "name": "new_issue", "description": "A new issue is created" }
+        ],
+        "reactions": [
+          { "name": "create_issue", "description": "Create an issue" }
+        ]
+      },
+      {
+        "name": "slack",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/7/76/Slack_Icon.png",
+        "actions": [
+          { "name": "new_message", "description": "A new Slack message is posted" }
+        ],
+        "reactions": [
+          { "name": "send_message", "description": "Send a Slack message" }
+        ]
+      },
+      {
+        "name": "youtube",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg",
+        "actions": [
+          { "name": "new_video_published", "description": "A new video is published" }
+        ],
+        "reactions": [
+          { "name": "upload_video", "description": "Upload a video" }
+        ]
+      }
+    ]
+  }
+}
