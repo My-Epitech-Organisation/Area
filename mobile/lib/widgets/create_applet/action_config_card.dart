@@ -45,7 +45,7 @@ class ActionConfigCard extends StatelessWidget {
               hint: 'Select what action the automation should perform',
               child: DropdownButtonFormField<String>(
                 isExpanded: true,
-                value: selectedAction,
+                initialValue: selectedAction,
                 decoration: InputDecoration(
                   labelText: 'Action',
                   hintText: 'Choose what the automation should do when triggered',

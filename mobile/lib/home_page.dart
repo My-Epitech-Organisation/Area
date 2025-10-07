@@ -218,9 +218,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 title: 'Create Automation',
                 subtitle: 'Build new workflows',
                 color: Colors.blue,
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const CreateAppletPage()),
-                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CreateAppletPage(),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(width: 12),
@@ -231,9 +236,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 title: 'My Automations',
                 subtitle: 'View all workflows',
                 color: Colors.purple,
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const MyAppletsPage()),
-                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MyAppletsPage(),
+                    ),
+                  );
+                },
               ),
             ),
           ],

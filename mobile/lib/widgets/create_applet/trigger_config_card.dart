@@ -45,7 +45,7 @@ class TriggerConfigCard extends StatelessWidget {
               hint: 'Select which service will trigger the automation',
               child: DropdownButtonFormField<String>(
                 isExpanded: true,
-                value: selectedTrigger,
+                initialValue: selectedTrigger,
                 decoration: InputDecoration(
                   labelText: 'Trigger Service',
                   hintText: 'Choose the service that will start the automation',
