@@ -32,8 +32,6 @@ from drf_spectacular.views import (
 )
 from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 
-from users.views import ItemViewSet
-
 # Create router and register viewsets
 router = DefaultRouter()
 router.register(r"services", views.ServiceViewSet, basename="service")
@@ -41,12 +39,11 @@ router.register(r"actions", views.ActionViewSet, basename="action")
 router.register(r"reactions", views.ReactionViewSet, basename="reaction")
 router.register(r"areas", views.AreaViewSet, basename="area")
 router.register(r"executions", views.ExecutionViewSet, basename="execution")
-router.register(r"items", ItemViewSet, basename="item")
 
 app_name = "automations"
 
 urlpatterns = [
-        # JWT authentication endpoints
+    # JWT authentication endpoints
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 

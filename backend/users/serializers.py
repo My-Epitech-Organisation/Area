@@ -13,11 +13,6 @@ from django.core.exceptions import ValidationError
 
 from .models import User
 
-class ItemSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    name = serializers.CharField(max_length=100)
-    price = serializers.DecimalField(max_digits=8, decimal_places=2)
-
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
     password2 = serializers.CharField(

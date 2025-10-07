@@ -18,22 +18,9 @@ from django.conf import settings
 from django.core.mail import send_mail
 
 from .models import User
-from .serializers import EmailTokenObtainPairSerializer, UserSerializer, ItemSerializer
+from .serializers import EmailTokenObtainPairSerializer, UserSerializer
 
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
-
-@extend_schema_view(
-    list=extend_schema(
-        summary="List Items",
-        description="Retrieve a list of items.",
-        responses=ItemSerializer(many=True),
-    ),
-    retrieve=extend_schema(
-        summary="Retrieve Item",
-        description="Retrieve a specific item by ID.",
-        responses=ItemSerializer(),
-    ),
-)
 
 @extend_schema(
     tags=["Items"],
@@ -46,23 +33,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiPara
         )
     ]
 )
-class ItemViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        # For schema generation, return empty queryset
-        if getattr(self, "swagger_fake_view", False):
-            return []
-        return []  # This is a simple example ViewSet
-
-    def list(self, request):
-        data = [
-            {"id": 1, "name": "Item 1", "price": "9.99"}
-        ]
-        return Response(data)
-    def retrieve(self, request, pk=None):
-        item = {"id": int(pk), "name": f"Item {pk}", "price": "9.99"}
-        return Response(item)
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
