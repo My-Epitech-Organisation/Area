@@ -38,7 +38,6 @@ class UserDetailView(APIView):
 
 class SendEmailVerificationView(APIView):
     permission_classes = (IsAuthenticated,)
-    serializer_class = None  # No serializer needed for this endpoint
 
     def post(self, request):
         user = request.user
@@ -93,7 +92,6 @@ class SendEmailVerificationView(APIView):
 
 class VerifyEmailView(APIView):
     permission_classes = (AllowAny,)
-    serializer_class = None  # No serializer needed for this endpoint
 
     def get(self, request, token):
         try:
