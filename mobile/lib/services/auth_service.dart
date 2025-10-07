@@ -113,8 +113,7 @@ class AuthService {
   // ============================================
   // GOOGLE AUTHENTICATION
   // ============================================
-  // GOOGLE AUTHENTICATION
-  // ============================================
+
 
   /// Enable debug logs for Google Sign-In (set to false in production)
   static const bool _enableGoogleSignInDebugLogs = true;
@@ -125,37 +124,20 @@ class AuthService {
     }
   }
 
-  /// Initialize Google Sign-In with Web Client ID
-  /// 
-  /// This method initializes the Google Sign-In instance with the Web Client ID
-  /// from GoogleSignInConfig. This is required before calling authenticate().
-  /// 
-  /// The Web Client ID must match the one configured in the backend to ensure
-  /// the ID token can be verified.
   Future<void> _ensureGoogleSignInInitialized() async {
     if (!_isGoogleSignInInitialized) {
       _logDebug('🔧 Initializing Google Sign-In...');
       _logDebug('📋 Web Client ID: ${GoogleSignInConfig.webClientId}');
-      
+
       await _googleSignIn.initialize(
         serverClientId: GoogleSignInConfig.webClientId,
       );
-      
+
       _isGoogleSignInInitialized = true;
       _logDebug('✅ Google Sign-In initialized successfully');
     }
   }
 
-  /// Login with Google account
-  /// 
-  /// Flow:
-  /// 1. Initialize Google Sign-In with Web Client ID
-  /// 2. Authenticate user with Google (opens Google Sign-In UI)
-  /// 3. Receive ID token from Google
-  /// 4. Send ID token to backend at /auth/google-login/
-  /// 5. Backend verifies token and returns JWT tokens
-  /// 6. Store JWT tokens locally
-  /// 
   /// Returns user data with tokens if successful, null otherwise
   Future<Map<String, dynamic>?> loginWithGoogle() async {
     try {
@@ -169,7 +151,7 @@ class AuthService {
 
       _logDebug('✅ Google authentication successful');
       _logDebug('📧 Account email: ${account.email}');
-      
+
       final GoogleSignInAuthentication auth = account.authentication;
       final String? idToken = auth.idToken;
 
@@ -185,7 +167,7 @@ class AuthService {
       );
 
       _logDebug('📡 Backend response: ${response.statusCode}');
-      
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         await _storeTokensFromResponse(data);
@@ -203,7 +185,6 @@ class AuthService {
     }
   }
 
-  /// Sign out from Google
   Future<void> signOutGoogle() async {
     await _ensureGoogleSignInInitialized();
     await _googleSignIn.signOut();
@@ -366,7 +347,6 @@ class AuthService {
         'Enter a valid email address.': 'Please enter a valid email address.',
       },
       'username': {
-        // Username is just a display name (non-unique), so no "already exists" error expected
         'This field may not be blank.': 'Please enter a display name.',
       },
       'password': {
