@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/services.dart';
 
-/// Provider gérant l'état d'authentification
+/// Provider managing authentication state
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
 
-  // État
+  // State
   bool _isAuthenticated = false;
   String? _error;
   String? _userEmail;
@@ -18,7 +18,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   // ============================================
-  // VÉRIFICATION DU STATUT AUTH AU DÉMARRAGE
+  // AUTH STATUS CHECK AT STARTUP
   // ============================================
 
   Future<void> checkAuthStatus() async {
@@ -27,7 +27,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ============================================
-  // CONNEXION EMAIL/PASSWORD
+  // EMAIL/PASSWORD LOGIN
   // ============================================
 
   Future<bool> login(String email, String password) async {
@@ -76,7 +76,7 @@ class AuthProvider extends ChangeNotifier {
         password: password,
         confirmPassword: confirmPassword,
       );
-      
+
       // Step 2: Automatically login to get tokens
       await _authService.loginWithEmail(
         email: email,
@@ -99,7 +99,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ============================================
-  // CONNEXION GOOGLE
+  // GOOGLE SIGN-IN
   // ============================================
 
   Future<bool> loginWithGoogle() async {
@@ -131,7 +131,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ============================================
-  // DÉCONNEXION
+  // LOGOUT
   // ============================================
 
   Future<void> logout() async {
@@ -143,7 +143,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ============================================
-  // HELPERS PRIVÉS
+  // PRIVATE HELPERS
   // ============================================
 
   void _setLoading(bool value) {
