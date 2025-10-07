@@ -9,7 +9,9 @@ This module provides Django REST Framework serializers for:
 
 from rest_framework import serializers
 
-from .models import Action, Area, Reaction, Service
+from users.oauth.manager import OAuthManager
+
+from .models import Action, Area, Execution, Reaction, Service
 from .validators import (
     validate_action_config,
     validate_action_reaction_compatibility,
@@ -222,7 +224,32 @@ class AreaCreateSerializer(serializers.ModelSerializer):
         action_config = attrs.get("action_config", {})
         reaction_config = attrs.get("reaction_config", {})
 
+        # OAuth2 Validation: Check if user has connected required services
         if action:
+            service_name = action.service.name.lower()
+
+            # Check if this service requires OAuth2 connection
+            from django.conf import settings
+
+            if service_name in settings.OAUTH2_PROVIDERS:
+                # Verify user has a valid token for this service
+
+                user = (
+                    self.context.get("request").user
+                    if self.context.get("request")
+                    else None
+                )
+                if user:
+                    token = OAuthManager.get_valid_token(user, service_name)
+
+                    if not token:
+                        raise serializers.ValidationError(
+                            {
+                                "action": f"You must connect your {action.service.name} account before creating "
+                                f"an area with this action. Please visit /auth/oauth/{service_name}/ to connect."
+                            }
+                        )
+
             # Validate action configuration against schema
             try:
                 validate_action_config(action.name, action_config)
@@ -230,6 +257,30 @@ class AreaCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"action_config": str(e)})
 
         if reaction:
+            service_name = reaction.service.name.lower()
+
+            # Check if this service requires OAuth2 connection
+            from django.conf import settings
+
+            if service_name in settings.OAUTH2_PROVIDERS:
+                # Verify user has a valid token for this service
+
+                user = (
+                    self.context.get("request").user
+                    if self.context.get("request")
+                    else None
+                )
+                if user:
+                    token = OAuthManager.get_valid_token(user, service_name)
+
+                    if not token:
+                        raise serializers.ValidationError(
+                            {
+                                "reaction": f"You must connect your {reaction.service.name} account before creating "
+                                f"an area with this reaction. Please visit /auth/oauth/{service_name}/ to connect."
+                            }
+                        )
+
             # Validate reaction configuration against schema
             try:
                 validate_reaction_config(reaction.name, reaction_config)
@@ -277,3 +328,114 @@ class AboutServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
         fields = ["name", "actions", "reactions"]
+
+
+# Serializers pour Execution (journaling)
+
+
+class ExecutionAreaSerializer(serializers.ModelSerializer):
+    """Nested Area representation for Execution serializer."""
+
+    action_name = serializers.CharField(source="action.name", read_only=True)
+    reaction_name = serializers.CharField(source="reaction.name", read_only=True)
+    action_service = serializers.CharField(source="action.service.name", read_only=True)
+    reaction_service = serializers.CharField(
+        source="reaction.service.name", read_only=True
+    )
+
+    class Meta:
+        model = Area
+        fields = [
+            "id",
+            "name",
+            "action_name",
+            "reaction_name",
+            "action_service",
+            "reaction_service",
+        ]
+        read_only_fields = fields
+
+
+class ExecutionSerializer(serializers.ModelSerializer):
+    """
+    Full serializer for Execution with nested Area details.
+
+    Used for retrieve/detail views where complete information is needed.
+    """
+
+    area_detail = ExecutionAreaSerializer(source="area", read_only=True)
+    duration_seconds = serializers.SerializerMethodField()
+    is_terminal = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = Execution
+        fields = [
+            "id",
+            "area",
+            "area_detail",
+            "external_event_id",
+            "status",
+            "created_at",
+            "started_at",
+            "completed_at",
+            "trigger_data",
+            "result_data",
+            "error_message",
+            "retry_count",
+            "duration_seconds",
+            "is_terminal",
+        ]
+        read_only_fields = fields
+
+    def get_duration_seconds(self, obj):
+        """Return execution duration in seconds."""
+        return obj.duration
+
+
+class ExecutionListSerializer(serializers.ModelSerializer):
+    """
+    Optimized serializer for Execution list views.
+
+    Excludes heavy JSON fields and nested data for better performance
+    in list endpoints.
+    """
+
+    area_name = serializers.CharField(source="area.name", read_only=True)
+    action_name = serializers.CharField(source="area.action.name", read_only=True)
+    reaction_name = serializers.CharField(source="area.reaction.name", read_only=True)
+    duration_seconds = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Execution
+        fields = [
+            "id",
+            "area",
+            "area_name",
+            "action_name",
+            "reaction_name",
+            "external_event_id",
+            "status",
+            "created_at",
+            "started_at",
+            "completed_at",
+            "duration_seconds",
+            "retry_count",
+        ]
+        read_only_fields = fields
+
+    def get_duration_seconds(self, obj):
+        """Return execution duration in seconds."""
+        return obj.duration
+
+
+class ExecutionStatsSerializer(serializers.Serializer):
+    """Serializer for execution statistics."""
+
+    total = serializers.IntegerField()
+    pending = serializers.IntegerField()
+    running = serializers.IntegerField()
+    success = serializers.IntegerField()
+    failed = serializers.IntegerField()
+    skipped = serializers.IntegerField()
+    by_area = serializers.DictField(child=serializers.IntegerField())
+    recent_failures = ExecutionListSerializer(many=True, read_only=True)
