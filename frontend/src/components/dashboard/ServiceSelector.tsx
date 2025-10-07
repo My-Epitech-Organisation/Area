@@ -16,14 +16,14 @@ const ServiceSelector: React.FC<ServiceSelectorProps> = ({
   return (
     <section className="service-selector">
       <h2 className="service-selector-title">
-        Services disponibles
+        Available Services
       </h2>
       <div className="service-selector-list scrollbar-thin scrollbar-thumb-indigo-500 scrollbar-track-transparent">
-        {services.map((service, i) => {
+        {services.map((service) => {
           const isActive = selectedService?.name === service.name;
           return (
             <button
-              key={i}
+              key={service.name}
               onClick={() => onSelect(service)}
               className={`service-selector-button ${isActive ? 'active' : ''}`}
             >
