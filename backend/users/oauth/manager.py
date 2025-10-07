@@ -6,6 +6,7 @@ import secrets
 from typing import Optional
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.utils import timezone
 
@@ -16,6 +17,7 @@ from .github import GitHubOAuthProvider
 from .google import GoogleOAuthProvider
 
 logger = logging.getLogger(__name__)
+User = get_user_model()
 
 
 class OAuthManager:
@@ -315,3 +317,170 @@ class OAuthManager:
             and config.get("client_secret")
             and config.get("redirect_uri")
         )
+
+    @classmethod
+    def get_or_create_google_user(
+        cls,
+        email: str,
+        google_id: Optional[str] = None,
+        name: Optional[str] = None,
+        email_verified: bool = False,
+        picture: Optional[str] = None,
+    ):
+        """
+        Get or create a user from Google authentication data.
+
+        This method is used by both OAuth2 flow (web) and Google Sign-In (mobile)
+        to ensure consistent user creation logic.
+
+        Args:
+            email: User's email address from Google
+            google_id: Google user ID (sub claim)
+            name: User's display name from Google
+            email_verified: Whether Google has verified the email
+            picture: URL to user's Google profile picture
+
+        Returns:
+            Tuple[User, bool]: (user instance, created flag)
+                - user: The User instance
+                - created: True if user was created, False if existing
+
+        Raises:
+            ValueError: If email is not provided
+        """
+        if not email:
+            raise ValueError("Email is required to create or retrieve a Google user")
+
+        created = False
+
+        try:
+            # Try to find existing user by email
+            user = User.objects.get(email=email)
+            logger.info(f"Existing user logged in with Google: {email}")
+
+        except User.DoesNotExist:
+            # Create new user
+            username = email.split("@")[0]
+
+            # Ensure username is unique
+            base_username = username
+            counter = 1
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+
+            # Create user without password (OAuth-only account)
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=None,  # No password for OAuth users
+            )
+
+            # Set optional fields if provided
+            if name:
+                # Split name into first_name and last_name
+                name_parts = name.split(" ", 1)
+                user.first_name = name_parts[0]
+                if len(name_parts) > 1:
+                    user.last_name = name_parts[1]
+
+            # Mark email as verified if Google confirms it
+            if email_verified and hasattr(user, "email_verified"):
+                user.email_verified = True
+
+            user.save()
+            created = True
+
+            logger.info(f"New user created via Google authentication: {email}")
+
+        return user, created
+
+    @classmethod
+    def get_or_create_github_user(
+        cls,
+        github_id: str,
+        email: Optional[str] = None,
+        username: Optional[str] = None,
+        name: Optional[str] = None,
+        avatar_url: Optional[str] = None,
+    ):
+        """
+        Get or create a user from GitHub authentication data.
+
+        This method ensures consistent user creation logic for GitHub OAuth.
+
+        Args:
+            github_id: GitHub user ID (required)
+            email: User's email address from GitHub
+            username: GitHub username
+            name: User's display name from GitHub
+            avatar_url: URL to user's GitHub avatar
+
+        Returns:
+            Tuple[User, bool]: (user instance, created flag)
+                - user: The User instance
+                - created: True if user was created, False if existing
+
+        Raises:
+            ValueError: If neither github_id nor email is provided
+        """
+        if not github_id and not email:
+            raise ValueError(
+                "Either github_id or email is required to create or retrieve a GitHub user"
+            )
+
+        created = False
+
+        try:
+            # Try to find existing user by email first (if provided)
+            if email:
+                user = User.objects.get(email=email)
+                logger.info(f"Existing user logged in with GitHub: {email}")
+            else:
+                # Try to find by username if no email
+                if username:
+                    user = User.objects.get(username=username)
+                    logger.info(f"Existing user logged in with GitHub: {username}")
+                else:
+                    raise User.DoesNotExist
+
+        except User.DoesNotExist:
+            # Create new user
+            # Use GitHub username or generate from email or github_id
+            if username:
+                user_username = username
+            elif email:
+                user_username = email.split("@")[0]
+            else:
+                user_username = f"github_{github_id}"
+
+            # Ensure username is unique
+            base_username = user_username
+            counter = 1
+            while User.objects.filter(username=user_username).exists():
+                user_username = f"{base_username}{counter}"
+                counter += 1
+
+            # Create user without password (OAuth-only account)
+            user = User.objects.create_user(
+                username=user_username,
+                email=email or f"github_{github_id}@noreply.github.com",
+                password=None,  # No password for OAuth users
+            )
+
+            # Set optional fields if provided
+            if name:
+                # Split name into first_name and last_name
+                name_parts = name.split(" ", 1)
+                user.first_name = name_parts[0]
+                if len(name_parts) > 1:
+                    user.last_name = name_parts[1]
+
+            user.save()
+            created = True
+
+            logger.info(
+                f"New user created via GitHub authentication: {user.username}"
+            )
+
+        return user, created
