@@ -66,6 +66,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _handleDeepLink(Uri uri) {
+    debugPrint('Handling deep link: $uri');
+    
     // Handle password reset deep link: area://reset-password?token=abc123
     if (uri.scheme == 'area' && uri.host == 'reset-password') {
       final token = uri.queryParameters['token'];
@@ -83,6 +85,49 @@ class _MyAppState extends State<MyApp> {
         });
       } else {
         debugPrint('Reset password link missing token');
+      }
+    }
+    
+    // Handle OAuth deep link: myapp://auth/oauth/{provider}/callback?code=xxx&state=yyy
+    if (uri.scheme == 'myapp' && uri.host == 'auth') {
+      final pathSegments = uri.pathSegments;
+      
+      if (pathSegments.length >= 3 && 
+          pathSegments[0] == 'oauth' && 
+          pathSegments[2] == 'callback') {
+        
+        final provider = pathSegments[1];
+        final code = uri.queryParameters['code'];
+        final state = uri.queryParameters['state'];
+        final error = uri.queryParameters['error'];
+        
+        String message;
+        bool success;
+        
+        if (error != null) {
+          success = false;
+          message = uri.queryParameters['error_description'] ?? error;
+        } else if (code != null && state != null) {
+          success = true;
+          message = 'Successfully connected to $provider';
+        } else {
+          success = false;
+          message = 'Invalid OAuth callback parameters';
+        }
+        
+        // Show snackbar notification
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final context = navigatorKey.currentContext;
+          if (context != null && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(message),
+                backgroundColor: success ? Colors.green : Colors.red,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        });
       }
     }
   }

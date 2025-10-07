@@ -66,6 +66,14 @@ class ApiConfig {
   static String get statisticsUrl => '$authBaseUrl/statistics';
   static String get userStatisticsUrl => '$authBaseUrl/users/statistics/';
 
+  // OAuth2 URLs
+  static String oauthInitiateUrl(String provider) =>
+      '$authBaseUrl/oauth/$provider/';
+  static String oauthCallbackUrl(String provider, {required String code, required String state}) =>
+      '$authBaseUrl/oauth/$provider/callback/?code=$code&state=$state';
+  static String serviceDisconnectUrl(String provider) =>
+      '$authBaseUrl/services/$provider/disconnect/';
+
   static String automationUrl(int id) => '$authBaseUrl/automations/$id/';
   static String automationToggleUrl(int id) =>
       '$authBaseUrl/automations/$id/toggle/';

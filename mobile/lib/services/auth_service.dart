@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../config/api_config.dart';
+import '../config/google_signin_config.dart';
 import 'token_service.dart';
 import 'cache_service.dart';
 
@@ -20,6 +22,8 @@ class AuthException implements Exception {
 class AuthService {
   final TokenService _tokenService = TokenService();
   final CacheService _cache = CacheService();
+
+  // Google Sign-In singleton instance
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
   bool _isGoogleSignInInitialized = false;
@@ -109,24 +113,63 @@ class AuthService {
   // ============================================
   // GOOGLE AUTHENTICATION
   // ============================================
+  // GOOGLE AUTHENTICATION
+  // ============================================
 
-  /// Initialize Google Sign-In
+  /// Enable debug logs for Google Sign-In (set to false in production)
+  static const bool _enableGoogleSignInDebugLogs = true;
+
+  void _logDebug(String message) {
+    if (_enableGoogleSignInDebugLogs && kDebugMode) {
+      debugPrint(message);
+    }
+  }
+
+  /// Initialize Google Sign-In with Web Client ID
+  /// 
+  /// This method initializes the Google Sign-In instance with the Web Client ID
+  /// from GoogleSignInConfig. This is required before calling authenticate().
+  /// 
+  /// The Web Client ID must match the one configured in the backend to ensure
+  /// the ID token can be verified.
   Future<void> _ensureGoogleSignInInitialized() async {
     if (!_isGoogleSignInInitialized) {
-      await _googleSignIn.initialize();
+      _logDebug('🔧 Initializing Google Sign-In...');
+      _logDebug('📋 Web Client ID: ${GoogleSignInConfig.webClientId}');
+      
+      await _googleSignIn.initialize(
+        serverClientId: GoogleSignInConfig.webClientId,
+      );
+      
       _isGoogleSignInInitialized = true;
+      _logDebug('✅ Google Sign-In initialized successfully');
     }
   }
 
   /// Login with Google account
+  /// 
+  /// Flow:
+  /// 1. Initialize Google Sign-In with Web Client ID
+  /// 2. Authenticate user with Google (opens Google Sign-In UI)
+  /// 3. Receive ID token from Google
+  /// 4. Send ID token to backend at /auth/google-login/
+  /// 5. Backend verifies token and returns JWT tokens
+  /// 6. Store JWT tokens locally
+  /// 
+  /// Returns user data with tokens if successful, null otherwise
   Future<Map<String, dynamic>?> loginWithGoogle() async {
     try {
+      _logDebug('🚀 Starting Google Sign-In...');
       await _ensureGoogleSignInInitialized();
 
+      _logDebug('🔐 Authenticating with Google...');
       final GoogleSignInAccount account = await _googleSignIn.authenticate(
         scopeHint: <String>['email'],
       );
 
+      _logDebug('✅ Google authentication successful');
+      _logDebug('📧 Account email: ${account.email}');
+      
       final GoogleSignInAuthentication auth = account.authentication;
       final String? idToken = auth.idToken;
 
@@ -134,21 +177,27 @@ class AuthService {
         throw AuthException('No Google ID token received');
       }
 
+      _logDebug('🎫 ID Token received, sending to backend...');
       final response = await http.post(
         Uri.parse(ApiConfig.googleLoginUrl),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'id_token': idToken}),
       );
 
+      _logDebug('📡 Backend response: ${response.statusCode}');
+      
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         await _storeTokensFromResponse(data);
+        _logDebug('✅ Login successful!');
         return data;
       }
 
       final errorMessage = _parseErrorResponse(response);
+      _logDebug('❌ Backend error: $errorMessage');
       throw AuthException(errorMessage, statusCode: response.statusCode);
     } catch (e) {
+      _logDebug('❌ Google sign-in error: $e');
       if (e is AuthException) rethrow;
       throw AuthException('Google sign-in error: ${e.toString()}');
     }
