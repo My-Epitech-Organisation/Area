@@ -35,9 +35,7 @@ class Command(BaseCommand):
         reset = options.get("reset", False)
 
         self.stdout.write(self.style.SUCCESS("=" * 70))
-        self.stdout.write(
-            self.style.SUCCESS("  AREA - Initializing Services Database")
-        )
+        self.stdout.write(self.style.SUCCESS("  AREA - Initializing Services Database"))
         self.stdout.write(self.style.SUCCESS("=" * 70))
         self.stdout.write("")
 
@@ -254,15 +252,13 @@ class Command(BaseCommand):
         self.stdout.write(f"   • Actions created: {action_count}")
         self.stdout.write(f"   • Reactions created: {reaction_count}")
         self.stdout.write("")
-        self.stdout.write(
-            self.style.HTTP_INFO("🔗 Services are now available at:")
-        )
+        self.stdout.write(self.style.HTTP_INFO("🔗 Services are now available at:"))
         self.stdout.write("   • API: http://localhost:8080/api/services/")
-        self.stdout.write("   • Admin: http://localhost:8080/admin/automations/service/")
-        self.stdout.write("")
         self.stdout.write(
-            self.style.HTTP_INFO("💡 Next steps:")
+            "   • Admin: http://localhost:8080/admin/automations/service/"
         )
+        self.stdout.write("")
+        self.stdout.write(self.style.HTTP_INFO("💡 Next steps:"))
         self.stdout.write("   1. Create a user account (signup)")
         self.stdout.write("   2. Connect OAuth2 services (Google, GitHub)")
         self.stdout.write("   3. Create your first AREA automation")
