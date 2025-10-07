@@ -294,3 +294,6 @@ try:
         LOGGING["root"]["handlers"].append("file")
 except Exception as e:
     print(f"Warning: Could not setup file logging: {e}")
+
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
