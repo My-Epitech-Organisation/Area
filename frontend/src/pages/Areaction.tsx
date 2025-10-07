@@ -30,10 +30,12 @@ const Areaction: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [selectedActionService, setSelectedActionService] = useState<string | null>(preselectedService || null);
-  const [selectedReactionService, setSelectedReactionService] = useState<string | null>(preselectedService || null);
-  const [selectedAction, setSelectedAction] = useState<string | null>(preselectedAction || null);
-  const [selectedReaction, setSelectedReaction] = useState<string | null>(preselectedReaction || null);
+  const [selectedActionService, setSelectedActionService] = useState<string | null>(null);
+  const [selectedReactionService, setSelectedReactionService] = useState<string | null>(null);
+  const [selectedAction, setSelectedAction] = useState<string | null>(null);
+  const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [messageType, setMessageType] = useState<'error' | 'success' | null>(null);
 
   const getServiceByName = (name: string | null): Service | undefined => {
     if (!name) return undefined;
@@ -77,7 +79,7 @@ const Areaction: React.FC = () => {
     const fetchServices = async () => {
       setLoading(true);
       try {
-        const res = await fetch("/about.json");
+        const res = await fetch("http://localhost:8080/about.json");
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
@@ -92,12 +94,36 @@ const Areaction: React.FC = () => {
           );
 
           if (service) {
-            if (!preselectedAction && service.actions.length > 0) {
-              setSelectedAction(service.actions[0].name);
+            // Only set as action service if it has actions
+            if (service.actions && service.actions.length > 0) {
+              setSelectedActionService(service.name);
+              if (!preselectedAction && service.actions.length > 0) {
+                setSelectedAction(service.actions[0].name);
+              } else if (preselectedAction) {
+                // Make sure the preselectedAction exists in this service
+                const actionExists = service.actions.some(a => a.name === preselectedAction);
+                if (actionExists) {
+                  setSelectedAction(preselectedAction);
+                } else {
+                  setSelectedAction(service.actions[0].name);
+                }
+              }
             }
 
-            if (!preselectedReaction && service.reactions.length > 0) {
-              setSelectedReaction(service.reactions[0].name);
+            // Only set as reaction service if it has reactions
+            if (service.reactions && service.reactions.length > 0) {
+              setSelectedReactionService(service.name);
+              if (!preselectedReaction && service.reactions.length > 0) {
+                setSelectedReaction(service.reactions[0].name);
+              } else if (preselectedReaction) {
+                // Make sure the preselectedReaction exists in this service
+                const reactionExists = service.reactions.some(r => r.name === preselectedReaction);
+                if (reactionExists) {
+                  setSelectedReaction(preselectedReaction);
+                } else {
+                  setSelectedReaction(service.reactions[0].name);
+                }
+              }
             }
           }
         }
@@ -116,6 +142,8 @@ const Areaction: React.FC = () => {
   const handleActionServiceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const serviceName = e.target.value;
     setSelectedActionService(serviceName);
+    setMessage(null);
+    setMessageType(null);
 
     const actions = getActionsForService(serviceName);
     setSelectedAction(actions.length > 0 ? actions[0].name : null);
@@ -124,14 +152,26 @@ const Areaction: React.FC = () => {
   const handleReactionServiceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const serviceName = e.target.value;
     setSelectedReactionService(serviceName);
+    setMessage(null);
+    setMessageType(null);
 
     const reactions = getReactionsForService(serviceName);
     setSelectedReaction(reactions.length > 0 ? reactions[0].name : null);
   };
 
   const handleCreateAutomation = () => {
-    if (!selectedActionService || !selectedReactionService || !selectedAction || !selectedReaction) {
-      alert("Please select both an action and a reaction");
+    const missingFields: string[] = [];
+    if (!selectedActionService)
+        missingFields.push("Action Service");
+    if (!selectedAction)
+        missingFields.push("Action");
+    if (!selectedReactionService)
+        missingFields.push("Reaction Service");
+    if (!selectedReaction)
+        missingFields.push("Reaction");
+    if (missingFields.length > 0) {
+      setMessage("Please select: " + missingFields.join(", "));
+      setMessageType('error');
       return;
     }
 
@@ -144,7 +184,8 @@ const Areaction: React.FC = () => {
 
     console.log("Creating automation:", automation);
 
-    alert("Automation created successfully!");
+    setMessage("Automation created successfully!");
+    setMessageType('success');
   };
 
   const formatName = (name: string): string => {
@@ -232,7 +273,7 @@ const Areaction: React.FC = () => {
                       <div className="flex items-center gap-1 bg-indigo-600/20 px-2 py-1 rounded-full">
                         {resolveLogo(getServiceByName(selectedActionService)?.logo, selectedActionService) && (
                           <img
-                            src={resolveLogo(getServiceByName(selectedActionService)?.logo, selectedActionService) || ''} 
+                            src={resolveLogo(getServiceByName(selectedActionService)?.logo, selectedActionService) || ''}
                             alt={selectedActionService}
                             className="h-4 w-4 object-contain"
                           />
@@ -386,7 +427,7 @@ const Areaction: React.FC = () => {
               <div className="flex items-center gap-2 bg-purple-600/20 px-4 py-3 rounded-lg">
                 {resolveLogo(getServiceByName(selectedReactionService)?.logo, selectedReactionService) && (
                   <img
-                    src={resolveLogo(getServiceByName(selectedReactionService)?.logo, selectedReactionService) || ''} 
+                    src={resolveLogo(getServiceByName(selectedReactionService)?.logo, selectedReactionService) || ''}
                     alt={selectedReactionService}
                     className="h-6 w-6 object-contain"
                   />
@@ -394,6 +435,12 @@ const Areaction: React.FC = () => {
                 <span className="text-purple-200">{formatName(selectedReaction)}</span>
               </div>
             </div>
+          </div>
+        )}
+
+        {message && (
+          <div className={`w-full max-w-5xl mx-auto mb-4 px-6 py-3 rounded ${messageType === 'error' ? 'text-red-400 bg-red-900/20' : 'text-emerald-300 bg-emerald-900/20'}`}>
+            {message}
           </div>
         )}
 
