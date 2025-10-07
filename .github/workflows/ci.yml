@@ -113,7 +113,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t area_frontend ./frontend
+          docker build -t area_frontend -f ./frontend/Dockerfile.prod ./frontend
 
   mobile-ci:
     name: Mobile CI
