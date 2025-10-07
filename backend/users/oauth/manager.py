@@ -479,8 +479,6 @@ class OAuthManager:
             user.save()
             created = True
 
-            logger.info(
-                f"New user created via GitHub authentication: {user.username}"
-            )
+            logger.info(f"New user created via GitHub authentication: {user.username}")
 
         return user, created
