@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../config/service_provider_config.dart';
 
 class GoogleSignInButton extends StatelessWidget {
   final bool isLoading;
@@ -11,7 +12,7 @@ class GoogleSignInButton extends StatelessWidget {
       height: 50,
       child: OutlinedButton.icon(
         icon: Image.asset(
-          'assets/google_logo.png',
+          ServiceProviderConfig.getIconPath('google'),
           height: 24,
           width: 24,
         ),
@@ -21,7 +22,7 @@ class GoogleSignInButton extends StatelessWidget {
                 height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
-            : const Text('Sign in with Google'),
+            : Text('Sign in with ${ServiceProviderConfig.getDisplayName('google')}'),
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.black,

@@ -41,6 +41,7 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   google_sign_in: ^7.2.0
   app_links: ^6.3.3  # Pour les deep links
+  url_launcher: ^6.3.1  # Pour ouvrir les URLs OAuth
 
 dev_dependencies:
   flutter_test:

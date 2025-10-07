@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../providers/applet_provider.dart';
 import '../providers/provider_manager.dart';
+import 'service_connections_page.dart';
 
 class UserPage extends StatelessWidget {
   const UserPage({super.key});
@@ -317,27 +318,41 @@ class SettingsSection extends StatelessWidget {
         const SizedBox(height: 16),
         Container(
           decoration: _boxDecoration,
-          child: const Column(
+          child: Column(
             children: [
               SettingItem(
+                title: 'Connected Services',
+                subtitle: 'Manage OAuth2 service connections',
+                icon: Icons.link,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ServiceConnectionsPage(),
+                    ),
+                  );
+                },
+              ),
+              const Divider(height: 1),
+              const SettingItem(
                 title: 'Notifications',
                 subtitle: 'Manage your notification preferences',
                 icon: Icons.notifications,
               ),
-              Divider(height: 1),
-              SettingItem(
+              const Divider(height: 1),
+              const SettingItem(
                 title: 'Privacy',
                 subtitle: 'Control your privacy settings',
                 icon: Icons.privacy_tip,
               ),
-              Divider(height: 1),
-              SettingItem(
+              const Divider(height: 1),
+              const SettingItem(
                 title: 'Help & Support',
                 subtitle: 'Get help and contact support',
                 icon: Icons.help,
               ),
-              Divider(height: 1),
-              SettingItem(
+              const Divider(height: 1),
+              const SettingItem(
                 title: 'About',
                 subtitle: 'App version and information',
                 icon: Icons.info,
@@ -356,11 +371,13 @@ class SettingItem extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.icon,
+    this.onTap,
   });
 
   final String title;
   final String subtitle;
   final IconData icon;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -369,7 +386,7 @@ class SettingItem extends StatelessWidget {
       title: Text(title),
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () {
+      onTap: onTap ?? () {
         // TODO: Implement navigation to settings
       },
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
