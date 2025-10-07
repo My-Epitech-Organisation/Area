@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Google Sign-In Configuration
 class GoogleSignInConfig {
-
-  static const String webClientId =
-      '810500685105-bsetto3ag8e6n45p1j3378e6ommfeq7e.apps.googleusercontent.com';
+  static String get webClientId =>
+      dotenv.env['GOOGLE_CLIENT_ID'] ?? '';
 
   static const List<String> scopes = [
     'email',
