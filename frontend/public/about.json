@@ -4,7 +4,7 @@
     "current_time": 1531680780,
     "services": [
       {
-        "name": "facebook",
+        "name": "Facebook",
         "logo": "https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png",
         "actions": [
           { "name": "new_message_in_group", "description": "A new message is posted in the group" },
@@ -14,7 +14,7 @@
         "reactions": [ { "name": "like_message", "description": "The user likes a message" } ]
       },
       {
-        "name": "google",
+        "name": "Google",
         "logo": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Google_Favicon_2025.svg",
         "actions": [
           { "name": "new_search", "description": "A new search is performed" }
@@ -24,8 +24,8 @@
         ]
       },
       {
-        "name": "gmail",
-        "logo": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Gmail_Icon.svg",
+        "name": "Gmail",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg",
         "actions": [
           { "name": "new_email_received", "description": "A new email is received" }
         ],
@@ -34,8 +34,8 @@
         ]
       },
       {
-        "name": "google_calendar",
-        "logo": "https://upload.wikimedia.org/wikipedia/commons/7/74/Google_Calendar_icon_%282020%29.svg",
+        "name": "Google Calendar",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg",
         "actions": [
           { "name": "event_created", "description": "A new calendar event is created" }
         ],
@@ -44,8 +44,8 @@
         ]
       },
       {
-        "name": "teams",
-        "logo": "https://upload.wikimedia.org/wikipedia/commons/4/4d/Microsoft_TEAMS_%282019-present%29.svg",
+        "name": "Teams",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Microsoft_Office_Teams_%282018%E2%80%93present%29.svg",
         "actions": [
           { "name": "new_message_in_channel", "description": "A new message in a channel" }
         ],
@@ -54,7 +54,7 @@
         ]
       },
       {
-        "name": "instagram",
+        "name": "Instagram",
         "logo": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg",
         "actions": [
           { "name": "new_post", "description": "A new post is published" }
@@ -64,8 +64,8 @@
         ]
       },
       {
-        "name": "tiktok",
-        "logo": "https://upload.wikimedia.org/wikipedia/en/6/69/TikTok_logo.svg",
+        "name": "Tiktok",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Tiktok_icon.svg",
         "actions": [
           { "name": "new_video", "description": "A new video is uploaded" }
         ],
@@ -74,8 +74,8 @@
         ]
       },
       {
-        "name": "x",
-        "logo": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Twitter_Logo_2012.png",
+        "name": "X",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/c/ce/X_logo_2023.svg",
         "actions": [
           { "name": "new_tweet", "description": "A new tweet is posted" }
         ],
@@ -84,7 +84,7 @@
         ]
       },
       {
-        "name": "github",
+        "name": "Github",
         "logo": "https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg",
         "actions": [
           { "name": "new_issue", "description": "A new issue is created" }
@@ -94,7 +94,7 @@
         ]
       },
       {
-        "name": "slack",
+        "name": "Slack",
         "logo": "https://upload.wikimedia.org/wikipedia/commons/7/76/Slack_Icon.png",
         "actions": [
           { "name": "new_message", "description": "A new Slack message is posted" }
@@ -104,8 +104,8 @@
         ]
       },
       {
-        "name": "youtube",
-        "logo": "https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg",
+        "name": "YouTube",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg",
         "actions": [
           { "name": "new_video_published", "description": "A new video is published" }
         ],
