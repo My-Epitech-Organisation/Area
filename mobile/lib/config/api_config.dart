@@ -2,6 +2,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class ApiConfig {
+  static String get appletsUrl => '$baseUrl/applets/';
+
+  static String get googleLoginUrl => '$authBaseUrl/google-login/';
   static String? _overrideBaseUrl;
   static String? _autoDetectedBase;
 
@@ -53,10 +56,23 @@ class ApiConfig {
   static String get registerUrl => '$authBaseUrl/register/';
   static String get refreshUrl => '$authBaseUrl/login/refresh/';
   static String get profileUrl => '$authBaseUrl/me/';
+
+  // Password Reset URLs
+  static String get forgotPasswordUrl => '$authBaseUrl/password-reset/';
+  static String get resetPasswordUrl => '$authBaseUrl/password-reset/confirm/';
+
   static String get automationsUrl => '$authBaseUrl/automations/';
   static String get servicesUrl => '$authBaseUrl/services/';
   static String get statisticsUrl => '$authBaseUrl/statistics';
   static String get userStatisticsUrl => '$authBaseUrl/users/statistics/';
+
+  // OAuth2 URLs
+  static String oauthInitiateUrl(String provider) =>
+      '$authBaseUrl/oauth/$provider/';
+  static String oauthCallbackUrl(String provider, {required String code, required String state}) =>
+      '$authBaseUrl/oauth/$provider/callback/?code=$code&state=$state';
+  static String serviceDisconnectUrl(String provider) =>
+      '$authBaseUrl/services/$provider/disconnect/';
 
   static String automationUrl(int id) => '$authBaseUrl/automations/$id/';
   static String automationToggleUrl(int id) =>
