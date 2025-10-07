@@ -23,11 +23,9 @@ const ServiceDetail: React.FC = () => {
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Lazy load images
   const imageModules = import.meta.glob("../assets/*.{png,jpg,jpeg,svg,gif}", { eager: true }) as Record<string, { default: string }>;
   const imagesByName: Record<string, string> = {};
-  
+
   Object.keys(imageModules).forEach((p) => {
     const parts = p.split("/");
     const file = parts[parts.length - 1];
@@ -43,7 +41,7 @@ const ServiceDetail: React.FC = () => {
       const base = rawLogo.split("/").pop()?.replace(/\.[^/.]+$/, "").toLowerCase() ?? "";
       if (imagesByName[base]) return imagesByName[base];
     }
-    
+
     const key = name.toLowerCase();
     return imagesByName[key] ?? null;
   };
@@ -56,14 +54,11 @@ const ServiceDetail: React.FC = () => {
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
-        
         const data = await res.json();
         const serviceList = data?.server?.services || [];
-        
-        const foundService = serviceList.find((s: any) => 
+        const foundService = serviceList.find((s: any) =>
           (s.id?.toString() === serviceId || s.name?.toLowerCase() === serviceId?.toLowerCase())
         );
-        
         if (foundService) {
           setService(foundService);
           setError(null);
@@ -76,7 +71,6 @@ const ServiceDetail: React.FC = () => {
         setLoading(false);
       }
     };
-    
     fetchServiceDetails();
   }, [serviceId]);
 
@@ -106,7 +100,7 @@ const ServiceDetail: React.FC = () => {
   const logo = resolveLogo(service.logo, service.name);
 
   return (
-    <div className="w-screen min-h-screen bg-gradient-to-br from-black/90 via-gray-900/80 to-indigo-950 p-6">
+    <div className="w-screen min-h-screen bg-page-service-detail p-6">
       <div className="max-w-6xl mx-auto pt-20">
         <Link to="/services" className="text-indigo-300 hover:text-indigo-100 flex items-center gap-2 mb-8 transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -119,8 +113,8 @@ const ServiceDetail: React.FC = () => {
           <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
             <div className="w-32 h-32 bg-white/10 rounded-xl flex items-center justify-center overflow-hidden p-2">
               {logo ? (
-                <img 
-                  src={logo} 
+                <img
+                  src={logo}
                   alt={`${service.name} logo`}
                   className="w-full h-full object-contain"
                 />
@@ -133,7 +127,6 @@ const ServiceDetail: React.FC = () => {
               <h1 className="text-3xl md:text-4xl font-bold text-white text-center md:text-left">
                 {service.name.charAt(0).toUpperCase() + service.name.slice(1)}
               </h1>
-              
               <div className="mt-8 grid gap-8 md:grid-cols-2">
                 <div>
                   <h2 className="text-xl font-semibold text-indigo-300 mb-4 flex items-center gap-2">
@@ -145,8 +138,8 @@ const ServiceDetail: React.FC = () => {
                   {service.actions && service.actions.length > 0 ? (
                     <div className="space-y-3">
                       {service.actions.map((action, index) => (
-                        <div 
-                          key={`action-${index}`} 
+                        <div
+                          key={`action-${index}`}
                           className="bg-white/5 rounded-lg p-4 hover:bg-white/10 transition"
                         >
                           <h3 className="font-medium text-white">{action.name.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}</h3>
@@ -158,7 +151,6 @@ const ServiceDetail: React.FC = () => {
                     <p className="text-gray-400">No actions available</p>
                   )}
                 </div>
-                
                 <div>
                   <h2 className="text-xl font-semibold text-indigo-300 mb-4 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -169,8 +161,8 @@ const ServiceDetail: React.FC = () => {
                   {service.reactions && service.reactions.length > 0 ? (
                     <div className="space-y-3">
                       {service.reactions.map((reaction, index) => (
-                        <div 
-                          key={`reaction-${index}`} 
+                        <div
+                          key={`reaction-${index}`}
                           className="bg-white/5 rounded-lg p-4 hover:bg-white/10 transition"
                         >
                           <h3 className="font-medium text-white">{reaction.name.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}</h3>
@@ -185,14 +177,15 @@ const ServiceDetail: React.FC = () => {
               </div>
 
               <div className="mt-10 flex justify-center md:justify-start">
-                <button 
+                <Link
+                  to={`/Areaction?service=${service.name}${service.actions && service.actions.length > 0 ? `&action=${service.actions[0].name}` : ''}${service.reactions && service.reactions.length > 0 ? `&reaction=${service.reactions[0].name}` : ''}`}
                   className="px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium flex items-center gap-2 transition-colors"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                   </svg>
                   Add Automation with this Service
-                </button>
+                </Link>
               </div>
             </div>
           </div>
