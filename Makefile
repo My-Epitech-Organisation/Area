@@ -62,6 +62,12 @@ migrate: ## Run Django migrations
 makemigrations: ## Create new Django migrations
 	docker-compose exec server python manage.py makemigrations
 
+init-db: ## Initialize database with default services/actions/reactions
+	docker-compose exec server python manage.py init_services
+
+init-db-reset: ## Reset and reinitialize database (WARNING: deletes all services)
+	docker-compose exec server python manage.py init_services --reset
+
 superuser: ## Create Django superuser
 	docker-compose exec server python manage.py createsuperuser
 
