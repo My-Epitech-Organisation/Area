@@ -310,14 +310,15 @@ class AuthService {
   /// Clean and make error messages user-friendly
   String _cleanErrorMessage(String field, String message) {
     final Map<String, Map<String, String>> friendlyMessages = {
-      'username': {
-        'A user with that username already exists.':
+      'email': {
+        'A user with that email already exists.':
             'This email is already registered. Please login instead.',
         'already exists': 'This email is already registered.',
-      },
-      'email': {
         'Enter a valid email address.': 'Please enter a valid email address.',
-        'already exists': 'This email is already registered.',
+      },
+      'username': {
+        // Username is just a display name (non-unique), so no "already exists" error expected
+        'This field may not be blank.': 'Please enter a display name.',
       },
       'password': {
         'This password is too short.': 'Password must be at least 8 characters.',
