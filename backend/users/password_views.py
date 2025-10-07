@@ -54,7 +54,7 @@ class ForgotPasswordView(APIView):
             <html>
             <body>
                 <h2>Password Reset Request</h2>
-                <p>Hello {user.username},</p>
+                <p>Hello,</p>
                 <p>You have requested to reset your password for your AREA account.</p>
                 <p>Click the link below to reset your password:</p>
                 <p>
@@ -126,7 +126,7 @@ class ResetPasswordView(APIView):
         # Mark token as used
         reset_token.mark_used()
 
-        logger.info(f"Password reset successful for user: {user.username}")
+        logger.info(f"Password reset successful for user: {user.email}")
 
         return Response(
             {"message": "Password has been reset successfully. You can now log in."},
@@ -153,7 +153,7 @@ class ChangePasswordView(APIView):
         user.set_password(new_password)
         user.save()
 
-        logger.info(f"Password changed successfully for user: {user.username}")
+        logger.info(f"Password changed successfully for user: {user.email}")
 
         return Response(
             {"message": "Password has been changed successfully."},
