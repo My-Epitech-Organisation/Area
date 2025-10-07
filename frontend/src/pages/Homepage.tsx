@@ -83,7 +83,15 @@ const Homepage: React.FC = () => {
               <div className="relative z-10 text-center">
                 <h2 className="mb-16 text-9xl text-white font-semibold">Discover AREA</h2>
                 <p className="text-5xl text-gray-300 mt-4">AREA connects your favorite services and creates action→reaction rules to automate daily tasks. Start by exploring the sections below.</p>
-                <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                  <div className="card-bg p-6 rounded-xl backdrop-blur-sm card-border flex flex-col items-start gap-4">
+                    <div className="icon-accent text-4xl">
+                      <i className="fa-solid fa-bolt"></i>
+                    </div>
+                    <h3 className="text-2xl text-primary font-semibold">Areaction</h3>
+                    <p className="text-lg text-muted">Create your own automation by connecting actions and reactions.</p>
+                    <a href="/Areaction" className="mt-4 self-stretch inline-block text-center px-4 py-2 btn-primary rounded-full hover:btn-primary transition">Make it</a>
+                  </div>
                   <div className="bg-white/5 p-6 rounded-xl backdrop-blur-sm border border-white/10 flex flex-col items-start gap-4">
                     <div className="icon-accent text-4xl">
                       <i className="fa-solid fa-gear"></i>
