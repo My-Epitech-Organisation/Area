@@ -26,6 +26,9 @@ done
 echo -e "${GREEN}✅ Redis is ready!${NC}"
 
 # Run database migrations
+echo -e "${YELLOW}🔄 Making migrations...${NC}"
+python manage.py makemigrations --noinput
+
 echo -e "${YELLOW}🔄 Running database migrations...${NC}"
 python manage.py migrate --noinput
 
@@ -38,9 +41,9 @@ echo -e "${YELLOW}👤 Creating superuser if needed...${NC}"
 python manage.py shell << EOF
 from django.contrib.auth import get_user_model
 User = get_user_model()
-if not User.objects.filter(username='admin').exists():
-    User.objects.create_superuser('admin', 'admin@area.com', 'admin123')
-    print('✅ Superuser created: admin / admin123')
+if not User.objects.filter(email='admin@areaction.app').exists():
+    User.objects.create_superuser(email='admin@areaction.app', password='admin123')
+    print('✅ Superuser created: admin@areaction.app / admin123')
 else:
     print('ℹ️  Superuser already exists')
 EOF
