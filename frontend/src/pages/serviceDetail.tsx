@@ -50,7 +50,7 @@ const ServiceDetail: React.FC = () => {
     const fetchServiceDetails = async () => {
       setLoading(true);
       try {
-        const res = await fetch("/about.json");
+        const res = await fetch("http://localhost:8080/about.json");
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
