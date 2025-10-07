@@ -10,6 +10,7 @@
 *.old
 *.tmp
 *.ref
+my_refs(do_not_delete)
 
 package-lock.json
 node_modules/
