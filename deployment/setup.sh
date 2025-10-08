@@ -87,13 +87,13 @@ else
     echo -e "${YELLOW}⚠️  You will be prompted to set a password for the 'areaction' user${NC}"
     echo -e "${YELLOW}    This user will own the application files and run Docker containers${NC}"
     echo ""
-    
+
     # Create user with home directory
     adduser --gecos "" areaction
-    
+
     # Add user to docker group to run docker commands without sudo
     usermod -aG docker areaction
-    
+
     echo -e "${GREEN}User 'areaction' created successfully${NC}"
 fi
 
@@ -179,38 +179,38 @@ ENVEOF
     echo ""
     echo -e "${YELLOW}Please fill in the following required values:${NC}"
     echo ""
-    
+
     # Generate secure secret key
     SECRET_KEY=$(openssl rand -base64 50 | tr -d '\n')
     sed -i "s/SECRET_KEY=$/SECRET_KEY=$SECRET_KEY/" .env
     echo -e "${GREEN}✓ SECRET_KEY generated${NC}"
-    
+
     # Database password
     DB_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')
     sed -i "s/DB_PASSWORD=$/DB_PASSWORD=$DB_PASSWORD/" .env
     echo -e "${GREEN}✓ DB_PASSWORD generated${NC}"
-    
+
     echo ""
     echo -e "${YELLOW}Manual configuration required:${NC}"
     read -p "Google OAuth Client ID: " GOOGLE_CLIENT_ID
     sed -i "s/GOOGLE_CLIENT_ID=$/GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID/" .env
-    
+
     read -p "Google OAuth Client Secret: " GOOGLE_CLIENT_SECRET
     sed -i "s/GOOGLE_CLIENT_SECRET=$/GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET/" .env
-    
+
     read -p "GitHub OAuth Client ID: " GITHUB_CLIENT_ID
     sed -i "s/GITHUB_CLIENT_ID=$/GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID/" .env
-    
+
     read -p "GitHub OAuth Client Secret: " GITHUB_CLIENT_SECRET
     sed -i "s/GITHUB_CLIENT_SECRET=$/GITHUB_CLIENT_SECRET=$GITHUB_CLIENT_SECRET/" .env
-    
+
     read -p "Email Host User (optional, press Enter to skip): " EMAIL_HOST_USER
     if [ ! -z "$EMAIL_HOST_USER" ]; then
         sed -i "s/EMAIL_HOST_USER=$/EMAIL_HOST_USER=$EMAIL_HOST_USER/" .env
         read -p "Email Host Password: " EMAIL_HOST_PASSWORD
         sed -i "s/EMAIL_HOST_PASSWORD=$/EMAIL_HOST_PASSWORD=$EMAIL_HOST_PASSWORD/" .env
     fi
-    
+
     echo ""
     echo -e "${GREEN}Environment configuration completed${NC}"
 else
@@ -233,11 +233,11 @@ cat > /etc/nginx/sites-available/area << 'NGINXEOF'
 server {
     listen 80;
     server_name areaction.app www.areaction.app;
-    
+
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
     }
-    
+
     location / {
         return 301 https://$host$request_uri;
     }
@@ -271,16 +271,16 @@ server {
 server {
     listen 443 ssl http2;
     server_name areaction.app www.areaction.app;
-    
+
     ssl_certificate /etc/letsencrypt/live/areaction.app/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/areaction.app/privkey.pem;
-    
+
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
     ssl_prefer_server_ciphers on;
-    
+
     client_max_body_size 100M;
-    
+
     # Frontend - React App
     location / {
         proxy_pass http://localhost:8081;
@@ -293,7 +293,7 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
-    
+
     # Backend API
     location /api/ {
         proxy_pass http://localhost:8080/;
@@ -303,7 +303,7 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
-    
+
     # WebSocket support
     location /ws/ {
         proxy_pass http://localhost:8080/ws/;
@@ -314,20 +314,20 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
-    
+
     # Static files
     location /static/ {
         alias /opt/area/staticfiles/;
         expires 1y;
         add_header Cache-Control "public, immutable";
     }
-    
+
     location /media/ {
         alias /opt/area/mediafiles/;
         expires 1y;
         add_header Cache-Control "public";
     }
-    
+
     # APK download
     location /client.apk {
         alias /opt/area/mobile-build/client.apk;

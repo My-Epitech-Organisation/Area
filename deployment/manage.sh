@@ -88,25 +88,25 @@ restart_services() {
 # Pull latest code
 pull_update() {
     echo -e "${BLUE}Pulling latest code...${NC}"
-    
+
     # Stash local changes if any
     if ! git diff-index --quiet HEAD --; then
         echo -e "${YELLOW}Stashing local changes...${NC}"
         git stash
     fi
-    
+
     # Pull
     git pull origin main
-    
+
     echo -e "${GREEN}Code updated${NC}"
     echo ""
     echo -e "${YELLOW}Rebuilding containers...${NC}"
     docker-compose -f docker-compose.yml -f docker-compose.prod.yml build
-    
+
     echo ""
     echo -e "${YELLOW}Restarting services...${NC}"
     docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-    
+
     echo -e "${GREEN}Update complete${NC}"
 }
 
@@ -136,30 +136,30 @@ show_status() {
 reset_services() {
     echo -e "${RED}WARNING: This will delete all containers and volumes!${NC}"
     read -p "Are you sure? (yes/no): " CONFIRM
-    
+
     if [ "$CONFIRM" != "yes" ]; then
         echo "Cancelled"
         exit 0
     fi
-    
+
     echo -e "${YELLOW}Stopping services...${NC}"
     docker-compose -f docker-compose.yml -f docker-compose.prod.yml down -v
-    
+
     echo -e "${YELLOW}Rebuilding...${NC}"
     docker-compose -f docker-compose.yml -f docker-compose.prod.yml build
-    
+
     echo -e "${YELLOW}Starting services...${NC}"
     docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-    
+
     echo -e "${YELLOW}Waiting for database...${NC}"
     sleep 10
-    
+
     echo -e "${YELLOW}Running migrations...${NC}"
     docker-compose exec server python manage.py migrate
-    
+
     echo -e "${YELLOW}Initializing database...${NC}"
     docker-compose exec server python manage.py init_services
-    
+
     echo -e "${GREEN}Reset complete${NC}"
 }
 
@@ -169,19 +169,19 @@ delete_all() {
     echo -e "${RED}This action cannot be undone!${NC}"
     echo ""
     read -p "Type 'DELETE' to confirm: " CONFIRM
-    
+
     if [ "$CONFIRM" != "DELETE" ]; then
         echo "Cancelled"
         exit 0
     fi
-    
+
     echo -e "${RED}Deleting everything...${NC}"
     docker-compose -f docker-compose.yml -f docker-compose.prod.yml down -v --remove-orphans
-    
+
     # Remove images
     echo -e "${YELLOW}Removing images...${NC}"
     docker images | grep area | awk '{print $3}' | xargs -r docker rmi -f
-    
+
     echo -e "${GREEN}All containers and volumes deleted${NC}"
 }
 
@@ -189,18 +189,18 @@ delete_all() {
 backup_database() {
     BACKUP_DIR="backups"
     mkdir -p $BACKUP_DIR
-    
+
     TIMESTAMP=$(date +%Y%m%d_%H%M%S)
     BACKUP_FILE="$BACKUP_DIR/area_backup_$TIMESTAMP.sql"
-    
+
     echo -e "${BLUE}Backing up database...${NC}"
     docker-compose exec -T db pg_dump -U area_user area_db > $BACKUP_FILE
-    
+
     # Compress
     gzip $BACKUP_FILE
-    
+
     echo -e "${GREEN}Backup saved: ${BACKUP_FILE}.gz${NC}"
-    
+
     # Keep only last 10 backups
     ls -t $BACKUP_DIR/*.gz | tail -n +11 | xargs -r rm
     echo "Old backups cleaned (keeping last 10)"
@@ -209,26 +209,26 @@ backup_database() {
 # Restore database
 restore_database() {
     BACKUP_DIR="backups"
-    
+
     if [ ! -d "$BACKUP_DIR" ]; then
         echo -e "${RED}No backups found${NC}"
         exit 1
     fi
-    
+
     echo -e "${BLUE}Available backups:${NC}"
     ls -lh $BACKUP_DIR/*.gz
     echo ""
-    
+
     read -p "Enter backup filename: " BACKUP_FILE
-    
+
     if [ ! -f "$BACKUP_DIR/$BACKUP_FILE" ]; then
         echo -e "${RED}Backup file not found${NC}"
         exit 1
     fi
-    
+
     echo -e "${YELLOW}Restoring database...${NC}"
     gunzip -c $BACKUP_DIR/$BACKUP_FILE | docker-compose exec -T db psql -U area_user area_db
-    
+
     echo -e "${GREEN}Database restored${NC}"
 }
 
@@ -260,38 +260,38 @@ create_superuser() {
 # Full update (pull + migrate + restart)
 full_update() {
     echo -e "${BLUE}Running full update...${NC}"
-    
+
     # Backup database first
     echo -e "${YELLOW}Creating backup before update...${NC}"
     backup_database
-    
+
     # Pull code
     echo -e "${YELLOW}Pulling latest code...${NC}"
     git pull origin main
-    
+
     # Rebuild
     echo -e "${YELLOW}Rebuilding containers...${NC}"
     docker-compose -f docker-compose.yml -f docker-compose.prod.yml build
-    
+
     # Stop services
     echo -e "${YELLOW}Stopping services...${NC}"
     docker-compose -f docker-compose.yml -f docker-compose.prod.yml down
-    
+
     # Start services
     echo -e "${YELLOW}Starting services...${NC}"
     docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-    
+
     # Wait for DB
     sleep 10
-    
+
     # Run migrations
     echo -e "${YELLOW}Running migrations...${NC}"
     docker-compose exec server python manage.py migrate
-    
+
     # Collect static
     echo -e "${YELLOW}Collecting static files...${NC}"
     docker-compose exec server python manage.py collectstatic --noinput
-    
+
     echo -e "${GREEN}Update complete!${NC}"
     docker-compose ps
 }
