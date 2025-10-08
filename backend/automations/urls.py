@@ -1,3 +1,10 @@
+##
+## EPITECH PROJECT, 2025
+## Area
+## File description:
+## urls
+##
+
 """
 URL routing for the AREA automation API.
 
@@ -9,7 +16,13 @@ This module defines the API endpoints for:
 - Webhook receiver
 """
 
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from django.urls import include, path
 
@@ -27,6 +40,22 @@ router.register(r"executions", views.ExecutionViewSet, basename="execution")
 app_name = "automations"
 
 urlpatterns = [
+    # JWT authentication endpoints
+    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    # API schema and documentation
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    # Swagger UI
+    path(
+        "docs/",
+        SpectacularSwaggerView.as_view(url_name="automations:schema"),
+        name="swagger-ui",
+    ),
+    path(
+        "redoc/",
+        SpectacularRedocView.as_view(url_name="automations:schema"),
+        name="redoc",
+    ),
     # API endpoints
     path("api/", include(router.urls)),
     # Special endpoint for service discovery
