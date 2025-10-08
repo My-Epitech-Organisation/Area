@@ -13,6 +13,10 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
+# Paths configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 # Check if running as areaction user (recommended for security)
 CURRENT_USER=$(whoami)
 if [ "$CURRENT_USER" != "areaction" ] && [ "$CURRENT_USER" != "root" ]; then
@@ -28,11 +32,14 @@ if [ "$CURRENT_USER" != "areaction" ] && [ "$CURRENT_USER" != "root" ]; then
 fi
 
 # Check if .env exists
-if [ ! -f .env ]; then
-    echo -e "${RED}Error: .env file not found${NC}"
+if [ ! -f "$PROJECT_DIR/.env" ]; then
+    echo -e "${RED}Error: .env file not found at $PROJECT_DIR/.env${NC}"
     echo "Run setup.sh first or create .env manually"
     exit 1
 fi
+
+# Change to project directory for all docker-compose commands
+cd "$PROJECT_DIR" || exit 1
 
 # Help function
 show_help() {
