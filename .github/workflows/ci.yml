@@ -13,8 +13,8 @@ on:
   workflow_dispatch:
 
 env:
-  # MIRROR_REPO_URL: "git@github.com:EpitechPGE3-2025/G-DEV-500-NAN-5-1-area-6.git"
-  MIRROR_REPO_URL: "git@github.com:My-Epitech-Organisation/Area.git"
+  MIRROR_REPO_URL: "git@github.com:EpitechPGE3-2025/G-DEV-500-NAN-5-1-area-6.git"
+  # MIRROR_REPO_URL: "git@github.com:My-Epitech-Organisation/Area.git"
 
 jobs:
   check_the_repository:
