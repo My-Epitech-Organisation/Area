@@ -1,3 +1,10 @@
+##
+## EPITECH PROJECT, 2025
+## Area
+## File description:
+## password_views
+##
+
 """Views for password reset functionality."""
 
 import logging
@@ -26,6 +33,7 @@ class ForgotPasswordView(APIView):
     """Request a password reset email."""
 
     permission_classes = [AllowAny]
+    serializer_class = ForgotPasswordSerializer
 
     def post(self, request):
         """Send password reset email if user exists."""
@@ -109,6 +117,7 @@ class ResetPasswordView(APIView):
     """Reset password using a token."""
 
     permission_classes = [AllowAny]
+    serializer_class = ResetPasswordSerializer
 
     def post(self, request):
         """Reset the user's password."""
@@ -138,6 +147,7 @@ class ChangePasswordView(APIView):
     """Change password for authenticated user."""
 
     permission_classes = [IsAuthenticated]
+    serializer_class = ChangePasswordSerializer
 
     def post(self, request):
         """Change the user's password."""
