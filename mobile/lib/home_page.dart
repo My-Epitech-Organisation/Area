@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/applet_provider.dart';
 import 'providers/user_provider.dart';
-import 'pages/create_applet_page.dart';
-import 'pages/my_applets_page.dart';
+import 'providers/navigation_provider.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -27,22 +26,18 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header avec nom d'utilisateur
                   _buildHeader(userProfile),
 
                   const SizedBox(height: 32),
 
-                  // Métriques principales
                   _buildMetricsCards(applets),
 
                   const SizedBox(height: 32),
 
-                  // Actions rapides
                   _buildQuickActions(context),
 
                   const SizedBox(height: 32),
 
-                  // Applets récents
                   _buildRecentApplets(applets),
                 ],
               ),
@@ -219,12 +214,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 subtitle: 'Build new workflows',
                 color: Colors.blue,
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const CreateAppletPage(),
-                    ),
-                  );
+                  final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
+                  navigationProvider.navigateToPage(1); // Index 1 = Create Automation
                 },
               ),
             ),
@@ -237,12 +228,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 subtitle: 'View all workflows',
                 color: Colors.purple,
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MyAppletsPage(),
-                    ),
-                  );
+                  final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
+                  navigationProvider.navigateToPage(2); // Index 2 = My Automations
                 },
               ),
             ),
@@ -321,7 +308,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _buildRecentApplets(List<dynamic>? applets) {
     if (applets == null || applets.isEmpty) {
       return SizedBox(
-        height: MediaQuery.of(context).size.height * 0.4, // Hauteur fixe pour permettre le centrage
+        height: MediaQuery.of(context).size.height * 0.4,
         child: Center(
           child: Container(
             padding: const EdgeInsets.all(32),
@@ -382,9 +369,10 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             TextButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const MyAppletsPage()),
-              ),
+              onPressed: () {
+                final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
+                navigationProvider.navigateToPage(2); // Index 2 = My Automations
+              },
               child: const Text('View All'),
             ),
           ],
