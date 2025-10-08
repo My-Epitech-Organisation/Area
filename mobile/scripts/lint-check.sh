@@ -24,7 +24,7 @@ echo "========================================"
 
 # Format check
 echo -e "${BLUE}📏 Checking code formatting (dart format)...${NC}"
-if dart format --output=none --set-exit-if-changed .; then
+if dart format --output=show --set-exit-if-changed . >/dev/null; then
     echo -e "${GREEN}✅ Format: PASSED${NC}"
 else
     echo -e "${RED}❌ Format: FAILED${NC}"
