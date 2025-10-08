@@ -267,6 +267,7 @@ jobs:
   push_to_mirror:
     needs: [docker-compose-validation, check_the_repository]
     runs-on: ubuntu-latest
+    if: needs.check_the_repository.outputs.same_repository == 'false'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
