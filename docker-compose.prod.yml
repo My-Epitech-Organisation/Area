@@ -63,8 +63,9 @@ services:
       - CSRF_COOKIE_SECURE=True
       - ENVIRONMENT=production
     volumes:
-      - backend_static_prod:/app/staticfiles
-      - backend_media_prod:/app/mediafiles
+      # Bind mounts for nginx to serve static/media files directly
+      - ./staticfiles:/app/staticfiles
+      - ./mediafiles:/app/mediafiles
       - backend_logs_prod:/app/logs
     deploy:
       resources:
@@ -171,10 +172,8 @@ volumes:
     name: area_redis_data_prod
   apk_shared_prod:
     name: area_apk_shared_prod
-  backend_static_prod:
-    name: area_backend_static_prod
-  backend_media_prod:
-    name: area_backend_media_prod
+  # backend_static_prod and backend_media_prod are now bind mounts (see server.volumes)
   backend_logs_prod:
     name: area_backend_logs_prod
+
 
