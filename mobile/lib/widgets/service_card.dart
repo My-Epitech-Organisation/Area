@@ -6,19 +6,13 @@ class ServiceCard extends StatelessWidget {
   final Service service;
   final VoidCallback? onTap;
 
-  const ServiceCard({
-    super.key,
-    required this.service,
-    this.onTap,
-  });
+  const ServiceCard({super.key, required this.service, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -56,20 +50,16 @@ class ServiceCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       '${service.actions.length} actions, ${service.reactions.length} reactions',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
                     ),
                   ],
                 ),
               ),
 
               // Arrow Icon
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: Colors.grey[400],
-              ),
+              Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
             ],
           ),
         ),

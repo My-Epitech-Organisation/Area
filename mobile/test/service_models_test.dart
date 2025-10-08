@@ -9,15 +9,15 @@ void main() {
         'actions': [
           {
             'name': 'new_issue',
-            'description': 'Triggered when a new issue is created'
-          }
+            'description': 'Triggered when a new issue is created',
+          },
         ],
         'reactions': [
           {
             'name': 'create_issue',
-            'description': 'Creates a new issue in the repository'
-          }
-        ]
+            'description': 'Creates a new issue in the repository',
+          },
+        ],
       };
 
       final service = Service.fromJson(json);
@@ -30,11 +30,7 @@ void main() {
     });
 
     test('Service.fromJson should handle null values gracefully', () {
-      final json = {
-        'name': null,
-        'actions': null,
-        'reactions': null
-      };
+      final json = {'name': null, 'actions': null, 'reactions': null};
 
       final service = Service.fromJson(json);
 
@@ -57,10 +53,16 @@ void main() {
       final service = Service(
         name: 'discord',
         actions: [
-          ServiceAction(name: 'message_received', description: 'When a message is received')
+          ServiceAction(
+            name: 'message_received',
+            description: 'When a message is received',
+          ),
         ],
         reactions: [
-          ServiceReaction(name: 'send_message', description: 'Send a message to a channel')
+          ServiceReaction(
+            name: 'send_message',
+            description: 'Send a message to a channel',
+          ),
         ],
       );
 
@@ -74,10 +76,22 @@ void main() {
     });
 
     test('Service.displayName should format names correctly', () {
-      expect(Service(name: 'github', actions: [], reactions: []).displayName, 'Github');
-      expect(Service(name: 'discord_bot', actions: [], reactions: []).displayName, 'Discord Bot');
-      expect(Service(name: '', actions: [], reactions: []).displayName, 'Unknown Service');
-      expect(Service(name: 'test_service', actions: [], reactions: []).displayName, 'Test Service');
+      expect(
+        Service(name: 'github', actions: [], reactions: []).displayName,
+        'Github',
+      );
+      expect(
+        Service(name: 'discord_bot', actions: [], reactions: []).displayName,
+        'Discord Bot',
+      );
+      expect(
+        Service(name: '', actions: [], reactions: []).displayName,
+        'Unknown Service',
+      );
+      expect(
+        Service(name: 'test_service', actions: [], reactions: []).displayName,
+        'Test Service',
+      );
     });
 
     test('Service.iconPath should return correct path', () {
@@ -90,7 +104,7 @@ void main() {
     test('ServiceAction.fromJson should parse correctly', () {
       final json = {
         'name': 'new_commit',
-        'description': 'Triggered when a new commit is pushed'
+        'description': 'Triggered when a new commit is pushed',
       };
 
       final action = ServiceAction.fromJson(json);
@@ -100,10 +114,7 @@ void main() {
     });
 
     test('ServiceAction.fromJson should handle null values', () {
-      final json = {
-        'name': null,
-        'description': null
-      };
+      final json = {'name': null, 'description': null};
 
       final action = ServiceAction.fromJson(json);
 
@@ -114,7 +125,7 @@ void main() {
     test('ServiceAction.toJson should serialize correctly', () {
       final action = ServiceAction(
         name: 'pull_request_opened',
-        description: 'When a pull request is opened'
+        description: 'When a pull request is opened',
       );
 
       final json = action.toJson();
@@ -128,7 +139,7 @@ void main() {
     test('ServiceReaction.fromJson should parse correctly', () {
       final json = {
         'name': 'send_notification',
-        'description': 'Sends a notification to the user'
+        'description': 'Sends a notification to the user',
       };
 
       final reaction = ServiceReaction.fromJson(json);
@@ -138,10 +149,7 @@ void main() {
     });
 
     test('ServiceReaction.fromJson should handle null values', () {
-      final json = {
-        'name': null,
-        'description': null
-      };
+      final json = {'name': null, 'description': null};
 
       final reaction = ServiceReaction.fromJson(json);
 
@@ -152,7 +160,7 @@ void main() {
     test('ServiceReaction.toJson should serialize correctly', () {
       final reaction = ServiceReaction(
         name: 'create_comment',
-        description: 'Creates a comment on the issue'
+        description: 'Creates a comment on the issue',
       );
 
       final json = reaction.toJson();

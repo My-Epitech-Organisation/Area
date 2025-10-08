@@ -42,10 +42,13 @@ class _SearchableServiceListState extends State<SearchableServiceList> {
     }
     return widget.services.where((service) {
       return service.displayName.toLowerCase().contains(_searchQuery) ||
-             service.actions.any((action) =>
-                 action.displayName.toLowerCase().contains(_searchQuery)) ||
-             service.reactions.any((reaction) =>
-                 reaction.displayName.toLowerCase().contains(_searchQuery));
+          service.actions.any(
+            (action) => action.displayName.toLowerCase().contains(_searchQuery),
+          ) ||
+          service.reactions.any(
+            (reaction) =>
+                reaction.displayName.toLowerCase().contains(_searchQuery),
+          );
     }).toList();
   }
 
@@ -104,9 +107,6 @@ class RefreshableList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: child,
-    );
+    return RefreshIndicator(onRefresh: onRefresh, child: child);
   }
 }

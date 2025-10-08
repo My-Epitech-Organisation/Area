@@ -31,20 +31,13 @@ class _ServicesPageState extends State<ServicesPage> {
   }
 
   void _onServiceTap(Service service) {
-    Navigator.pushNamed(
-      context,
-      '/service-details',
-      arguments: service,
-    );
+    Navigator.pushNamed(context, '/service-details', arguments: service);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Services'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Services'), elevation: 0),
       body: Consumer<ServiceCatalogProvider>(
         builder: (context, provider, child) {
           if (provider.isLoadingServices && provider.services.isEmpty) {
