@@ -12,7 +12,29 @@ on:
     paths: [ "backend/**", "frontend/**", "mobile/**", "docker-compose.yml" ]
   workflow_dispatch:
 
+env:
+  # MIRROR_REPO_URL: "git@github.com:EpitechPGE3-2025/G-DEV-500-NAN-5-1-area-6.git"
+  MIRROR_REPO_URL: "git@github.com:My-Epitech-Organisation/Area.git"
+
 jobs:
+  check_the_repository:
+    runs-on: ubuntu-latest
+    outputs:
+      same_repository: ${{ steps.checking_the_repo.outputs.same_repository }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Check if the repository is the same
+        id: checking_the_repo
+        run: |
+          if [ "${{ github.event.repository.ssh_url }}" != "${{ env.MIRROR_REPO_URL }}" ]; then
+            echo "::notice::Repository is different from the mirror repository."
+            echo "same_repository=true" >> $GITHUB_OUTPUT
+          else
+            echo "::warning::Repository is the same as the mirror repository."
+            echo "same_repository=false" >> $GITHUB_OUTPUT
+          fi
+
   backend-ci:
     name: Backend CI
     runs-on: ubuntu-latest
@@ -216,3 +238,16 @@ jobs:
           sleep 30
           docker compose ps
           docker compose down
+
+  push_to_mirror:
+    needs: docker-compose-validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 
+        with:
+          fetch-depth: 0
+      - uses: pixta-dev/repository-mirroring-action@v2
+        with:
+          target_repo_url: ${{ env.MIRROR_REPO_URL }}
+          ssh_private_key: ${{ secrets.EPITECH_SSH_KEY }}
