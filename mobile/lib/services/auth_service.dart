@@ -117,11 +117,8 @@ class AuthService {
   Future<void> _ensureGoogleSignInInitialized() async {
     if (!_isGoogleSignInInitialized) {
       _logDebug('🔧 Initializing Google Sign-In...');
-      _logDebug('📋 Web Client ID: ${GoogleSignInConfig.webClientId}');
 
-      await _googleSignIn.initialize(
-        serverClientId: GoogleSignInConfig.webClientId,
-      );
+      await _googleSignIn.initialize();
 
       _isGoogleSignInInitialized = true;
       _logDebug('✅ Google Sign-In initialized successfully');
@@ -135,9 +132,7 @@ class AuthService {
       await _ensureGoogleSignInInitialized();
 
       _logDebug('🔐 Authenticating with Google...');
-      final GoogleSignInAccount account = await _googleSignIn.authenticate(
-        scopeHint: <String>['email'],
-      );
+      final GoogleSignInAccount account = await _googleSignIn.authenticate();
 
       _logDebug('✅ Google authentication successful');
       _logDebug('📧 Account email: ${account.email}');
