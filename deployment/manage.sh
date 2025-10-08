@@ -13,6 +13,20 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
+# Check if running as areaction user (recommended for security)
+CURRENT_USER=$(whoami)
+if [ "$CURRENT_USER" != "areaction" ] && [ "$CURRENT_USER" != "root" ]; then
+    echo -e "${YELLOW}Warning: Running as user '$CURRENT_USER'${NC}"
+    echo -e "${YELLOW}Recommended: Run as 'areaction' user for security isolation${NC}"
+    echo -e "${YELLOW}Switch with: sudo su - areaction${NC}"
+    echo ""
+    read -p "Continue anyway? [y/N] " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+
 # Check if .env exists
 if [ ! -f .env ]; then
     echo -e "${RED}Error: .env file not found${NC}"
