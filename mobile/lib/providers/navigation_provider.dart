@@ -14,8 +14,6 @@ class NavigationProvider extends ChangeNotifier {
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOutCubic,
       );
-      _currentPage = pageIndex;
-      notifyListeners();
     }
   }
 
