@@ -31,14 +31,24 @@ function usePaginatedApi<T>(endpoint: string): UseApiResult<T[]> {
       setError(null);
 
       try {
-        const response = await fetch(`${API_BASE}${endpoint}`);
+        const token = localStorage.getItem('access_token');
+
+        const response = await fetch(`${API_BASE}${endpoint}`, {
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : '',
+            'Content-Type': 'application/json',
+          },
+        });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error('Session expired, please log in again');
+          }
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
         const json: PaginatedResponse<T> = await response.json();
-        
+
         if (isMounted) {
           setData(json.results);
         }
@@ -69,14 +79,14 @@ function usePaginatedApi<T>(endpoint: string): UseApiResult<T[]> {
  * Hook for fetching all available actions
  */
 export function useActions(): UseApiResult<Action[]> {
-  return usePaginatedApi<Action>('/api/actions/');
+  return usePaginatedApi<Action>('/actions/');
 }
 
 /**
  * Hook for fetching all available reactions
  */
 export function useReactions(): UseApiResult<Reaction[]> {
-  return usePaginatedApi<Reaction>('/api/reactions/');
+  return usePaginatedApi<Reaction>('/reactions/');
 }
 
 /**
@@ -98,13 +108,13 @@ export function useCreateArea() {
     setError(null);
 
     try {
-      const token = localStorage.getItem('access');
-      
+      const token = localStorage.getItem('access_token');
+
       if (!token) {
         throw new Error('Authentication required. Please login.');
       }
 
-      const response = await fetch(`${API_BASE}/api/areas/`, {
+      const response = await fetch(`${API_BASE}/areas/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,8 +129,8 @@ export function useCreateArea() {
         }
 
         const errorData: ApiError = await response.json().catch(() => ({}));
-        const errorMessage = errorData.detail || 
-                            Object.values(errorData)[0] || 
+        const errorMessage = errorData.detail ||
+                            Object.values(errorData)[0] ||
                             `HTTP ${response.status}: ${response.statusText}`;
         throw new Error(errorMessage);
       }
