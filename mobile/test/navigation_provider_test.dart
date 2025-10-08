@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/providers/navigation_provider.dart';
+import 'package:mobile/providers/navigation_provider.dart';
 
 void main() {
   group('NavigationProvider', () {
