@@ -55,9 +55,6 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
     username_field = "email"  # Tell DRF to use 'email' as the input field name
 
     def validate(self, attrs):  # type: ignore[override]
-        # Map 'email' from attrs to 'username' for parent validation
-        # since SimpleJWT expects 'username' internally but our USERNAME_FIELD is 'email'
-        if "email" in attrs:
-            attrs[User.USERNAME_FIELD] = attrs.pop("email")
-
+        # SimpleJWT internally expects a field matching USERNAME_FIELD
         return super().validate(attrs)
+
