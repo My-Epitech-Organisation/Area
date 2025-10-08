@@ -84,3 +84,33 @@ export interface ApiError {
   detail?: string;
   [key: string]: any;
 }
+
+// OAuth2 / Service Connection types
+export interface ServiceConnection {
+  service_name: string;
+  created_at: string;
+  expires_at: string | null;
+  is_expired: boolean;
+  expires_in_minutes: number | null;
+  has_refresh_token: boolean;
+}
+
+export interface ConnectedServicesResponse {
+  connected_services: ServiceConnection[];
+  available_providers: string[];
+  total_connected: number;
+}
+
+export interface OAuthInitiateResponse {
+  redirect_url: string;
+  state: string;
+  provider: string;
+  expires_in: number;
+}
+
+export interface OAuthCallbackResponse {
+  message: string;
+  service: string;
+  created: boolean;
+  expires_at?: string;
+}
