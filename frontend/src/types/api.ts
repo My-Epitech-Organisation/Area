@@ -2,6 +2,30 @@
  * Type definitions for AREA API responses
  */
 
+// JSON Schema types for dynamic form generation
+export interface JSONSchemaProperty {
+  type: 'string' | 'number' | 'integer' | 'boolean' | 'array' | 'object';
+  description?: string;
+  format?: string;
+  pattern?: string;
+  minimum?: number;
+  maximum?: number;
+  minLength?: number;
+  maxLength?: number;
+  enum?: any[];
+  default?: any;
+  items?: JSONSchemaProperty;
+  properties?: Record<string, JSONSchemaProperty>;
+  additionalProperties?: boolean | JSONSchemaProperty;
+}
+
+export interface JSONSchema {
+  type: 'object';
+  properties: Record<string, JSONSchemaProperty>;
+  required?: string[];
+  additionalProperties?: boolean;
+}
+
 export interface Service {
   id: number;
   name: string;
@@ -15,6 +39,8 @@ export interface Action {
   service: number;
   name: string;
   description: string;
+  service_name?: string;
+  config_schema?: JSONSchema;
 }
 
 export interface Reaction {
@@ -22,6 +48,8 @@ export interface Reaction {
   service: number;
   name: string;
   description: string;
+  service_name?: string;
+  config_schema?: JSONSchema;
 }
 
 export interface Area {
