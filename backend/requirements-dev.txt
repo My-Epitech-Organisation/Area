@@ -8,3 +8,6 @@ bandit==1.8.6
 # Testing and coverage
 pytest-django==4.11.1
 coverage==7.10.7
+
+# Time mocking for tests
+freezegun==1.5.1

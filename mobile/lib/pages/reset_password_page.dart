@@ -35,7 +35,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     // Check if token exists
     if (widget.token == null || widget.token!.isEmpty) {
       setState(() {
-        _errorMessage = 'Invalid or missing reset token. Please try again from the email link.';
+        _errorMessage =
+            'Invalid or missing reset token. Please try again from the email link.';
       });
       return;
     }
@@ -74,9 +75,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reset Password'),
-      ),
+      appBar: AppBar(title: const Text('Reset Password')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -94,27 +93,17 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 32),
-            const Icon(
-              Icons.lock_reset,
-              size: 80,
-              color: Colors.blue,
-            ),
+            const Icon(Icons.lock_reset, size: 80, color: Colors.blue),
             const SizedBox(height: 24),
             const Text(
               'Create New Password',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             const Text(
               'Choose a new password for your account.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
@@ -247,36 +236,23 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Icon(
-          Icons.check_circle,
-          size: 80,
-          color: Colors.green,
-        ),
+        const Icon(Icons.check_circle, size: 80, color: Colors.green),
         const SizedBox(height: 24),
         const Text(
           'Password Reset!',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
         const Text(
           'Your password has been successfully reset.',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
         const Text(
           'You can now login with your new password.',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 32),

@@ -1,3 +1,10 @@
+##
+## EPITECH PROJECT, 2025
+## Area
+## File description:
+## google_signin
+##
+
 """Google Sign-In authentication views for mobile."""
 
 import logging
@@ -5,19 +12,20 @@ import logging
 from google.auth.transport import requests
 from google.oauth2 import id_token
 from rest_framework import status
+from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.conf import settings
 
+from ..serializers import GoogleLoginSerializer
 from .manager import OAuthManager
 
 logger = logging.getLogger(__name__)
 
 
-class GoogleLoginView(APIView):
+class GoogleLoginView(GenericAPIView):
     """
     Handle Google Sign-In authentication for mobile apps.
 
@@ -44,6 +52,7 @@ class GoogleLoginView(APIView):
     """
 
     permission_classes = [AllowAny]
+    serializer_class = GoogleLoginSerializer
 
     def post(self, request):
         """Authenticate user with Google ID token."""

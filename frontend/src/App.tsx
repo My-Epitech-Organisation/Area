@@ -31,6 +31,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/auth/callback/:provider" element={<OAuthCallback />} />
+        <Route index element={<Homepage />} />
       </Routes>
     </BrowserRouter>
   );

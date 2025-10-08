@@ -1,113 +1,113 @@
 import 'package:flutter/material.dart';
+import '../widgets/create_applet/create_applet_widgets.dart';
 
-class CreateAppletPage extends StatelessWidget {
+class CreateAppletPage extends StatefulWidget {
   const CreateAppletPage({super.key});
+
+  @override
+  State<CreateAppletPage> createState() => _CreateAppletPageState();
+}
+
+class _CreateAppletPageState extends State<CreateAppletPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  String? _selectedTrigger;
+  String? _selectedAction;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Create new applet page',
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Semantics(
-                header: true,
-                child: const Text(
-                  'Create a new AREA applet',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'An applet is an automation that connects services.',
-                style: TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 20),
-              Semantics(
-                label: 'Applet name input field',
-                hint: 'Enter a name for your new applet',
-                child: TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Applet Name',
-                    border: OutlineInputBorder(),
-                    helperText: 'Choose a descriptive name for your applet',
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Semantics(
-                label: 'Trigger service selection',
-                hint: 'Select which service will trigger the applet',
-                child: DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    labelText: 'Trigger Service',
-                    border: OutlineInputBorder(),
-                    helperText:
-                        'Choose the service that will start the automation',
-                  ),
-                  items: ['Gmail', 'Discord', 'GitHub', 'Timer']
-                      .map(
-                        (service) => DropdownMenuItem(
-                          value: service,
-                          child: Text(service),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {},
-                ),
-              ),
-              const SizedBox(height: 10),
-              Semantics(
-                label: 'Action selection',
-                hint: 'Select what action the applet should perform',
-                child: DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    labelText: 'Action',
-                    border: OutlineInputBorder(),
-                    helperText:
-                        'Choose what the applet should do when triggered',
-                  ),
-                  items: ['Send message', 'Create task', 'Notify']
-                      .map(
-                        (action) => DropdownMenuItem(
-                          value: action,
-                          child: Text(action),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {},
-                ),
-              ),
-              const SizedBox(height: 20),
-              Semantics(
-                button: true,
-                label: 'Create applet button',
-                hint: 'Tap to create the new applet with selected settings',
-                child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Applet created!'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 48),
-                  ),
-                  child: const Text(
-                    'Create Applet',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-              ),
+      label: 'Create new automation page',
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Theme.of(context).colorScheme.surface,
+              Theme.of(context).colorScheme.surface.withAlpha(204),
             ],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 24),
+
+                // Automation Details Card
+                AutomationDetailsCard(nameController: _nameController),
+
+                const SizedBox(height: 16),
+
+                // Trigger Configuration Card
+                TriggerConfigCard(
+                  selectedTrigger: _selectedTrigger,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedTrigger = value;
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                // Action Configuration Card
+                ActionConfigCard(
+                  selectedAction: _selectedAction,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedAction = value;
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 32),
+
+                // Create Button
+                CreateAutomationButton(onPressed: _createAutomation),
+
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  void _createAutomation() {
+    if (_formKey.currentState?.validate() ?? false) {
+      // Here you would typically save the automation
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Automation "${_nameController.text}" created successfully!',
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+
+      // Reset form
+      _nameController.clear();
+      setState(() {
+        _selectedTrigger = null;
+        _selectedAction = null;
+      });
+      _formKey.currentState?.reset();
+    }
   }
 }

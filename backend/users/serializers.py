@@ -1,3 +1,10 @@
+##
+## EPITECH PROJECT, 2025
+## Area
+## File description:
+## serializers
+##
+
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -45,6 +52,12 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
+class GoogleLoginSerializer(serializers.Serializer):
+    id_token = serializers.CharField(
+        required=True, help_text="Google ID token from mobile app"
+    )
+
+
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Custom token serializer that uses email for authentication.
 
@@ -57,4 +70,3 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):  # type: ignore[override]
         # SimpleJWT internally expects a field matching USERNAME_FIELD
         return super().validate(attrs)
-

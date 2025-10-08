@@ -8,7 +8,8 @@ class ServiceCatalogService {
   final CacheService _cache = CacheService();
 
   // Singleton pattern
-  static final ServiceCatalogService _instance = ServiceCatalogService._internal();
+  static final ServiceCatalogService _instance =
+      ServiceCatalogService._internal();
   factory ServiceCatalogService() => _instance;
   ServiceCatalogService._internal();
 
