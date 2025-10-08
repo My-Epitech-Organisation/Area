@@ -131,10 +131,11 @@ class ServiceViewSetTest(BaseAPITest):
 
         # Should return both active services
         data = response.json()
-        self.assertEqual(len(data["results"]), 2)
+        self.assertEqual(len(data["results"]), 3)
         service_names = [s["name"] for s in data["results"]]
         self.assertIn("github", service_names)
         self.assertIn("email", service_names)
+        self.assertIn("timer", service_names)
 
     def test_list_services_unauthenticated(self):
         """Test that unauthenticated requests are rejected."""
@@ -152,7 +153,7 @@ class ServiceViewSetTest(BaseAPITest):
 
         data = response.json()
         self.assertEqual(data["name"], "github")
-        self.assertEqual(data["actions_count"], 2)  # timer_daily + github_new_issue
+        self.assertEqual(data["actions_count"], 1)  # github_new_issue
         self.assertEqual(data["reactions_count"], 1)  # slack_message
 
     def test_service_viewset_read_only(self):
@@ -210,8 +211,8 @@ class ActionReactionViewSetTest(BaseAPITest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         data = response.json()
-        # All actions in our test data belong to github service
-        self.assertEqual(len(data["results"]), 2)
+        # Only github_new_issue belongs to github service now
+        self.assertEqual(len(data["results"]), 1)
 
         for action in data["results"]:
             self.assertEqual(action["service_name"], "github")
