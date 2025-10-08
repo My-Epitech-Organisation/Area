@@ -154,8 +154,7 @@ services:
       - "${FRONTEND_PORT:-8081}:80"  # Expose frontend for nginx proxy
     volumes:
       - apk_shared_prod:/shared
-      - backend_static_prod:/usr/share/nginx/html/static
-      - backend_media_prod:/usr/share/nginx/html/media
+      # static/media files are now served by system nginx directly from bind mounts
     deploy:
       resources:
         limits:
