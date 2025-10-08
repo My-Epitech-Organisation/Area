@@ -294,7 +294,7 @@ def about_json_view(request):
     about_data = {
         "client": {"host": request.get_host()},
         "server": {
-            "current_time": time.time(),
+            "current_time": int(time.time()),
             "services": serializer.data,
         },
     }
