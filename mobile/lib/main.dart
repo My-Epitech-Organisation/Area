@@ -7,6 +7,9 @@ import 'providers/providers.dart';
 import 'pages/splash_page.dart';
 import 'pages/login_page.dart';
 import 'pages/reset_password_page.dart';
+import 'pages/services_page.dart';
+import 'pages/service_details_page.dart';
+import 'models/service.dart';
 import 'swipe_navigation_page.dart';
 import 'utils/debug_helper.dart';
 import 'utils/oauth_deep_link_handler.dart';
@@ -211,6 +214,10 @@ class _MyAppState extends State<MyApp> {
         routes: {
           '/home': (context) => const SwipeNavigationPage(),
           '/login': (context) => const LoginPage(),
+          '/services': (context) => const ServicesPage(),
+          '/service-details': (context) => ServiceDetailsPage(
+            service: ModalRoute.of(context)!.settings.arguments as Service,
+          ),
         },
         // Error handling
         builder: (context, widget) {
