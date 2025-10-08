@@ -297,3 +297,39 @@ except Exception as e:
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+
+# OAuth2 Provider Configuration
+OAUTH2_PROVIDERS = {
+    "google": {
+        "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
+        "client_secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
+        "redirect_uri": os.getenv(
+            "GOOGLE_REDIRECT_URI", "http://localhost:8080/auth/google/callback"
+        ),
+        "authorization_endpoint": "https://accounts.google.com/o/oauth2/v2/auth",
+        "token_endpoint": "https://oauth2.googleapis.com/token",
+        "userinfo_endpoint": "https://www.googleapis.com/oauth2/v2/userinfo",
+        "scopes": [
+            "openid",
+            "email",
+            "profile",
+            "https://www.googleapis.com/auth/gmail.readonly",
+        ],
+        "requires_refresh": True,
+    },
+    "github": {
+        "client_id": os.getenv("GITHUB_CLIENT_ID", ""),
+        "client_secret": os.getenv("GITHUB_CLIENT_SECRET", ""),
+        "redirect_uri": os.getenv(
+            "GITHUB_REDIRECT_URI", "http://localhost:8080/auth/oauth/github/callback/"
+        ),
+        "authorization_endpoint": "https://github.com/login/oauth/authorize",
+        "token_endpoint": "https://github.com/login/oauth/access_token",
+        "userinfo_endpoint": "https://api.github.com/user",
+        "scopes": ["user", "repo", "notifications"],
+        "requires_refresh": False,  # GitHub tokens don't expire
+    },
+}
+
+# OAuth2 state expiry time (seconds)
+OAUTH2_STATE_EXPIRY = 600  # 10 minutes
