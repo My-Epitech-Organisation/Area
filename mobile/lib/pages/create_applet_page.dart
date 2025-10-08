@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/create_applet/create_applet_widgets.dart';
+import '../providers/service_catalog_provider.dart';
 
 class CreateAppletPage extends StatefulWidget {
   const CreateAppletPage({super.key});
@@ -11,8 +13,19 @@ class CreateAppletPage extends StatefulWidget {
 class _CreateAppletPageState extends State<CreateAppletPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  String? _selectedTrigger;
-  String? _selectedAction;
+  String? _selectedTriggerService;
+  String? _selectedTriggerAction;
+  String? _selectedActionService;
+  String? _selectedActionReaction;
+
+  @override
+  void initState() {
+    super.initState();
+    // Load services when page opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ServiceCatalogProvider>().loadServices();
+    });
+  }
 
   @override
   void dispose() {
@@ -51,25 +64,46 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
 
                 // Trigger Configuration Card
                 TriggerConfigCard(
-                  selectedTrigger: _selectedTrigger,
-                  onChanged: (value) {
+                  selectedService: _selectedTriggerService,
+                  selectedAction: _selectedTriggerAction,
+                  onServiceChanged: (value) {
                     setState(() {
-                      _selectedTrigger = value;
+                      _selectedTriggerService = value;
+                      _selectedTriggerAction =
+                          null; // Reset action when service changes
+                      // Reset action selection when trigger changes
+                      _selectedActionService = null;
+                      _selectedActionReaction = null;
+                    });
+                  },
+                  onActionChanged: (value) {
+                    setState(() {
+                      _selectedTriggerAction = value;
                     });
                   },
                 ),
 
                 const SizedBox(height: 16),
 
-                // Action Configuration Card
-                ActionConfigCard(
-                  selectedAction: _selectedAction,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedAction = value;
-                    });
-                  },
-                ),
+                // Action Configuration Card - Only show when trigger action is selected
+                if (_selectedTriggerService != null &&
+                    _selectedTriggerAction != null)
+                  ActionConfigCard(
+                    selectedService: _selectedActionService,
+                    selectedReaction: _selectedActionReaction,
+                    onServiceChanged: (value) {
+                      setState(() {
+                        _selectedActionService = value;
+                        _selectedActionReaction =
+                            null; // Reset reaction when service changes
+                      });
+                    },
+                    onReactionChanged: (value) {
+                      setState(() {
+                        _selectedActionReaction = value;
+                      });
+                    },
+                  ),
 
                 const SizedBox(height: 32),
 
@@ -87,15 +121,38 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
 
   void _createAutomation() {
     if (_formKey.currentState?.validate() ?? false) {
-      // Here you would typically save the automation
+      // Validate that all required fields are selected
+      if (_selectedTriggerService == null || _selectedTriggerAction == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select a trigger'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      if (_selectedActionService == null || _selectedActionReaction == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select an action'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Here you would typically save the automation with the selected services and actions
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Automation "${_nameController.text}" created successfully!',
+            'Automation "${_nameController.text}" created successfully!\n'
+            'Trigger: $_selectedTriggerService - $_selectedTriggerAction\n'
+            'Action: $_selectedActionService - $_selectedActionReaction',
             style: const TextStyle(color: Colors.white),
           ),
           backgroundColor: Theme.of(context).colorScheme.primary,
-          duration: const Duration(seconds: 3),
+          duration: const Duration(seconds: 5),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
@@ -104,8 +161,10 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
       // Reset form
       _nameController.clear();
       setState(() {
-        _selectedTrigger = null;
-        _selectedAction = null;
+        _selectedTriggerService = null;
+        _selectedTriggerAction = null;
+        _selectedActionService = null;
+        _selectedActionReaction = null;
       });
       _formKey.currentState?.reset();
     }
