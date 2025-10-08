@@ -169,7 +169,10 @@ class _MyAppState extends State<MyApp> {
             ),
             filled: true,
             fillColor: Colors.grey.withValues(alpha: 0.1),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
           ),
           cardTheme: const CardThemeData(
             elevation: 4,

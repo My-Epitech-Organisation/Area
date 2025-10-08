@@ -14,9 +14,7 @@ class ActionConfigCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -24,10 +22,7 @@ class ActionConfigCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.bolt,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+                Icon(Icons.bolt, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   'Action Configuration',
@@ -46,7 +41,8 @@ class ActionConfigCard extends StatelessWidget {
                 initialValue: selectedAction,
                 decoration: InputDecoration(
                   labelText: 'Action',
-                  hintText: 'Choose what the automation should do when triggered',
+                  hintText:
+                      'Choose what the automation should do when triggered',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
