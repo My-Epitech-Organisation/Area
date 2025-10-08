@@ -48,6 +48,23 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 ALLOWED_HOSTS = []
 
 
+# Security Settings
+# Only enable SSL redirect and secure cookies in production
+if not DEBUG:
+    # Force HTTPS redirect (nginx handles SSL termination)
+    SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False") == "True"
+    # Secure cookies (only sent over HTTPS)
+    SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "False") == "True"
+    CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "False") == "True"
+    # Trust X-Forwarded-Proto header from nginx
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+else:
+    # Development: No SSL enforcement
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -341,6 +358,9 @@ CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "False") == "True"
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8081",
     "http://127.0.0.1:8081",
+    "http://areaction.app:8081",
+    "https://areaction.app",
+    "http://areaction.app",
 ]
 
 # Update ALLOWED_HOSTS
@@ -390,6 +410,14 @@ LOGGING = {
         },
     },
 }
+
+# Production: Log to stdout/stderr instead of file (better for Docker logs)
+if os.getenv("ENVIRONMENT") == "production":
+    LOGGING["handlers"]["file"] = {
+        "level": os.getenv("LOG_LEVEL", "INFO"),
+        "class": "logging.StreamHandler",  # stdout instead of FileHandler
+        "formatter": "verbose",
+    }
 
 # OAuth2 Provider Configuration
 OAUTH2_PROVIDERS = {

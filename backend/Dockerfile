@@ -1,5 +1,5 @@
 # Multi-stage build for Django backend
-FROM python:3.13-slim as base
+FROM python:3.13-slim AS base
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -19,8 +19,8 @@ RUN apt-get update \
 # Set work directory
 WORKDIR /app
 
-# Install Python dependencies
-COPY requirements.txt requirements-dev.txt ./
+# Install Python dependencies (production only)
+COPY requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
@@ -46,4 +46,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 
 # Default command - ASGI with UvicornWorker for WebSocket support
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "3", "--worker-class", "uvicorn.workers.UvicornWorker", "--timeout", "60", "area_project.asgi:application"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:8080 --workers ${GUNICORN_WORKERS:-3} --worker-class uvicorn.workers.UvicornWorker --timeout 60 --forwarded-allow-ips='*' --access-logfile - --error-logfile - area_project.asgi:application"]

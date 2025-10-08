@@ -19,6 +19,7 @@ db.sqlite3
 db.sqlite3-journal
 media/
 staticfiles/
+mediafiles/
 
 # Testing
 .coverage
@@ -30,6 +31,13 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
+
+# Code quality tools
+.ruff_cache/
+.mypy_cache/
+.flake8
+.bandit
+.isort.cfg
 
 # IDE
 .vscode/
@@ -50,26 +58,26 @@ Thumbs.db
 # Git
 .git/
 .gitignore
+.gitattributes
 
 # Documentation
 docs/
 *.md
+README*
 
 # Development tools
-.flake8
-.bandit
-.mypy_cache/
-.isort.cfg
+Makefile
 
 # Environment variables
 .env
-.env.local
-.env.*.local
+.env.*
+*.env
 
 # Temporary files
 *.tmp
 *.temp
 *.pid
+*.bak
 
 # Logs
 logs/
@@ -80,3 +88,17 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Test files
+test_*.py
+tests/
+*_test.py
+test/
+
+# Development requirements
+requirements-dev.txt
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
