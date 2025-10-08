@@ -24,8 +24,8 @@ const Login: React.FC = () => {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        if (data.access) localStorage.setItem('access', data.access);
-        if (data.refresh) localStorage.setItem('refresh', data.refresh);
+        if (data.access) localStorage.setItem('access_token', data.access);
+        if (data.refresh) localStorage.setItem('refresh_token', data.refresh);
         window.location.href = '/dashboard';
         return;
       }
