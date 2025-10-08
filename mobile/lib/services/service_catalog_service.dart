@@ -1,6 +1,7 @@
 import '../config/api_config.dart';
 import 'http_client_service.dart';
 import 'cache_service.dart';
+import '../models/service.dart';
 
 /// Service responsible for service catalog (services, actions, reactions)
 class ServiceCatalogService {
@@ -12,88 +13,44 @@ class ServiceCatalogService {
   factory ServiceCatalogService() => _instance;
   ServiceCatalogService._internal();
 
-  /// Get all available services
-  Future<List<Map<String, dynamic>>> getAvailableServices({
+  /// Get all available services from about.json
+  Future<List<Service>> getAvailableServices({
     bool forceRefresh = false,
   }) async {
     const cacheKey = 'services';
 
     if (!forceRefresh) {
-      final cached = _cache.get<List<Map<String, dynamic>>>(cacheKey);
+      final cached = _cache.get<List<Service>>(cacheKey);
       if (cached != null) return cached;
     }
 
-    final response = await _httpClient.get(ApiConfig.servicesUrl);
+    final response = await _httpClient.get(ApiConfig.aboutUrl);
 
-    final services = _httpClient.parseResponse<List<Map<String, dynamic>>>(
+    final aboutData = _httpClient.parseResponse<Map<String, dynamic>>(
       response,
-      (data) => (data as List<dynamic>)
-          .map((item) => item as Map<String, dynamic>)
-          .toList(),
+      (data) => data as Map<String, dynamic>,
     );
+
+    final serverData = aboutData['server'] as Map<String, dynamic>?;
+    if (serverData == null) {
+      throw Exception('Invalid about.json format: missing server data');
+    }
+
+    final servicesData = serverData['services'] as List<dynamic>?;
+    if (servicesData == null) {
+      throw Exception('Invalid about.json format: missing services data');
+    }
+
+    final services = servicesData
+        .map((item) => Service.fromJson(item as Map<String, dynamic>))
+        .toList();
 
     _cache.set(cacheKey, services);
     return services;
   }
 
-  /// Get actions for a specific service
-  Future<List<Map<String, dynamic>>> getServiceActions(
-    int serviceId, {
-    bool forceRefresh = false,
-  }) async {
-    final cacheKey = 'actions_$serviceId';
-
-    if (!forceRefresh) {
-      final cached = _cache.get<List<Map<String, dynamic>>>(cacheKey);
-      if (cached != null) return cached;
-    }
-
-    final response = await _httpClient.get(
-      ApiConfig.serviceActionsUrl(serviceId),
-    );
-
-    final actions = _httpClient.parseResponse<List<Map<String, dynamic>>>(
-      response,
-      (data) => (data as List<dynamic>)
-          .map((item) => item as Map<String, dynamic>)
-          .toList(),
-    );
-
-    _cache.set(cacheKey, actions);
-    return actions;
-  }
-
-  /// Get reactions for a specific service
-  Future<List<Map<String, dynamic>>> getServiceReactions(
-    int serviceId, {
-    bool forceRefresh = false,
-  }) async {
-    final cacheKey = 'reactions_$serviceId';
-
-    if (!forceRefresh) {
-      final cached = _cache.get<List<Map<String, dynamic>>>(cacheKey);
-      if (cached != null) return cached;
-    }
-
-    final response = await _httpClient.get(
-      ApiConfig.serviceReactionsUrl(serviceId),
-    );
-
-    final reactions = _httpClient.parseResponse<List<Map<String, dynamic>>>(
-      response,
-      (data) => (data as List<dynamic>)
-          .map((item) => item as Map<String, dynamic>)
-          .toList(),
-    );
-
-    _cache.set(cacheKey, reactions);
-    return reactions;
-  }
-
   /// Clear all service catalog cache
   void clearCache() {
     _cache.clearByPattern('services');
-    _cache.clearByPattern('actions_');
-    _cache.clearByPattern('reactions_');
   }
 }
