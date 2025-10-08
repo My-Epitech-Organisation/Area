@@ -1,0 +1,178 @@
+# =============================================================================
+# AREA - Production Configuration
+# =============================================================================
+# This file contains production-specific overrides:
+#   - restart: always for automatic recovery
+#   - Resource limits (CPU/RAM) for stability
+#   - Security environment variables
+#   - Production volumes with _prod suffix for isolation
+#   - Healthchecks for monitoring
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs -f
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml down
+#
+# Note: Managed by deployment/manage.sh script on production server
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Database - Production Overrides
+  # ---------------------------------------------------------------------------
+  db:
+    container_name: area_postgres_prod
+    restart: always
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+
+  # ---------------------------------------------------------------------------
+  # Redis - Production Overrides
+  # ---------------------------------------------------------------------------
+  redis:
+    container_name: area_redis_prod
+    restart: always
+    volumes:
+      - redis_data_prod:/data
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  # ---------------------------------------------------------------------------
+  # Backend API - Production Overrides
+  # ---------------------------------------------------------------------------
+  server:
+    container_name: area_server_prod
+    restart: always
+    build:
+      context: ./backend
+    ports:
+      - "${BACKEND_PORT:-8000}:8080"  # Expose API for nginx proxy
+    environment:
+      - DEBUG=False
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - SECURE_SSL_REDIRECT=True
+      - SESSION_COOKIE_SECURE=True
+      - CSRF_COOKIE_SECURE=True
+      - ENVIRONMENT=production
+    volumes:
+      # Bind mounts for nginx to serve static/media files directly
+      - ./staticfiles:/app/staticfiles
+      - ./mediafiles:/app/mediafiles
+      - backend_logs_prod:/app/logs
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ---------------------------------------------------------------------------
+  # Celery Worker - Production Overrides
+  # ---------------------------------------------------------------------------
+  worker:
+    container_name: area_worker_prod
+    restart: always
+    volumes:
+      - backend_logs_prod:/app/logs
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      disable: true  # Worker is not an HTTP service
+
+  # ---------------------------------------------------------------------------
+  # Celery Beat - Production Overrides
+  # ---------------------------------------------------------------------------
+  beat:
+    container_name: area_beat_prod
+    restart: always
+    volumes:
+      - backend_logs_prod:/app/logs
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      disable: true  # Beat is not an HTTP service
+
+  # ---------------------------------------------------------------------------
+  # Flower - Production Overrides
+  # ---------------------------------------------------------------------------
+  flower:
+    container_name: area_flower_prod
+    restart: always
+    environment:
+      - FLOWER_BASIC_AUTH=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-changeme}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5555/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Mobile Client - Production Overrides
+  # ---------------------------------------------------------------------------
+  client_mobile:
+    container_name: area_client_mobile_prod
+    volumes:
+      - apk_shared_prod:/shared
+
+  # ---------------------------------------------------------------------------
+  # Web Client - Production Overrides
+  # ---------------------------------------------------------------------------
+  client_web:
+    container_name: area_client_web_prod
+    restart: always
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod  # Production nginx build
+      args:
+        VITE_API_BASE: ${VITE_API_BASE:-https://areaction.app/api}  # Backend API URL from .env
+    ports:
+      - "${FRONTEND_PORT:-8081}:80"  # Expose frontend for nginx proxy
+    volumes:
+      - apk_shared_prod:/shared
+      # static/media files are now served by system nginx directly from bind mounts
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+# =============================================================================
+# Production Volumes (isolated with _prod suffix)
+# =============================================================================
+volumes:
+  pgdata_prod:
+    name: area_pgdata_prod
+  redis_data_prod:
+    name: area_redis_data_prod
+  apk_shared_prod:
+    name: area_apk_shared_prod
+  # backend_static_prod and backend_media_prod are now bind mounts (see server.volumes)
+  backend_logs_prod:
+    name: area_backend_logs_prod
+
+

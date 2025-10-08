@@ -5,204 +5,215 @@
 ## Makefile
 ##
 
+# =============================================================================
 # AREA Project Makefile
-# Simplified Docker operations
+# =============================================================================
+# Clean, modular Docker Compose commands for dev/prod/test environments
+# Documentation: docs/DOCKER_COMPOSE.md
+# =============================================================================
 
-.PHONY: help build up down logs shell migrate test lint clean status
+.PHONY: help dev prod test \
+		up-dev up-prod up-test down-dev down-prod down-test \
+		logs-dev logs-prod logs-test restart-dev restart-prod test-shell \
+		build shell migrate makemigrations superuser init-db \
+		lint format ruff-check ruff-fix \
+		status health clean restart \
+		db-shell db-dump env validate
 
 # Default target
 help: ## Show this help message
-	@echo "AREA Project - Available commands:"
-	@echo
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@echo "╔══════════════════════════════════════════════════════════════╗"
+	@echo "║              AREA Project - Available Commands               ║"
+	@echo "╚══════════════════════════════════════════════════════════════╝"
+	@echo ""
+	@echo "🚀 Quick Start:"
+	@echo "  make dev       - Start development (hot reload)"
+	@echo "  make prod      - Start production (nginx)"
+	@echo "  make test      - Run tests (CI-ready)"
+	@echo "  make validate  - Validate Docker Compose architecture"
+	@echo ""
+	@echo "📦 Environment Management:"
+	@grep -E '^(up-dev|down-dev|logs-dev|restart-dev|up-prod|down-prod|logs-prod|restart-prod|up-test|down-test|logs-test|test-shell):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+	@echo "🔧 Backend Commands:"
+	@grep -E '^(shell|migrate|makemigrations|superuser|init-db):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+	@echo "✨ Code Quality:"
+	@grep -E '^(lint|format|ruff-check|ruff-fix):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+	@echo "🗄️  Database:"
+	@grep -E '^(db-shell|db-dump):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+	@echo "🛠️  Utilities:"
+	@grep -E '^(build|status|health|clean|restart|env):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+	@echo "📖 Full documentation: docs/DOCKER_COMPOSE.md"
 
-# Quick dev mode
-dev: ## Launch project in development mode (backend + dev frontend with hot reload)
-	@echo "Starting AREA in development mode..."
-	@echo "Frontend: http://localhost:5173"
-	$(MAKE) up-dev
+# =============================================================================
+# QUICK START COMMANDS
+# =============================================================================
 
-prod: ## Launch project in production mode (backend + prod frontend)
-	@echo "Starting AREA in production mode..."
-	@echo "Frontend: http://localhost:8081"
-	$(MAKE) up-web
+dev: ## Start development (hot reload, Vite on :5173)
+	@echo "🚀 Starting AREA in DEVELOPMENT mode..."
+	@echo "   Frontend: http://localhost:5173 (Vite hot reload)"
+	@echo "   Backend:  http://localhost:8080"
+	@echo "   Flower:   http://localhost:5555"
+	@docker-compose up -d --remove-orphans
+	@echo "✅ Services started! Run 'make logs-dev' to see logs"
 
-# Docker operations
-build: ## Build all Docker images
-	docker-compose build
+prod: ## Start production (nginx on :8081)
+	@echo "🚀 Starting AREA in PRODUCTION mode..."
+	@echo "   Frontend: http://localhost:8081 (nginx)"
+	@echo "   ⚠️  For production servers, use: ./deployment/manage.sh start"
+	@docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+	@echo "✅ Production services started!"
 
-build-fast: ## Build only essential services (excludes mobile)
-	docker-compose build server client_web
+test: ## Run all tests (pytest + tmpfs volumes)
+	@echo "🧪 Running tests with optimized test environment..."
+	@docker-compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit
+	@docker-compose -f docker-compose.yml -f docker-compose.test.yml down
 
-up: ## Start all services
-	docker-compose up -d
+validate: ## Validate Docker Compose architecture
+	@bash scripts/validate-docker-compose.sh
 
-up-fast: ## Start backend services only (no web/mobile - fastest startup)
-	docker-compose up -d db redis server worker beat flower
+# =============================================================================
+# DEVELOPMENT ENVIRONMENT
+# =============================================================================
 
-up-web: ## Start all services except mobile (but includes web - mobile will build)
-	docker-compose up -d db redis server worker beat flower client_web
+up-dev: ## Start dev services (detached)
+	@docker-compose up -d --remove-orphans
 
-up-dev: ## Start all services with dev frontend (hot reload)
-	docker-compose up -d --remove-orphans db redis server worker beat flower client_web_dev
+down-dev: ## Stop dev services
+	@docker-compose down
 
-up-dev-logs: ## Start all services with dev frontend and logs
-	docker-compose up --remove-orphans db redis server worker beat flower client_web_dev
+logs-dev: ## Show dev logs (follow)
+	@docker-compose logs -f
 
-up-logs: ## Start all services with logs
-	docker-compose up
+restart-dev: ## Restart dev services
+	@docker-compose restart
 
-up-fast-logs: ## Start all services except mobile with logs (faster startup)
-	docker-compose up db redis server worker beat flower client_web
+# =============================================================================
+# PRODUCTION ENVIRONMENT
+# =============================================================================
 
-up-mobile: ## Start mobile build service only
-	docker-compose up -d client_mobile
+up-prod: ## Start prod services (detached)
+	@docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
-up-web-logs: ## Start all services except mobile with logs (but mobile will build)
-	docker-compose up db redis server worker beat flower client_web
+down-prod: ## Stop prod services
+	@docker-compose -f docker-compose.yml -f docker-compose.prod.yml down
 
-up-backend-logs: ## Start backend services only with logs (fastest)
-	docker-compose up db redis server worker beat flower
+logs-prod: ## Show prod logs (follow)
+	@docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs -f
 
-down: ## Stop all services
-	docker-compose down
+restart-prod: ## Restart prod services
+	@docker-compose -f docker-compose.yml -f docker-compose.prod.yml restart
 
-down-v: ## Stop all services and remove volumes
-	docker-compose down -v
+# =============================================================================
+# TEST ENVIRONMENT
+# =============================================================================
 
-logs: ## Show logs for all services
-	docker-compose logs -f
+up-test: ## Start test services (foreground)
+	@docker-compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit
 
-logs-backend: ## Show backend logs only
-	docker-compose logs -f server
+down-test: ## Stop test services
+	@docker-compose -f docker-compose.yml -f docker-compose.test.yml down
 
-# Backend specific commands
-shell: ## Open Django shell in backend container
-	docker-compose exec server python manage.py shell
+logs-test: ## Show test logs
+	@docker-compose -f docker-compose.yml -f docker-compose.test.yml logs
+
+test-shell: ## Open bash in test server
+	@docker-compose -f docker-compose.yml -f docker-compose.test.yml run --rm server bash
+
+# =============================================================================
+# BACKEND COMMANDS
+# =============================================================================
+
+shell: ## Open Django shell
+	@docker-compose exec server python manage.py shell
 
 migrate: ## Run Django migrations
-	docker-compose exec server python manage.py migrate
+	@docker-compose exec server python manage.py migrate
 
-makemigrations: ## Create new Django migrations
-	docker-compose exec server python manage.py makemigrations
-
-init-db: ## Initialize database with default services/actions/reactions
-	docker-compose exec server python manage.py init_services
-
-init-db-reset: ## Reset and reinitialize database (WARNING: deletes all services)
-	docker-compose exec server python manage.py init_services --reset
+makemigrations: ## Create Django migrations
+	@docker-compose exec server python manage.py makemigrations
 
 superuser: ## Create Django superuser
-	docker-compose exec server python manage.py createsuperuser
+	@docker-compose exec server python manage.py createsuperuser
 
-# Celery commands
-celery-status: ## Check Celery worker status
-	docker-compose exec worker celery -A area_project status
+init-db: ## Initialize DB with services/actions/reactions
+	@docker-compose exec server python manage.py init_services
 
-celery-purge: ## Purge all Celery tasks
-	docker-compose exec worker celery -A area_project purge -f
+init-db-reset: ## Reset and reinitialize DB (⚠️ DELETES ALL DATA)
+	@echo "⚠️  WARNING: This will DELETE all services, actions, and reactions!"
+	@read -p "Are you sure? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		docker-compose exec server python manage.py init_services --reset; \
+	else \
+		echo "Cancelled."; \
+	fi
 
-flower: ## Open Flower monitoring interface
-	@echo "Opening Flower at http://localhost:5555"
-	@open http://localhost:5555 2>/dev/null || xdg-open http://localhost:5555 2>/dev/null || echo "Please open http://localhost:5555 manually"
+# =============================================================================
+# CODE QUALITY & LINTING
+# =============================================================================
 
-# Testing and development
-test: ## Run Django tests
-	docker-compose exec server python manage.py test
+lint: ## Run comprehensive linting (Ruff + Bandit)
+	@docker-compose exec server bash scripts/lint-check.sh
 
-# Code Quality & Linting (using Ruff + custom scripts)
-lint: ## Run comprehensive linting check using Ruff-powered scripts
-	docker-compose exec server bash scripts/lint-check.sh
+format: ## Auto-fix formatting and imports (Ruff)
+	@docker-compose exec server bash scripts/lint-fix.sh
 
-lint-check: ## Alias for lint command
-	docker-compose exec server bash scripts/lint-check.sh
+ruff-check: ## Run Ruff linting only
+	@docker-compose exec server ruff check .
 
-format: ## Auto-fix code formatting using Ruff-powered scripts
-	docker-compose exec server bash scripts/lint-fix.sh
+ruff-fix: ## Auto-fix Ruff issues
+	@docker-compose exec server ruff check --fix .
 
-lint-fix: ## Alias for format command
-	docker-compose exec server bash scripts/lint-fix.sh
+# =============================================================================
+# DATABASE OPERATIONS
+# =============================================================================
 
-# Individual Ruff commands (for specific checks)
-ruff-check: ## Run only Ruff linting checks
-	docker-compose exec server ruff check .
-
-ruff-format: ## Check code formatting with Ruff (no changes)
-	docker-compose exec server ruff format --check .
-
-ruff-fix: ## Auto-fix all issues with Ruff
-	docker-compose exec server ruff check --fix .
-
-ruff-format-fix: ## Fix code formatting with Ruff
-	docker-compose exec server ruff format .
-
-# Legacy tools (kept for compatibility - consider using ruff-* commands)
-bandit: ## Run security checks with bandit
-	docker-compose exec server bandit -r . -x "*/tests/*,*/migrations/*,*/venv/*"
-
-# Monitoring
-status: ## Show status of all containers
-	docker-compose ps
-
-health: ## Check health of backend service
-	curl -f http://localhost:8080/health/ || echo "Backend is not healthy"
-
-logs-worker: ## Show Celery worker logs
-	docker-compose logs -f worker
-
-logs-beat: ## Show Celery beat logs
-	docker-compose logs -f beat
-
-logs-flower: ## Show Flower logs
-	docker-compose logs -f flower
-
-# Cleanup
-clean: ## Clean up Docker resources
-	docker-compose down -v --remove-orphans
-	docker system prune -f
-
-restart: ## Restart all services
-	docker-compose restart
-
-restart-backend: ## Restart only backend service
-	docker-compose restart server
-
-# Database operations
 db-shell: ## Open PostgreSQL shell
-	docker-compose exec db psql -U $(shell grep DB_USER .env | cut -d '=' -f2) -d $(shell grep DB_NAME .env | cut -d '=' -f2)
+	@docker-compose exec db psql -U $$(grep DB_USER .env | cut -d '=' -f2) -d $$(grep DB_NAME .env | cut -d '=' -f2)
 
-db-dump: ## Create database dump
-	docker-compose exec db pg_dump -U $(shell grep DB_USER .env | cut -d '=' -f2) $(shell grep DB_NAME .env | cut -d '=' -f2) > backup.sql
+db-dump: ## Create database backup
+	@echo "📦 Creating database dump..."
+	@docker-compose exec -T db pg_dump -U $$(grep DB_USER .env | cut -d '=' -f2) $$(grep DB_NAME .env | cut -d '=' -f2) > backup_$$(date +%Y%m%d_%H%M%S).sql
+	@echo "✅ Backup created: backup_$$(date +%Y%m%d_%H%M%S).sql"
 
-# Environment setup
+# =============================================================================
+# UTILITIES
+# =============================================================================
+
+build: ## Build all Docker images
+	@docker-compose build
+
+status: ## Show container status
+	@docker-compose ps
+
+health: ## Check backend health
+	@curl -f http://localhost:8080/health/ && echo "✅ Backend is healthy" || echo "❌ Backend is not healthy"
+
+clean: ## Clean Docker resources (⚠️ removes volumes)
+	@echo "⚠️  WARNING: This will remove all volumes and orphaned containers!"
+	@read -p "Are you sure? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		docker-compose down -v --remove-orphans; \
+		docker system prune -f; \
+		echo "✅ Cleanup complete"; \
+	else \
+		echo "Cancelled."; \
+	fi
+
+restart: ## Restart all dev services
+	@docker-compose restart
+
 env: ## Copy .env.example to .env
-	cp .env.example .env
-	@echo "Please edit .env file with your configuration"
-
-install-dev: ## Install development dependencies in backend container
-	docker-compose exec server pip install -r requirements-dev.txt
-
-# Code quality helpers
-lint-install: ## Install linting dependencies and show script info
-	@echo "⚡ Ruff-Powered Code Quality Scripts"
-	@echo "=================================="
-	@echo "🚀 Performance: 10-100x faster than Black+flake8+isort!"
-	@echo ""
-	@echo "Available scripts:"
-	@echo "  • backend/scripts/lint-check.sh - Comprehensive verification (Ruff + Bandit)"
-	@echo "  • backend/scripts/lint-fix.sh   - Auto-fix with Ruff formatter"
-	@echo ""
-	@echo "Main commands:"
-	@echo "  make lint        - Run all checks (~0.6s vs 19s before!)"
-	@echo "  make format      - Auto-fix formatting/imports/style"
-	@echo "  make ruff-check  - Direct Ruff linting only"
-	@echo "  make ruff-fix    - Direct Ruff auto-fixes"
-	@echo "  make install-dev - Install dev dependencies"
-	@echo ""
-	@echo "📊 Tools replaced by Ruff:"
-	@echo "  ❌ Black (formatting) → ✅ Ruff format"
-	@echo "  ❌ isort (imports) → ✅ Ruff I rules"
-	@echo "  ❌ flake8 + plugins → ✅ Ruff linting"
-	@echo "  ✅ Bandit (security) - kept for advanced checks"
-	@echo ""
-	docker-compose exec server pip install -r requirements-dev.txt
+	@if [ -f .env ]; then \
+		echo "⚠️  .env already exists. Backup created as .env.backup"; \
+		cp .env .env.backup; \
+	fi
+	@cp .env.example .env
+	@echo "✅ .env created from .env.example"
+	@echo "📝 Please edit .env with your configuration"

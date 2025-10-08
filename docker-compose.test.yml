@@ -1,0 +1,107 @@
+# =============================================================================
+# AREA - Test/CI Configuration
+# =============================================================================
+# This file is for CI/CD pipelines (GitHub Actions, GitLab CI, etc.)
+# It contains test-specific optimizations:
+#   - tmpfs volumes for speed (in-memory)
+#   - Minimal services (no flower, no clients)
+#   - CELERY_TASK_ALWAYS_EAGER for synchronous task execution
+#   - No port mappings (not needed in CI)
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit
+#   docker-compose -f docker-compose.yml -f docker-compose.test.yml run --rm server pytest
+#
+# Note: Add to .github/workflows/*.yml for automated testing
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Database - Test Overrides (tmpfs for speed)
+  # ---------------------------------------------------------------------------
+  db:
+    container_name: area_postgres_test
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust  # No password for tests
+
+  # ---------------------------------------------------------------------------
+  # Redis - Test Overrides
+  # ---------------------------------------------------------------------------
+  redis:
+    container_name: area_redis_test
+
+  # ---------------------------------------------------------------------------
+  # Backend API - Test Overrides
+  # ---------------------------------------------------------------------------
+  server:
+    container_name: area_server_test
+    environment:
+      - DJANGO_SETTINGS_MODULE=area_project.settings
+      - DEBUG=False
+      - SECRET_KEY=test-secret-key-do-not-use-in-production
+      - DATABASE_URL=postgres://postgres@db:5432/test_area
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_TASK_ALWAYS_EAGER=True  # Run tasks synchronously
+      - CELERY_TASK_EAGER_PROPAGATES=True  # Propagate exceptions
+    command: >
+      sh -c "
+        python manage.py migrate --noinput &&
+        python manage.py collectstatic --noinput &&
+        pytest --maxfail=1 --disable-warnings -v
+      "
+
+  # ---------------------------------------------------------------------------
+  # Celery Worker - Test Overrides (disabled, use EAGER mode)
+  # ---------------------------------------------------------------------------
+  worker:
+    profiles:
+      - disabled  # Don't start worker in tests (use EAGER mode)
+
+  # ---------------------------------------------------------------------------
+  # Celery Beat - Test Overrides (disabled)
+  # ---------------------------------------------------------------------------
+  beat:
+    profiles:
+      - disabled  # Don't start beat in tests
+
+  # ---------------------------------------------------------------------------
+  # Flower - Test Overrides (disabled)
+  # ---------------------------------------------------------------------------
+  flower:
+    profiles:
+      - disabled  # Don't start flower in tests
+
+  # ---------------------------------------------------------------------------
+  # Mobile Client - Test Overrides (disabled)
+  # ---------------------------------------------------------------------------
+  client_mobile:
+    profiles:
+      - disabled  # Don't build APK in tests
+
+  # ---------------------------------------------------------------------------
+  # Web Client - Test Overrides (disabled)
+  # ---------------------------------------------------------------------------
+  client_web:
+    profiles:
+      - disabled  # Don't build frontend in tests
+
+# =============================================================================
+# Volumes (use tmpfs for speed - override base volumes)
+# =============================================================================
+volumes:
+  pgdata:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+  redis_data:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+  backend_logs:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+
