@@ -77,8 +77,30 @@ ufw allow 8081/tcp  # Frontend
 echo -e "${GREEN}Firewall configured${NC}"
 
 echo ""
-echo -e "${GREEN}Step 6/8: Create Application Directory${NC}"
+echo -e "${GREEN}Step 6/8: Create Dedicated User${NC}"
+# Check if user already exists
+if id "areaction" &>/dev/null; then
+    echo -e "${YELLOW}User 'areaction' already exists${NC}"
+else
+    echo -e "${YELLOW}Creating dedicated user 'areaction' for security isolation...${NC}"
+    echo ""
+    echo -e "${YELLOW}⚠️  You will be prompted to set a password for the 'areaction' user${NC}"
+    echo -e "${YELLOW}    This user will own the application files and run Docker containers${NC}"
+    echo ""
+    
+    # Create user with home directory
+    adduser --gecos "" areaction
+    
+    # Add user to docker group to run docker commands without sudo
+    usermod -aG docker areaction
+    
+    echo -e "${GREEN}User 'areaction' created successfully${NC}"
+fi
+
+echo ""
+echo -e "${GREEN}Step 7/8: Create Application Directory${NC}"
 mkdir -p /opt/area
+chown -R areaction:areaction /opt/area
 cd /opt/area
 
 # Get repository info
@@ -92,14 +114,14 @@ GIT_BRANCH=${GIT_BRANCH:-main}
 
 if [ -d ".git" ]; then
     echo -e "${YELLOW}Repository already exists, pulling latest changes...${NC}"
-    git pull origin $GIT_BRANCH
+    sudo -u areaction git pull origin $GIT_BRANCH
 else
     echo -e "${GREEN}Cloning repository...${NC}"
-    git clone -b $GIT_BRANCH $REPO_URL .
+    sudo -u areaction git clone -b $GIT_BRANCH $REPO_URL .
 fi
 
 echo ""
-echo -e "${GREEN}Step 7/8: Environment Configuration${NC}"
+echo -e "${GREEN}Step 8/8: Environment Configuration${NC}"
 echo -e "${YELLOW}Creating production .env file...${NC}"
 
 if [ ! -f .env ]; then
@@ -318,20 +340,38 @@ NGINXSSLEOF
 nginx -t && systemctl reload nginx
 
 echo ""
-echo -e "${GREEN}Step 9/9: Setup Auto-renewal for SSL${NC}"
+echo -e "${GREEN}Step 9/10: Setup Auto-renewal for SSL${NC}"
 (crontab -l 2>/dev/null; echo "0 3 * * * certbot renew --quiet && systemctl reload nginx") | crontab -
+
+echo ""
+echo -e "${GREEN}Step 10/10: Set Correct Permissions${NC}"
+# Ensure areaction user owns all application files
+chown -R areaction:areaction /opt/area
+
+# Add deployment script to areaction user's path and make it accessible
+chmod +x /opt/area/deployment/manage.sh
+echo -e "${GREEN}Permissions set correctly${NC}"
 
 echo ""
 echo "============================================"
 echo -e "${GREEN}Setup Complete!${NC}"
 echo "============================================"
 echo ""
+echo -e "${YELLOW}Security Notice:${NC}"
+echo "  - Application runs as dedicated user 'areaction'"
+echo "  - Docker containers isolated from root user"
+echo "  - All files owned by areaction:areaction"
+echo ""
 echo "Next steps:"
 echo "1. Review and update /opt/area/.env with your credentials"
 echo "2. Configure DNS for areaction.app to point to this server IP"
-echo "3. Run: cd /opt/area && ./deployment/manage.sh start"
+echo "3. Switch to areaction user and start the application:"
+echo "   sudo su - areaction"
+echo "   cd /opt/area"
+echo "   ./deployment/manage.sh start"
 echo ""
-echo "Management commands:"
+echo "Management commands (as areaction user):"
+echo "  sudo su - areaction"
 echo "  cd /opt/area"
 echo "  ./deployment/manage.sh [start|stop|restart|logs|pull|reset|status]"
 echo ""
