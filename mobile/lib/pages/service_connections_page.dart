@@ -13,18 +13,15 @@ class ServiceConnectionsPage extends StatefulWidget {
 }
 
 class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
-
   @override
   void initState() {
     super.initState();
   }
 
-    @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Connected Services'),
-      ),
+      appBar: AppBar(title: const Text('Connected Services')),
       body: _buildBody(),
     );
   }
@@ -34,21 +31,26 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
       builder: (context, serviceProvider, child) {
         final allServices = serviceProvider.services;
 
-        final sortedServices = [...allServices]..sort((a, b) {
-          final aRequiresOAuth = ServiceProviderConfig.requiresOAuth(a.name);
-          final bRequiresOAuth = ServiceProviderConfig.requiresOAuth(b.name);
+        final sortedServices = [...allServices]
+          ..sort((a, b) {
+            final aRequiresOAuth = ServiceProviderConfig.requiresOAuth(a.name);
+            final bRequiresOAuth = ServiceProviderConfig.requiresOAuth(b.name);
 
-          if (aRequiresOAuth && !bRequiresOAuth) return -1;
-          if (!aRequiresOAuth && bRequiresOAuth) return 1;
-          return a.displayName.compareTo(b.displayName);
-        });
+            if (aRequiresOAuth && !bRequiresOAuth) return -1;
+            if (!aRequiresOAuth && bRequiresOAuth) return 1;
+            return a.displayName.compareTo(b.displayName);
+          });
 
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
             const Text(
               'Services Requiring Connection',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -57,14 +59,21 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
             ),
             const SizedBox(height: 12),
             ...sortedServices
-                .where((service) => ServiceProviderConfig.requiresOAuth(service.name))
+                .where(
+                  (service) =>
+                      ServiceProviderConfig.requiresOAuth(service.name),
+                )
                 .map((service) => _buildServiceCard(service)),
 
             const SizedBox(height: 24),
 
             const Text(
               'Built-in Services',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -73,7 +82,10 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
             ),
             const SizedBox(height: 12),
             ...sortedServices
-                .where((service) => !ServiceProviderConfig.requiresOAuth(service.name))
+                .where(
+                  (service) =>
+                      !ServiceProviderConfig.requiresOAuth(service.name),
+                )
                 .map((service) => _buildServiceCard(service)),
 
             const SizedBox(height: 24),
@@ -124,7 +136,9 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: requiresOAuth ? Colors.blue.withValues(alpha: 0.2) : Colors.green.withValues(alpha: 0.2),
+          backgroundColor: requiresOAuth
+              ? Colors.blue.withValues(alpha: 0.2)
+              : Colors.green.withValues(alpha: 0.2),
           child: Image.network(
             ServiceProviderConfig.getIconUrl(service.name),
             width: 24,
@@ -150,7 +164,9 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
                   // TODO: Implement OAuth connection logic
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('${service.displayName} OAuth connection not implemented yet'),
+                      content: Text(
+                        '${service.displayName} OAuth connection not implemented yet',
+                      ),
                       backgroundColor: Colors.orange,
                     ),
                   );
@@ -162,14 +178,14 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
                   // Services without OAuth are always "available"
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('${service.displayName} is always available (no OAuth required)'),
+                      content: Text(
+                        '${service.displayName} is always available (no OAuth required)',
+                      ),
                       backgroundColor: Colors.green,
                     ),
                   );
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                 child: const Text('Available'),
               ),
       ),
