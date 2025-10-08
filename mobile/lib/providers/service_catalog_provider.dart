@@ -1,30 +1,27 @@
 import 'package:flutter/material.dart';
 import '../services/services.dart';
+import '../models/service.dart';
 
 class ServiceCatalogProvider extends ChangeNotifier {
   final ServiceCatalogService _catalogService = ServiceCatalogService();
 
-  List<Map<String, dynamic>> _services = [];
-  final Map<int, List<Map<String, dynamic>>> _actionsCache = {};
-  final Map<int, List<Map<String, dynamic>>> _reactionsCache = {};
+  List<Service> _services = [];
+  final Map<String, List<ServiceAction>> _actionsCache = {};
+  final Map<String, List<ServiceReaction>> _reactionsCache = {};
 
   bool _isLoadingServices = false;
-  bool _isLoadingActions = false;
-  bool _isLoadingReactions = false;
   String? _error;
 
-  List<Map<String, dynamic>> get services => _services;
+  List<Service> get services => _services;
   bool get isLoadingServices => _isLoadingServices;
-  bool get isLoadingActions => _isLoadingActions;
-  bool get isLoadingReactions => _isLoadingReactions;
   String? get error => _error;
 
-  List<Map<String, dynamic>>? getActionsForService(int serviceId) {
-    return _actionsCache[serviceId];
+  List<ServiceAction>? getActionsForService(String serviceName) {
+    return _actionsCache[serviceName];
   }
 
-  List<Map<String, dynamic>>? getReactionsForService(int serviceId) {
-    return _reactionsCache[serviceId];
+  List<ServiceReaction>? getReactionsForService(String serviceName) {
+    return _reactionsCache[serviceName];
   }
 
   Future<void> loadServices({bool forceRefresh = false}) async {
@@ -37,58 +34,15 @@ class ServiceCatalogProvider extends ChangeNotifier {
         forceRefresh: forceRefresh,
       );
 
+      for (final service in _services) {
+        _actionsCache[service.name] = service.actions;
+        _reactionsCache[service.name] = service.reactions;
+      }
+
       _isLoadingServices = false;
       notifyListeners();
     } catch (e) {
       _isLoadingServices = false;
-      _error = e.toString();
-      notifyListeners();
-    }
-  }
-
-  Future<void> loadActionsForService(
-    int serviceId, {
-    bool forceRefresh = false,
-  }) async {
-    try {
-      _isLoadingActions = true;
-      _error = null;
-      notifyListeners();
-
-      final actions = await _catalogService.getServiceActions(
-        serviceId,
-        forceRefresh: forceRefresh,
-      );
-      _actionsCache[serviceId] = actions;
-
-      _isLoadingActions = false;
-      notifyListeners();
-    } catch (e) {
-      _isLoadingActions = false;
-      _error = e.toString();
-      notifyListeners();
-    }
-  }
-
-  Future<void> loadReactionsForService(
-    int serviceId, {
-    bool forceRefresh = false,
-  }) async {
-    try {
-      _isLoadingReactions = true;
-      _error = null;
-      notifyListeners();
-
-      final reactions = await _catalogService.getServiceReactions(
-        serviceId,
-        forceRefresh: forceRefresh,
-      );
-      _reactionsCache[serviceId] = reactions;
-
-      _isLoadingReactions = false;
-      notifyListeners();
-    } catch (e) {
-      _isLoadingReactions = false;
       _error = e.toString();
       notifyListeners();
     }

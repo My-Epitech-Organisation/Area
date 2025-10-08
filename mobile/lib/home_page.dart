@@ -215,6 +215,25 @@ class _MyHomePageState extends State<MyHomePage> {
             Expanded(
               child: _buildNavigationCard(
                 context,
+                icon: Icons.apps,
+                title: 'Services',
+                subtitle: 'Explore services',
+                color: Colors.green,
+                onTap: () {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    Navigator.pushNamed(context, '/services');
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildNavigationCard(
+                context,
                 icon: Icons.list,
                 title: 'My Automations',
                 subtitle: 'View all workflows',
@@ -230,6 +249,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
               ),
             ),
+            const SizedBox(width: 12),
+            const Expanded(child: SizedBox()),
           ],
         ),
       ],
