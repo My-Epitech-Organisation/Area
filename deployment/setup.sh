@@ -194,23 +194,23 @@ ENVEOF
     echo -e "${YELLOW}Manual configuration required:${NC}"
     read -p "Google OAuth Client ID: " GOOGLE_CLIENT_ID
     sed -i "s|GOOGLE_CLIENT_ID=\$|GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID|" .env
-    
+
     read -p "Google OAuth Client Secret: " GOOGLE_CLIENT_SECRET
     sed -i "s|GOOGLE_CLIENT_SECRET=\$|GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET|" .env
-    
+
     read -p "GitHub OAuth Client ID: " GITHUB_CLIENT_ID
     sed -i "s|GITHUB_CLIENT_ID=\$|GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID|" .env
-    
+
     read -p "GitHub OAuth Client Secret: " GITHUB_CLIENT_SECRET
     sed -i "s|GITHUB_CLIENT_SECRET=\$|GITHUB_CLIENT_SECRET=$GITHUB_CLIENT_SECRET|" .env
-    
+
     read -p "Email Host User (optional, press Enter to skip): " EMAIL_HOST_USER
     if [ ! -z "$EMAIL_HOST_USER" ]; then
         sed -i "s|EMAIL_HOST_USER=\$|EMAIL_HOST_USER=$EMAIL_HOST_USER|" .env
         read -p "Email Host Password: " EMAIL_HOST_PASSWORD
         sed -i "s|EMAIL_HOST_PASSWORD=\$|EMAIL_HOST_PASSWORD=$EMAIL_HOST_PASSWORD|" .env
     fi
-    
+
     echo ""
     echo -e "${GREEN}Environment configuration completed${NC}"
 else
