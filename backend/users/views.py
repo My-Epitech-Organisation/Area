@@ -1,7 +1,14 @@
+##
+## EPITECH PROJECT, 2025
+## Area
+## File description:
+## views
+##
+
 import secrets
 import string
 
-from rest_framework import generics, status
+from rest_framework import generics, status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -22,6 +29,7 @@ class RegisterView(generics.CreateAPIView):
 
 class UserDetailView(APIView):
     permission_classes = (IsAuthenticated,)
+    serializer_class = UserSerializer
 
     def get(self, request):
         serializer = UserSerializer(request.user)

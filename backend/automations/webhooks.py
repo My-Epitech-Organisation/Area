@@ -1,3 +1,10 @@
+##
+## EPITECH PROJECT, 2025
+## Area
+## File description:
+## webhooks
+##
+
 """
 Webhook receiver for external service events.
 
@@ -19,6 +26,7 @@ import json
 import logging
 from typing import Any, Optional
 
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -298,6 +306,10 @@ def process_webhook_event(
 @csrf_exempt
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@extend_schema(
+    request=None,  # No specific request serializer
+    responses={200: None},  # Generic response
+)
 def webhook_receiver(request: Request, service: str) -> Response:
     """
     Universal webhook receiver endpoint.
