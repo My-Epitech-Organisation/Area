@@ -14,9 +14,7 @@ class TriggerConfigCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -51,7 +49,8 @@ class TriggerConfigCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   prefixIcon: const Icon(Icons.sensors),
-                  helperText: 'Select the service that will trigger your automation',
+                  helperText:
+                      'Select the service that will trigger your automation',
                 ),
                 items: ['Gmail', 'Discord', 'GitHub', 'Timer']
                     .map(

@@ -35,10 +35,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      await _authService.loginWithEmail(
-        email: email,
-        password: password,
-      );
+      await _authService.loginWithEmail(email: email, password: password);
 
       _isAuthenticated = true;
       _userEmail = email;
@@ -78,10 +75,7 @@ class AuthProvider extends ChangeNotifier {
       );
 
       // Step 2: Automatically login to get tokens
-      await _authService.loginWithEmail(
-        email: email,
-        password: password,
-      );
+      await _authService.loginWithEmail(email: email, password: password);
 
       _isAuthenticated = true;
       _userEmail = email;

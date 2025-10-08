@@ -63,11 +63,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: const Icon(
-            Icons.waving_hand,
-            color: Colors.white,
-            size: 24,
-          ),
+          child: const Icon(Icons.waving_hand, color: Colors.white, size: 24),
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -85,10 +81,7 @@ class _MyHomePageState extends State<MyHomePage> {
               const SizedBox(height: 4),
               Text(
                 'Ready to automate your day?',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
               ),
             ],
           ),
@@ -99,7 +92,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildMetricsCards(List<dynamic>? applets) {
     final totalApplets = applets?.length ?? 0;
-    final activeApplets = applets?.where((applet) => applet['enabled'] == true).length ?? 0;
+    final activeApplets =
+        applets?.where((applet) => applet['enabled'] == true).length ?? 0;
 
     return Row(
       children: [
@@ -155,11 +149,7 @@ class _MyHomePageState extends State<MyHomePage> {
               color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 24,
-            ),
+            child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(height: 12),
           Text(
@@ -181,10 +171,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           Text(
             subtitle,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade500,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
           ),
         ],
       ),
@@ -214,8 +201,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 subtitle: 'Build new workflows',
                 color: Colors.blue,
                 onTap: () {
-                  final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
-                  navigationProvider.navigateToPage(1); // Index 1 = Create Automation
+                  final navigationProvider = Provider.of<NavigationProvider>(
+                    context,
+                    listen: false,
+                  );
+                  navigationProvider.navigateToPage(
+                    1,
+                  ); // Index 1 = Create Automation
                 },
               ),
             ),
@@ -247,8 +239,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 subtitle: 'View all workflows',
                 color: Colors.purple,
                 onTap: () {
-                  final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
-                  navigationProvider.navigateToPage(2); // Index 2 = My Automations
+                  final navigationProvider = Provider.of<NavigationProvider>(
+                    context,
+                    listen: false,
+                  );
+                  navigationProvider.navigateToPage(
+                    2,
+                  ); // Index 2 = My Automations
                 },
               ),
             ),
@@ -283,10 +280,7 @@ class _MyHomePageState extends State<MyHomePage> {
               offset: const Offset(0, 4),
             ),
           ],
-          border: Border.all(
-            color: color.withValues(alpha: 0.1),
-            width: 1,
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.1), width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,11 +291,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 24,
-              ),
+              child: Icon(icon, color: color, size: 24),
             ),
             const SizedBox(height: 12),
             Text(
@@ -315,10 +305,7 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(height: 4),
             Text(
               subtitle,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade600,
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -360,10 +347,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 const SizedBox(height: 8),
                 Text(
                   'Create your first automation to get started',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade500,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -391,8 +375,13 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             TextButton(
               onPressed: () {
-                final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
-                navigationProvider.navigateToPage(2); // Index 2 = My Automations
+                final navigationProvider = Provider.of<NavigationProvider>(
+                  context,
+                  listen: false,
+                );
+                navigationProvider.navigateToPage(
+                  2,
+                ); // Index 2 = My Automations
               },
               child: const Text('View All'),
             ),
@@ -451,10 +440,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 const SizedBox(height: 2),
                 Text(
                   applet['description'] ?? 'No description',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

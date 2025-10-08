@@ -6,10 +6,7 @@ import '../services/oauth_service.dart';
 class ConnectedServicesWidget extends StatefulWidget {
   final VoidCallback? onServiceTap;
 
-  const ConnectedServicesWidget({
-    super.key,
-    this.onServiceTap,
-  });
+  const ConnectedServicesWidget({super.key, this.onServiceTap});
 
   @override
   State<ConnectedServicesWidget> createState() =>
@@ -54,9 +51,7 @@ class _ConnectedServicesWidgetState extends State<ConnectedServicesWidget> {
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(16),
-          child: Center(
-            child: CircularProgressIndicator(),
-          ),
+          child: Center(child: CircularProgressIndicator()),
         ),
       );
     }
@@ -78,10 +73,7 @@ class _ConnectedServicesWidgetState extends State<ConnectedServicesWidget> {
                 const SizedBox(height: 4),
                 Text(
                   'Connectez des services pour créer des automatisations',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
@@ -108,10 +100,7 @@ class _ConnectedServicesWidgetState extends State<ConnectedServicesWidget> {
               children: [
                 const Text(
                   'Services connectés',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 TextButton(
                   onPressed: widget.onServiceTap,
@@ -143,7 +132,11 @@ class _ConnectedServicesWidgetState extends State<ConnectedServicesWidget> {
                 ),
                 trailing: service.isExpired
                     ? const Icon(Icons.warning, color: Colors.red, size: 20)
-                    : const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                    : const Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 20,
+                      ),
               );
             },
           ),

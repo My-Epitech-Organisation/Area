@@ -14,8 +14,9 @@ class AppletProvider extends ChangeNotifier {
   String? get error => _error;
 
   List<Applet> get activeApplets => _applets.where((a) => a.isActive).toList();
-  List<Applet> get inactiveApplets => _applets.where((a) => !a.isActive).toList();
-  
+  List<Applet> get inactiveApplets =>
+      _applets.where((a) => !a.isActive).toList();
+
   int get totalCount => _applets.length;
   int get activeCount => _applets.where((a) => a.isActive).length;
 
