@@ -15,17 +15,36 @@ const OAuthCallback: React.FC = () => {
     const handleCallback = async () => {
       const code = searchParams.get('code');
       const state = searchParams.get('state');
+      const service = searchParams.get('service');
+      const created = searchParams.get('created');
+      const expires_at = searchParams.get('expires_at');
       const error = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
 
-      // Handle OAuth error from provider
+      // If backend already redirected to frontend with summary params
+      if (service) {
+        // Show success or error based on query params
+        if (error) {
+          setStatus('error');
+          setMessage(errorDescription || `Authentication failed: ${error}`);
+          return;
+        }
+
+        // Successful server-side connection
+        setStatus('success');
+        setMessage(`Successfully ${created === 'true' ? 'connected' : 'reconnected'} to ${service}`);
+        setTimeout(() => navigate('/services'), 2000);
+        return;
+      }
+
+      // Handle OAuth error from provider (client-side flow)
       if (error) {
         setStatus('error');
         setMessage(errorDescription || `Authentication failed: ${error}`);
         return;
       }
 
-      // Validate required parameters
+      // Client-side flow: frontend must exchange code/state with backend
       if (!code || !state || !provider) {
         setStatus('error');
         setMessage('Missing required authentication parameters');
@@ -41,7 +60,7 @@ const OAuthCallback: React.FC = () => {
           return;
         }
 
-        // Call the backend callback endpoint
+        // Call the backend callback endpoint (API mode)
         const response = await fetch(
           `${API_BASE}/auth/oauth/${provider}/callback/?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`,
           {
@@ -63,7 +82,7 @@ const OAuthCallback: React.FC = () => {
         // Success!
         setStatus('success');
         setMessage(data.message || `Successfully connected to ${provider}!`);
-        
+
         // Redirect to services page after 2 seconds
         setTimeout(() => {
           navigate('/services');
