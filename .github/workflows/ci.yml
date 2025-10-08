@@ -82,9 +82,9 @@ jobs:
         env:
           DATABASE_URL: postgresql://area_user:secret_password@localhost:5432/area_db
           REDIS_URL: redis://localhost:6379/0
-          DJANGO_SECRET_KEY: test-secret-key-for-ci
-          DJANGO_DEBUG: "True"
-          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+          SECRET_KEY: test-secret-key-for-ci
+          DEBUG: "True"
+          ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
           cd backend
           source venv/bin/activate
