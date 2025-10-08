@@ -11,7 +11,7 @@ import logging
 
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -155,6 +155,9 @@ class OAuthCallbackView(APIView):
     #    route so the SPA can show a success page.
     # 2) API/AJAX client: includes Authorization header or X-Requested-With ->
     #    we require authentication and behave as before returning JSON.
+    # Override global DEFAULT_PERMISSION_CLASSES (IsAuthenticated) so that
+    # providers can redirect the browser here without a Bearer token.
+    permission_classes = [AllowAny]
     serializer_class = OAuthCallbackSerializer
 
     def get(self, request, provider: str):
@@ -241,15 +244,11 @@ class OAuthCallbackView(APIView):
 
         # Browser navigation mode - complete flow on behalf of user stored in state
         try:
-            # Validate state and extract expected user_id from cache
-            cache_key = OAuthManager._get_state_cache_key(state)
-            state_data = None
-            try:
-                from django.core.cache import cache as _cache
+            # Validate state: read cached state to find the initiating user
+            from django.core.cache import cache as _cache
 
-                state_data = _cache.get(cache_key)
-            except Exception:
-                state_data = None
+            cache_key = OAuthManager._get_state_cache_key(state)
+            state_data = _cache.get(cache_key)
 
             if not state_data:
                 # If invalid state, return JSON for API clients or redirect to frontend with error
@@ -259,11 +258,20 @@ class OAuthCallbackView(APIView):
                     redirect_to = f"{frontend}/auth/callback/{provider}?error=invalid_state"
                     return Response(status=status.HTTP_302_FOUND, headers={"Location": redirect_to})
                 return Response({"error": "invalid_state", "message": "State invalid or expired"}, status=status.HTTP_400_BAD_REQUEST)
-
             user_id = state_data.get("user_id")
             if not user_id:
                 logger.warning("State missing user_id")
                 return Response({"error": "invalid_state", "message": "State missing user information"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Now validate state atomically (this will also delete it from cache)
+            is_valid, err = OAuthManager.validate_state(state=state, user_id=str(user_id), provider=provider)
+            if not is_valid:
+                logger.warning(f"State validation failed after lookup: {err}")
+                if accepts_html:
+                    frontend = getattr(settings, "FRONTEND_URL", None) or request.build_absolute_uri("/").rstrip("/")
+                    redirect_to = f"{frontend}/auth/callback/{provider}?error=invalid_state"
+                    return Response(status=status.HTTP_302_FOUND, headers={"Location": redirect_to})
+                return Response({"error": "invalid_state", "message": err}, status=status.HTTP_400_BAD_REQUEST)
 
             # Load user by id
             from django.contrib.auth import get_user_model
