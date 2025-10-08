@@ -5,8 +5,6 @@ class MyAppletsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: const Center(child: Text('List of my automations here')),
-    );
+    return const Center(child: Text('List of my automations here'));
   }
 }

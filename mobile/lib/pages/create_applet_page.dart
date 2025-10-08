@@ -22,24 +22,23 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Semantics(
-        label: 'Create new automation page',
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Theme.of(context).colorScheme.surface,
-                Theme.of(context).colorScheme.surface.withAlpha(204),
-              ],
-            ),
+    return Semantics(
+      label: 'Create new automation page',
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Theme.of(context).colorScheme.surface,
+              Theme.of(context).colorScheme.surface.withAlpha(204),
+            ],
           ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -88,9 +87,8 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
             ),
           ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
   void _createAutomation() {
     if (_formKey.currentState?.validate() ?? false) {
