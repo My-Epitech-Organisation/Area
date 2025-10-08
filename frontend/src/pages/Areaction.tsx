@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useActions, useReactions, useCreateArea } from "../hooks/useApi";
 import { findActionByName, findReactionByName, generateAreaName } from "../utils/areaHelpers";
+import { DynamicConfigForm } from "../components/DynamicConfigForm";
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
 
@@ -43,6 +44,8 @@ const Areaction: React.FC = () => {
   const [selectedReactionService, setSelectedReactionService] = useState<string | null>(null);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
+  const [actionConfig, setActionConfig] = useState<Record<string, any>>({});
+  const [reactionConfig, setReactionConfig] = useState<Record<string, any>>({});
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<'error' | 'success' | null>(null);
 
@@ -207,8 +210,8 @@ const Areaction: React.FC = () => {
         name: generateAreaName(selectedAction!, selectedReaction!),
         action: actionObj.id,
         reaction: reactionObj.id,
-        action_config: {},
-        reaction_config: {},
+        action_config: actionConfig,
+        reaction_config: reactionConfig,
         status: 'active'
       });
 
@@ -352,6 +355,21 @@ const Areaction: React.FC = () => {
                       {getActionsForService(selectedActionService).find(a => a.name === selectedAction)?.description}
                     </p>
                   )}
+                  
+                  {/* Dynamic configuration form for action */}
+                  {selectedAction && apiActions && (() => {
+                    const actionObj = findActionByName(apiActions, selectedAction);
+                    return actionObj?.config_schema && (
+                      <div className="mt-4">
+                        <DynamicConfigForm
+                          schema={actionObj.config_schema}
+                          values={actionConfig}
+                          onChange={setActionConfig}
+                          title="Action Configuration"
+                        />
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -440,6 +458,21 @@ const Areaction: React.FC = () => {
                       {getReactionsForService(selectedReactionService).find(r => r.name === selectedReaction)?.description}
                     </p>
                   )}
+                  
+                  {/* Dynamic configuration form for reaction */}
+                  {selectedReaction && apiReactions && (() => {
+                    const reactionObj = findReactionByName(apiReactions, selectedReaction);
+                    return reactionObj?.config_schema && (
+                      <div className="mt-4">
+                        <DynamicConfigForm
+                          schema={reactionObj.config_schema}
+                          values={reactionConfig}
+                          onChange={setReactionConfig}
+                          title="Reaction Configuration"
+                        />
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
