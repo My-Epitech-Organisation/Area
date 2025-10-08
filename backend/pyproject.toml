@@ -44,6 +44,7 @@ ignore = [
     "E203",  # whitespace before ':' (Black compatibility)
     # Note: W503 is deprecated in favor of W503 in newer versions
     # Ruff handles line breaks differently than flake8
+    "E501",  # line too long (handled by Black)
 ]
 
 [tool.ruff.lint.per-file-ignores]

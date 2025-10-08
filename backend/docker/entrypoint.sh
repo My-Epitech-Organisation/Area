@@ -36,6 +36,11 @@ python manage.py migrate --noinput
 echo -e "${YELLOW}📦 Collecting static files...${NC}"
 python manage.py collectstatic --noinput --clear
 
+# Initialize services (Actions & Reactions)
+echo -e "${YELLOW}🔧 Initializing services database...${NC}"
+python manage.py init_services
+echo -e "${GREEN}✅ Services initialized!${NC}"
+
 # Create superuser if it doesn't exist
 echo -e "${YELLOW}👤 Creating superuser if needed...${NC}"
 python manage.py shell << EOF
