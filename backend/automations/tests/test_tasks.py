@@ -353,7 +353,7 @@ class ExecuteReactionTest(TestCase):
     def test_execute_reaction_failure_and_retry(self, mock_logic):
         """Test reaction failure triggers retry."""
         # Make reaction logic fail
-        mock_logic.side_effect = Exception("Simulated failure")
+        mock_logic.side_effect = RuntimeError("Simulated failure")
 
         execution = Execution.objects.create(
             area=self.area,

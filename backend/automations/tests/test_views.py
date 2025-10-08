@@ -50,9 +50,13 @@ class BaseAPITest(APITestCase):
             name="email", description="Email service", status=Service.Status.ACTIVE
         )
 
+        self.timer_service = Service.objects.create(
+            name="timer", description="Timer service", status=Service.Status.ACTIVE
+        )
+
         # Create test actions
         self.timer_action = Action.objects.create(
-            service=self.github_service,
+            service=self.timer_service,
             name="timer_daily",
             description="Daily timer trigger",
         )
