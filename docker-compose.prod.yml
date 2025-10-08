@@ -54,7 +54,7 @@ services:
     build:
       context: ./backend
     ports:
-      - "${BACKEND_PORT:-8000}:8080"  # Expose API
+      - "${BACKEND_PORT:-8000}:8080"  # Expose API for nginx proxy
     environment:
       - DEBUG=False
       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
@@ -116,8 +116,6 @@ services:
   flower:
     container_name: area_flower_prod
     restart: always
-    ports:
-      - "5555:5555"  # Expose Flower UI
     environment:
       - FLOWER_BASIC_AUTH=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-changeme}
     deploy:
@@ -150,9 +148,9 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod  # Production nginx build
       args:
-        VITE_API_BASE: ${VITE_API_BASE:-http://localhost:8000}  # Backend API URL from .env
+        VITE_API_BASE: ${VITE_API_BASE:-https://areaction.app/api}  # Backend API URL from .env
     ports:
-      - "${FRONTEND_PORT:-8081}:80"  # Expose nginx
+      - "${FRONTEND_PORT:-8081}:80"  # Expose frontend for nginx proxy
     volumes:
       - apk_shared_prod:/shared
       - backend_static_prod:/usr/share/nginx/html/static
