@@ -47,6 +47,11 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = []
 
+# Frontend URL for OAuth redirects
+# In development: http://localhost:5173
+# In production: https://your-frontend-domain.com
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
 
 # Security Settings
 # Only enable SSL redirect and secure cookies in production
