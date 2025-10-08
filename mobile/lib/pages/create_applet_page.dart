@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/create_applet/create_applet_widgets.dart';
 import '../providers/service_catalog_provider.dart';
+import '../services/applet_service.dart';
 
 class CreateAppletPage extends StatefulWidget {
   const CreateAppletPage({super.key});
@@ -17,6 +18,11 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
   String? _selectedTriggerAction;
   String? _selectedActionService;
   String? _selectedActionReaction;
+
+  int? _selectedActionId;
+  int? _selectedReactionId;
+
+  bool _isCreating = false;
 
   @override
   void initState() {
@@ -74,11 +80,16 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
                       // Reset action selection when trigger changes
                       _selectedActionService = null;
                       _selectedActionReaction = null;
+                      _selectedActionId = null;
+                      _selectedReactionId = null;
                     });
                   },
                   onActionChanged: (value) {
                     setState(() {
                       _selectedTriggerAction = value;
+                      _selectedActionId = context
+                          .read<ServiceCatalogProvider>()
+                          .getActionId(value!);
                     });
                   },
                 ),
@@ -96,11 +107,15 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
                         _selectedActionService = value;
                         _selectedActionReaction =
                             null; // Reset reaction when service changes
+                        _selectedReactionId = null;
                       });
                     },
                     onReactionChanged: (value) {
                       setState(() {
                         _selectedActionReaction = value;
+                        _selectedReactionId = context
+                            .read<ServiceCatalogProvider>()
+                            .getReactionId(value!);
                       });
                     },
                   ),
@@ -108,7 +123,10 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
                 const SizedBox(height: 32),
 
                 // Create Button
-                CreateAutomationButton(onPressed: _createAutomation),
+                CreateAutomationButton(
+                  onPressed: _isCreating ? null : _createAutomation,
+                  label: _isCreating ? 'Creating...' : 'Create Automation',
+                ),
 
                 const SizedBox(height: 20),
               ],
@@ -119,7 +137,7 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
     );
   }
 
-  void _createAutomation() {
+  void _createAutomation() async {
     if (_formKey.currentState?.validate() ?? false) {
       // Validate that all required fields are selected
       if (_selectedTriggerService == null || _selectedTriggerAction == null) {
@@ -142,31 +160,79 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
         return;
       }
 
-      // Here you would typically save the automation with the selected services and actions
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Automation "${_nameController.text}" created successfully!\n'
-            'Trigger: $_selectedTriggerService - $_selectedTriggerAction\n'
-            'Action: $_selectedActionService - $_selectedActionReaction',
-            style: const TextStyle(color: Colors.white),
+      if (_selectedActionId == null || _selectedReactionId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invalid action or reaction selected'),
+            backgroundColor: Colors.red,
           ),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          duration: const Duration(seconds: 5),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
+        );
+        return;
+      }
 
-      // Reset form
-      _nameController.clear();
       setState(() {
-        _selectedTriggerService = null;
-        _selectedTriggerAction = null;
-        _selectedActionService = null;
-        _selectedActionReaction = null;
+        _isCreating = true;
       });
-      _formKey.currentState?.reset();
+
+      try {
+        final appletService = AppletService();
+        final applet = await appletService.createApplet(
+          description: _nameController.text.isNotEmpty
+              ? _nameController.text
+              : 'Created from mobile app',
+          actionId: _selectedActionId!,
+          reactionId: _selectedReactionId!,
+          actionConfig: {}, // TODO: Add configuration step
+          reactionConfig: {}, // TODO: Add configuration step
+        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Automation "${applet.name}" created successfully!',
+                style: const TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+
+          // Reset form
+          _nameController.clear();
+          setState(() {
+            _selectedTriggerService = null;
+            _selectedTriggerAction = null;
+            _selectedActionService = null;
+            _selectedActionReaction = null;
+            _selectedActionId = null;
+            _selectedReactionId = null;
+          });
+          _formKey.currentState?.reset();
+
+          // Navigate back to home or automations list
+          Navigator.of(context).pop();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Failed to create automation: ${e.toString()}',
+                style: const TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isCreating = false;
+          });
+        }
+      }
     }
   }
 }
