@@ -235,27 +235,6 @@ class OAuthManager:
         return True, None
 
     @classmethod
-    def consume_state(cls, state: str) -> Optional[dict]:
-        """
-        Retrieve and consume a stored OAuth2 state token.
-
-        This is used by the OAuth callback endpoint which may be called
-        without an authenticated session — the state contains the user_id
-        and provider and is a one-time token.
-
-        Returns the stored state dict (with keys 'user_id', 'provider', ...)
-        or None if not found/expired.
-        """
-        cache_key = cls._get_state_cache_key(state)
-        state_data = cache.get(cache_key)
-        if not state_data:
-            return None
-
-        # Consume it (one-time use)
-        cache.delete(cache_key)
-        return state_data
-
-    @classmethod
     def _get_state_cache_key(cls, state: str) -> str:
         """
         Generate a cache key for OAuth2 state.

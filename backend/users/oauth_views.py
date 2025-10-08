@@ -146,10 +146,7 @@ class OAuthCallbackView(APIView):
         - expires_at: Token expiration timestamp (if applicable)
     """
 
-    # Callback can be called by the OAuth provider and therefore may not have
-    # an authenticated session. We will validate the state token to identify
-    # the user instead of relying on request.user.
-    permission_classes = []
+    permission_classes = [IsAuthenticated]
     serializer_class = OAuthCallbackSerializer
 
     def get(self, request, provider: str):
@@ -181,29 +178,18 @@ class OAuthCallbackView(APIView):
         state = validated_data["state"]
 
         try:
-            # Try to consume state to identify the user (callback is called
-            # by the provider and the session may not exist). OAuthManager
-            # provides "consume_state" to atomically retrieve the stored
-            # state payload which contains the expected user_id and provider.
-            state_data = OAuthManager.consume_state(state)
-            if not state_data:
-                logger.warning(f"Invalid or expired OAuth2 state: {state}")
-                return Response(
-                    {"error": "invalid_state", "message": "State token is invalid or expired"},
-                    status=status.HTTP_400_BAD_REQUEST,
+            # Validate CSRF state
+            is_valid, error_msg = OAuthManager.validate_state(
+                state=state, user_id=str(request.user.id), provider=provider
+            )
+
+            if not is_valid:
+                logger.warning(
+                    f"Invalid OAuth2 state for user "
+                    f"{request.user.email}: {error_msg}"
                 )
-
-            # Resolve user from state
-            user_id = state_data.get("user_id")
-            try:
-                from django.contrib.auth import get_user_model
-
-                User = get_user_model()
-                user = User.objects.get(pk=user_id)
-            except Exception:
-                logger.exception(f"Failed to resolve user from state: {state_data}")
                 return Response(
-                    {"error": "invalid_state", "message": "Unable to resolve user from state"},
+                    {"error": "invalid_state", "message": error_msg},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -218,7 +204,7 @@ class OAuthCallbackView(APIView):
 
             # Store or update token in database
             service_token, created = ServiceToken.objects.update_or_create(
-                user=user,
+                user=request.user,
                 service_name=provider,
                 defaults={
                     "access_token": token_data["access_token"],
@@ -228,52 +214,17 @@ class OAuthCallbackView(APIView):
             )
 
             action = "connected" if created else "reconnected"
-            logger.info(f"User {user.email} {action} to {provider}")
+            logger.info(f"User {request.user.email} {action} to {provider}")
 
-            # If the request came from a browser (Accept header includes text/html),
-            # redirect to the frontend callback page so the SPA can show a friendly UI.
-            accept = request.META.get("HTTP_ACCEPT", "")
-            # Consider this a browser navigation only if the client explicitly
-            # accepts HTML and the request is not an AJAX/fetch request with
-            # an Authorization header. Many programmatic clients use "*/*"
-            # which must NOT be treated as a browser here (avoids redirect loop).
-            has_auth = bool(request.META.get("HTTP_AUTHORIZATION") or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest")
-            is_browser = ("text/html" in accept) and (not has_auth)
-
-            response_payload = {
-                "message": f"Successfully {action} to {provider}",
-                "service": provider,
-                "created": created,
-                "expires_at": expires_at.isoformat() if expires_at else None,
-            }
-
-            if is_browser:
-                # Determine frontend base URL: prefer explicit setting, fallback to
-                # request.build_absolute_uri with root path.
-                frontend_base = getattr(settings, "FRONTEND_URL", None)
-                if not frontend_base:
-                    frontend_base = request.build_absolute_uri("/").rstrip("/")
-
-                # Construct redirect URL to SPA callback route. Include a small summary
-                # via query params so the SPA can display the result.
-                from urllib.parse import urlencode
-
-                redirect_qs = urlencode(
-                    {
-                        "service": response_payload["service"],
-                        "created": str(response_payload["created"]).lower(),
-                        "expires_at": response_payload["expires_at"] or "",
-                    }
-                )
-
-                redirect_url = f"{frontend_base}/auth/callback/{provider}?{redirect_qs}"
-
-                logger.debug(f"Redirecting browser OAuth callback to {redirect_url}")
-                from django.http import HttpResponseRedirect
-
-                return HttpResponseRedirect(redirect_url)
-
-            return Response(response_payload, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "message": f"Successfully {action} to {provider}",
+                    "service": provider,
+                    "created": created,
+                    "expires_at": expires_at.isoformat() if expires_at else None,
+                },
+                status=status.HTTP_200_OK,
+            )
 
         except OAuthError as e:
             logger.error(f"OAuth2 error during callback: {str(e)}")
