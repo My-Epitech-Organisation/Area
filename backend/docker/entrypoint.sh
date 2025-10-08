@@ -43,14 +43,17 @@ echo -e "${GREEN}✅ Services initialized!${NC}"
 
 # Create superuser if it doesn't exist
 echo -e "${YELLOW}👤 Creating superuser if needed...${NC}"
+ADMIN_EMAIL="${DJANGO_SUPERUSER_EMAIL:-admin@areaction.app}"
+ADMIN_PASSWORD="${DJANGO_SUPERUSER_PASSWORD:-admin123}"
+
 python manage.py shell << EOF
 from django.contrib.auth import get_user_model
 User = get_user_model()
-if not User.objects.filter(email='admin@areaction.app').exists():
-    User.objects.create_superuser(email='admin@areaction.app', password='admin123')
-    print('✅ Superuser created: admin@areaction.app / admin123')
+if not User.objects.filter(email='$ADMIN_EMAIL').exists():
+    User.objects.create_superuser(email='$ADMIN_EMAIL', password='$ADMIN_PASSWORD')
+    print('✅ Superuser created: $ADMIN_EMAIL')
 else:
-    print('ℹ️  Superuser already exists')
+    print('ℹ️  Superuser already exists: $ADMIN_EMAIL')
 EOF
 
 # Load initial data if needed
