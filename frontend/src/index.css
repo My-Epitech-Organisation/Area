@@ -20,6 +20,21 @@
 	--bl-mid: #000000;
 	--bl-end: #1b9b73; /* emerald-600 */
 
+	/* Services page */
+	--page-services-start: #261450; /* deep indigo */
+	--page-services-mid: #000000;
+	--page-services-end: #5b21b6; /* violet-600 */
+
+	/* Service Detail page */
+	--page-service-detail-start: #0a3b77; /* deep blue */
+	--page-service-detail-mid: #000000;
+	--page-service-detail-end: #0ea5b7; /* cyan-400 */
+
+	/* Areaction page */
+	--page-areaction-start: #3a519b; /* blue-900 */
+	--page-areaction-mid: #000000;
+	--page-areaction-end: #721ab9; /* blue-800 */
+
 	/* signup / login - background */
 	--auth-signup-start: #0d05a3; /* indigo-600 */
 	--auth-signup-mid: #000000;
@@ -49,6 +64,11 @@
 .bg-br { background: linear-gradient(to bottom right, var(--br-start), var(--br-mid), var(--br-end)); }
 .bg-bl { background: linear-gradient(to bottom right, var(--bl-start), var(--bl-mid), var(--bl-end)); }
 
+/* page specific background utilities */
+.bg-page-services { background: linear-gradient(135deg, var(--page-services-start) 0%, var(--page-services-mid) 50%, var(--page-services-end) 100%); }
+.bg-page-service-detail { background: linear-gradient(135deg, var(--page-service-detail-start) 0%, var(--page-service-detail-mid) 50%, var(--page-service-detail-end) 100%); }
+.bg-page-areaction { background: linear-gradient(135deg, var(--page-areaction-start) 0%, var(--page-areaction-mid) 50%, var(--page-areaction-end) 100%); }
+
 .bg-auth-signup { background: linear-gradient(135deg, var(--auth-signup-start) 0%, var(--auth-signup-mid) 40%, var(--auth-signup-end) 100%); }
 .bg-auth-login { background: linear-gradient(135deg, var(--auth-login-start) 0%, var(--auth-login-mid) 40%, var(--auth-login-end) 100%); }
 
@@ -61,4 +81,24 @@
 
 .btn-primary { background: var(--btn-bg) !important; color: var(--btn-text) !important; }
 .btn-primary:hover { background: var(--btn-hover) !important; }
+
+
+.scrollbar-visible::-webkit-scrollbar { height: 12px; width: 12px; }
+.scrollbar-visible::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-visible::-webkit-scrollbar-thumb { background-color: rgba(99,102,241,0.9); border-radius: 10px; border: 3px solid rgba(0,0,0,0.0); }
+.scrollbar-visible { scrollbar-color: rgba(99,102,241,0.9) transparent; scrollbar-width: thin; }
+
+/* appear animation for cards */
+@keyframes appear {
+	from { opacity: 0; transform: translateY(8px) scale(0.995); }
+	to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-appear { animation: appear 360ms cubic-bezier(.2,.9,.2,1) both; }
+
+/* slide-up animation for bottom notifications */
+@keyframes slide-up {
+	from { opacity: 0; transform: translateY(12px); }
+	to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up { animation: slide-up 360ms cubic-bezier(.2,.9,.2,1) both; }
 
