@@ -230,7 +230,7 @@ const Areaction: React.FC = () => {
 
   // Combine loading states
   const isLoading = loading || loadingActions || loadingReactions;
-  
+
   // Combine error states
   const combinedError = error || errorActions || errorReactions;
 
