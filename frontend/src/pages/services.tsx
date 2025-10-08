@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
+
 type AboutService = {
   id: number | string;
   Name: string;
@@ -54,7 +56,7 @@ const Services: React.FC = () => {
     const fetchAbout = async () => {
       setLoading(true);
       try {
-        const res = await fetch("http://localhost:8080/about.json");
+        const res = await fetch(`${API_BASE}/about.json`);
         if (!res.ok)
           throw new Error(`HTTP ${res.status}`);
         const data = await res.json();

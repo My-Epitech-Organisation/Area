@@ -1,30 +1,46 @@
+# =============================================================================
+# AREA - Base Docker Compose Configuration
+# =============================================================================
+# This is the BASE configuration containing all services with minimal,
+# environment-agnostic settings. This file should NOT be used alone.
+#
+# Usage:
+#   Development:  docker-compose up (auto-loads docker-compose.override.yml)
+#   Production:   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   Testing:      docker-compose -f docker-compose.yml -f docker-compose.test.yml up
+#
+# See: docs/DOCKER_COMPOSE.md for detailed documentation
+# =============================================================================
+
 services:
+  # ---------------------------------------------------------------------------
+  # Database - PostgreSQL
+  # ---------------------------------------------------------------------------
   db:
-    container_name: area_postgres
     image: postgres:16
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-    ports:
-      - "${DB_PORT}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
       - area-net
 
+  # ---------------------------------------------------------------------------
+  # Cache & Message Broker - Redis
+  # ---------------------------------------------------------------------------
   redis:
-    container_name: area_redis
     image: redis:7
     volumes:
-      - redis-data:/data
-    ports:
-      - "${REDIS_PORT}:6379"
+      - redis_data:/data
     networks:
       - area-net
 
+  # ---------------------------------------------------------------------------
+  # Backend API - Django
+  # ---------------------------------------------------------------------------
   server:
-    container_name: area_server
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -33,27 +49,21 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=area_project.settings
       - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
     depends_on:
       - db
       - redis
-    ports:
-      - "${BACKEND_PORT:-8080}:8080"
     volumes:
       - backend_static:/app/staticfiles
       - backend_media:/app/mediafiles
       - backend_logs:/app/logs
     networks:
       - area-net
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
+  # ---------------------------------------------------------------------------
+  # Celery Worker - Async Tasks
+  # ---------------------------------------------------------------------------
   worker:
-    container_name: area_worker
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -69,12 +79,15 @@ services:
       - redis
       - db
       - server
+    volumes:
+      - backend_logs:/app/logs
     networks:
       - area-net
-    restart: unless-stopped
 
+  # ---------------------------------------------------------------------------
+  # Celery Beat - Task Scheduler
+  # ---------------------------------------------------------------------------
   beat:
-    container_name: area_beat
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -90,12 +103,15 @@ services:
       - redis
       - db
       - server
+    volumes:
+      - backend_logs:/app/logs
     networks:
       - area-net
-    restart: unless-stopped
 
+  # ---------------------------------------------------------------------------
+  # Flower - Celery Monitoring (optional)
+  # ---------------------------------------------------------------------------
   flower:
-    container_name: area_flower
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -111,30 +127,30 @@ services:
       - redis
       - db
       - server
-    ports:
-      - "${FLOWER_PORT:-5555}:5555"
     networks:
       - area-net
-    restart: unless-stopped
 
+  # ---------------------------------------------------------------------------
+  # Mobile Client - Flutter APK Builder
+  # ---------------------------------------------------------------------------
   client_mobile:
-    container_name: area_client_mobile
-    build: ./mobile
+    build:
+      context: ./mobile
+      dockerfile: Dockerfile
     volumes:
       - apk_shared:/shared
-      - ./mobile:/app
     depends_on:
       - server
     networks:
       - area-net
 
+  # ---------------------------------------------------------------------------
+  # Web Client - React Frontend
+  # ---------------------------------------------------------------------------
   client_web:
-    container_name: area_client_web
     build:
       context: ./frontend
-      dockerfile: Dockerfile.prod
-    ports:
-      - "${FRONTEND_PORT:-8081}:80"
+      dockerfile: Dockerfile
     volumes:
       - apk_shared:/shared
       - backend_static:/usr/share/nginx/html/static
@@ -145,13 +161,27 @@ services:
     networks:
       - area-net
 
+# =============================================================================
+# Volumes
+# =============================================================================
 volumes:
   pgdata:
-  redis-data:
+    name: area_pgdata
+  redis_data:
+    name: area_redis_data
   apk_shared:
+    name: area_apk_shared
   backend_static:
+    name: area_backend_static
   backend_media:
+    name: area_backend_media
   backend_logs:
+    name: area_backend_logs
 
+# =============================================================================
+# Networks
+# =============================================================================
 networks:
   area-net:
+    name: area_network
+    driver: bridge
