@@ -4,7 +4,7 @@ import parseErrors from "../utils/parseErrors";
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
 
 const Login: React.FC = () => {
-  const [usernameOrEmail, setUsernameOrEmail] = useState("");
+  const [email, setemail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
@@ -20,7 +20,7 @@ const Login: React.FC = () => {
       const res = await fetch(`${API_BASE}/auth/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: usernameOrEmail, password }),
+        body: JSON.stringify({ email: email, password }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -54,17 +54,14 @@ const Login: React.FC = () => {
               <div className="text-red-400 text-sm p-3 bg-red-900/20 rounded">{generalError}</div>
             )}
 
-            <label className="text-sm text-gray-300">Username or email</label>
+            <label className="text-sm text-gray-300">email</label>
             <input
-              value={usernameOrEmail}
-              onChange={(e) => setUsernameOrEmail(e.target.value)}
+              value={email}
+              onChange={(e) => setemail(e.target.value)}
               required
               className="px-4 py-3 rounded-md bg-transparent border border-white/20 text-white"
-              placeholder="username or email"
+              placeholder="email"
             />
-            {fieldErrors.username && (
-              <div className="text-red-400 text-sm">{fieldErrors.username.join(' ')}</div>
-            )}
             {fieldErrors.email && (
               <div className="text-red-400 text-sm">{fieldErrors.email.join(' ')}</div>
             )}
