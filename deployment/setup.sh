@@ -299,22 +299,19 @@ server {
 
     client_max_body_size 100M;
 
-    # Frontend - React App
-    location / {
-        proxy_pass http://localhost:8081;
+    # Backend API
+    location /api/ {
+        proxy_pass http://localhost:8000/;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Backend API
-    location /api/ {
-        proxy_pass http://localhost:8000/;
+    # Django Admin (must be before frontend location /)
+    location /admin/ {
+        proxy_pass http://localhost:8000/admin/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -351,6 +348,19 @@ server {
         alias /opt/area/mobile-build/client.apk;
         add_header Content-Type application/vnd.android.package-archive;
         add_header Content-Disposition "attachment; filename=area-client.apk";
+    }
+
+    # Frontend - React App (must be last, catches all remaining routes)
+    location / {
+        proxy_pass http://localhost:8081;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 NGINXSSLEOF
