@@ -47,10 +47,10 @@ jobs:
         run: |
           if [ "${{ github.event.repository.ssh_url }}" != "${{ env.MIRROR_REPO_URL }}" ]; then
             echo "::notice::Repository is different from the mirror repository."
-            echo "same_repository=true" >> $GITHUB_OUTPUT
+            echo "same_repository=false" >> $GITHUB_OUTPUT
           else
             echo "::warning::Repository is the same as the mirror repository."
-            echo "same_repository=false" >> $GITHUB_OUTPUT
+            echo "same_repository=true" >> $GITHUB_OUTPUT
           fi
 
   backend-ci:
@@ -265,11 +265,11 @@ jobs:
           docker compose down
 
   push_to_mirror:
-    needs: docker-compose-validation
+    needs: [docker-compose-validation, check_the_repository]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: pixta-dev/repository-mirroring-action@v1
