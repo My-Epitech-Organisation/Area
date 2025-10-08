@@ -6,7 +6,6 @@ import 'package:mobile/services/services.dart';
 
 // Generate mocks
 @GenerateMocks([ServiceCatalogService])
-
 void main() {
   group('ServiceCatalogProvider', () {
     late ServiceCatalogProvider provider;
@@ -51,9 +50,7 @@ void main() {
     test('Service model integration', () {
       final service = Service(
         name: 'test',
-        actions: [
-          ServiceAction(name: 'action1', description: 'Test action'),
-        ],
+        actions: [ServiceAction(name: 'action1', description: 'Test action')],
         reactions: [
           ServiceReaction(name: 'reaction1', description: 'Test reaction'),
         ],

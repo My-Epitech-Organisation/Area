@@ -5,18 +5,13 @@ import '../utils/service_icons.dart';
 class ServiceHeaderCard extends StatelessWidget {
   final Service service;
 
-  const ServiceHeaderCard({
-    super.key,
-    required this.service,
-  });
+  const ServiceHeaderCard({super.key, required this.service});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
@@ -48,9 +43,9 @@ class ServiceHeaderCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     '${service.actions.length} actions • ${service.reactions.length} reactions',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                   ),
                 ],
               ),

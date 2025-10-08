@@ -216,8 +216,8 @@ class _MyAppState extends State<MyApp> {
           '/login': (context) => const LoginPage(),
           '/services': (context) => const ServicesPage(),
           '/service-details': (context) => ServiceDetailsPage(
-                service: ModalRoute.of(context)!.settings.arguments as Service,
-              ),
+            service: ModalRoute.of(context)!.settings.arguments as Service,
+          ),
         },
         // Error handling
         builder: (context, widget) {

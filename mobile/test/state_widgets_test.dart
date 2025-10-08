@@ -4,13 +4,11 @@ import 'package:mobile/widgets/state_widgets.dart';
 
 void main() {
   group('LoadingStateWidget', () {
-    testWidgets('should display CircularProgressIndicator', (WidgetTester tester) async {
+    testWidgets('should display CircularProgressIndicator', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: LoadingStateWidget(),
-          ),
-        ),
+        const MaterialApp(home: Scaffold(body: LoadingStateWidget())),
       );
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -20,23 +18,19 @@ void main() {
   group('ErrorStateWidget', () {
     testWidgets('should display error message', (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: ErrorStateWidget(),
-          ),
-        ),
+        const MaterialApp(home: Scaffold(body: ErrorStateWidget())),
       );
 
       expect(find.text('An error occurred'), findsOneWidget);
     });
 
-    testWidgets('should display retry button when callback provided', (WidgetTester tester) async {
+    testWidgets('should display retry button when callback provided', (
+      WidgetTester tester,
+    ) async {
       var called = false;
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: ErrorStateWidget(onRetry: () => called = true),
-          ),
+          home: Scaffold(body: ErrorStateWidget(onRetry: () => called = true)),
         ),
       );
 
@@ -50,9 +44,7 @@ void main() {
     testWidgets('should display message', (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
-          home: Scaffold(
-            body: EmptyStateWidget(message: 'No data'),
-          ),
+          home: Scaffold(body: EmptyStateWidget(message: 'No data')),
         ),
       );
 
