@@ -30,9 +30,6 @@ services:
         limits:
           cpus: '2'
           memory: 2G
-        reservations:
-          cpus: '1'
-          memory: 1G
 
   # ---------------------------------------------------------------------------
   # Redis - Production Overrides
@@ -47,9 +44,6 @@ services:
         limits:
           cpus: '1'
           memory: 512M
-        reservations:
-          cpus: '0.5'
-          memory: 256M
 
   # ---------------------------------------------------------------------------
   # Backend API - Production Overrides
@@ -75,9 +69,6 @@ services:
         limits:
           cpus: '2'
           memory: 2G
-        reservations:
-          cpus: '1'
-          memory: 1G
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health/"]
       interval: 30s
@@ -98,9 +89,6 @@ services:
         limits:
           cpus: '1'
           memory: 1G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
 
   # ---------------------------------------------------------------------------
   # Celery Beat - Production Overrides
@@ -115,9 +103,6 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
 
   # ---------------------------------------------------------------------------
   # Flower - Production Overrides
@@ -132,9 +117,6 @@ services:
         limits:
           cpus: '0.5'
           memory: 256M
-        reservations:
-          cpus: '0.25'
-          memory: 128M
 
   # ---------------------------------------------------------------------------
   # Mobile Client - Production Overrides
@@ -164,9 +146,6 @@ services:
         limits:
           cpus: '1'
           memory: 512M
-        reservations:
-          cpus: '0.5'
-          memory: 256M
 
 # =============================================================================
 # Production Volumes (isolated with _prod suffix)
