@@ -29,7 +29,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/" element={<Homepage />} />
+        <Route index element={<Homepage />} />
       </Routes>
     </BrowserRouter>
   );
