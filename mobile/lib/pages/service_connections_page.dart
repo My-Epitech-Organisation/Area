@@ -124,10 +124,19 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: Colors.grey.withValues(alpha: 0.2),
-          child: Icon(
-            ServiceIcons.getServiceIcon(service.name),
-            color: Colors.grey,
+          backgroundColor: requiresOAuth ? Colors.blue.withValues(alpha: 0.2) : Colors.green.withValues(alpha: 0.2),
+          child: Image.network(
+            ServiceProviderConfig.getIconUrl(service.name),
+            width: 24,
+            height: 24,
+            errorBuilder: (context, error, stackTrace) {
+              // Fallback to default icon if image fails to load
+              return Icon(
+                ServiceIcons.getServiceIcon(service.name),
+                color: requiresOAuth ? Colors.blue : Colors.green,
+                size: 20,
+              );
+            },
           ),
         ),
         title: Text(service.displayName),
