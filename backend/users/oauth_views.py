@@ -146,7 +146,10 @@ class OAuthCallbackView(APIView):
         - expires_at: Token expiration timestamp (if applicable)
     """
 
-    permission_classes = [IsAuthenticated]
+    # Callback can be called by the OAuth provider and therefore may not have
+    # an authenticated session. We will validate the state token to identify
+    # the user instead of relying on request.user.
+    permission_classes = []
     serializer_class = OAuthCallbackSerializer
 
     def get(self, request, provider: str):
@@ -178,18 +181,29 @@ class OAuthCallbackView(APIView):
         state = validated_data["state"]
 
         try:
-            # Validate CSRF state
-            is_valid, error_msg = OAuthManager.validate_state(
-                state=state, user_id=str(request.user.id), provider=provider
-            )
-
-            if not is_valid:
-                logger.warning(
-                    f"Invalid OAuth2 state for user "
-                    f"{request.user.email}: {error_msg}"
-                )
+            # Try to consume state to identify the user (callback is called
+            # by the provider and the session may not exist). OAuthManager
+            # provides "consume_state" to atomically retrieve the stored
+            # state payload which contains the expected user_id and provider.
+            state_data = OAuthManager.consume_state(state)
+            if not state_data:
+                logger.warning(f"Invalid or expired OAuth2 state: {state}")
                 return Response(
-                    {"error": "invalid_state", "message": error_msg},
+                    {"error": "invalid_state", "message": "State token is invalid or expired"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Resolve user from state
+            user_id = state_data.get("user_id")
+            try:
+                from django.contrib.auth import get_user_model
+
+                User = get_user_model()
+                user = User.objects.get(pk=user_id)
+            except Exception:
+                logger.exception(f"Failed to resolve user from state: {state_data}")
+                return Response(
+                    {"error": "invalid_state", "message": "Unable to resolve user from state"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -204,7 +218,7 @@ class OAuthCallbackView(APIView):
 
             # Store or update token in database
             service_token, created = ServiceToken.objects.update_or_create(
-                user=request.user,
+                user=user,
                 service_name=provider,
                 defaults={
                     "access_token": token_data["access_token"],
@@ -214,7 +228,7 @@ class OAuthCallbackView(APIView):
             )
 
             action = "connected" if created else "reconnected"
-            logger.info(f"User {request.user.email} {action} to {provider}")
+            logger.info(f"User {user.email} {action} to {provider}")
 
             return Response(
                 {
