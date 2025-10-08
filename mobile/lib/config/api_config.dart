@@ -63,6 +63,8 @@ class ApiConfig {
 
   static String get automationsUrl => '$authBaseUrl/automations/';
   static String get servicesUrl => '$authBaseUrl/services/';
+  static String get actionsUrl => '$authBaseUrl/actions/';
+  static String get reactionsUrl => '$authBaseUrl/reactions/';
   static String get aboutUrl => '$baseUrl/about.json';
   static String get statisticsUrl => '$authBaseUrl/statistics';
   static String get userStatisticsUrl => '$authBaseUrl/users/statistics/';
