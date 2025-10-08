@@ -31,7 +31,7 @@ function usePaginatedApi<T>(endpoint: string): UseApiResult<T[]> {
       setError(null);
 
       try {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('access');
 
         const response = await fetch(`${API_BASE}${endpoint}`, {
           headers: {
@@ -108,7 +108,7 @@ export function useCreateArea() {
     setError(null);
 
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem('access');
 
       if (!token) {
         throw new Error('Authentication required. Please login.');
