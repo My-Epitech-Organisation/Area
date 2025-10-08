@@ -3,13 +3,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Google Sign-In Configuration
 class GoogleSignInConfig {
-  static String get webClientId =>
-      dotenv.env['GOOGLE_CLIENT_ID'] ?? '';
+  static String get webClientId => dotenv.env['GOOGLE_CLIENT_ID'] ?? '';
 
-  static const List<String> scopes = [
-    'email',
-    'profile',
-  ];
+  static const List<String> scopes = ['email', 'profile'];
 
   static bool get isDebug => kDebugMode;
 

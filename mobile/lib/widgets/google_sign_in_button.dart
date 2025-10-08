@@ -4,7 +4,11 @@ import '../config/service_provider_config.dart';
 class GoogleSignInButton extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onPressed;
-  const GoogleSignInButton({super.key, required this.isLoading, required this.onPressed});
+  const GoogleSignInButton({
+    super.key,
+    required this.isLoading,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +26,9 @@ class GoogleSignInButton extends StatelessWidget {
                 height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
-            : Text('Sign in with ${ServiceProviderConfig.getDisplayName('google')}'),
+            : Text(
+                'Sign in with ${ServiceProviderConfig.getDisplayName('google')}',
+              ),
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.black,

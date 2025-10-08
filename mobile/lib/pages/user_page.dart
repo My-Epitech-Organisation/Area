@@ -5,26 +5,38 @@ import '../providers/applet_provider.dart';
 import '../providers/provider_manager.dart';
 import 'service_connections_page.dart';
 
-class UserPage extends StatelessWidget {
+class UserPage extends StatefulWidget {
   const UserPage({super.key});
 
   @override
+  State<UserPage> createState() => _UserPageState();
+}
+
+class _UserPageState extends State<UserPage> {
+  Future<void> _refreshData() async {
+    await ProviderManager.refreshAll(context);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              UserProfileSection(),
-              SizedBox(height: 24),
-              StatisticsSection(),
-              SizedBox(height: 24),
-              SettingsSection(),
-              SizedBox(height: 24),
-              LogoutSection(),
-            ],
+        child: RefreshIndicator(
+          onRefresh: _refreshData,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const UserProfileSection(),
+                const SizedBox(height: 24),
+                const StatisticsSection(),
+                const SizedBox(height: 24),
+                const SettingsSection(),
+                const SizedBox(height: 24),
+                const LogoutSection(),
+              ],
+            ),
           ),
         ),
       ),
@@ -32,8 +44,25 @@ class UserPage extends StatelessWidget {
   }
 }
 
-class UserProfileSection extends StatelessWidget {
+class UserProfileSection extends StatefulWidget {
   const UserProfileSection({super.key});
+
+  @override
+  State<UserProfileSection> createState() => _UserProfileSectionState();
+}
+
+class _UserProfileSectionState extends State<UserProfileSection> {
+  @override
+  void initState() {
+    super.initState();
+    // Load profile if not already loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      if (userProvider.profile == null && !userProvider.isLoadingProfile) {
+        userProvider.loadProfile();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,9 +74,7 @@ class UserProfileSection extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.all(20),
             decoration: _boxDecoration,
-            child: const Center(
-              child: CircularProgressIndicator(),
-            ),
+            child: const Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -87,11 +114,7 @@ class UserProfileSection extends StatelessWidget {
               const CircleAvatar(
                 radius: 40,
                 backgroundColor: Colors.blue,
-                child: Icon(
-                  Icons.person,
-                  size: 40,
-                  color: Colors.white,
-                ),
+                child: Icon(Icons.person, size: 40, color: Colors.white),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -108,10 +131,7 @@ class UserProfileSection extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       userProfile?['email'] ?? 'No email',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                     ),
                     const SizedBox(height: 8),
                     UserVerificationBadge(
@@ -129,10 +149,7 @@ class UserProfileSection extends StatelessWidget {
 }
 
 class UserVerificationBadge extends StatelessWidget {
-  const UserVerificationBadge({
-    super.key,
-    required this.isVerified,
-  });
+  const UserVerificationBadge({super.key, required this.isVerified});
 
   final bool isVerified;
 
@@ -141,20 +158,14 @@ class UserVerificationBadge extends StatelessWidget {
     final color = isVerified ? Colors.green : Colors.orange;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         isVerified ? 'Verified User' : 'Unverified User',
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w500,
-        ),
+        style: TextStyle(color: color, fontWeight: FontWeight.w500),
       ),
     );
   }
@@ -168,7 +179,9 @@ class StatisticsSection extends StatelessWidget {
     return Consumer2<AppletProvider, UserProvider>(
       builder: (context, appletProvider, userProvider, child) {
         final userProfile = userProvider.profile;
-        final activeCount = appletProvider.applets.where((a) => a.isActive).length;
+        final activeCount = appletProvider.applets
+            .where((a) => a.isActive)
+            .length;
         final totalCount = appletProvider.applets.length;
         final serviceCount = appletProvider.applets
             .map((a) => a.action.service.name)
@@ -187,7 +200,7 @@ class StatisticsSection extends StatelessWidget {
               children: [
                 Expanded(
                   child: _buildStatCard(
-                    'Active Applets',
+                    'Active Automations',
                     '$activeCount',
                     Icons.play_arrow,
                     Colors.blue,
@@ -196,7 +209,7 @@ class StatisticsSection extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatCard(
-                    'Total Applets',
+                    'Total Automations',
                     '$totalCount',
                     Icons.flash_on,
                     Colors.orange,
@@ -263,10 +276,7 @@ class StatisticsSection extends StatelessWidget {
 }
 
 class UserStatusCard extends StatelessWidget {
-  const UserStatusCard({
-    super.key,
-    required this.isVerified,
-  });
+  const UserStatusCard({super.key, required this.isVerified});
 
   final bool isVerified;
 
@@ -384,12 +394,14 @@ class SettingItem extends StatelessWidget {
       title: Text(title),
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.chevron_right),
-      onTap: onTap ?? () {
-        // TODO: Implement navigation to settings pages
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$title feature coming soon!')),
-        );
-      },
+      onTap:
+          onTap ??
+          () {
+            // TODO: Implement navigation to settings pages
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('$title feature coming soon!')),
+            );
+          },
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
@@ -407,28 +419,29 @@ class LogoutSection extends StatelessWidget {
 
   Future<bool> _showLogoutConfirmation(BuildContext context) async {
     return await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirm Sign Out'),
-        content: const Text(
-          'Are you sure you want to sign out of your account?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Confirm Sign Out'),
+            content: const Text(
+              'Are you sure you want to sign out of your account?',
             ),
-            child: const Text('Sign Out'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Sign Out'),
+              ),
+            ],
           ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
   }
 
   Future<void> _performLogout(BuildContext context) async {
@@ -443,7 +456,9 @@ class LogoutSection extends StatelessWidget {
         // Close loading dialog
         Navigator.of(context).pop();
         // Navigate to login
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/login', (route) => false);
       }
     } catch (e) {
       if (context.mounted) {
