@@ -14,7 +14,7 @@ class ServiceConnectionsPage extends StatefulWidget {
 
 class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
   final OAuthService _oauthService = OAuthService();
-  
+
   ServiceConnectionList? _serviceList;
   bool _isLoading = true;
   String? _error;
@@ -51,25 +51,20 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
       // Initiate OAuth flow
       final response = await _oauthService.initiateOAuth(provider);
-      
+
       // Close loading dialog
       if (mounted) Navigator.pop(context);
 
       // Open browser with authorization URL
       final uri = Uri.parse(response.redirectUrl);
       if (await canLaunchUrl(uri)) {
-        await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
-        
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+
         // Show info dialog
         if (mounted) {
           showDialog(
@@ -79,7 +74,7 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
               content: Text(
                 'Autorisez l\'application dans votre navigateur.\n\n'
                 'Une fois autorisé, vous serez redirigé vers l\'application.\n\n'
-                'Provider: ${ServiceProviderConfig.getDisplayName(provider)}'
+                'Provider: ${ServiceProviderConfig.getDisplayName(provider)}',
               ),
               actions: [
                 TextButton(
@@ -100,7 +95,7 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
       if (mounted) {
         // Close loading dialog if still open
         Navigator.of(context, rootNavigator: true).pop();
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erreur de connexion: ${e.toString()}'),
@@ -117,7 +112,7 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
       builder: (context) => AlertDialog(
         title: const Text('Déconnecter le service'),
         content: Text(
-          'Voulez-vous vraiment déconnecter ${ServiceProviderConfig.getDisplayName(provider)} ?'
+          'Voulez-vous vraiment déconnecter ${ServiceProviderConfig.getDisplayName(provider)} ?',
         ),
         actions: [
           TextButton(
@@ -137,18 +132,18 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
 
     try {
       await _oauthService.disconnectService(provider);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '${ServiceProviderConfig.getDisplayName(provider)} déconnecté'
+              '${ServiceProviderConfig.getDisplayName(provider)} déconnecté',
             ),
             backgroundColor: Colors.green,
           ),
         );
       }
-      
+
       _loadServices();
     } catch (e) {
       if (mounted) {
@@ -168,10 +163,7 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
       appBar: AppBar(
         title: const Text('Services connectés'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadServices,
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadServices),
         ],
       ),
       body: _buildBody(),
@@ -214,10 +206,7 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
           if (_serviceList!.connectedServices.isNotEmpty) ...[
             const Text(
               'Services connectés',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             ..._serviceList!.connectedServices.map(
@@ -225,22 +214,19 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
             ),
             const SizedBox(height: 24),
           ],
-          
+
           // Available services section
           if (_serviceList!.unconnectedProviders.isNotEmpty) ...[
             const Text(
               'Services disponibles',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             ..._serviceList!.unconnectedProviders.map(
               (provider) => _buildAvailableServiceCard(provider),
             ),
           ],
-          
+
           // Info card
           const SizedBox(height: 24),
           Card(
@@ -286,8 +272,8 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
     Color statusColor;
     if (service.isExpired) {
       statusColor = Colors.red;
-    } else if (service.expiresInMinutes != null && 
-               service.expiresInMinutes! < 60) {
+    } else if (service.expiresInMinutes != null &&
+        service.expiresInMinutes! < 60) {
       statusColor = Colors.orange;
     } else {
       statusColor = Colors.green;
@@ -331,10 +317,7 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: Colors.grey.withValues(alpha: 0.2),
-          child: Icon(
-            _getProviderIcon(provider),
-            color: Colors.grey,
-          ),
+          child: Icon(_getProviderIcon(provider), color: Colors.grey),
         ),
         title: Text(ServiceProviderConfig.getDisplayName(provider)),
         subtitle: Text(

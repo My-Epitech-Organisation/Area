@@ -28,9 +28,8 @@ class AppletService {
 
     final applets = _httpClient.parseResponse<List<Applet>>(
       response,
-      (data) => (data as List<dynamic>)
-          .map((json) => Applet.fromJson(json))
-          .toList(),
+      (data) =>
+          (data as List<dynamic>).map((json) => Applet.fromJson(json)).toList(),
     );
 
     _cache.set(cacheKey, applets);
@@ -99,9 +98,7 @@ class AppletService {
 
   /// Delete an applet
   Future<void> deleteApplet(int id) async {
-    final response = await _httpClient.delete(
-      ApiConfig.automationUrl(id),
-    );
+    final response = await _httpClient.delete(ApiConfig.automationUrl(id));
 
     if (response.statusCode == 204) {
       _cache.remove(_cacheKeyPrefix);
@@ -112,9 +109,7 @@ class AppletService {
 
   /// Toggle applet active/inactive state
   Future<Applet> toggleApplet(int id) async {
-    final response = await _httpClient.post(
-      ApiConfig.automationToggleUrl(id),
-    );
+    final response = await _httpClient.post(ApiConfig.automationToggleUrl(id));
 
     final applet = _httpClient.parseResponse<Applet>(
       response,
@@ -133,9 +128,8 @@ class AppletService {
 
     return _httpClient.parseResponse<List<Applet>>(
       response,
-      (data) => (data as List<dynamic>)
-          .map((json) => Applet.fromJson(json))
-          .toList(),
+      (data) =>
+          (data as List<dynamic>).map((json) => Applet.fromJson(json)).toList(),
     );
   }
 
