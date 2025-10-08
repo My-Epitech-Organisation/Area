@@ -92,7 +92,6 @@ class _SearchableServiceListState extends State<SearchableServiceList> {
   }
 }
 
-/// Widget pour une liste avec pull-to-refresh
 class RefreshableList extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final Widget child;
