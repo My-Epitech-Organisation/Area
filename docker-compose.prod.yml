@@ -1,0 +1,188 @@
+# =============================================================================
+# AREA - Production Configuration
+# =============================================================================
+# This file contains production-specific overrides:
+#   - restart: always for automatic recovery
+#   - Resource limits (CPU/RAM) for stability
+#   - Security environment variables
+#   - Production volumes with _prod suffix for isolation
+#   - Healthchecks for monitoring
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs -f
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml down
+#
+# Note: Managed by deployment/manage.sh script on production server
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Database - Production Overrides
+  # ---------------------------------------------------------------------------
+  db:
+    container_name: area_postgres_prod
+    restart: always
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+  # ---------------------------------------------------------------------------
+  # Redis - Production Overrides
+  # ---------------------------------------------------------------------------
+  redis:
+    container_name: area_redis_prod
+    restart: always
+    volumes:
+      - redis_data_prod:/data
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  # ---------------------------------------------------------------------------
+  # Backend API - Production Overrides
+  # ---------------------------------------------------------------------------
+  server:
+    container_name: area_server_prod
+    restart: always
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod  # Use production Dockerfile (if exists)
+    environment:
+      - DEBUG=False
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - SECURE_SSL_REDIRECT=True
+      - SESSION_COOKIE_SECURE=True
+      - CSRF_COOKIE_SECURE=True
+      - ENVIRONMENT=production
+    volumes:
+      - backend_static_prod:/app/staticfiles
+      - backend_media_prod:/app/mediafiles
+      - backend_logs_prod:/app/logs
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ---------------------------------------------------------------------------
+  # Celery Worker - Production Overrides
+  # ---------------------------------------------------------------------------
+  worker:
+    container_name: area_worker_prod
+    restart: always
+    volumes:
+      - backend_logs_prod:/app/logs
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # ---------------------------------------------------------------------------
+  # Celery Beat - Production Overrides
+  # ---------------------------------------------------------------------------
+  beat:
+    container_name: area_beat_prod
+    restart: always
+    volumes:
+      - backend_logs_prod:/app/logs
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # ---------------------------------------------------------------------------
+  # Flower - Production Overrides
+  # ---------------------------------------------------------------------------
+  flower:
+    container_name: area_flower_prod
+    restart: always
+    environment:
+      - FLOWER_BASIC_AUTH=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-changeme}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  # ---------------------------------------------------------------------------
+  # Mobile Client - Production Overrides
+  # ---------------------------------------------------------------------------
+  client_mobile:
+    container_name: area_client_mobile_prod
+    volumes:
+      - apk_shared_prod:/shared
+
+  # ---------------------------------------------------------------------------
+  # Web Client - Production Overrides
+  # ---------------------------------------------------------------------------
+  client_web:
+    container_name: area_client_web_prod
+    restart: always
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod  # Production nginx build
+    ports:
+      - "${FRONTEND_PORT:-8081}:80"  # Expose nginx
+    volumes:
+      - apk_shared_prod:/shared
+      - backend_static_prod:/usr/share/nginx/html/static
+      - backend_media_prod:/usr/share/nginx/html/media
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+# =============================================================================
+# Production Volumes (isolated with _prod suffix)
+# =============================================================================
+volumes:
+  pgdata_prod:
+    name: area_pgdata_prod
+  redis_data_prod:
+    name: area_redis_data_prod
+  apk_shared_prod:
+    name: area_apk_shared_prod
+  backend_static_prod:
+    name: area_backend_static_prod
+  backend_media_prod:
+    name: area_backend_media_prod
+  backend_logs_prod:
+    name: area_backend_logs_prod
+

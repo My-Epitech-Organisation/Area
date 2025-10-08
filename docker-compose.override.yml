@@ -1,15 +1,122 @@
+# =============================================================================
+# AREA - Development Overrides
+# =============================================================================
+# This file is AUTOMATICALLY loaded when you run `docker-compose up`.
+# It contains development-specific configurations:
+#   - Port mappings for direct access
+#   - Container names for easier debugging
+#   - Hot-reload volumes
+#   - Vite dev server for frontend
+#
+# Usage:
+#   docker-compose up              # Loads base + override automatically
+#   docker-compose up -d           # Same, but detached
+#
+# Note: This file OVERRIDES services defined in docker-compose.yml
+# =============================================================================
+
 services:
-  client_web_dev:
+  # ---------------------------------------------------------------------------
+  # Database - Development Overrides
+  # ---------------------------------------------------------------------------
+  db:
+    container_name: area_postgres
+    ports:
+      - "${DB_PORT}:5432"  # Expose for local tools (pgAdmin, DBeaver, etc.)
+
+  # ---------------------------------------------------------------------------
+  # Redis - Development Overrides
+  # ---------------------------------------------------------------------------
+  redis:
+    container_name: area_redis
+    ports:
+      - "${REDIS_PORT}:6379"  # Expose for redis-cli or GUI tools
+
+  # ---------------------------------------------------------------------------
+  # Backend API - Development Overrides
+  # ---------------------------------------------------------------------------
+  server:
+    container_name: area_server
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"  # Expose API for direct access
+    volumes:
+      - ./backend:/app  # HOT RELOAD: Mount source code
+      - backend_static:/app/staticfiles  # Keep static files in volume
+      - backend_media:/app/mediafiles    # Keep media files in volume
+      - backend_logs:/app/logs           # Keep logs in volume
+    command: >
+      sh -c "
+        python manage.py migrate &&
+        python manage.py collectstatic --noinput &&
+        python manage.py runserver 0.0.0.0:8080
+      "
+
+  # ---------------------------------------------------------------------------
+  # Celery Worker - Development Overrides
+  # ---------------------------------------------------------------------------
+  worker:
+    container_name: area_worker
+    volumes:
+      - ./backend:/app  # HOT RELOAD: Mount source code
+      - backend_logs:/app/logs
+
+  # ---------------------------------------------------------------------------
+  # Celery Beat - Development Overrides
+  # ---------------------------------------------------------------------------
+  beat:
+    container_name: area_beat
+    volumes:
+      - ./backend:/app  # HOT RELOAD: Mount source code
+      - backend_logs:/app/logs
+
+  # ---------------------------------------------------------------------------
+  # Flower - Development Overrides
+  # ---------------------------------------------------------------------------
+  flower:
+    container_name: area_flower
+    ports:
+      - "${FLOWER_PORT:-5555}:5555"  # Expose Celery monitoring UI
+    volumes:
+      - ./backend:/app  # HOT RELOAD: Mount source code
+
+  # ---------------------------------------------------------------------------
+  # Mobile Client - Development Overrides
+  # ---------------------------------------------------------------------------
+  client_mobile:
+    container_name: area_client_mobile
+    volumes:
+      - apk_shared:/shared
+      - ./mobile:/app  # HOT RELOAD: Mount source code (if needed)
+
+  # ---------------------------------------------------------------------------
+  # Web Client - Development with Vite Hot Reload
+  # ---------------------------------------------------------------------------
+  # OVERRIDE: Replace production nginx with Vite dev server
+  client_web:
     container_name: area_client_web_dev
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
     ports:
-      - "${FRONTEND_DEV_PORT:-5173}:5173"
+      - "${FRONTEND_DEV_PORT:-5173}:5173"  # Vite dev server port
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    depends_on:
-      - server
-    networks:
-      - area-net
+      - ./frontend:/app           # HOT RELOAD: Mount source code
+      - /app/node_modules         # Preserve node_modules from image
+      - apk_shared:/shared        # APK download
+    environment:
+      - VITE_API_URL=http://localhost:${BACKEND_PORT:-8080}
+      - CHOKIDAR_USEPOLLING=true  # Better file watching in Docker
+
+# =============================================================================
+# Volumes (inherited from base)
+# =============================================================================
+volumes:
+  backend_static:
+    name: area_backend_static
+  backend_media:
+    name: area_backend_media
+  backend_logs:
+    name: area_backend_logs
+  apk_shared:
+    name: area_apk_shared
