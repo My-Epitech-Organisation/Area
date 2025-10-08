@@ -314,6 +314,9 @@ CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "False") == "True"
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8081",
     "http://127.0.0.1:8081",
+    "http://areaction.app:8081",
+    "https://areaction.app",
+    "http://areaction.app",
 ]
 
 # Update ALLOWED_HOSTS
