@@ -1,3 +1,10 @@
+##
+## EPITECH PROJECT, 2025
+## Area
+## File description:
+## settings
+##
+
 """
 Django settings for area_project project.
 
@@ -60,6 +67,9 @@ INSTALLED_APPS = [
     # Local apps
     "users",
     "automations",
+    # Documentation
+    "drf_spectacular",
+    "drf_spectacular_sidecar",
 ]
 
 REST_FRAMEWORK = {
@@ -80,6 +90,23 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {"anon": "100/day", "user": "1000/day"},
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "AREA API",
+    "DESCRIPTION": "API for the AREA (Actions-Reactions Automation) system",
+    "VERSION": "1.0.0",
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SECURITY": [{"bearerAuth": []}],
+    "SECURITY_SCHEMES": {
+        "bearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "Use 'Bearer <token>' obtained via /api/token/obtain/ (simplejwt)",
+        }
+    },
 }
 
 MIDDLEWARE = [

@@ -1,3 +1,10 @@
+##
+## EPITECH PROJECT, 2025
+## Area
+## File description:
+## serializers
+##
+
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -43,6 +50,12 @@ class UserSerializer(serializers.ModelSerializer):
         user.email_verified = False
         user.save()
         return user
+
+
+class GoogleLoginSerializer(serializers.Serializer):
+    id_token = serializers.CharField(
+        required=True, help_text="Google ID token from mobile app"
+    )
 
 
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
