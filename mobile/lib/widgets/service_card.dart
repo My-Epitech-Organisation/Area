@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/service.dart';
+import '../utils/service_icons.dart';
 
 class ServiceCard extends StatelessWidget {
   final Service service;
@@ -34,7 +35,7 @@ class ServiceCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
-                  _getServiceIcon(service.name),
+                  ServiceIcons.getServiceIcon(service.name),
                   color: Theme.of(context).primaryColor,
                   size: 24,
                 ),
@@ -74,39 +75,5 @@ class ServiceCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  IconData _getServiceIcon(String serviceName) {
-    // Map service names to appropriate icons
-    switch (serviceName.toLowerCase()) {
-      case 'facebook':
-        return Icons.facebook;
-      case 'twitter':
-      case 'x':
-        return Icons.alternate_email;
-      case 'gmail':
-      case 'email':
-        return Icons.email;
-      case 'discord':
-        return Icons.chat;
-      case 'github':
-        return Icons.code;
-      case 'spotify':
-        return Icons.music_note;
-      case 'youtube':
-        return Icons.play_circle_fill;
-      case 'slack':
-        return Icons.message;
-      case 'telegram':
-        return Icons.send;
-      case 'weather':
-        return Icons.wb_sunny;
-      case 'timer':
-        return Icons.timer;
-      case 'rss':
-        return Icons.rss_feed;
-      default:
-        return Icons.apps;
-    }
   }
 }
