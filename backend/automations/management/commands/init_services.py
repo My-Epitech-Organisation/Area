@@ -27,7 +27,10 @@ class Command(BaseCommand):
         parser.add_argument(
             "--reset",
             action="store_true",
-            help="Delete all existing services, actions, and reactions before initializing",
+            help=(
+                "Delete all existing services, actions, and reactions "
+                "before initializing"
+            ),
         )
 
     def handle(self, *args, **options):
@@ -35,9 +38,7 @@ class Command(BaseCommand):
         reset = options.get("reset", False)
 
         self.stdout.write(self.style.SUCCESS("=" * 70))
-        self.stdout.write(
-            self.style.SUCCESS("  AREA - Initializing Services Database")
-        )
+        self.stdout.write(self.style.SUCCESS("  AREA - Initializing Services Database"))
         self.stdout.write(self.style.SUCCESS("=" * 70))
         self.stdout.write("")
 
@@ -57,7 +58,7 @@ class Command(BaseCommand):
 
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"\n✗ Error during initialization: {e}"))
-            raise CommandError(f"Failed to initialize database: {e}")
+            raise CommandError(f"Failed to initialize database: {e}") from e
 
     def _reset_database(self):
         """Delete all existing services, actions, and reactions."""
@@ -92,11 +93,17 @@ class Command(BaseCommand):
                 "actions": [
                     {
                         "name": "timer_daily",
-                        "description": "Trigger at a specific time every day (e.g., 9:00 AM daily)",
+                        "description": (
+                            "Trigger at a specific time every day "
+                            "(e.g., 9:00 AM daily)"
+                        ),
                     },
                     {
                         "name": "timer_weekly",
-                        "description": "Trigger at a specific time on specific days of the week (e.g., Monday 9:00 AM)",
+                        "description": (
+                            "Trigger at a specific time on specific days "
+                            "of the week (e.g., Monday 9:00 AM)"
+                        ),
                     },
                 ],
                 "reactions": [],
@@ -108,7 +115,9 @@ class Command(BaseCommand):
                 "actions": [
                     {
                         "name": "github_new_issue",
-                        "description": "Triggered when a new issue is created in a repository",
+                        "description": (
+                            "Triggered when a new issue is created in a repository"
+                        ),
                     },
                     {
                         "name": "github_new_pr",
@@ -129,7 +138,10 @@ class Command(BaseCommand):
                 "actions": [
                     {
                         "name": "gmail_new_email",
-                        "description": "Triggered when a new email is received matching specific criteria",
+                        "description": (
+                            "Triggered when a new email is received "
+                            "matching specific criteria"
+                        ),
                     },
                 ],
                 "reactions": [],
@@ -177,7 +189,9 @@ class Command(BaseCommand):
                 "actions": [
                     {
                         "name": "webhook_trigger",
-                        "description": "Triggered when a webhook receives an HTTP request",
+                        "description": (
+                            "Triggered when a webhook receives an HTTP request"
+                        ),
                     },
                 ],
                 "reactions": [
@@ -221,7 +235,8 @@ class Command(BaseCommand):
                 if created:
                     self.stdout.write(
                         self.style.SUCCESS(
-                            f"    ✓ Created action: {action.name} → {action.description}"
+                            f"    ✓ Created action: {action.name} → "
+                            f"{action.description}"
                         )
                     )
 
@@ -236,7 +251,8 @@ class Command(BaseCommand):
                 if created:
                     self.stdout.write(
                         self.style.SUCCESS(
-                            f"    ✓ Created reaction: {reaction.name} → {reaction.description}"
+                            f"    ✓ Created reaction: {reaction.name} → "
+                            f"{reaction.description}"
                         )
                     )
 
@@ -254,15 +270,13 @@ class Command(BaseCommand):
         self.stdout.write(f"   • Actions created: {action_count}")
         self.stdout.write(f"   • Reactions created: {reaction_count}")
         self.stdout.write("")
-        self.stdout.write(
-            self.style.HTTP_INFO("🔗 Services are now available at:")
-        )
+        self.stdout.write(self.style.HTTP_INFO("🔗 Services are now available at:"))
         self.stdout.write("   • API: http://localhost:8080/api/services/")
-        self.stdout.write("   • Admin: http://localhost:8080/admin/automations/service/")
-        self.stdout.write("")
         self.stdout.write(
-            self.style.HTTP_INFO("💡 Next steps:")
+            "   • Admin: http://localhost:8080/admin/automations/service/"
         )
+        self.stdout.write("")
+        self.stdout.write(self.style.HTTP_INFO("💡 Next steps:"))
         self.stdout.write("   1. Create a user account (signup)")
         self.stdout.write("   2. Connect OAuth2 services (Google, GitHub)")
         self.stdout.write("   3. Create your first AREA automation")
