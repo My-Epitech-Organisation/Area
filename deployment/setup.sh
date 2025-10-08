@@ -177,7 +177,9 @@ EMAIL_HOST_USER=
 EMAIL_HOST_PASSWORD=
 
 # Security
-SECURE_SSL_REDIRECT=True
+# IMPORTANT: SECURE_SSL_REDIRECT=False because nginx handles HTTPS redirection
+# Django receives HTTP requests from nginx proxy on localhost
+SECURE_SSL_REDIRECT=False
 SESSION_COOKIE_SECURE=True
 CSRF_COOKIE_SECURE=True
 

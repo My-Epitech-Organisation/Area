@@ -41,6 +41,23 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 ALLOWED_HOSTS = []
 
 
+# Security Settings
+# Only enable SSL redirect and secure cookies in production
+if not DEBUG:
+    # Force HTTPS redirect (nginx handles SSL termination)
+    SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False") == "True"
+    # Secure cookies (only sent over HTTPS)
+    SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "False") == "True"
+    CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "False") == "True"
+    # Trust X-Forwarded-Proto header from nginx
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+else:
+    # Development: No SSL enforcement
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+
+
 # Application definition
 
 INSTALLED_APPS = [
