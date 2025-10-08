@@ -233,7 +233,12 @@ class OAuthCallbackView(APIView):
             # If the request came from a browser (Accept header includes text/html),
             # redirect to the frontend callback page so the SPA can show a friendly UI.
             accept = request.META.get("HTTP_ACCEPT", "")
-            is_browser = "text/html" in accept or "*/*" in accept
+            # Consider this a browser navigation only if the client explicitly
+            # accepts HTML and the request is not an AJAX/fetch request with
+            # an Authorization header. Many programmatic clients use "*/*"
+            # which must NOT be treated as a browser here (avoids redirect loop).
+            has_auth = bool(request.META.get("HTTP_AUTHORIZATION") or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest")
+            is_browser = ("text/html" in accept) and (not has_auth)
 
             response_payload = {
                 "message": f"Successfully {action} to {provider}",
