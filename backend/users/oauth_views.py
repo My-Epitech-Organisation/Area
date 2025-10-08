@@ -278,7 +278,8 @@ class OAuthCallbackView(APIView):
 
             User = get_user_model()
             try:
-                user = User.objects.get(id=int(user_id))
+                # User.id is a UUIDField in this project; do not cast to int
+                user = User.objects.get(id=user_id)
             except Exception:
                 logger.error(f"User id from state not found: {user_id}")
                 return Response({"error": "invalid_state", "message": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
