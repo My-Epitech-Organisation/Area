@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Widget de carte pour la configuration de l'action
-/// Permet de sélectionner l'action à exécuter lorsque le trigger est déclenché
 class ActionConfigCard extends StatelessWidget {
   final String? selectedAction;
   final ValueChanged<String?> onChanged;

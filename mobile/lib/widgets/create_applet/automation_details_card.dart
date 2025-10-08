@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Widget de carte pour la section de détails de l'automation
-/// Contient le champ de saisie du nom de l'automation
 class AutomationDetailsCard extends StatelessWidget {
   final TextEditingController nameController;
 
