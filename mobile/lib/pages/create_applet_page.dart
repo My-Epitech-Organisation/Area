@@ -39,56 +39,51 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
           padding: const EdgeInsets.all(16.0),
           child: Form(
             key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 24),
 
-                  const SizedBox(height: 24),
+                // Automation Details Card
+                AutomationDetailsCard(nameController: _nameController),
 
-                  // Automation Details Card
-                  AutomationDetailsCard(
-                    nameController: _nameController,
-                  ),
+                const SizedBox(height: 16),
 
-                  const SizedBox(height: 16),
+                // Trigger Configuration Card
+                TriggerConfigCard(
+                  selectedTrigger: _selectedTrigger,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedTrigger = value;
+                    });
+                  },
+                ),
 
-                  // Trigger Configuration Card
-                  TriggerConfigCard(
-                    selectedTrigger: _selectedTrigger,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedTrigger = value;
-                      });
-                    },
-                  ),
+                const SizedBox(height: 16),
 
-                  const SizedBox(height: 16),
+                // Action Configuration Card
+                ActionConfigCard(
+                  selectedAction: _selectedAction,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedAction = value;
+                    });
+                  },
+                ),
 
-                  // Action Configuration Card
-                  ActionConfigCard(
-                    selectedAction: _selectedAction,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedAction = value;
-                      });
-                    },
-                  ),
+                const SizedBox(height: 32),
 
-                  const SizedBox(height: 32),
+                // Create Button
+                CreateAutomationButton(onPressed: _createAutomation),
 
-                  // Create Button
-                  CreateAutomationButton(
-                    onPressed: _createAutomation,
-                  ),
-
-                  const SizedBox(height: 20),
-                ],
-              ),
+                const SizedBox(height: 20),
+              ],
             ),
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
 
   void _createAutomation() {
     if (_formKey.currentState?.validate() ?? false) {
@@ -102,9 +97,7 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
           backgroundColor: Theme.of(context).colorScheme.primary,
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
 

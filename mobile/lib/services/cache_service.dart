@@ -25,7 +25,8 @@ class CacheService {
     }
 
     final duration = cacheDurationMinutes ?? _defaultCacheDurationMinutes;
-    final isExpired = DateTime.now().difference(timestamp).inMinutes >= duration;
+    final isExpired =
+        DateTime.now().difference(timestamp).inMinutes >= duration;
 
     if (isExpired) {
       remove(key);

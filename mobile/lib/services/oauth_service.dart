@@ -51,10 +51,7 @@ class OAuthService {
       }
 
       final errorMessage = _parseErrorResponse(response);
-      throw OAuthException(
-        errorMessage,
-        statusCode: response.statusCode,
-      );
+      throw OAuthException(errorMessage, statusCode: response.statusCode);
     } catch (e) {
       if (e is OAuthException) rethrow;
       throw OAuthException('Failed to initiate OAuth: ${e.toString()}');
@@ -79,11 +76,7 @@ class OAuthService {
 
       final response = await http.get(
         Uri.parse(
-          ApiConfig.oauthCallbackUrl(
-            provider,
-            code: code,
-            state: state,
-          ),
+          ApiConfig.oauthCallbackUrl(provider, code: code, state: state),
         ),
         headers: {
           'Authorization': 'Bearer $token',
@@ -96,10 +89,7 @@ class OAuthService {
       }
 
       final errorMessage = _parseErrorResponse(response);
-      throw OAuthException(
-        errorMessage,
-        statusCode: response.statusCode,
-      );
+      throw OAuthException(errorMessage, statusCode: response.statusCode);
     } catch (e) {
       if (e is OAuthException) rethrow;
       throw OAuthException('Failed to complete OAuth: ${e.toString()}');
@@ -132,10 +122,7 @@ class OAuthService {
       }
 
       final errorMessage = _parseErrorResponse(response);
-      throw OAuthException(
-        errorMessage,
-        statusCode: response.statusCode,
-      );
+      throw OAuthException(errorMessage, statusCode: response.statusCode);
     } catch (e) {
       if (e is OAuthException) rethrow;
       throw OAuthException('Failed to fetch services: ${e.toString()}');
@@ -163,10 +150,7 @@ class OAuthService {
       }
 
       final errorMessage = _parseErrorResponse(response);
-      throw OAuthException(
-        errorMessage,
-        statusCode: response.statusCode,
-      );
+      throw OAuthException(errorMessage, statusCode: response.statusCode);
     } catch (e) {
       if (e is OAuthException) rethrow;
       throw OAuthException('Failed to disconnect service: ${e.toString()}');
@@ -177,8 +161,9 @@ class OAuthService {
   Future<bool> isServiceConnected(String provider) async {
     try {
       final services = await getConnectedServices();
-      return services.connectedServices
-          .any((s) => s.serviceName.toLowerCase() == provider.toLowerCase());
+      return services.connectedServices.any(
+        (s) => s.serviceName.toLowerCase() == provider.toLowerCase(),
+      );
     } catch (e) {
       return false;
     }
@@ -188,8 +173,9 @@ class OAuthService {
   Future<ServiceToken?> getServiceToken(String provider) async {
     try {
       final services = await getConnectedServices();
-      final matchingServices = services.connectedServices
-          .where((s) => s.serviceName.toLowerCase() == provider.toLowerCase());
+      final matchingServices = services.connectedServices.where(
+        (s) => s.serviceName.toLowerCase() == provider.toLowerCase(),
+      );
       return matchingServices.isNotEmpty ? matchingServices.first : null;
     } catch (e) {
       return null;
@@ -241,5 +227,4 @@ class OAuthService {
       return 'Request failed with status ${response.statusCode}';
     }
   }
-
 }

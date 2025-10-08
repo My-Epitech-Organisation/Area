@@ -24,9 +24,7 @@ void main() {
     // Create a simple MaterialApp to test basic functionality
     const testApp = MaterialApp(
       title: 'Test App',
-      home: Scaffold(
-        body: Center(child: Text('Test Content')),
-      ),
+      home: Scaffold(body: Center(child: Text('Test Content'))),
     );
 
     await tester.pumpWidget(testApp);

@@ -117,8 +117,7 @@ class ServiceConnectionList {
 
   /// Get list of providers that are not yet connected
   List<String> get unconnectedProviders {
-    final connectedNames =
-        connectedServices.map((s) => s.serviceName).toSet();
+    final connectedNames = connectedServices.map((s) => s.serviceName).toSet();
     return availableProviders
         .where((p) => !connectedNames.contains(p))
         .toList();

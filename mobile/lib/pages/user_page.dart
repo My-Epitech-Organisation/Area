@@ -74,9 +74,7 @@ class _UserProfileSectionState extends State<UserProfileSection> {
           return Container(
             padding: const EdgeInsets.all(20),
             decoration: _boxDecoration,
-            child: const Center(
-              child: CircularProgressIndicator(),
-            ),
+            child: const Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -116,11 +114,7 @@ class _UserProfileSectionState extends State<UserProfileSection> {
               const CircleAvatar(
                 radius: 40,
                 backgroundColor: Colors.blue,
-                child: Icon(
-                  Icons.person,
-                  size: 40,
-                  color: Colors.white,
-                ),
+                child: Icon(Icons.person, size: 40, color: Colors.white),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -137,10 +131,7 @@ class _UserProfileSectionState extends State<UserProfileSection> {
                     const SizedBox(height: 4),
                     Text(
                       userProfile?['email'] ?? 'No email',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                     ),
                     const SizedBox(height: 8),
                     UserVerificationBadge(
@@ -158,10 +149,7 @@ class _UserProfileSectionState extends State<UserProfileSection> {
 }
 
 class UserVerificationBadge extends StatelessWidget {
-  const UserVerificationBadge({
-    super.key,
-    required this.isVerified,
-  });
+  const UserVerificationBadge({super.key, required this.isVerified});
 
   final bool isVerified;
 
@@ -170,20 +158,14 @@ class UserVerificationBadge extends StatelessWidget {
     final color = isVerified ? Colors.green : Colors.orange;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         isVerified ? 'Verified User' : 'Unverified User',
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w500,
-        ),
+        style: TextStyle(color: color, fontWeight: FontWeight.w500),
       ),
     );
   }
@@ -197,7 +179,9 @@ class StatisticsSection extends StatelessWidget {
     return Consumer2<AppletProvider, UserProvider>(
       builder: (context, appletProvider, userProvider, child) {
         final userProfile = userProvider.profile;
-        final activeCount = appletProvider.applets.where((a) => a.isActive).length;
+        final activeCount = appletProvider.applets
+            .where((a) => a.isActive)
+            .length;
         final totalCount = appletProvider.applets.length;
         final serviceCount = appletProvider.applets
             .map((a) => a.action.service.name)
@@ -292,10 +276,7 @@ class StatisticsSection extends StatelessWidget {
 }
 
 class UserStatusCard extends StatelessWidget {
-  const UserStatusCard({
-    super.key,
-    required this.isVerified,
-  });
+  const UserStatusCard({super.key, required this.isVerified});
 
   final bool isVerified;
 
@@ -413,12 +394,14 @@ class SettingItem extends StatelessWidget {
       title: Text(title),
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.chevron_right),
-      onTap: onTap ?? () {
-        // TODO: Implement navigation to settings pages
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$title feature coming soon!')),
-        );
-      },
+      onTap:
+          onTap ??
+          () {
+            // TODO: Implement navigation to settings pages
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('$title feature coming soon!')),
+            );
+          },
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
@@ -436,28 +419,29 @@ class LogoutSection extends StatelessWidget {
 
   Future<bool> _showLogoutConfirmation(BuildContext context) async {
     return await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirm Sign Out'),
-        content: const Text(
-          'Are you sure you want to sign out of your account?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Confirm Sign Out'),
+            content: const Text(
+              'Are you sure you want to sign out of your account?',
             ),
-            child: const Text('Sign Out'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Sign Out'),
+              ),
+            ],
           ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
   }
 
   Future<void> _performLogout(BuildContext context) async {
@@ -472,7 +456,9 @@ class LogoutSection extends StatelessWidget {
         // Close loading dialog
         Navigator.of(context).pop();
         // Navigate to login
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/login', (route) => false);
       }
     } catch (e) {
       if (context.mounted) {
