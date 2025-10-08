@@ -1,5 +1,5 @@
 # Multi-stage build for Django backend
-FROM python:3.13-slim as base
+FROM python:3.13-slim AS base
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -19,8 +19,8 @@ RUN apt-get update \
 # Set work directory
 WORKDIR /app
 
-# Install Python dependencies
-COPY requirements.txt requirements-dev.txt ./
+# Install Python dependencies (production only)
+COPY requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
