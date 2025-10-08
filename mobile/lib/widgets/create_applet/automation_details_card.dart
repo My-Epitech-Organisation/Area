@@ -3,18 +3,13 @@ import 'package:flutter/material.dart';
 class AutomationDetailsCard extends StatelessWidget {
   final TextEditingController nameController;
 
-  const AutomationDetailsCard({
-    super.key,
-    required this.nameController,
-  });
+  const AutomationDetailsCard({super.key, required this.nameController});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
