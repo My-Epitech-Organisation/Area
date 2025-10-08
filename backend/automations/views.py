@@ -1,3 +1,10 @@
+##
+## EPITECH PROJECT, 2025
+## Area
+## File description:
+## views
+##
+
 """
 API Views for the AREA automation system.
 
@@ -10,6 +17,7 @@ This module provides Django REST Framework ViewSets for:
 import time
 from typing import Any, Type
 
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
@@ -134,6 +142,17 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
         return obj.owner == request.user
 
 
+@extend_schema(
+    tags=["Areas"],
+    parameters=[
+        OpenApiParameter(
+            name="id",
+            type=int,
+            location=OpenApiParameter.PATH,
+            description="Area ID",
+        )
+    ],
+)
 class AreaViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Area CRUD operations with proper permissions.
@@ -170,6 +189,10 @@ class AreaViewSet(viewsets.ModelViewSet):
         """
         Filter Areas to only show those owned by the current user.
         """
+        # For schema generation, return an empty queryset to avoid user filtering issues
+        if getattr(self, "swagger_fake_view", False):
+            return Area.objects.none()
+
         return Area.objects.filter(owner=self.request.user).select_related(
             "action", "reaction", "action__service", "reaction__service"
         )
@@ -279,6 +302,23 @@ def about_json_view(request):
     return JsonResponse(about_data)
 
 
+@extend_schema(
+    tags=["Executions"],
+    parameters=[
+        OpenApiParameter(
+            name="id",
+            type=int,
+            location=OpenApiParameter.PATH,
+            description="Execution ID",
+        ),
+        OpenApiParameter(
+            name="area_id",
+            type=int,
+            location=OpenApiParameter.QUERY,
+            description="Filter by Area ID",
+        ),
+    ],
+)
 class ExecutionViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Read-only ViewSet for Execution journaling and monitoring.
@@ -317,6 +357,10 @@ class ExecutionViewSet(viewsets.ReadOnlyModelViewSet):
         Filter Executions to only show those from Areas owned by the current user.
         Optimized with select_related to avoid N+1 queries.
         """
+        # For schema generation, return an empty queryset to avoid user filtering issues
+        if getattr(self, "swagger_fake_view", False):
+            return Execution.objects.none()
+
         queryset = Execution.objects.filter(
             area__owner=self.request.user
         ).select_related(
