@@ -94,15 +94,13 @@ class HttpClientService {
     String url, {
     Map<String, String>? additionalHeaders,
   }) async {
-    return await _retryRequest(
-      () async {
-        final headers = await _getHeaders();
-        if (additionalHeaders != null) {
-          headers.addAll(additionalHeaders);
-        }
-        return http.get(Uri.parse(url), headers: headers);
-      },
-    );
+    return await _retryRequest(() async {
+      final headers = await _getHeaders();
+      if (additionalHeaders != null) {
+        headers.addAll(additionalHeaders);
+      }
+      return http.get(Uri.parse(url), headers: headers);
+    });
   }
 
   /// Perform POST request
@@ -111,19 +109,17 @@ class HttpClientService {
     Map<String, dynamic>? body,
     Map<String, String>? additionalHeaders,
   }) async {
-    return await _retryRequest(
-      () async {
-        final headers = await _getHeaders();
-        if (additionalHeaders != null) {
-          headers.addAll(additionalHeaders);
-        }
-        return http.post(
-          Uri.parse(url),
-          headers: headers,
-          body: body != null ? json.encode(body) : null,
-        );
-      },
-    );
+    return await _retryRequest(() async {
+      final headers = await _getHeaders();
+      if (additionalHeaders != null) {
+        headers.addAll(additionalHeaders);
+      }
+      return http.post(
+        Uri.parse(url),
+        headers: headers,
+        body: body != null ? json.encode(body) : null,
+      );
+    });
   }
 
   /// Perform PATCH request
@@ -132,19 +128,17 @@ class HttpClientService {
     Map<String, dynamic>? body,
     Map<String, String>? additionalHeaders,
   }) async {
-    return await _retryRequest(
-      () async {
-        final headers = await _getHeaders();
-        if (additionalHeaders != null) {
-          headers.addAll(additionalHeaders);
-        }
-        return http.patch(
-          Uri.parse(url),
-          headers: headers,
-          body: body != null ? json.encode(body) : null,
-        );
-      },
-    );
+    return await _retryRequest(() async {
+      final headers = await _getHeaders();
+      if (additionalHeaders != null) {
+        headers.addAll(additionalHeaders);
+      }
+      return http.patch(
+        Uri.parse(url),
+        headers: headers,
+        body: body != null ? json.encode(body) : null,
+      );
+    });
   }
 
   /// Perform DELETE request
@@ -152,15 +146,13 @@ class HttpClientService {
     String url, {
     Map<String, String>? additionalHeaders,
   }) async {
-    return await _retryRequest(
-      () async {
-        final headers = await _getHeaders();
-        if (additionalHeaders != null) {
-          headers.addAll(additionalHeaders);
-        }
-        return http.delete(Uri.parse(url), headers: headers);
-      },
-    );
+    return await _retryRequest(() async {
+      final headers = await _getHeaders();
+      if (additionalHeaders != null) {
+        headers.addAll(additionalHeaders);
+      }
+      return http.delete(Uri.parse(url), headers: headers);
+    });
   }
 
   /// Parse response and throw exception if error

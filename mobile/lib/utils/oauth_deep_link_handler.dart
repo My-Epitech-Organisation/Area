@@ -15,7 +15,8 @@ class OAuthDeepLinkHandler {
   Function(String provider, bool success, String? message)? onOAuthComplete;
 
   // Singleton pattern
-  static final OAuthDeepLinkHandler _instance = OAuthDeepLinkHandler._internal();
+  static final OAuthDeepLinkHandler _instance =
+      OAuthDeepLinkHandler._internal();
   factory OAuthDeepLinkHandler() => _instance;
   OAuthDeepLinkHandler._internal();
 
@@ -52,7 +53,6 @@ class OAuthDeepLinkHandler {
       if (pathSegments.length >= 3 &&
           pathSegments[0] == AppConfig.oauthPath &&
           pathSegments[2] == AppConfig.callbackPath) {
-
         final provider = pathSegments[1];
         final code = uri.queryParameters['code'];
         final state = uri.queryParameters['state'];
@@ -60,7 +60,8 @@ class OAuthDeepLinkHandler {
 
         if (error != null) {
           // OAuth error
-          final errorDescription = uri.queryParameters['error_description'] ?? error;
+          final errorDescription =
+              uri.queryParameters['error_description'] ?? error;
           debugPrint('OAuth error: $errorDescription');
           onOAuthComplete?.call(provider, false, errorDescription);
           return;
@@ -71,7 +72,7 @@ class OAuthDeepLinkHandler {
           onOAuthComplete?.call(
             provider,
             false,
-            'Invalid OAuth callback parameters'
+            'Invalid OAuth callback parameters',
           );
           return;
         }
@@ -84,7 +85,8 @@ class OAuthDeepLinkHandler {
             state: state,
           );
 
-          final message = result['message'] as String? ??
+          final message =
+              result['message'] as String? ??
               'Successfully connected to $provider';
 
           debugPrint('OAuth success: $message');

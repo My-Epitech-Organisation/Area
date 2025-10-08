@@ -44,10 +44,7 @@ class TokenService {
     required String authToken,
     required String refreshToken,
   }) async {
-    await Future.wait([
-      setAuthToken(authToken),
-      setRefreshToken(refreshToken),
-    ]);
+    await Future.wait([setAuthToken(authToken), setRefreshToken(refreshToken)]);
   }
 
   /// Clear all tokens from memory and storage

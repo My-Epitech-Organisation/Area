@@ -70,8 +70,11 @@ class ApiConfig {
   // OAuth2 URLs
   static String oauthInitiateUrl(String provider) =>
       '$authBaseUrl/oauth/$provider/';
-  static String oauthCallbackUrl(String provider, {required String code, required String state}) =>
-      '$authBaseUrl/oauth/$provider/callback/?code=$code&state=$state';
+  static String oauthCallbackUrl(
+    String provider, {
+    required String code,
+    required String state,
+  }) => '$authBaseUrl/oauth/$provider/callback/?code=$code&state=$state';
   static String serviceDisconnectUrl(String provider) =>
       '$authBaseUrl/services/$provider/disconnect/';
 

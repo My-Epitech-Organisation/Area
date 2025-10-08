@@ -58,9 +58,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Forgot Password'),
-      ),
+      appBar: AppBar(title: const Text('Forgot Password')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -77,27 +75,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 32),
-          const Icon(
-            Icons.lock_reset,
-            size: 80,
-            color: Colors.blue,
-          ),
+          const Icon(Icons.lock_reset, size: 80, color: Colors.blue),
           const SizedBox(height: 24),
           const Text(
             'Reset Password',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           const Text(
             'Enter your email address and we will send you a link to reset your password.',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
@@ -171,36 +159,23 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Icon(
-          Icons.check_circle,
-          size: 80,
-          color: Colors.green,
-        ),
+        const Icon(Icons.check_circle, size: 80, color: Colors.green),
         const SizedBox(height: 24),
         const Text(
           'Email Sent!',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
         Text(
           'A reset link has been sent to ${_emailController.text.trim()}',
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
-          ),
+          style: const TextStyle(fontSize: 14, color: Colors.grey),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
         const Text(
           'Please check your email and follow the instructions.',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 32),
