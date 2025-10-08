@@ -43,10 +43,7 @@ class AuthService {
     required String password,
   }) async {
     try {
-      final payload = <String, String>{
-        'username': email,
-        'password': password,
-      };
+      final payload = <String, String>{'username': email, 'password': password};
 
       if (email.contains('@')) {
         payload['email'] = email;
@@ -65,10 +62,7 @@ class AuthService {
       }
 
       final errorMessage = _parseErrorResponse(response);
-      throw AuthException(
-        errorMessage,
-        statusCode: response.statusCode,
-      );
+      throw AuthException(errorMessage, statusCode: response.statusCode);
     } catch (e) {
       if (e is AuthException) rethrow;
       throw AuthException('Connection error: ${e.toString()}');
@@ -100,10 +94,7 @@ class AuthService {
       }
 
       final errorMessage = _parseErrorResponse(response);
-      throw AuthException(
-        errorMessage,
-        statusCode: response.statusCode,
-      );
+      throw AuthException(errorMessage, statusCode: response.statusCode);
     } catch (e) {
       if (e is AuthException) rethrow;
       throw AuthException('Registration error: ${e.toString()}');
@@ -113,7 +104,6 @@ class AuthService {
   // ============================================
   // GOOGLE AUTHENTICATION
   // ============================================
-
 
   /// Enable debug logs for Google Sign-In (set to false in production)
   static const bool _enableGoogleSignInDebugLogs = true;
@@ -227,10 +217,7 @@ class AuthService {
       }
 
       final errorMessage = _parseErrorResponse(response);
-      throw AuthException(
-        errorMessage,
-        statusCode: response.statusCode,
-      );
+      throw AuthException(errorMessage, statusCode: response.statusCode);
     } catch (e) {
       if (e is AuthException) rethrow;
       throw AuthException('Connection error: ${e.toString()}');
@@ -260,10 +247,7 @@ class AuthService {
       }
 
       final errorMessage = _parseErrorResponse(response);
-      throw AuthException(
-        errorMessage,
-        statusCode: response.statusCode,
-      );
+      throw AuthException(errorMessage, statusCode: response.statusCode);
     } catch (e) {
       if (e is AuthException) rethrow;
       throw AuthException('Connection error: ${e.toString()}');
@@ -350,7 +334,8 @@ class AuthService {
         'This field may not be blank.': 'Please enter a display name.',
       },
       'password': {
-        'This password is too short.': 'Password must be at least 8 characters.',
+        'This password is too short.':
+            'Password must be at least 8 characters.',
         'This password is too common.': 'Please choose a stronger password.',
       },
     };

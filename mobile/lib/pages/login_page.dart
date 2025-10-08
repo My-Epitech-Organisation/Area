@@ -67,8 +67,9 @@ class _LoginPageState extends State<LoginPage> {
       }
     } else {
       setState(() {
-        _errorMessage = authProvider.error ??
-          (_isLogin ? 'Login failed' : 'Registration failed');
+        _errorMessage =
+            authProvider.error ??
+            (_isLogin ? 'Login failed' : 'Registration failed');
       });
     }
   }
@@ -184,10 +185,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildFormFields() {
     return Column(
       children: [
-        if (!_isLogin) ...[
-          _buildUsernameField(),
-          const SizedBox(height: 16),
-        ],
+        if (!_isLogin) ...[_buildUsernameField(), const SizedBox(height: 16)],
         _buildEmailField(),
         const SizedBox(height: 16),
         _buildPasswordField(),
@@ -347,17 +345,12 @@ class _LoginPageState extends State<LoginPage> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const ForgotPasswordPage(),
-            ),
+            MaterialPageRoute(builder: (context) => const ForgotPasswordPage()),
           );
         },
         child: const Text(
           'Forgot password ?',
-          style: TextStyle(
-            color: Colors.blue,
-            fontSize: 14,
-          ),
+          style: TextStyle(color: Colors.blue, fontSize: 14),
         ),
       ),
     );
