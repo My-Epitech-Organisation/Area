@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mobile/providers/service_catalog_provider.dart';
 import 'package:mobile/models/service.dart';
@@ -7,16 +6,13 @@ import 'package:mobile/services/services.dart';
 
 // Generate mocks
 @GenerateMocks([ServiceCatalogService])
-import 'service_catalog_provider_test.mocks.dart';
 
 void main() {
   group('ServiceCatalogProvider', () {
     late ServiceCatalogProvider provider;
-    late MockServiceCatalogService mockService;
 
     setUp(() {
       provider = ServiceCatalogProvider();
-      mockService = MockServiceCatalogService();
       // Note: In a real implementation, we'd inject the service
       // For now, we'll test the public interface
     });
