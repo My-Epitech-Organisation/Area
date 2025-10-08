@@ -46,4 +46,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 
 # Default command - ASGI with UvicornWorker for WebSocket support
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:8080 --workers ${GUNICORN_WORKERS:-3} --worker-class uvicorn.workers.UvicornWorker --timeout 60 --access-logfile - --error-logfile - area_project.asgi:application"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:8080 --workers ${GUNICORN_WORKERS:-3} --worker-class uvicorn.workers.UvicornWorker --timeout 60 --forwarded-allow-ips='*' --access-logfile - --error-logfile - area_project.asgi:application"]
