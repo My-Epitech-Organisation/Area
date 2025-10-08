@@ -15,9 +15,8 @@ const OAuthCallback: React.FC = () => {
     const handleCallback = async () => {
       const code = searchParams.get('code');
       const state = searchParams.get('state');
-      const service = searchParams.get('service');
-      const created = searchParams.get('created');
-      const expires_at = searchParams.get('expires_at');
+  const service = searchParams.get('service');
+  const created = searchParams.get('created');
       const error = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
 
