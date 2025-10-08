@@ -49,13 +49,21 @@ void main() {
 
     test('Service model integration', () {
       final service = Service(
+        id: 1,
         name: 'test',
-        actions: [ServiceAction(name: 'action1', description: 'Test action')],
+        actions: [
+          ServiceAction(id: 1, name: 'action1', description: 'Test action'),
+        ],
         reactions: [
-          ServiceReaction(name: 'reaction1', description: 'Test reaction'),
+          ServiceReaction(
+            id: 2,
+            name: 'reaction1',
+            description: 'Test reaction',
+          ),
         ],
       );
 
+      expect(service.id, 1);
       expect(service.name, 'test');
       expect(service.actions.length, 1);
       expect(service.reactions.length, 1);
