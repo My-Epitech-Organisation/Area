@@ -147,7 +147,12 @@ jobs:
       - name: Run linting
         run: |
           cd mobile
-          flutter analyze
+          if ./scripts/lint-check.sh; then
+            echo "Linting succeeded"
+          else
+            echo "Linting failed"
+            exit 1
+          fi
 
       - name: Run tests
         run: |
