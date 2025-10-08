@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Bouton principal de création d'automation avec un design gradient
-/// Ce bouton est responsif et accessible
 class CreateAutomationButton extends StatelessWidget {
   final VoidCallback onPressed;
   final String label;

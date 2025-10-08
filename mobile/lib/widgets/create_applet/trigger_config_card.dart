@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Widget de carte pour la configuration du déclencheur (trigger)
-/// Permet de sélectionner le service qui déclenchera l'automation
 class TriggerConfigCard extends StatelessWidget {
   final String? selectedTrigger;
   final ValueChanged<String?> onChanged;
