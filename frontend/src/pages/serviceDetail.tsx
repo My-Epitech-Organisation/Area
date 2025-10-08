@@ -52,7 +52,8 @@ const ServiceDetail: React.FC = () => {
     const fetchServiceDetails = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/about.json`);
+        const baseUrl = API_BASE.replace(/\/api$/, '');
+        const res = await fetch(`${baseUrl}/about.json`);
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
