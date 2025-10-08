@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
+
 type ServiceAction = {
   name: string;
   description: string;
@@ -79,7 +81,7 @@ const Areaction: React.FC = () => {
     const fetchServices = async () => {
       setLoading(true);
       try {
-        const res = await fetch("http://localhost:8080/about.json");
+        const res = await fetch(`${API_BASE}/about.json`);
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
