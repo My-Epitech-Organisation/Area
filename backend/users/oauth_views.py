@@ -230,15 +230,45 @@ class OAuthCallbackView(APIView):
             action = "connected" if created else "reconnected"
             logger.info(f"User {user.email} {action} to {provider}")
 
-            return Response(
-                {
-                    "message": f"Successfully {action} to {provider}",
-                    "service": provider,
-                    "created": created,
-                    "expires_at": expires_at.isoformat() if expires_at else None,
-                },
-                status=status.HTTP_200_OK,
-            )
+            # If the request came from a browser (Accept header includes text/html),
+            # redirect to the frontend callback page so the SPA can show a friendly UI.
+            accept = request.META.get("HTTP_ACCEPT", "")
+            is_browser = "text/html" in accept or "*/*" in accept
+
+            response_payload = {
+                "message": f"Successfully {action} to {provider}",
+                "service": provider,
+                "created": created,
+                "expires_at": expires_at.isoformat() if expires_at else None,
+            }
+
+            if is_browser:
+                # Determine frontend base URL: prefer explicit setting, fallback to
+                # request.build_absolute_uri with root path.
+                frontend_base = getattr(settings, "FRONTEND_URL", None)
+                if not frontend_base:
+                    frontend_base = request.build_absolute_uri("/").rstrip("/")
+
+                # Construct redirect URL to SPA callback route. Include a small summary
+                # via query params so the SPA can display the result.
+                from urllib.parse import urlencode
+
+                redirect_qs = urlencode(
+                    {
+                        "service": response_payload["service"],
+                        "created": str(response_payload["created"]).lower(),
+                        "expires_at": response_payload["expires_at"] or "",
+                    }
+                )
+
+                redirect_url = f"{frontend_base}/auth/callback/{provider}?{redirect_qs}"
+
+                logger.debug(f"Redirecting browser OAuth callback to {redirect_url}")
+                from django.http import HttpResponseRedirect
+
+                return HttpResponseRedirect(redirect_url)
+
+            return Response(response_payload, status=status.HTTP_200_OK)
 
         except OAuthError as e:
             logger.error(f"OAuth2 error during callback: {str(e)}")
