@@ -59,6 +59,7 @@ services:
     volumes:
       - ./backend:/app  # HOT RELOAD: Mount source code
       - backend_logs:/app/logs
+    command: ["celery", "-A", "area_project", "worker", "--loglevel=info", "--autoreload"]
 
   # ---------------------------------------------------------------------------
   # Celery Beat - Development Overrides
