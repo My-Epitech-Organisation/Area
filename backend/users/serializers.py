@@ -70,4 +70,3 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):  # type: ignore[override]
         # SimpleJWT internally expects a field matching USERNAME_FIELD
         return super().validate(attrs)
-
