@@ -314,3 +314,6 @@ except Exception as e:
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+
+# OAuth2 providers that require user authentication
+OAUTH2_PROVIDERS = ["github", "google"]

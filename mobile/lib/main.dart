@@ -13,7 +13,7 @@ import 'utils/oauth_deep_link_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Try to load .env file from different possible locations
   try {
     await dotenv.load(fileName: ".env");
@@ -26,7 +26,7 @@ void main() async {
       // Continue without .env - app will use fallback values
     }
   }
-  
+
   DebugHelper.printConfiguration();
   runApp(const MyApp());
 }
@@ -97,13 +97,16 @@ class _MyAppState extends State<MyApp> {
     }
 
     // Handle links while app is running
-    _sub = _appLinks.uriLinkStream.listen((Uri? uri) {
-      if (uri != null) {
-        _handleDeepLink(uri);
-      }
-    }, onError: (err) {
-      debugPrint('Error listening to link stream: $err');
-    });
+    _sub = _appLinks.uriLinkStream.listen(
+      (Uri? uri) {
+        if (uri != null) {
+          _handleDeepLink(uri);
+        }
+      },
+      onError: (err) {
+        debugPrint('Error listening to link stream: $err');
+      },
+    );
   }
 
   void _handleDeepLink(Uri uri) {
@@ -166,7 +169,10 @@ class _MyAppState extends State<MyApp> {
             ),
             filled: true,
             fillColor: Colors.grey.withValues(alpha: 0.1),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
           ),
           cardTheme: const CardThemeData(
             elevation: 4,

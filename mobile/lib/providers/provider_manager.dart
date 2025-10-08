@@ -14,7 +14,7 @@ class ProviderManager {
 
   static Future<void> _loadUserData(BuildContext context) async {
     if (!context.mounted) return;
-    
+
     await Future.wait([
       context.read<UserProvider>().loadProfile(),
       context.read<AppletProvider>().loadApplets(),
@@ -32,7 +32,7 @@ class ProviderManager {
     await authProvider.logout();
 
     if (!context.mounted) return;
-    
+
     context.read<UserProvider>().clear();
     context.read<AppletProvider>().clear();
     context.read<ServiceCatalogProvider>().clear();
@@ -40,7 +40,7 @@ class ProviderManager {
 
   static Future<void> refreshAll(BuildContext context) async {
     if (!context.mounted) return;
-    
+
     await Future.wait([
       context.read<UserProvider>().loadProfile(forceRefresh: true),
       context.read<AppletProvider>().loadApplets(forceRefresh: true),

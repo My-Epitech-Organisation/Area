@@ -6,7 +6,7 @@ class UserProvider extends ChangeNotifier {
 
   Map<String, dynamic>? _profile;
   Map<String, dynamic>? _statistics;
-  
+
   bool _isLoadingProfile = false;
   bool _isLoadingStats = false;
   String? _error;
@@ -40,7 +40,9 @@ class UserProvider extends ChangeNotifier {
       _error = null;
       notifyListeners();
 
-      _statistics = await _userService.getUserStatistics(forceRefresh: forceRefresh);
+      _statistics = await _userService.getUserStatistics(
+        forceRefresh: forceRefresh,
+      );
 
       _isLoadingStats = false;
       notifyListeners();
