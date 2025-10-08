@@ -53,6 +53,8 @@ services:
     restart: always
     build:
       context: ./backend
+    ports:
+      - "${BACKEND_PORT:-8000}:8080"  # Expose API
     environment:
       - DEBUG=False
       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
@@ -89,6 +91,8 @@ services:
         limits:
           cpus: '1'
           memory: 1G
+    healthcheck:
+      disable: true  # Worker is not an HTTP service
 
   # ---------------------------------------------------------------------------
   # Celery Beat - Production Overrides
@@ -103,6 +107,8 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
+    healthcheck:
+      disable: true  # Beat is not an HTTP service
 
   # ---------------------------------------------------------------------------
   # Flower - Production Overrides
@@ -110,6 +116,8 @@ services:
   flower:
     container_name: area_flower_prod
     restart: always
+    ports:
+      - "5555:5555"  # Expose Flower UI
     environment:
       - FLOWER_BASIC_AUTH=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-changeme}
     deploy:
@@ -117,6 +125,12 @@ services:
         limits:
           cpus: '0.5'
           memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5555/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ---------------------------------------------------------------------------
   # Mobile Client - Production Overrides
