@@ -364,6 +364,14 @@ LOGGING = {
     },
 }
 
+# Production: Log to stdout/stderr instead of file (better for Docker logs)
+if os.getenv("ENVIRONMENT") == "production":
+    LOGGING["handlers"]["file"] = {
+        "level": os.getenv("LOG_LEVEL", "INFO"),
+        "class": "logging.StreamHandler",  # stdout instead of FileHandler
+        "formatter": "verbose",
+    }
+
 # OAuth2 Provider Configuration
 OAUTH2_PROVIDERS = {
     "google": {
