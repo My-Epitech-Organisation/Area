@@ -25,12 +25,12 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-echo -e "${GREEN}Step 1/8: System Update${NC}"
+echo -e "${GREEN}Step 1/10: System Update${NC}"
 apt-get update
 apt-get upgrade -y
 
 echo ""
-echo -e "${GREEN}Step 2/8: Install Required Packages${NC}"
+echo -e "${GREEN}Step 2/10: Install Required Packages${NC}"
 apt-get install -y \
     curl \
     git \
@@ -42,7 +42,7 @@ apt-get install -y \
     vim
 
 echo ""
-echo -e "${GREEN}Step 3/8: Install Docker${NC}"
+echo -e "${GREEN}Step 3/10: Install Docker${NC}"
 if ! command -v docker &> /dev/null; then
     curl -fsSL https://get.docker.com -o get-docker.sh
     sh get-docker.sh
@@ -55,7 +55,7 @@ else
 fi
 
 echo ""
-echo -e "${GREEN}Step 4/8: Install Docker Compose${NC}"
+echo -e "${GREEN}Step 4/10: Install Docker Compose${NC}"
 if ! command -v docker-compose &> /dev/null; then
     curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     chmod +x /usr/local/bin/docker-compose
@@ -65,19 +65,19 @@ else
 fi
 
 echo ""
-echo -e "${GREEN}Step 5/8: Configure Firewall (UFW)${NC}"
+echo -e "${GREEN}Step 5/10: Configure Firewall (UFW)${NC}"
 ufw --force enable
 ufw default deny incoming
 ufw default allow outgoing
 ufw allow ssh
-ufw allow http
-ufw allow https
-ufw allow 8080/tcp  # Backend API
-ufw allow 8081/tcp  # Frontend
+ufw allow http   # Port 80 for Let's Encrypt challenges and HTTP→HTTPS redirect
+ufw allow https  # Port 443 for HTTPS
+# Note: Docker containers (8000, 8081) are only accessible via nginx proxy
+# No need to expose them directly to the internet
 echo -e "${GREEN}Firewall configured${NC}"
 
 echo ""
-echo -e "${GREEN}Step 6/8: Create Dedicated User${NC}"
+echo -e "${GREEN}Step 6/10: Create Dedicated User${NC}"
 # Check if user already exists
 if id "areaction" &>/dev/null; then
     echo -e "${YELLOW}User 'areaction' already exists${NC}"
@@ -98,7 +98,7 @@ else
 fi
 
 echo ""
-echo -e "${GREEN}Step 7/8: Create Application Directory${NC}"
+echo -e "${GREEN}Step 7/10: Create Application Directory${NC}"
 mkdir -p /opt/area
 chown -R areaction:areaction /opt/area
 cd /opt/area
@@ -121,7 +121,7 @@ else
 fi
 
 echo ""
-echo -e "${GREEN}Step 8/8: Environment Configuration${NC}"
+echo -e "${GREEN}Step 8/10: Environment Configuration${NC}"
 echo -e "${YELLOW}Creating production .env file...${NC}"
 
 if [ ! -f .env ]; then
@@ -145,8 +145,18 @@ REDIS_URL=redis://redis:6379/0
 REDIS_PORT=6379
 
 # Ports
-BACKEND_PORT=8080
+BACKEND_PORT=8000
 FRONTEND_PORT=8081
+
+# Frontend API URL (used at build time)
+VITE_API_BASE=https://areaction.app/api
+
+# Django Superuser (Optional - created automatically on first startup if set)
+DJANGO_SUPERUSER_EMAIL=admin@areaction.app
+DJANGO_SUPERUSER_PASSWORD=
+
+# Gunicorn Configuration
+GUNICORN_WORKERS=4
 
 # OAuth2 - Google
 GOOGLE_CLIENT_ID=
@@ -190,6 +200,12 @@ ENVEOF
     sed -i "s|DB_PASSWORD=\$|DB_PASSWORD=$DB_PASSWORD|" .env
     echo -e "${GREEN}✓ DB_PASSWORD generated${NC}"
 
+    # Django Superuser password (use | as delimiter to avoid issues with / in base64)
+    SUPERUSER_PASSWORD=$(openssl rand -base64 24 | tr -d '\n' | tr -d '/' | tr -d '+')
+    sed -i "s|DJANGO_SUPERUSER_PASSWORD=\$|DJANGO_SUPERUSER_PASSWORD=$SUPERUSER_PASSWORD|" .env
+    echo -e "${GREEN}✓ DJANGO_SUPERUSER_PASSWORD generated: $SUPERUSER_PASSWORD${NC}"
+    echo -e "${YELLOW}  Save this password! You'll need it to login as admin@areaction.app${NC}"
+
     echo ""
     echo -e "${YELLOW}Manual configuration required:${NC}"
     read -p "Google OAuth Client ID: " GOOGLE_CLIENT_ID
@@ -218,7 +234,7 @@ else
 fi
 
 echo ""
-echo -e "${GREEN}Step 8/8: SSL Certificate Setup${NC}"
+echo -e "${GREEN}Step 9/10: SSL Certificate Setup${NC}"
 echo -e "${YELLOW}Setting up Let's Encrypt SSL certificate...${NC}"
 
 read -p "Enter email for Let's Encrypt notifications: " LETSENCRYPT_EMAIL
@@ -296,7 +312,7 @@ server {
 
     # Backend API
     location /api/ {
-        proxy_pass http://localhost:8080/;
+        proxy_pass http://localhost:8000/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -306,7 +322,7 @@ server {
 
     # WebSocket support
     location /ws/ {
-        proxy_pass http://localhost:8080/ws/;
+        proxy_pass http://localhost:8000/ws/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
