@@ -35,9 +35,11 @@ db.sqlite3
 .vscode/
 .idea/
 
-# Environment variables
+# Environment variables - Keep templates, ignore actual credentials
 *.env
 *.env.local
+!.env.example
+!.env.production
 
 # PoC
 Poc/
