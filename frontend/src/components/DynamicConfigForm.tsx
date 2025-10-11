@@ -49,8 +49,8 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
               type="number"
               value={currentValue}
               onChange={(e) => {
-                const val = property.type === 'integer' 
-                  ? parseInt(e.target.value, 10) 
+                const val = property.type === 'integer'
+                  ? parseInt(e.target.value, 10)
                   : parseFloat(e.target.value);
                 handleFieldChange(fieldName, isNaN(val) ? '' : val);
               }}

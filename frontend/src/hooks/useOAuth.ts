@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { 
-  ConnectedServicesResponse, 
+import type {
+  ConnectedServicesResponse,
   OAuthInitiateResponse,
-  ServiceConnection 
+  ServiceConnection
 } from '../types/api';
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'http://localhost:8080';
@@ -90,10 +90,10 @@ export const useInitiateOAuth = () => {
       }
 
       const data: OAuthInitiateResponse = await response.json();
-      
+
       // Redirect to OAuth provider
       window.location.href = data.redirect_url;
-      
+
       return data;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
@@ -163,9 +163,9 @@ export const useDisconnectService = () => {
  */
 export const useIsServiceConnected = (serviceName: string): boolean => {
   const { services, loading } = useConnectedServices();
-  
+
   if (loading) return false;
-  
+
   return services.some(
     service => service.service_name.toLowerCase() === serviceName.toLowerCase() && !service.is_expired
   );
