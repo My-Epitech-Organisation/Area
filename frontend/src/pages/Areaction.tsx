@@ -184,8 +184,6 @@ const Areaction: React.FC = () => {
       reaction: selectedReaction
     };
 
-    console.log("Creating automation:", automation);
-
     setMessage("Automation created successfully!");
     setMessageType('success');
   };
