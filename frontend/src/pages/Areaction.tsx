@@ -355,7 +355,7 @@ const Areaction: React.FC = () => {
                       {getActionsForService(selectedActionService).find(a => a.name === selectedAction)?.description}
                     </p>
                   )}
-                  
+
                   {/* Dynamic configuration form for action */}
                   {selectedAction && apiActions && (() => {
                     const actionObj = findActionByName(apiActions, selectedAction);
@@ -458,7 +458,7 @@ const Areaction: React.FC = () => {
                       {getReactionsForService(selectedReactionService).find(r => r.name === selectedReaction)?.description}
                     </p>
                   )}
-                  
+
                   {/* Dynamic configuration form for reaction */}
                   {selectedReaction && apiReactions && (() => {
                     const reactionObj = findReactionByName(apiReactions, selectedReaction);

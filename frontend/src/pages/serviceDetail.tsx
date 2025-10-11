@@ -26,12 +26,12 @@ const ServiceDetail: React.FC = () => {
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // OAuth hooks
   const { services: connectedServices, loading: loadingOAuth } = useConnectedServices();
   const { initiateOAuth, loading: connectingOAuth } = useInitiateOAuth();
   const { disconnectService, loading: disconnectingOAuth } = useDisconnectService();
-  
+
   const imageModules = import.meta.glob("../assets/*.{png,jpg,jpeg,svg,gif}", { eager: true }) as Record<string, { default: string }>;
   const imagesByName: Record<string, string> = {};
 
@@ -108,20 +108,20 @@ const ServiceDetail: React.FC = () => {
   }
 
   const logo = resolveLogo(service.logo, service.name);
-  
+
   // Check if this service requires OAuth and if it's connected
   const oauthProviders = ['github', 'google', 'gmail'];
   const requiresOAuth = service && oauthProviders.includes(service.name.toLowerCase());
   const isConnected = requiresOAuth && connectedServices.some(
     s => s.service_name.toLowerCase() === service.name.toLowerCase() && !s.is_expired
   );
-  
+
   const handleConnect = async () => {
     if (service) {
       await initiateOAuth(service.name.toLowerCase());
     }
   };
-  
+
   const handleDisconnect = async () => {
     if (service && window.confirm(`Are you sure you want to disconnect ${service.name}?`)) {
       const success = await disconnectService(service.name.toLowerCase());
@@ -161,7 +161,7 @@ const ServiceDetail: React.FC = () => {
                 <h1 className="text-3xl md:text-4xl font-bold text-white text-center md:text-left">
                   {service.name.charAt(0).toUpperCase() + service.name.slice(1)}
                 </h1>
-                
+
                 {/* OAuth Connection Status */}
                 {requiresOAuth && (
                   <div className="flex items-center gap-3">
@@ -205,7 +205,7 @@ const ServiceDetail: React.FC = () => {
                   </div>
                 )}
               </div>
-              
+
               <div className="mt-8 grid gap-8 md:grid-cols-2">
                 <div>
                   <h2 className="text-xl font-semibold text-indigo-300 mb-4 flex items-center gap-2">
