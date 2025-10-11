@@ -17,3 +17,11 @@ export const getStoredUser = (): User | null => {
     return null;
   }
 };
+
+export const getAccessToken = (): string | null => {
+  const token =
+    localStorage.getItem("access") ||
+    localStorage.getItem("access_token") ||
+    localStorage.getItem("token");
+  return token;
+};
