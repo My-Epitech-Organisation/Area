@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/service_catalog_provider.dart';
+import '../../providers/connected_services_provider.dart';
 import '../../utils/service_icons.dart';
+import '../../config/service_provider_config.dart';
 
 enum SelectorType { trigger, action }
 
 /// Generic card for selecting a service and then an action/reaction from that service
-class ServiceActionSelectorCard extends StatelessWidget {
+class ServiceActionSelectorCard extends StatefulWidget {
   final String title;
   final IconData titleIcon;
   final SelectorType selectorType;
@@ -14,6 +16,7 @@ class ServiceActionSelectorCard extends StatelessWidget {
   final String? selectedAction;
   final ValueChanged<String?> onServiceChanged;
   final ValueChanged<String?> onActionChanged;
+  final bool filterByConnectedServices;
 
   const ServiceActionSelectorCard({
     super.key,
@@ -24,52 +27,72 @@ class ServiceActionSelectorCard extends StatelessWidget {
     required this.selectedAction,
     required this.onServiceChanged,
     required this.onActionChanged,
+    this.filterByConnectedServices = true,
   });
 
   @override
+  State<ServiceActionSelectorCard> createState() => _ServiceActionSelectorCardState();
+}
+
+class _ServiceActionSelectorCardState extends State<ServiceActionSelectorCard> {
+  bool _showOnlyConnected = true;
+
+  @override
   Widget build(BuildContext context) {
-    return Consumer<ServiceCatalogProvider>(
-      builder: (context, serviceProvider, child) {
+    return Consumer2<ServiceCatalogProvider, ConnectedServicesProvider>(
+      builder: (context, serviceProvider, connectedProvider, child) {
         // Filter services based on selector type
-        final filteredServices = serviceProvider.services
+        var filteredServices = serviceProvider.services
             .where(
-              (service) => selectorType == SelectorType.trigger
+              (service) => widget.selectorType == SelectorType.trigger
                   ? service.actions.isNotEmpty
                   : service.reactions.isNotEmpty,
             )
             .toList();
 
+        // Further filter by connected services if enabled
+        if (widget.filterByConnectedServices && _showOnlyConnected) {
+          filteredServices = filteredServices.where((service) {
+            // Services that don't require OAuth are always available
+            if (!ServiceProviderConfig.requiresOAuth(service.name)) {
+              return true;
+            }
+            // OAuth services must be connected
+            return connectedProvider.isServiceConnected(service.name);
+          }).toList();
+        }
+
         // Get labels and icons based on selector type
-        final serviceLabel = selectorType == SelectorType.trigger
+        final serviceLabel = widget.selectorType == SelectorType.trigger
             ? 'Trigger Service'
             : 'Action Service';
-        final serviceHint = selectorType == SelectorType.trigger
+        final serviceHint = widget.selectorType == SelectorType.trigger
             ? 'Choose the triggering service'
             : 'Choose the executing service';
-        final serviceHelperText = selectorType == SelectorType.trigger
+        final serviceHelperText = widget.selectorType == SelectorType.trigger
             ? 'Select the service that will trigger your automation'
             : 'Select the service that will execute the action';
-        final serviceIcon = selectorType == SelectorType.trigger
+        final serviceIcon = widget.selectorType == SelectorType.trigger
             ? Icons.sensors
             : Icons.call_to_action;
 
-        final actionLabel = selectorType == SelectorType.trigger
+        final actionLabel = widget.selectorType == SelectorType.trigger
             ? 'Action Trigger'
             : 'Reaction';
-        final actionHint = selectorType == SelectorType.trigger
+        final actionHint = widget.selectorType == SelectorType.trigger
             ? 'Choose the triggering action'
             : 'Choose the action to perform';
-        final actionHelperText = selectorType == SelectorType.trigger
+        final actionHelperText = widget.selectorType == SelectorType.trigger
             ? 'Select the action that will trigger your automation'
             : 'Select the action that your automation should perform';
-        final actionIcon = selectorType == SelectorType.trigger
+        final actionIcon = widget.selectorType == SelectorType.trigger
             ? Icons.play_circle_outline
             : Icons.flash_on;
 
-        final serviceValidatorMessage = selectorType == SelectorType.trigger
+        final serviceValidatorMessage = widget.selectorType == SelectorType.trigger
             ? 'Please select a trigger service'
             : 'Please select an action service';
-        final actionValidatorMessage = selectorType == SelectorType.trigger
+        final actionValidatorMessage = widget.selectorType == SelectorType.trigger
             ? 'Please select a trigger action'
             : 'Please select a reaction';
 
@@ -86,27 +109,79 @@ class ServiceActionSelectorCard extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      titleIcon,
+                      widget.titleIcon,
                       color: Theme.of(context).colorScheme.primary,
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
+                    Expanded(
+                      child: Text(
+                        widget.title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
+                    // Toggle for filtering by connected services
+                    if (widget.filterByConnectedServices)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Connected only',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          Switch(
+                            value: _showOnlyConnected,
+                            onChanged: (value) {
+                              setState(() {
+                                _showOnlyConnected = value;
+                              });
+                            },
+                            activeColor: Theme.of(context).colorScheme.primary,
+                          ),
+                        ],
+                      ),
                   ],
                 ),
+                
+                // Info banner when filter is on but no services match
+                if (widget.filterByConnectedServices && _showOnlyConnected && filteredServices.isEmpty)
+                  Container(
+                    margin: const EdgeInsets.only(top: 12, bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          color: Theme.of(context).colorScheme.error,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'No connected services available. Please connect a service or turn off the filter.',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onErrorContainer,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 const SizedBox(height: 16),
 
                 // Service Selection
                 Semantics(
-                  label: '$title service selection',
+                  label: '${widget.title} service selection',
                   hint: serviceHelperText,
                   child: DropdownButtonFormField<String>(
                     isExpanded: true,
-                    initialValue: selectedService,
+                    initialValue: widget.selectedService,
                     decoration: InputDecoration(
                       labelText: serviceLabel,
                       hintText: serviceHint,
@@ -117,6 +192,9 @@ class ServiceActionSelectorCard extends StatelessWidget {
                       helperText: serviceHelperText,
                     ),
                     items: filteredServices.map((service) {
+                      final isConnected = connectedProvider.isServiceConnected(service.name);
+                      final requiresOAuth = ServiceProviderConfig.requiresOAuth(service.name);
+                      
                       return DropdownMenuItem(
                         value: service.name,
                         child: Row(
@@ -127,12 +205,18 @@ class ServiceActionSelectorCard extends StatelessWidget {
                               color: Theme.of(context).colorScheme.primary,
                             ),
                             const SizedBox(width: 8),
-                            Text(service.displayName),
+                            Expanded(child: Text(service.displayName)),
+                            if (requiresOAuth && isConnected)
+                              Icon(
+                                Icons.check_circle,
+                                size: 16,
+                                color: Colors.green,
+                              ),
                           ],
                         ),
                       );
                     }).toList(),
-                    onChanged: onServiceChanged,
+                    onChanged: widget.onServiceChanged,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return serviceValidatorMessage;
@@ -145,13 +229,13 @@ class ServiceActionSelectorCard extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // Action/Reaction Selection - Only show when service is selected
-                if (selectedService != null)
+                if (widget.selectedService != null)
                   Semantics(
-                    label: '$title action selection',
+                    label: '${widget.title} action selection',
                     hint: actionHelperText,
                     child: DropdownButtonFormField<String>(
                       isExpanded: true,
-                      initialValue: selectedAction,
+                      initialValue: widget.selectedAction,
                       decoration: InputDecoration(
                         labelText: actionLabel,
                         hintText: actionHint,
@@ -162,9 +246,9 @@ class ServiceActionSelectorCard extends StatelessWidget {
                         helperText: actionHelperText,
                       ),
                       items:
-                          (selectorType == SelectorType.trigger
+                          (widget.selectorType == SelectorType.trigger
                               ? serviceProvider
-                                    .getActionsForService(selectedService!)
+                                    .getActionsForService(widget.selectedService!)
                                     ?.map((action) {
                                       return DropdownMenuItem(
                                         value: action.name,
@@ -173,7 +257,7 @@ class ServiceActionSelectorCard extends StatelessWidget {
                                     })
                                     .toList()
                               : serviceProvider
-                                    .getReactionsForService(selectedService!)
+                                    .getReactionsForService(widget.selectedService!)
                                     ?.map((reaction) {
                                       return DropdownMenuItem(
                                         value: reaction.name,
@@ -182,7 +266,7 @@ class ServiceActionSelectorCard extends StatelessWidget {
                                     })
                                     .toList()) ??
                           [],
-                      onChanged: onActionChanged,
+                      onChanged: widget.onActionChanged,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return actionValidatorMessage;
