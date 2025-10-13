@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useActions, useReactions, useCreateArea } from "../hooks/useApi";
+import { findActionByName, findReactionByName, generateAreaName } from "../utils/areaHelpers";
+import { DynamicConfigForm } from "../components/DynamicConfigForm";
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
 
@@ -28,6 +31,11 @@ const Areaction: React.FC = () => {
   const preselectedAction = queryParams.get('action');
   const preselectedReaction = queryParams.get('reaction');
 
+  // Fetch actions and reactions from API
+  const { data: apiActions, loading: loadingActions, error: errorActions } = useActions();
+  const { data: apiReactions, loading: loadingReactions, error: errorReactions } = useReactions();
+  const { createArea, loading: creatingArea } = useCreateArea();
+
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +44,8 @@ const Areaction: React.FC = () => {
   const [selectedReactionService, setSelectedReactionService] = useState<string | null>(null);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
+  const [actionConfig, setActionConfig] = useState<Record<string, any>>({});
+  const [reactionConfig, setReactionConfig] = useState<Record<string, any>>({});
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<'error' | 'success' | null>(null);
 
@@ -81,7 +91,8 @@ const Areaction: React.FC = () => {
     const fetchServices = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/about.json`);
+        const baseUrl = API_BASE.replace(/\/api$/, '');
+        const res = await fetch(`${baseUrl}/about.json`);
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
@@ -161,7 +172,7 @@ const Areaction: React.FC = () => {
     setSelectedReaction(reactions.length > 0 ? reactions[0].name : null);
   };
 
-  const handleCreateAutomation = () => {
+  const handleCreateAutomation = async () => {
     const missingFields: string[] = [];
     if (!selectedActionService)
         missingFields.push("Action Service");
@@ -184,15 +195,32 @@ const Areaction: React.FC = () => {
       reaction: selectedReaction
     };
 
-    setMessage("Automation created successfully!");
-    setMessageType('success');
+    console.log("Creating automation:", automation);
+
+      setMessage("Automation created successfully!");
+      setMessageType('success');
+
+      // Redirect to dashboard after 1.5 seconds
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1500);
+    } catch (err: any) {
+      setMessage(err.message || "Failed to create automation");
+      setMessageType('error');
+    }
   };
 
   const formatName = (name: string): string => {
     return name.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
 
-  if (loading) {
+  // Combine loading states
+  const isLoading = loading || loadingActions || loadingReactions;
+
+  // Combine error states
+  const combinedError = error || errorActions || errorReactions;
+
+  if (isLoading) {
     return (
       <div className="w-screen min-h-screen bg-gradient-to-br from-black/90 via-gray-900/80 to-indigo-950 flex flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-500"></div>
@@ -201,12 +229,12 @@ const Areaction: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (combinedError) {
     return (
       <div className="w-screen min-h-screen bg-gradient-to-br from-black/90 via-gray-900/80 to-indigo-950 flex flex-col items-center justify-center">
         <div className="max-w-2xl w-full bg-white/10 backdrop-blur-lg rounded-xl p-8 text-center">
           <h2 className="text-2xl font-bold text-white mb-4">Error</h2>
-          <p className="text-rose-300">{error}</p>
+          <p className="text-rose-300">{combinedError}</p>
           <button
             onClick={() => navigate("/services")}
             className="mt-6 inline-block px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
@@ -309,6 +337,21 @@ const Areaction: React.FC = () => {
                       {getActionsForService(selectedActionService).find(a => a.name === selectedAction)?.description}
                     </p>
                   )}
+
+                  {/* Dynamic configuration form for action */}
+                  {selectedAction && apiActions && (() => {
+                    const actionObj = findActionByName(apiActions, selectedAction);
+                    return actionObj?.config_schema && (
+                      <div className="mt-4">
+                        <DynamicConfigForm
+                          schema={actionObj.config_schema}
+                          values={actionConfig}
+                          onChange={setActionConfig}
+                          title="Action Configuration"
+                        />
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -397,6 +440,21 @@ const Areaction: React.FC = () => {
                       {getReactionsForService(selectedReactionService).find(r => r.name === selectedReaction)?.description}
                     </p>
                   )}
+
+                  {/* Dynamic configuration form for reaction */}
+                  {selectedReaction && apiReactions && (() => {
+                    const reactionObj = findReactionByName(apiReactions, selectedReaction);
+                    return reactionObj?.config_schema && (
+                      <div className="mt-4">
+                        <DynamicConfigForm
+                          schema={reactionObj.config_schema}
+                          values={reactionConfig}
+                          onChange={setReactionConfig}
+                          title="Reaction Configuration"
+                        />
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -447,17 +505,26 @@ const Areaction: React.FC = () => {
         <div className="mt-10 flex justify-center">
           <button
             onClick={handleCreateAutomation}
-            disabled={!selectedActionService || !selectedReactionService || !selectedAction || !selectedReaction}
+            disabled={!selectedActionService || !selectedReactionService || !selectedAction || !selectedReaction || creatingArea}
             className={`px-8 py-4 rounded-xl font-medium flex items-center gap-2 transition-colors ${
-              (!selectedActionService || !selectedReactionService || !selectedAction || !selectedReaction)
+              (!selectedActionService || !selectedReactionService || !selectedAction || !selectedReaction || creatingArea)
                 ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
                 : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white'
             }`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
-            Create Automation
+            {creatingArea ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                Creating...
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                Create Automation
+              </>
+            )}
           </button>
         </div>
       </main>
