@@ -14,6 +14,7 @@ import About from "./pages/about";
 import Dashboard from "./pages/dashboard";
 import Login from "./pages/login";
 import Signup from "./pages/signup";
+import Profile from "./pages/profile";
 import Navbar from "./components/Navbar";
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/profile" element={<Profile />} />
         <Route index element={<Homepage />} />
       </Routes>
     </BrowserRouter>
