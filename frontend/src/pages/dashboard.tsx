@@ -8,7 +8,7 @@
 import React, {useState, useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import type { Service, User } from "../types";
-import { getStoredUser, getAccessToken } from "../utils/helper";
+import { getStoredUser, getAccessToken, fetchUserData } from "../utils/helper";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 
@@ -80,16 +80,6 @@ Object.keys(imageModules).forEach((p) => {
   imagesByName[name] = (imageModules as any)[p].default;
 });
 
-const originalFetch = window.fetch;
-window.fetch = async function(input: RequestInfo | URL, init?: RequestInit) {
-  try {
-    const response = await originalFetch(input, init);
-    return response;
-  } catch (error) {
-    throw error;
-  }
-};
-
 const Dashboard: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [services, setServices] = useState<Service[]>([]);
@@ -146,27 +136,13 @@ const Dashboard: React.FC = () => {
       }
     };
 
-    const fetchUserData = async () => {
+    const loadUserData = async () => {
       if (accessToken && !storedUser) {
         try {
-          const userResponse = await fetch(`${API_BASE}/auth/me/`, {
-            headers: {
-              'Authorization': `Bearer ${accessToken}`
-            }
-          });
-          if (userResponse.ok) {
-            const userData = await userResponse.json();
-            const userToStore = {
-              name: userData.username || userData.email || "User",
-              username: userData.username || "User",
-              email: userData.email,
-              id: userData.id || userData.pk
-            };
-            localStorage.setItem('user', JSON.stringify(userToStore));
+          const userToStore = await fetchUserData();
+          if (userToStore) {
             setUser(userToStore);
           } else {
-            const errorData = await userResponse.text();
-            console.error("API error:", errorData);
             if (accessToken) {
               const tokenData = extractUserFromToken(accessToken);
               if (tokenData && tokenData.user_id) {
@@ -260,7 +236,7 @@ const Dashboard: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        await fetchUserData();
+        await loadUserData();
         const servicesResponse = await fetch(`${API_BASE}/about.json`);
         if (!servicesResponse.ok) {
           throw new Error(`HTTP Error: ${servicesResponse.status}`);
