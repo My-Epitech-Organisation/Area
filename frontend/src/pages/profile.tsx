@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getStoredUser, getAccessToken } from "../utils/helper";
+import { getStoredUser, getAccessToken, fetchUserData } from "../utils/helper";
 import type { User } from "../types";
+import ProfileModal from "../components/ProfileModal";
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
 
@@ -16,13 +17,16 @@ const Profile: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [pendingProfileUpdate, setPendingProfileUpdate] = useState<Record<string, any> | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const loadUserProfile = async () => {
       setLoading(true);
       const storedUser = getStoredUser();
       const accessToken = getAccessToken();
+
       if (!accessToken) {
         navigate("/login");
         return;
@@ -35,40 +39,24 @@ const Profile: React.FC = () => {
       }
 
       try {
-        const response = await fetch(`${API_BASE}/auth/me/`, {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        });
+        const updatedUser = await fetchUserData();
 
-        if (response.ok) {
-          const userData = await response.json();
-          const updatedUser = {
-            name: userData.username || userData.email || "User",
-            username: userData.username || "User",
-            email: userData.email || "",
-            id: userData.id || userData.pk
-          };
-
-          localStorage.setItem('user', JSON.stringify(updatedUser));
+        if (updatedUser) {
           setUser(updatedUser);
           setUsername(updatedUser.username || "");
           setEmail(updatedUser.email || "");
-        } else {
-          console.error("Failed to fetch user data:", await response.text());
-          if (!storedUser) {
-            navigate("/login");
-          }
+        } else if (!storedUser) {
+          navigate("/login");
         }
       } catch (err) {
-        console.error("Error fetching user profile:", err);
+        console.error("Error loading profile data:", err);
         setError("Failed to load profile data. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserData();
+    loadUserProfile();
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,19 +98,24 @@ const Profile: React.FC = () => {
       return;
     }
 
+    setPendingProfileUpdate(updateData);
+    setIsPasswordModalOpen(true);
+    setSaving(false);
+    return;
+  };
+
+  const handlePasswordConfirm = async (oldPassword: string) => {
+    if (!oldPassword || !pendingProfileUpdate) return;
+
+    setSaving(true);
+    const accessToken = getAccessToken();
+
     try {
       let hasUpdates = false;
       let successMessage = "";
 
-      const oldPassword = prompt("Please enter your current password to confirm changes");
 
-      if (!oldPassword) {
-        setError("Profile update cancelled - current password required");
-        setSaving(false);
-        return;
-      }
-
-      if (password) {
+      if (pendingProfileUpdate?.password) {
         const passwordResponse = await fetch(`${API_BASE}/auth/password/change/`, {
           method: 'POST',
           headers: {
@@ -131,8 +124,8 @@ const Profile: React.FC = () => {
           },
           body: JSON.stringify({
             old_password: oldPassword,
-            new_password: password,
-            confirm_password: confirmPassword
+            new_password: pendingProfileUpdate.password,
+            confirm_password: pendingProfileUpdate.password
           })
         });
 
@@ -141,22 +134,8 @@ const Profile: React.FC = () => {
           successMessage = "Password updated successfully. ";
 
           try {
-            const userResponse = await fetch(`${API_BASE}/auth/me/`, {
-              headers: {
-                'Authorization': `Bearer ${accessToken}`
-              }
-            });
-
-            if (userResponse.ok) {
-              const userData = await userResponse.json();
-              const refreshedUser = {
-                name: userData.username || userData.email || "User",
-                username: userData.username || "User",
-                email: userData.email || "",
-                id: userData.id || userData.pk
-              };
-
-              localStorage.setItem('user', JSON.stringify(refreshedUser));
+            const refreshedUser = await fetchUserData();
+            if (refreshedUser) {
               setUser(refreshedUser);
             }
           } catch (refreshErr) {
@@ -166,59 +145,64 @@ const Profile: React.FC = () => {
           const errorData = await passwordResponse.json().catch(() => ({}));
           setError(errorData.detail || "Failed to update password. Password change may require your current password.");
           setSaving(false);
+          setPendingProfileUpdate(null);
+          setIsPasswordModalOpen(false);
           return;
         }
       }
 
-      if ((username && username !== user?.username) || (email && email !== user?.email)) {
+      const newUsername = pendingProfileUpdate?.username;
+      const newEmail = pendingProfileUpdate?.email;
+
+      if ((newUsername && newUsername !== user?.username) || (newEmail && newEmail !== user?.email)) {
         try {
-          await fetch(`${API_BASE}/auth/me/`, {
+          const profileResponse = await fetch(`${API_BASE}/auth/me/`, {
             method: 'PUT',
             headers: {
               'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              username: username || user?.username,
-              email: email || user?.email
+              username: newUsername || user?.username,
+              email: newEmail || user?.email
             })
           });
 
-          if (user) {
-            const updatedUser: User = {
-              name: username || user.name,
-              username: username || user.username,
-              email: email || user.email,
-              id: user.id
-            };
+          if (profileResponse.ok) {
+            if (user) {
+              const updatedUser: User = {
+                name: newUsername || user.name,
+                username: newUsername || user.username,
+                email: newEmail || user.email,
+                id: user.id
+              };
 
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-            if (username) localStorage.setItem('username', username);
-            if (email) localStorage.setItem('email', email);
-            setUser(updatedUser);
-            hasUpdates = true;
+              localStorage.setItem('user', JSON.stringify(updatedUser));
+              if (newUsername) localStorage.setItem('username', newUsername);
+              if (newEmail) localStorage.setItem('email', newEmail);
+              setUser(updatedUser);
+              hasUpdates = true;
 
-            successMessage += "Profile updated successfully. ";
+              successMessage += "Profile updated successfully. ";
+            }
+          } else {
+            const errorData = await profileResponse.json().catch(() => ({}));
+            const errorMessage = errorData.detail ||
+                               errorData.email?.[0] ||
+                               errorData.username?.[0] ||
+                               "Failed to update profile information.";
+
+            setError(errorMessage);
+            setSaving(false);
+            setPendingProfileUpdate(null);
+            setIsPasswordModalOpen(false);
+            return;
           }
         } catch (err) {
           console.error("Failed to update profile on server:", err);
-
-          if (user) {
-            const updatedUser: User = {
-              name: username || user.name,
-              username: username || user.username,
-              email: email || user.email,
-              id: user.id
-            };
-
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-            if (username) localStorage.setItem('username', username);
-            if (email) localStorage.setItem('email', email);
-            setUser(updatedUser);
-            hasUpdates = true;
-
-            successMessage += "Changes saved locally. Server sync failed - changes may not persist after logout. ";
-          }
+          setError("Connection error: Failed to update profile. Please try again later.");
+          setSaving(false);
+          return;
         }
       }
 
@@ -230,14 +214,20 @@ const Profile: React.FC = () => {
       } else {
         setSuccess("No changes to save");
       }
-    } catch (err) {
-      console.error("Error updating profile:", err);
-      setError("An error occurred while updating your profile. Please try again.");
-    } finally {
-      setSaving(false);
+
+      setPendingProfileUpdate(null);
+      setIsPasswordModalOpen(false);
+
       if (!error) {
         setIsEditMode(false);
       }
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      setError("An error occurred while updating your profile. Please try again.");
+      setPendingProfileUpdate(null);
+      setIsPasswordModalOpen(false);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -254,6 +244,17 @@ const Profile: React.FC = () => {
 
   return (
     <div className="w-full min-h-screen bg-profile flex flex-col items-center">
+      <ProfileModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => {
+          setIsPasswordModalOpen(false);
+          setPendingProfileUpdate(null);
+          setSaving(false);
+        }}
+        onConfirm={handlePasswordConfirm}
+        title="Confirm Profile Changes"
+        message="Please enter your current password to save your changes"
+      />
       <header className="w-full pt-20 pb-6 flex justify-center">
         <h1 className="text-4xl md:text-5xl font-bold text-white">Your Profile</h1>
       </header>
