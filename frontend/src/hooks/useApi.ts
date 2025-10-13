@@ -4,8 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import type { Action, Reaction, PaginatedResponse, ApiError } from '../types/api';
-
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'http://localhost:8080';
+import { API_BASE } from '../utils/helper';
 
 interface UseApiResult<T> {
   data: T | null;
@@ -79,14 +78,14 @@ function usePaginatedApi<T>(endpoint: string): UseApiResult<T[]> {
  * Hook for fetching all available actions
  */
 export function useActions(): UseApiResult<Action[]> {
-  return usePaginatedApi<Action>('/actions/');
+  return usePaginatedApi<Action>('/api/actions/');
 }
 
 /**
  * Hook for fetching all available reactions
  */
 export function useReactions(): UseApiResult<Reaction[]> {
-  return usePaginatedApi<Reaction>('/reactions/');
+  return usePaginatedApi<Reaction>('/api/reactions/');
 }
 
 /**
@@ -114,7 +113,7 @@ export function useCreateArea() {
         throw new Error('Authentication required. Please login.');
       }
 
-      const response = await fetch(`${API_BASE}/areas/`, {
+      const response = await fetch(`${API_BASE}/api/areas/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
