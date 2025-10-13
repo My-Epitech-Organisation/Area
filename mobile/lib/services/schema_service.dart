@@ -92,7 +92,7 @@ class SchemaService {
     'send_email': {
       'type': 'object',
       'properties': {
-        'to': {
+        'recipient': {
           'type': 'string',
           'description': 'Recipient email address'
         },
@@ -105,7 +105,7 @@ class SchemaService {
           'description': 'Email body'
         }
       },
-      'required': ['to', 'subject', 'body']
+      'required': ['recipient', 'subject']
     }
   };
 
@@ -148,7 +148,9 @@ class SchemaService {
 
     // Check cache first
     final cached = _cache.get<Map<String, dynamic>>(cacheKey);
-    if (cached != null) return cached;
+    if (cached != null) {
+      return cached;
+    }
 
     // Check hardcoded schemas first
     if (_reactionSchemas.containsKey(reactionName)) {
