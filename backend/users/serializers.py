@@ -58,6 +58,19 @@ class GoogleLoginSerializer(serializers.Serializer):
     )
 
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    """Serializer for updating user profile (username and email only)."""
+
+    class Meta:
+        model = User
+        fields = ("username", "email", "email_verified")
+        read_only_fields = ("email_verified",)
+        extra_kwargs = {
+            "email": {"required": False},
+            "username": {"required": False},
+        }
+
+
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Custom token serializer that uses email for authentication.
 
