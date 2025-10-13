@@ -9,6 +9,17 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}🚀 Starting AREA Backend...${NC}"
 
+# Fix permissions for mounted volumes in development
+if [ -f "/app/manage.py" ]; then
+    chmod +x /app/manage.py 2>/dev/null || true
+fi
+
+# Ensure log directory exists and is writable
+mkdir -p /app/logs
+touch /app/logs/django.log
+chmod 666 /app/logs/django.log 2>/dev/null || true
+chmod 777 /app/logs 2>/dev/null || true
+
 # Wait for database to be ready
 echo -e "${YELLOW}⏳ Waiting for database...${NC}"
 while ! nc -z ${DB_HOST:-db} ${DB_PORT:-5432}; do
