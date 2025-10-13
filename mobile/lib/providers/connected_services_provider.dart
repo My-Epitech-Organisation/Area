@@ -25,9 +25,7 @@ class ConnectedServicesProvider extends ChangeNotifier {
 
   /// Get connected service names
   List<String> get connectedServiceNames {
-    return _connectedServices
-        .map((s) => s.serviceName.toLowerCase())
-        .toList();
+    return _connectedServices.map((s) => s.serviceName.toLowerCase()).toList();
   }
 
   /// Load connected services from API
@@ -38,7 +36,7 @@ class ConnectedServicesProvider extends ChangeNotifier {
       notifyListeners();
 
       final serviceList = await _oauthService.getConnectedServices();
-      
+
       _connectedServices = serviceList.connectedServices;
       _availableProviders = serviceList.availableProviders;
       _isLoading = false;

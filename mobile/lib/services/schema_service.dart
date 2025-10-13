@@ -19,11 +19,19 @@ class SchemaService {
       'properties': {
         'day_of_week': {
           'type': 'string',
-          'enum': ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
-          'description': 'Day of the week for the timer'
-        }
+          'enum': [
+            'monday',
+            'tuesday',
+            'wednesday',
+            'thursday',
+            'friday',
+            'saturday',
+            'sunday',
+          ],
+          'description': 'Day of the week for the timer',
+        },
       },
-      'required': ['day_of_week']
+      'required': ['day_of_week'],
     },
     'timer_daily': {
       'type': 'object',
@@ -32,27 +40,27 @@ class SchemaService {
           'type': 'integer',
           'minimum': 0,
           'maximum': 23,
-          'description': 'Hour of the day (0-23)'
+          'description': 'Hour of the day (0-23)',
         },
         'minute': {
           'type': 'integer',
           'minimum': 0,
           'maximum': 59,
-          'description': 'Minute of the hour (0-59)'
-        }
+          'description': 'Minute of the hour (0-59)',
+        },
       },
-      'required': ['hour', 'minute']
+      'required': ['hour', 'minute'],
     },
     'github_new_issue': {
       'type': 'object',
       'properties': {
         'repository': {
           'type': 'string',
-          'description': 'GitHub repository in format owner/repo'
-        }
+          'description': 'GitHub repository in format owner/repo',
+        },
       },
-      'required': ['repository']
-    }
+      'required': ['repository'],
+    },
   };
 
   static const Map<String, Map<String, dynamic>> _reactionSchemas = {
@@ -61,52 +69,37 @@ class SchemaService {
       'properties': {
         'repository': {
           'type': 'string',
-          'description': 'GitHub repository in format owner/repo'
+          'description': 'GitHub repository in format owner/repo',
         },
-        'title': {
-          'type': 'string',
-          'description': 'Issue title'
-        },
-        'body': {
-          'type': 'string',
-          'description': 'Issue body'
-        }
+        'title': {'type': 'string', 'description': 'Issue title'},
+        'body': {'type': 'string', 'description': 'Issue body'},
       },
-      'required': ['repository', 'title']
+      'required': ['repository', 'title'],
     },
     'webhook_post': {
       'type': 'object',
       'properties': {
-        'url': {
-          'type': 'string',
-          'description': 'Webhook URL'
-        },
+        'url': {'type': 'string', 'description': 'Webhook URL'},
         'method': {
           'type': 'string',
           'enum': ['POST', 'PUT', 'PATCH'],
-          'default': 'POST'
-        }
+          'default': 'POST',
+        },
       },
-      'required': ['url']
+      'required': ['url'],
     },
     'send_email': {
       'type': 'object',
       'properties': {
         'recipient': {
           'type': 'string',
-          'description': 'Recipient email address'
+          'description': 'Recipient email address',
         },
-        'subject': {
-          'type': 'string',
-          'description': 'Email subject'
-        },
-        'body': {
-          'type': 'string',
-          'description': 'Email body'
-        }
+        'subject': {'type': 'string', 'description': 'Email subject'},
+        'body': {'type': 'string', 'description': 'Email body'},
       },
-      'required': ['recipient', 'subject']
-    }
+      'required': ['recipient', 'subject'],
+    },
   };
 
   /// Get action configuration schema

@@ -82,7 +82,9 @@ class ActionData {
         ),
       );
     } else {
-      debugPrint('❌ ERROR: Invalid action data format: $json (type: ${json.runtimeType})');
+      debugPrint(
+        '❌ ERROR: Invalid action data format: $json (type: ${json.runtimeType})',
+      );
       throw FormatException('Invalid action data format: $json');
     }
   }
@@ -140,7 +142,9 @@ class ReactionData {
         ),
       );
     } else {
-      debugPrint('❌ ERROR: Invalid reaction data format: $json (type: ${json.runtimeType})');
+      debugPrint(
+        '❌ ERROR: Invalid reaction data format: $json (type: ${json.runtimeType})',
+      );
       throw FormatException('Invalid reaction data format: $json');
     }
   }
@@ -190,7 +194,9 @@ class Applet {
         actionConfig: json['action_config'] ?? {},
         reactionConfig: json['reaction_config'] ?? {},
         status: json['status'] ?? 'active',
-        createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
+        createdAt: DateTime.parse(
+          json['created_at'] ?? DateTime.now().toIso8601String(),
+        ),
       );
     } catch (e, stackTrace) {
       debugPrint('❌ ERROR in Applet.fromJson: $e');
