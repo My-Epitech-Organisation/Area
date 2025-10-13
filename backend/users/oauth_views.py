@@ -12,7 +12,7 @@ from uuid import UUID
 
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -190,14 +190,20 @@ class OAuthCallbackView(APIView):
         state = validated_data["state"]
 
         # Determine whether this is a browser navigation or an API/fetch call
-        has_auth = bool(request.headers.get("Authorization") or request.headers.get("X-Requested-With"))
+        has_auth = bool(
+            request.headers.get("Authorization")
+            or request.headers.get("X-Requested-With")
+        )
         accepts_html = "text/html" in request.headers.get("Accept", "")
 
         # If this looks like an API call, require authentication
         if has_auth:
             # API mode - behave like before (require authenticated user)
             if not request.user or not request.user.is_authenticated:
-                return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+                return Response(
+                    {"detail": "Authentication credentials were not provided."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
 
             try:
                 # Validate CSRF state against this user's id
@@ -206,12 +212,19 @@ class OAuthCallbackView(APIView):
                 )
 
                 if not is_valid:
-                    logger.warning(f"Invalid OAuth2 state for user {request.user.email}: {error_msg}")
-                    return Response({"error": "invalid_state", "message": error_msg}, status=status.HTTP_400_BAD_REQUEST)
+                    logger.warning(
+                        f"Invalid OAuth2 state for user {request.user.email}: {error_msg}"
+                    )
+                    return Response(
+                        {"error": "invalid_state", "message": error_msg},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
                 oauth_provider = OAuthManager.get_provider(provider)
                 token_data = oauth_provider.exchange_code_for_token(code)
-                expires_at = oauth_provider.calculate_expiry(token_data.get("expires_in"))
+                expires_at = oauth_provider.calculate_expiry(
+                    token_data.get("expires_in")
+                )
 
                 service_token, created = ServiceToken.objects.update_or_create(
                     user=request.user,
@@ -238,10 +251,21 @@ class OAuthCallbackView(APIView):
 
             except OAuthError as e:
                 logger.error(f"OAuth2 error during callback: {str(e)}")
-                return Response({"error": "oauth_error", "message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "oauth_error", "message": str(e)},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             except Exception as e:
-                logger.error(f"Unexpected error in OAuth2 callback: {str(e)}", exc_info=True)
-                return Response({"error": "internal_error", "message": "Failed to complete OAuth2 flow"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                logger.error(
+                    f"Unexpected error in OAuth2 callback: {str(e)}", exc_info=True
+                )
+                return Response(
+                    {
+                        "error": "internal_error",
+                        "message": "Failed to complete OAuth2 flow",
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
 
         # Browser navigation mode - complete flow on behalf of user stored in state
         try:
@@ -253,26 +277,54 @@ class OAuthCallbackView(APIView):
 
             if not state_data:
                 # If invalid state, return JSON for API clients or redirect to frontend with error
-                logger.warning(f"OAuth2 state missing or expired for provider {provider}")
+                logger.warning(
+                    f"OAuth2 state missing or expired for provider {provider}"
+                )
                 if accepts_html:
-                    frontend = getattr(settings, "FRONTEND_URL", None) or request.build_absolute_uri("/").rstrip("/")
-                    redirect_to = f"{frontend}/auth/callback/{provider}?error=invalid_state"
-                    return Response(status=status.HTTP_302_FOUND, headers={"Location": redirect_to})
-                return Response({"error": "invalid_state", "message": "State invalid or expired"}, status=status.HTTP_400_BAD_REQUEST)
+                    frontend = getattr(
+                        settings, "FRONTEND_URL", None
+                    ) or request.build_absolute_uri("/").rstrip("/")
+                    redirect_to = (
+                        f"{frontend}/auth/callback/{provider}?error=invalid_state"
+                    )
+                    return Response(
+                        status=status.HTTP_302_FOUND, headers={"Location": redirect_to}
+                    )
+                return Response(
+                    {"error": "invalid_state", "message": "State invalid or expired"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             user_id = state_data.get("user_id")
             if not user_id:
                 logger.warning("State missing user_id")
-                return Response({"error": "invalid_state", "message": "State missing user information"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {
+                        "error": "invalid_state",
+                        "message": "State missing user information",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             # Now validate state atomically (this will also delete it from cache)
-            is_valid, err = OAuthManager.validate_state(state=state, user_id=str(user_id), provider=provider)
+            is_valid, err = OAuthManager.validate_state(
+                state=state, user_id=str(user_id), provider=provider
+            )
             if not is_valid:
                 logger.warning(f"State validation failed after lookup: {err}")
                 if accepts_html:
-                    frontend = getattr(settings, "FRONTEND_URL", None) or request.build_absolute_uri("/").rstrip("/")
-                    redirect_to = f"{frontend}/auth/callback/{provider}?error=invalid_state"
-                    return Response(status=status.HTTP_302_FOUND, headers={"Location": redirect_to})
-                return Response({"error": "invalid_state", "message": err}, status=status.HTTP_400_BAD_REQUEST)
+                    frontend = getattr(
+                        settings, "FRONTEND_URL", None
+                    ) or request.build_absolute_uri("/").rstrip("/")
+                    redirect_to = (
+                        f"{frontend}/auth/callback/{provider}?error=invalid_state"
+                    )
+                    return Response(
+                        status=status.HTTP_302_FOUND, headers={"Location": redirect_to}
+                    )
+                return Response(
+                    {"error": "invalid_state", "message": err},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             # Load user by id with proper UUID validation
             from django.contrib.auth import get_user_model
@@ -287,13 +339,13 @@ class OAuthCallbackView(APIView):
                 logger.error(f"Invalid UUID from OAuth state: {user_id} - {e}")
                 return Response(
                     {"error": "invalid_state", "message": "Invalid user identifier"},
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
             except Exception as e:
                 logger.error(f"User lookup failed for id {user_id}: {e}")
                 return Response(
                     {"error": "invalid_state", "message": "User not found"},
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             oauth_provider = OAuthManager.get_provider(provider)
@@ -311,30 +363,57 @@ class OAuthCallbackView(APIView):
             )
 
             action = "connected" if created else "reconnected"
-            logger.info(f"User {user.email} {action} to {provider} via browser callback")
+            logger.info(
+                f"User {user.email} {action} to {provider} via browser callback"
+            )
 
             # Redirect to frontend callback route with summary params
-            frontend = getattr(settings, "FRONTEND_URL", None) or request.build_absolute_uri("/").rstrip("/")
+            frontend = getattr(
+                settings, "FRONTEND_URL", None
+            ) or request.build_absolute_uri("/").rstrip("/")
             redirect_to = f"{frontend}/auth/callback/{provider}?service={provider}&created={str(created).lower()}"
             if expires_at:
                 redirect_to += f"&expires_at={expires_at.isoformat()}"
 
-            return Response(status=status.HTTP_302_FOUND, headers={"Location": redirect_to})
+            return Response(
+                status=status.HTTP_302_FOUND, headers={"Location": redirect_to}
+            )
 
         except OAuthError as e:
             logger.error(f"OAuth2 error during browser callback: {str(e)}")
             if accepts_html:
-                frontend = getattr(settings, "FRONTEND_URL", None) or request.build_absolute_uri("/").rstrip("/")
+                frontend = getattr(
+                    settings, "FRONTEND_URL", None
+                ) or request.build_absolute_uri("/").rstrip("/")
                 redirect_to = f"{frontend}/auth/callback/{provider}?error=oauth_error"
-                return Response(status=status.HTTP_302_FOUND, headers={"Location": redirect_to})
-            return Response({"error": "oauth_error", "message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    status=status.HTTP_302_FOUND, headers={"Location": redirect_to}
+                )
+            return Response(
+                {"error": "oauth_error", "message": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         except Exception as e:
-            logger.error(f"Unexpected error in browser OAuth2 callback: {str(e)}", exc_info=True)
+            logger.error(
+                f"Unexpected error in browser OAuth2 callback: {str(e)}", exc_info=True
+            )
             if accepts_html:
-                frontend = getattr(settings, "FRONTEND_URL", None) or request.build_absolute_uri("/").rstrip("/")
-                redirect_to = f"{frontend}/auth/callback/{provider}?error=internal_error"
-                return Response(status=status.HTTP_302_FOUND, headers={"Location": redirect_to})
-            return Response({"error": "internal_error", "message": "Failed to complete OAuth2 flow"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                frontend = getattr(
+                    settings, "FRONTEND_URL", None
+                ) or request.build_absolute_uri("/").rstrip("/")
+                redirect_to = (
+                    f"{frontend}/auth/callback/{provider}?error=internal_error"
+                )
+                return Response(
+                    status=status.HTTP_302_FOUND, headers={"Location": redirect_to}
+                )
+            return Response(
+                {
+                    "error": "internal_error",
+                    "message": "Failed to complete OAuth2 flow",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class ServiceConnectionListView(APIView):
