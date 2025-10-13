@@ -37,13 +37,14 @@ services:
   # ---------------------------------------------------------------------------
   server:
     container_name: area_server
+    user: "root"  # Run as root in dev to avoid permission issues with mounted volumes
     ports:
       - "${BACKEND_PORT:-8080}:8080"  # Expose API for direct access
     volumes:
-      - ./backend:/app  # HOT RELOAD: Mount source code
+      - ./backend:/app:z  # HOT RELOAD: Mount source code (z for SELinux)
       - backend_static:/app/staticfiles  # Keep static files in volume
       - backend_media:/app/mediafiles    # Keep media files in volume
-      - backend_logs:/app/logs           # Keep logs in volume
+      - ./backend/logs:/app/logs:z       # Mount logs with SELinux label
     command: >
       sh -c "
         python manage.py migrate &&
@@ -56,29 +57,34 @@ services:
   # ---------------------------------------------------------------------------
   worker:
     container_name: area_worker
+    user: "root"  # Run as root in dev to avoid permission issues
     volumes:
-      - ./backend:/app  # HOT RELOAD: Mount source code
-      - backend_logs:/app/logs
-    command: ["celery", "-A", "area_project", "worker", "--loglevel=info", "--autoreload"]
+      - ./backend:/app:z  # HOT RELOAD: Mount source code (z for SELinux)
+      - ./backend/logs:/app/logs:z  # Mount logs with SELinux label
+    # Note: watchdog/watchmedo is used for hot-reload in production images
+    # In dev, we restart manually or use --pool=solo for debugging
+    command: ["celery", "-A", "area_project", "worker", "--loglevel=info", "--pool=solo"]
 
   # ---------------------------------------------------------------------------
   # Celery Beat - Development Overrides
   # ---------------------------------------------------------------------------
   beat:
     container_name: area_beat
+    user: "root"  # Run as root in dev to avoid permission issues
     volumes:
-      - ./backend:/app  # HOT RELOAD: Mount source code
-      - backend_logs:/app/logs
+      - ./backend:/app:z  # HOT RELOAD: Mount source code (z for SELinux)
+      - ./backend/logs:/app/logs:z  # Mount logs with SELinux label
 
   # ---------------------------------------------------------------------------
   # Flower - Development Overrides
   # ---------------------------------------------------------------------------
   flower:
     container_name: area_flower
+    user: "root"  # Run as root in dev to avoid permission issues
     ports:
       - "${FLOWER_PORT:-5555}:5555"  # Expose Celery monitoring UI
     volumes:
-      - ./backend:/app  # HOT RELOAD: Mount source code
+      - ./backend:/app:z  # HOT RELOAD: Mount source code (z for SELinux)
 
   # ---------------------------------------------------------------------------
   # Mobile Client - Development Overrides
@@ -87,7 +93,7 @@ services:
     container_name: area_client_mobile
     volumes:
       - apk_shared:/shared
-      - ./mobile:/app  # HOT RELOAD: Mount source code (if needed)
+      - ./mobile:/app:z  # HOT RELOAD: Mount source code (z for SELinux)
 
   # ---------------------------------------------------------------------------
   # Web Client - Development with Vite Hot Reload
@@ -95,6 +101,7 @@ services:
   # OVERRIDE: Replace production nginx with Vite dev server
   client_web:
     container_name: area_client_web_dev
+    user: "root"  # Run as root in dev to avoid permission issues with mounted volumes
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
@@ -102,7 +109,7 @@ services:
     ports:
       - "${FRONTEND_DEV_PORT:-5173}:5173"  # Vite dev server port
     volumes:
-      - ./frontend:/app           # HOT RELOAD: Mount source code
+      - ./frontend:/app:z         # HOT RELOAD: Mount source code (z for SELinux)
       - /app/node_modules         # Preserve node_modules from image
       - apk_shared:/shared        # APK download
     env_file:
