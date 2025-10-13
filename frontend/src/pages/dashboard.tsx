@@ -94,7 +94,7 @@ const Dashboard: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [activeServices, setActiveServices] = useState<string[]>([]);
-  const [userAreas, setUserAreas] = useState<any[]>([]);
+  const [_, setUserAreas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
