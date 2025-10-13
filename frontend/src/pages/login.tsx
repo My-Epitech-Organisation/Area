@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import parseErrors from "../utils/parseErrors";
-
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
+import { API_BASE } from "../utils/helper";
 
 const Login: React.FC = () => {
   const [email, setemail] = useState("");
