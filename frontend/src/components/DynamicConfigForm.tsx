@@ -3,8 +3,8 @@ import type { JSONSchema, JSONSchemaProperty } from '../types/api';
 
 interface DynamicConfigFormProps {
   schema: JSONSchema;
-  values: Record<string, any>;
-  onChange: (values: Record<string, any>) => void;
+  values: Record<string, unknown>;
+  onChange: (values: Record<string, unknown>) => void;
   title?: string;
 }
 
@@ -21,7 +21,7 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
     return null;
   }
 
-  const handleFieldChange = (fieldName: string, value: any) => {
+  const handleFieldChange = (fieldName: string, value: unknown) => {
     onChange({
       ...values,
       [fieldName]: value,
@@ -30,15 +30,21 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
 
   const renderField = (fieldName: string, property: JSONSchemaProperty) => {
     const isRequired = schema.required?.includes(fieldName) || false;
-    const currentValue = values[fieldName] ?? property.default ?? '';
 
     // Render based on type
     switch (property.type) {
       case 'integer':
-      case 'number':
+      case 'number': {
+        const numberValue =
+          typeof values[fieldName] === 'number'
+            ? (values[fieldName] as number)
+            : typeof property.default === 'number'
+              ? property.default
+              : '';
+
         return (
           <div key={fieldName} className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={fieldName} className="block text-sm font-medium text-gray-700 mb-1">
               {formatFieldName(fieldName)}
               {isRequired && <span className="text-red-500 ml-1">*</span>}
             </label>
@@ -46,12 +52,14 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
               <p className="text-xs text-gray-500 mb-1">{property.description}</p>
             )}
             <input
+              id={fieldName}
               type="number"
-              value={currentValue}
+              value={numberValue}
               onChange={(e) => {
-                const val = property.type === 'integer'
-                  ? parseInt(e.target.value, 10)
-                  : parseFloat(e.target.value);
+                const val =
+                  property.type === 'integer'
+                    ? parseInt(e.target.value, 10)
+                    : parseFloat(e.target.value);
                 handleFieldChange(fieldName, isNaN(val) ? '' : val);
               }}
               min={property.minimum}
@@ -62,14 +70,22 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
             />
           </div>
         );
+      }
 
-      case 'boolean':
+      case 'boolean': {
+        const boolValue =
+          typeof values[fieldName] === 'boolean'
+            ? (values[fieldName] as boolean)
+            : typeof property.default === 'boolean'
+              ? property.default
+              : false;
+
         return (
           <div key={fieldName} className="mb-4 flex items-center">
             <input
               type="checkbox"
               id={fieldName}
-              checked={currentValue || false}
+              checked={boolValue}
               onChange={(e) => handleFieldChange(fieldName, e.target.checked)}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
@@ -81,13 +97,20 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
             </label>
           </div>
         );
+      }
 
-      case 'string':
-        // Handle enum as select
+      case 'string': {
         if (property.enum && property.enum.length > 0) {
+          const stringValue =
+            typeof values[fieldName] === 'string'
+              ? (values[fieldName] as string)
+              : typeof property.default === 'string'
+                ? property.default
+                : '';
+
           return (
             <div key={fieldName} className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor={fieldName} className="block text-sm font-medium text-gray-700 mb-1">
                 {formatFieldName(fieldName)}
                 {isRequired && <span className="text-red-500 ml-1">*</span>}
               </label>
@@ -95,26 +118,40 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
                 <p className="text-xs text-gray-500 mb-1">{property.description}</p>
               )}
               <select
-                value={currentValue}
+                id={fieldName}
+                value={stringValue}
                 onChange={(e) => handleFieldChange(fieldName, e.target.value)}
                 required={isRequired}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select {formatFieldName(fieldName)}</option>
-                {property.enum.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
+                {property.enum.map((enumOption) => {
+                  const optionValue =
+                    typeof enumOption === 'string' || typeof enumOption === 'number'
+                      ? enumOption
+                      : String(enumOption);
+
+                  return (
+                    <option key={String(optionValue)} value={String(optionValue)}>
+                      {String(optionValue)}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           );
         }
 
-        // Handle regular string input
+        const stringValue =
+          typeof values[fieldName] === 'string'
+            ? (values[fieldName] as string)
+            : typeof property.default === 'string'
+              ? property.default
+              : '';
+
         return (
           <div key={fieldName} className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={fieldName} className="block text-sm font-medium text-gray-700 mb-1">
               {formatFieldName(fieldName)}
               {isRequired && <span className="text-red-500 ml-1">*</span>}
             </label>
@@ -122,8 +159,11 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
               <p className="text-xs text-gray-500 mb-1">{property.description}</p>
             )}
             <input
-              type={property.format === 'email' ? 'email' : property.format === 'uri' ? 'url' : 'text'}
-              value={currentValue}
+              id={fieldName}
+              type={
+                property.format === 'email' ? 'email' : property.format === 'uri' ? 'url' : 'text'
+              }
+              value={stringValue}
               onChange={(e) => handleFieldChange(fieldName, e.target.value)}
               required={isRequired}
               minLength={property.minLength}
@@ -134,11 +174,18 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
             />
           </div>
         );
+      }
 
-      case 'array':
+      case 'array': {
+        const arrayValue = Array.isArray(values[fieldName])
+          ? (values[fieldName] as unknown[])
+          : Array.isArray(property.default)
+            ? property.default
+            : [];
+
         return (
           <div key={fieldName} className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={fieldName} className="block text-sm font-medium text-gray-700 mb-1">
               {formatFieldName(fieldName)}
               {isRequired && <span className="text-red-500 ml-1">*</span>}
             </label>
@@ -146,10 +193,14 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
               <p className="text-xs text-gray-500 mb-1">{property.description}</p>
             )}
             <input
+              id={fieldName}
               type="text"
-              value={Array.isArray(currentValue) ? currentValue.join(', ') : ''}
+              value={arrayValue.join(', ')}
               onChange={(e) => {
-                const arr = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                const arr = e.target.value
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean);
                 handleFieldChange(fieldName, arr);
               }}
               required={isRequired}
@@ -158,11 +209,23 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
             />
           </div>
         );
+      }
 
-      case 'object':
+      case 'object': {
+        const objectValue =
+          typeof values[fieldName] === 'object' &&
+          values[fieldName] !== null &&
+          !Array.isArray(values[fieldName])
+            ? (values[fieldName] as Record<string, unknown>)
+            : typeof property.default === 'object' &&
+                property.default !== null &&
+                !Array.isArray(property.default)
+              ? property.default
+              : {};
+
         return (
           <div key={fieldName} className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={fieldName} className="block text-sm font-medium text-gray-700 mb-1">
               {formatFieldName(fieldName)}
               {isRequired && <span className="text-red-500 ml-1">*</span>}
             </label>
@@ -170,13 +233,14 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
               <p className="text-xs text-gray-500 mb-1">{property.description}</p>
             )}
             <textarea
-              value={typeof currentValue === 'object' ? JSON.stringify(currentValue, null, 2) : '{}'}
+              id={fieldName}
+              value={JSON.stringify(objectValue, null, 2)}
               onChange={(e) => {
                 try {
                   const obj = JSON.parse(e.target.value);
                   handleFieldChange(fieldName, obj);
                 } catch {
-                  // Invalid JSON, don't update
+                  console.error('Invalid JSON, please correct it.');
                 }
               }}
               required={isRequired}
@@ -186,24 +250,24 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
             />
           </div>
         );
+      }
 
-      default:
+      default: {
         return null;
+      }
     }
   };
 
   const formatFieldName = (name: string): string => {
     return name
       .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   };
 
   return (
     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-      {title && (
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">{title}</h3>
-      )}
+      {title && <h3 className="text-sm font-semibold text-gray-700 mb-3">{title}</h3>}
       <div className="space-y-2">
         {Object.entries(schema.properties).map(([fieldName, property]) =>
           renderField(fieldName, property)
