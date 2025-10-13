@@ -830,7 +830,7 @@ def _execute_reaction_logic(
 
         except requests.exceptions.RequestException as e:
             logger.error(f"[REACTION WEBHOOK] Failed: {e}")
-            raise Exception(f"Webhook POST failed: {e}")
+            raise Exception(f"Webhook POST failed: {e}") from e
 
     else:
         # Unknown reaction - log and continue
