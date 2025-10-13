@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../models/applet.dart';
 import '../config/api_config.dart';
 import 'http_client_service.dart';
@@ -57,7 +58,16 @@ class AppletService {
 
     final applet = _httpClient.parseResponse<Applet>(
       response,
-      (data) => Applet.fromJson(data),
+      (data) {
+        try {
+          return Applet.fromJson(data);
+        } catch (e, stackTrace) {
+          debugPrint('❌ ERROR parsing Applet from JSON: $e');
+          debugPrint('📊 Raw data: $data');
+          debugPrint('📚 Stack trace: $stackTrace');
+          rethrow;
+        }
+      },
     );
 
     // Clear cache to force refresh
