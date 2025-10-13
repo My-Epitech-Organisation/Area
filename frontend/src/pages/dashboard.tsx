@@ -9,8 +9,66 @@ import React, {useState, useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import type { Service, User } from "../types";
 import { getStoredUser, getAccessToken } from "../utils/helper";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Doughnut } from 'react-chartjs-2';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
+
+interface ServiceUsageChartProps {
+  services: Service[];
+  activeServices: string[];
+}
+
+const ServiceUsageChart: React.FC<ServiceUsageChartProps> = ({ services, activeServices }) => {
+  const usedServicesCount = activeServices.length;
+  const totalServicesCount = services.length;
+  const unusedServicesCount = totalServicesCount - usedServicesCount;
+
+  const data = {
+    labels: ['Used Services', 'Unused Services'],
+    datasets: [
+      {
+        data: [usedServicesCount, unusedServicesCount],
+        backgroundColor: ['#6366f1', '#4b5563'],
+        borderColor: ['#4f46e5', '#374151'],
+        borderWidth: 1,
+        hoverBackgroundColor: ['#4f46e5', '#6b7280'],
+        hoverBorderColor: ['#4338ca', '#4b5563'],
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+        labels: {
+          color: '#e2e8f0',
+          font: {
+            size: 12
+          }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context: any) {
+            const label = context.label || '';
+            const value = context.raw || 0;
+            const total = context.dataset.data.reduce((acc: number, val: number) => acc + val, 0);
+            const percentage = Math.round((value / total) * 100);
+            return `${label}: ${value} (${percentage}%)`;
+          }
+        }
+      }
+    }
+  };
+
+  return <Doughnut data={data} options={options} />;
+};
 
 const imageModules = import.meta.glob("../assets/*.{png,jpg,jpeg,svg,gif}", { eager: true }) as Record<string, { default: string }>;
 const imagesByName: Record<string, string> = {};
@@ -51,12 +109,8 @@ const Dashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key) {
-        const value = localStorage.getItem(key);
-      }
-    }
+    setUser(null);
+
     const storedUser = getStoredUser();
     const accessToken = getAccessToken();
     const storedUsername = localStorage.getItem('username');
@@ -297,14 +351,14 @@ const Dashboard: React.FC = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [navigate]);
 
   return (
-    <div className="w-full min-h-screen bg-dashboard flex pt-16">
-      <div className="flex flex-1 h-screen">
-        <div className="flex-1 p-8 flex flex-col items-center">
-          <header className="w-full flex flex-col items-center pt-6 mb-6">
-            <h1 className="text-5xl font-bold text-center text-white mb-3">Dashboard</h1>
+    <div className="w-full h-screen bg-dashboard flex pt-16 overflow-hidden">
+      <div className="flex flex-1">
+        <div className="flex-1 p-6 flex flex-col items-center overflow-y-auto">
+          <header className="w-full flex flex-col items-center pt-4 mb-4">
+            <h1 className="text-5xl font-bold text-center text-white mb-2">Dashboard</h1>
             <div className="w-full flex items-center justify-center">
               {user ? (
                 <p className="text-3xl font-semibold text-indigo-300 mt-2 animate-fadeIn">
@@ -319,12 +373,12 @@ const Dashboard: React.FC = () => {
               )}
             </div>
           </header>
-          <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="w-full flex flex-col gap-4 mb-4">
             <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-gray-200">
-              <h2 className="text-xl font-semibold text-indigo-300 mb-4">Service Activity</h2>
+              <h2 className="text-xl font-semibold text-indigo-300 mb-3">Service Activity</h2>
               {activeServices.length > 0 ? (
                 <>
-                  <div className="h-[200px] relative">
+                  <div className="h-[180px] relative">
                     <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-white bg-opacity-20"></div>
                     <div className="absolute left-0 bottom-0 top-0 w-[1px] bg-white bg-opacity-20"></div>
                     <div className="flex h-full items-end justify-between px-2">
@@ -351,11 +405,11 @@ const Dashboard: React.FC = () => {
                   </div>
                 </>
               ) : loading ? (
-                <div className="h-[200px] flex items-center justify-center">
+                <div className="h-[180px] flex items-center justify-center">
                   <div className="animate-pulse text-indigo-300">Loading activity data...</div>
                 </div>
               ) : (
-                <div className="h-[200px] flex flex-col items-center justify-center">
+                <div className="h-[180px] flex flex-col items-center justify-center">
                   <p className="text-gray-400 mb-3">No active services yet</p>
                   <button
                     onClick={() => navigate('/services')}
@@ -366,10 +420,17 @@ const Dashboard: React.FC = () => {
                 </div>
               )}
             </div>
-            <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-gray-200">
-              <h2 className="text-xl font-semibold text-indigo-300 mb-4">Quick Actions</h2>
-              <div className="grid grid-cols-2 gap-3">
-                <button
+            <div className="flex gap-4">
+              <div className="flex-1 bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-gray-200">
+                <h2 className="text-xl font-semibold text-indigo-300 mb-3">Services Usage</h2>
+                <div className="flex justify-center" style={{ position: 'relative', height: '180px' }}>
+                  <ServiceUsageChart services={services} activeServices={activeServices} />
+                </div>
+              </div>
+              <div className="flex-1 bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-gray-200">
+                <h2 className="text-xl font-semibold text-indigo-300 mb-3">Quick Actions</h2>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
                   onClick={() => navigate('/services')}
                   className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
@@ -377,15 +438,6 @@ const Dashboard: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                   <span className="font-medium">New Automation</span>
-                </button>
-                <button
-                  onClick={() => navigate('/services')}
-                  className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <span className="font-medium">Connect Service</span>
                 </button>
                 <button
                   onClick={() => navigate('/templates')}
@@ -396,69 +448,12 @@ const Dashboard: React.FC = () => {
                   </svg>
                   <span className="font-medium">View my profile</span>
                 </button>
-                <button
-                  onClick={() => navigate('/areas')}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                  <span className="font-medium">My Automations</span>
-                </button>
-              </div>
-            </div>
-            <div className="lg:col-span-2 bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-gray-200">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-indigo-300">Recent Notifications</h2>
-                <button className="text-xs text-indigo-300 hover:text-indigo-200 transition-colors">Mark all as read</button>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-start p-3 bg-white bg-opacity-5 rounded-lg hover:bg-opacity-10 transition-all cursor-pointer">
-                  <div className="rounded-full bg-amber-500 p-2 mr-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Your "Daily Weather Report" automation failed</p>
-                    <p className="text-xs text-gray-400 mt-1">Gmail service authentication expired</p>
-                  </div>
-                  <div className="text-xs text-gray-500">2h ago</div>
-                </div>
-                <div className="flex items-start p-3 bg-white bg-opacity-5 rounded-lg hover:bg-opacity-10 transition-all cursor-pointer">
-                  <div className="rounded-full bg-green-500 p-2 mr-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Successfully connected to Github service</p>
-                    <p className="text-xs text-gray-400 mt-1">You can now create automations with Github</p>
-                  </div>
-                  <div className="text-xs text-gray-500">5h ago</div>
-                </div>
-                <div className="flex items-start p-3 bg-white bg-opacity-5 rounded-lg hover:bg-opacity-10 transition-all cursor-pointer">
-                  <div className="rounded-full bg-blue-500 p-2 mr-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">New service available: Slack</p>
-                    <p className="text-xs text-gray-400 mt-1">Connect Slack to create automations with your workspace</p>
-                  </div>
-                  <div className="text-xs text-gray-500">1d ago</div>
-                </div>
-              </div>
-              <div className="mt-4 text-center">
-                <button className="text-sm text-indigo-300 hover:text-indigo-200 transition-colors">
-                  View all notifications
-                </button>
               </div>
             </div>
           </div>
         </div>
-        <aside className="w-[450px] h-full bg-black bg-opacity-20 border-l border-white border-opacity-10 overflow-y-auto p-5 pt-3">
+        </div>
+        <aside className="w-[450px] bg-black bg-opacity-20 border-l border-white border-opacity-10 overflow-y-auto p-5 pt-3">
           <h2 className="text-2xl font-bold text-indigo-400 mb-4 text-center">Services</h2>
           {loading ? (
             <div className="flex justify-center items-center h-40">
