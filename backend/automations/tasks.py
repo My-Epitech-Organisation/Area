@@ -816,7 +816,7 @@ def _execute_reaction_logic(
                 url,
                 json=payload,
                 headers={"Content-Type": "application/json"},
-                timeout=30
+                timeout=30,
             )
             response.raise_for_status()
 
