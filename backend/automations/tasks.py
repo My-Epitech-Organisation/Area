@@ -796,6 +796,42 @@ def _execute_reaction_logic(
             "note": "Teams integration not yet implemented",
         }
 
+    elif reaction_name == "webhook_post":
+        # Execute webhook POST request
+        url = reaction_config.get("url")
+        if not url:
+            raise ValueError("Webhook URL is required for webhook_post reaction")
+
+        payload = {
+            "area_id": area.id,
+            "area_name": area.name,
+            "trigger_data": trigger_data,
+            "timestamp": datetime.now().isoformat(),
+        }
+
+        logger.info(f"[REACTION WEBHOOK] POST to {url}")
+
+        try:
+            response = requests.post(
+                url,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=30
+            )
+            response.raise_for_status()
+
+            logger.info(f"[REACTION WEBHOOK] Success: {response.status_code}")
+            return {
+                "sent": True,
+                "url": url,
+                "status_code": response.status_code,
+                "response": response.text[:500],
+            }
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"[REACTION WEBHOOK] Failed: {e}")
+            raise Exception(f"Webhook POST failed: {e}")
+
     else:
         # Unknown reaction - log and continue
         logger.warning(
