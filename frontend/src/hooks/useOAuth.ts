@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type {
   ConnectedServicesResponse,
   OAuthInitiateResponse,
-  ServiceConnection
+  ServiceConnection,
 } from '../types/api';
 import { API_BASE } from '../utils/helper';
 
@@ -27,7 +27,7 @@ export const useConnectedServices = () => {
 
       const response = await fetch(`${API_BASE}/auth/services/`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -78,7 +78,7 @@ export const useInitiateOAuth = () => {
 
       const response = await fetch(`${API_BASE}/auth/oauth/${provider}/`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -130,14 +130,16 @@ export const useDisconnectService = () => {
       const response = await fetch(`${API_BASE}/auth/services/${provider}/disconnect/`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || `Failed to disconnect service: ${response.statusText}`);
+        throw new Error(
+          errorData.message || `Failed to disconnect service: ${response.statusText}`
+        );
       }
 
       return true;
@@ -166,6 +168,7 @@ export const useIsServiceConnected = (serviceName: string): boolean => {
   if (loading) return false;
 
   return services.some(
-    service => service.service_name.toLowerCase() === serviceName.toLowerCase() && !service.is_expired
+    (service) =>
+      service.service_name.toLowerCase() === serviceName.toLowerCase() && !service.is_expired
   );
 };
