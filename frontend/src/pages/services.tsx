@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { Link } from "react-router-dom";
-
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
+import { API_BASE } from "../utils/helper";
 
 type AboutService = {
   id: number | string;
