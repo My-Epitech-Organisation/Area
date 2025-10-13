@@ -2,9 +2,24 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class ApiConfig {
-  static String get appletsUrl => '$baseUrl/applets/';
+  static String get appletsUrl {
+    try {
+      return '$baseUrl/applets/';
+    } catch (e) {
+      debugPrint('⚠️ ERROR in appletsUrl: $e');
+      rethrow;
+    }
+  }
 
-  static String get googleLoginUrl => '$authBaseUrl/google-login/';
+  static String get googleLoginUrl {
+    try {
+      return '$authBaseUrl/google-login/';
+    } catch (e) {
+      debugPrint('⚠️ ERROR in googleLoginUrl: $e');
+      rethrow;
+    }
+  }
+  
   static String? _overrideBaseUrl;
   static String? _autoDetectedBase;
 
