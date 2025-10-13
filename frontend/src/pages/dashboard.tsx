@@ -8,13 +8,11 @@
 import React, {useState, useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import type { Service, User } from "../types";
-import { getStoredUser, getAccessToken, fetchUserData } from "../utils/helper";
+import { getStoredUser, getAccessToken, fetchUserData, API_BASE } from "../utils/helper";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
-
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
 
 interface ServiceUsageChartProps {
   services: Service[];
