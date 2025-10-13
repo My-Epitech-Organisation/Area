@@ -120,4 +120,6 @@ if not DEBUG:
 if os.getenv("ENVIRONMENT") == "development":
     LOGGING["root"]["handlers"] = ["console"]
     LOGGING["loggers"]["django"]["handlers"] = ["console"]
-    LOGGING["loggers"]["celery"]["handlers"] = ["console"]
+    # Only override celery logger if it exists
+    if "celery" in LOGGING.get("loggers", {}):
+        LOGGING["loggers"]["celery"]["handlers"] = ["console"]
