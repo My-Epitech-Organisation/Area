@@ -12,8 +12,8 @@ export interface JSONSchemaProperty {
   maximum?: number;
   minLength?: number;
   maxLength?: number;
-  enum?: any[];
-  default?: any;
+  enum?: (string | number | boolean)[];
+  default?: string | number | boolean | null;
   items?: JSONSchemaProperty;
   properties?: Record<string, JSONSchemaProperty>;
   additionalProperties?: boolean | JSONSchemaProperty;
@@ -58,8 +58,8 @@ export interface Area {
   name: string;
   action: number;
   reaction: number;
-  action_config: Record<string, any>;
-  reaction_config: Record<string, any>;
+  action_config: Record<string, unknown>;
+  reaction_config: Record<string, unknown>;
   status: 'active' | 'disabled' | 'paused';
   created_at: string;
 }
@@ -68,8 +68,8 @@ export interface CreateAreaPayload {
   name: string;
   action: number;
   reaction: number;
-  action_config?: Record<string, any>;
-  reaction_config?: Record<string, any>;
+  action_config?: Record<string, unknown>;
+  reaction_config?: Record<string, unknown>;
   status?: 'active' | 'disabled' | 'paused';
 }
 
@@ -82,7 +82,7 @@ export interface PaginatedResponse<T> {
 
 export interface ApiError {
   detail?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // OAuth2 / Service Connection types
