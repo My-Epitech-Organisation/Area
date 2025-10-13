@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useConnectedServices, useInitiateOAuth, useDisconnectService } from "../hooks/useOAuth";
-
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
+import { API_BASE } from "../utils/helper";
 
 type ServiceAction = {
   name: string;
