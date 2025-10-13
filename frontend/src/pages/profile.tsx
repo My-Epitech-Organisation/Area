@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getStoredUser, getAccessToken, fetchUserData } from "../utils/helper";
+import { getStoredUser, getAccessToken, fetchUserData, API_BASE } from "../utils/helper";
 import type { User } from "../types";
 import ProfileModal from "../components/ProfileModal";
-
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
 
 const Profile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -113,7 +111,6 @@ const Profile: React.FC = () => {
     try {
       let hasUpdates = false;
       let successMessage = "";
-
 
       if (pendingProfileUpdate?.password) {
         const passwordResponse = await fetch(`${API_BASE}/auth/password/change/`, {
