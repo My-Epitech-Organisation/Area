@@ -8,6 +8,7 @@
 """API views for OAuth2 authentication flow."""
 
 import logging
+from uuid import UUID
 
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -273,16 +274,27 @@ class OAuthCallbackView(APIView):
                     return Response(status=status.HTTP_302_FOUND, headers={"Location": redirect_to})
                 return Response({"error": "invalid_state", "message": err}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Load user by id
+            # Load user by id with proper UUID validation
             from django.contrib.auth import get_user_model
+            from django.shortcuts import get_object_or_404
 
             User = get_user_model()
             try:
-                # User.id is a UUIDField in this project; do not cast to int
-                user = User.objects.get(id=user_id)
-            except Exception:
-                logger.error(f"User id from state not found: {user_id}")
-                return Response({"error": "invalid_state", "message": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
+                # Validate that user_id is a valid UUID (User.id is a UUIDField)
+                user_uuid = UUID(user_id)
+                user = get_object_or_404(User, id=user_uuid)
+            except (ValueError, TypeError) as e:
+                logger.error(f"Invalid UUID from OAuth state: {user_id} - {e}")
+                return Response(
+                    {"error": "invalid_state", "message": "Invalid user identifier"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            except Exception as e:
+                logger.error(f"User lookup failed for id {user_id}: {e}")
+                return Response(
+                    {"error": "invalid_state", "message": "User not found"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             oauth_provider = OAuthManager.get_provider(provider)
             token_data = oauth_provider.exchange_code_for_token(code)
