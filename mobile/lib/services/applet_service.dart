@@ -47,7 +47,7 @@ class AppletService {
     final response = await _httpClient.post(
       ApiConfig.automationsUrl,
       body: {
-        'description': description,
+        'name': description,
         'action': actionId,
         'reaction': reactionId,
         'action_config': actionConfig,

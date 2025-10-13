@@ -22,6 +22,11 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
   int? _selectedActionId;
   int? _selectedReactionId;
 
+  Map<String, dynamic> _actionConfig = {};
+  Map<String, dynamic> _reactionConfig = {};
+
+  bool Function()? _validateConfigForm;
+
   bool _isCreating = false;
 
   @override
@@ -120,6 +125,34 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
                     },
                   ),
 
+                const SizedBox(height: 16),
+
+                if (_selectedTriggerService != null &&
+                    _selectedTriggerAction != null &&
+                    _selectedActionService != null &&
+                    _selectedActionReaction != null)
+                  ConfigStepCard(
+                    selectedActionName: _selectedTriggerAction!,
+                    selectedReactionName: _selectedActionReaction!,
+                    actionConfig: _actionConfig,
+                    reactionConfig: _reactionConfig,
+                    onActionConfigChanged: (config) {
+                      setState(() {
+                        _actionConfig = config;
+                      });
+                    },
+                    onReactionConfigChanged: (config) {
+                      setState(() {
+                        _reactionConfig = config;
+                      });
+                    },
+                    onValidationChanged: (validateFunction) {
+                      setState(() {
+                        _validateConfigForm = validateFunction;
+                      });
+                    },
+                  ),
+
                 const SizedBox(height: 32),
 
                 // Create Button
@@ -170,6 +203,22 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
         return;
       }
 
+      // Validate configuration form if it exists
+      if (_selectedTriggerService != null &&
+          _selectedTriggerAction != null &&
+          _selectedActionService != null &&
+          _selectedActionReaction != null) {
+        if (!(_validateConfigForm?.call() ?? true)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please fill in all required configuration fields'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+      }
+
       setState(() {
         _isCreating = true;
       });
@@ -182,8 +231,8 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
               : 'Created from mobile app',
           actionId: _selectedActionId!,
           reactionId: _selectedReactionId!,
-          actionConfig: {}, // TODO: Add configuration step
-          reactionConfig: {}, // TODO: Add configuration step
+          actionConfig: _actionConfig.isNotEmpty ? _actionConfig : {},
+          reactionConfig: _reactionConfig.isNotEmpty ? _reactionConfig : {},
         );
 
         if (mounted) {
