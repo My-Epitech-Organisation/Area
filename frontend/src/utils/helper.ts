@@ -7,7 +7,7 @@
 
 import type { User } from "../types";
 
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
+export const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
 
 export const getStoredUser = (): User | null => {
   const stored = localStorage.getItem("user");
