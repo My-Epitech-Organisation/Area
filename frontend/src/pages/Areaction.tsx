@@ -188,14 +188,32 @@ const Areaction: React.FC = () => {
       return;
     }
 
-    const automation = {
-      actionService: selectedActionService,
-      action: selectedAction,
-      reactionService: selectedReactionService,
-      reaction: selectedReaction
-    };
+    // Find the actual Action and Reaction objects from API
+    const actionObj = findActionByName(apiActions || [], selectedAction!);
+    const reactionObj = findReactionByName(apiReactions || [], selectedReaction!);
 
-    console.log("Creating automation:", automation);
+    if (!actionObj) {
+      setMessage(`Action "${selectedAction}" not found in database`);
+      setMessageType('error');
+      return;
+    }
+
+    if (!reactionObj) {
+      setMessage(`Reaction "${selectedReaction}" not found in database`);
+      setMessageType('error');
+      return;
+    }
+
+    try {
+      // Create the AREA with proper payload
+      await createArea({
+        name: generateAreaName(selectedAction!, selectedReaction!),
+        action: actionObj.id,
+        reaction: reactionObj.id,
+        action_config: actionConfig,
+        reaction_config: reactionConfig,
+        status: 'active'
+      });
 
       setMessage("Automation created successfully!");
       setMessageType('success');
