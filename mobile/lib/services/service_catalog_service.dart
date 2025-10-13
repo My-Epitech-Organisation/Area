@@ -25,28 +25,49 @@ class ServiceCatalogService {
       if (cached != null) return cached;
     }
 
-    // Get services
-    final servicesResponse = await _httpClient.get(ApiConfig.servicesUrl);
+    // Get services from about.json endpoint
+    final servicesResponse = await _httpClient.get(ApiConfig.aboutUrl);
     final servicesData = _httpClient.parseResponse<List<dynamic>>(
       servicesResponse,
-      (data) => data as List<dynamic>,
+      (data) {
+        // Extract services from server.services
+        if (data is Map && data.containsKey('server')) {
+          final server = data['server'] as Map<String, dynamic>;
+          if (server.containsKey('services')) {
+            return server['services'] as List<dynamic>;
+          }
+        }
+        throw Exception('Unexpected about.json response format: $data');
+      },
     );
 
-    // Get all actions
+    // Get real actions from API
     final actionsResponse = await _httpClient.get(ApiConfig.actionsUrl);
     final actionsData = _httpClient.parseResponse<List<dynamic>>(
       actionsResponse,
-      (data) => data as List<dynamic>,
+      (data) {
+        // API returns paginated response: {"results": [...]}
+        if (data is Map && data.containsKey('results')) {
+          return data['results'] as List<dynamic>;
+        }
+        return data as List<dynamic>;
+      },
     );
 
-    // Get all reactions
+    // Get real reactions from API
     final reactionsResponse = await _httpClient.get(ApiConfig.reactionsUrl);
     final reactionsData = _httpClient.parseResponse<List<dynamic>>(
       reactionsResponse,
-      (data) => data as List<dynamic>,
+      (data) {
+        // API returns paginated response: {"results": [...]}
+        if (data is Map && data.containsKey('results')) {
+          return data['results'] as List<dynamic>;
+        }
+        return data as List<dynamic>;
+      },
     );
 
-    // Group actions and reactions by service
+    // Group actions and reactions by service_id
     final actionsByService = <int, List<ServiceAction>>{};
     final reactionsByService = <int, List<ServiceReaction>>{};
 
@@ -63,11 +84,24 @@ class ServiceCatalogService {
     }
 
     // Create services with their actions and reactions
+    final serviceNameToId = <String, int>{};
+    for (final action in actionsData) {
+      final serviceName = action['service_name'] as String;
+      final serviceId = action['service_id'] as int;
+      serviceNameToId[serviceName] = serviceId;
+    }
+    for (final reaction in reactionsData) {
+      final serviceName = reaction['service_name'] as String;
+      final serviceId = reaction['service_id'] as int;
+      serviceNameToId[serviceName] = serviceId;
+    }
+
     final services = servicesData.map((serviceJson) {
-      final serviceId = serviceJson['id'] as int;
+      final serviceName = serviceJson['name'] as String;
+      final serviceId = serviceNameToId[serviceName] ?? 0;
       return Service(
         id: serviceId,
-        name: serviceJson['name'] as String,
+        name: serviceName,
         actions: actionsByService[serviceId] ?? [],
         reactions: reactionsByService[serviceId] ?? [],
       );

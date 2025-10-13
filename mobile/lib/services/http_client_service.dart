@@ -166,6 +166,8 @@ class HttpClientService {
       throw HttpException('Authentication required', statusCode: 401);
     }
 
+    print('HTTP Error ${response.statusCode}: ${response.body}');
+
     throw HttpException(
       'Request failed: ${response.statusCode}',
       statusCode: response.statusCode,
