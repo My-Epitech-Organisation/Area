@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useConnectedServices, useInitiateOAuth, useDisconnectService } from "../hooks/useOAuth";
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
 
@@ -25,6 +26,12 @@ const ServiceDetail: React.FC = () => {
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // OAuth hooks
+  const { services: connectedServices, loading: loadingOAuth } = useConnectedServices();
+  const { initiateOAuth, loading: connectingOAuth } = useInitiateOAuth();
+  const { disconnectService, loading: disconnectingOAuth } = useDisconnectService();
+
   const imageModules = import.meta.glob("../assets/*.{png,jpg,jpeg,svg,gif}", { eager: true }) as Record<string, { default: string }>;
   const imagesByName: Record<string, string> = {};
 
@@ -52,7 +59,8 @@ const ServiceDetail: React.FC = () => {
     const fetchServiceDetails = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/about.json`);
+        const baseUrl = API_BASE.replace(/\/api$/, '');
+        const res = await fetch(`${baseUrl}/about.json`);
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
@@ -101,6 +109,29 @@ const ServiceDetail: React.FC = () => {
 
   const logo = resolveLogo(service.logo, service.name);
 
+  // Check if this service requires OAuth and if it's connected
+  const oauthProviders = ['github', 'google', 'gmail'];
+  const requiresOAuth = service && oauthProviders.includes(service.name.toLowerCase());
+  const isConnected = requiresOAuth && connectedServices.some(
+    s => s.service_name.toLowerCase() === service.name.toLowerCase() && !s.is_expired
+  );
+
+  const handleConnect = async () => {
+    if (service) {
+      await initiateOAuth(service.name.toLowerCase());
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (service && window.confirm(`Are you sure you want to disconnect ${service.name}?`)) {
+      const success = await disconnectService(service.name.toLowerCase());
+      if (success) {
+        // Refresh the page or show a success message
+        window.location.reload();
+      }
+    }
+  };
+
   return (
     <div className="w-screen min-h-screen bg-page-service-detail p-6">
       <div className="max-w-6xl mx-auto pt-20">
@@ -126,9 +157,55 @@ const ServiceDetail: React.FC = () => {
             </div>
 
             <div className="flex-1">
-              <h1 className="text-3xl md:text-4xl font-bold text-white text-center md:text-left">
-                {service.name.charAt(0).toUpperCase() + service.name.slice(1)}
-              </h1>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <h1 className="text-3xl md:text-4xl font-bold text-white text-center md:text-left">
+                  {service.name.charAt(0).toUpperCase() + service.name.slice(1)}
+                </h1>
+
+                {/* OAuth Connection Status */}
+                {requiresOAuth && (
+                  <div className="flex items-center gap-3">
+                    {isConnected ? (
+                      <>
+                        <div className="flex items-center gap-2 bg-green-500/20 text-green-300 px-4 py-2 rounded-lg border border-green-500/30">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="font-medium">Connected</span>
+                        </div>
+                        <button
+                          onClick={handleDisconnect}
+                          disabled={disconnectingOAuth}
+                          className="px-4 py-2 text-sm bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Disconnect
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={handleConnect}
+                        disabled={connectingOAuth || loadingOAuth}
+                        className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {connectingOAuth ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                            <span>Connecting...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                            </svg>
+                            <span>Connect {service.name}</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="mt-8 grid gap-8 md:grid-cols-2">
                 <div>
                   <h2 className="text-xl font-semibold text-indigo-300 mb-4 flex items-center gap-2">
