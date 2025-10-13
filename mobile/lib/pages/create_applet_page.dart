@@ -1,7 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/create_applet/create_applet_widgets.dart';
+import '../widgets/create_applet/automation_preview_card.dart';
 import '../providers/service_catalog_provider.dart';
+import '../providers/connected_services_provider.dart';
+import '../providers/navigation_provider.dart';
 import '../services/applet_service.dart';
 
 class CreateAppletPage extends StatefulWidget {
@@ -32,9 +36,10 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
   @override
   void initState() {
     super.initState();
-    // Load services when page opens
+    // Load services and connected services when page opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ServiceCatalogProvider>().loadServices();
+      context.read<ConnectedServicesProvider>().loadConnectedServices();
     });
   }
 
@@ -153,6 +158,18 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
                     },
                   ),
 
+                const SizedBox(height: 24),
+
+                // Visual Preview - Show automation flow
+                AutomationPreviewCard(
+                  triggerServiceName: _selectedTriggerService,
+                  triggerActionName: _selectedTriggerAction,
+                  actionConfig: _actionConfig,
+                  reactionServiceName: _selectedActionService,
+                  reactionActionName: _selectedActionReaction,
+                  reactionConfig: _reactionConfig,
+                ),
+
                 const SizedBox(height: 32),
 
                 // Create Button
@@ -171,9 +188,25 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
   }
 
   void _createAutomation() async {
-    if (_formKey.currentState?.validate() ?? false) {
+    debugPrint('🚀 Starting automation creation...');
+    debugPrint('📊 Current state:');
+    debugPrint('  - _selectedTriggerService: $_selectedTriggerService');
+    debugPrint('  - _selectedTriggerAction: $_selectedTriggerAction');
+    debugPrint('  - _selectedActionService: $_selectedActionService');
+    debugPrint('  - _selectedActionReaction: $_selectedActionReaction');
+    debugPrint('  - _selectedActionId: $_selectedActionId');
+    debugPrint('  - _selectedReactionId: $_selectedReactionId');
+    debugPrint('  - _nameController.text: "${_nameController.text}"');
+
+    final formValid = _formKey.currentState?.validate() ?? false;
+    debugPrint('📝 Form validation: $formValid');
+
+    if (formValid) {
+      debugPrint('✅ Form is valid, checking selections...');
+
       // Validate that all required fields are selected
       if (_selectedTriggerService == null || _selectedTriggerAction == null) {
+        debugPrint('❌ Missing trigger selection');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Please select a trigger'),
@@ -183,7 +216,10 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
         return;
       }
 
+      debugPrint('✅ Trigger selected: $_selectedTriggerService -> $_selectedTriggerAction');
+
       if (_selectedActionService == null || _selectedActionReaction == null) {
+        debugPrint('❌ Missing action selection');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Please select an action'),
@@ -192,6 +228,13 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
         );
         return;
       }
+
+      debugPrint('✅ Action selected: $_selectedActionService -> $_selectedActionReaction');
+    } else {
+      debugPrint('❌ Form validation failed');
+      // The form validation will show its own error messages
+      return;
+    }
 
       if (_selectedActionId == null || _selectedReactionId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -235,7 +278,10 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
           reactionConfig: _reactionConfig.isNotEmpty ? _reactionConfig : {},
         );
 
+        debugPrint('✅ Automation created successfully: ${applet.name} (ID: ${applet.id})');
+
         if (mounted) {
+          debugPrint('📱 Showing success snackbar...');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -259,10 +305,13 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
           });
           _formKey.currentState?.reset();
 
-          // Navigate back to home or automations list
-          Navigator.of(context).pop();
+          // Navigate to "My Automations" page to show the newly created automation
+          debugPrint('🔄 Navigating to My Automations page...');
+          context.read<NavigationProvider>().navigateToPage(2); // Index 2 = My Automations
         }
-      } catch (e) {
+      } catch (e, stackTrace) {
+        debugPrint('❌ ERROR creating automation: $e');
+        debugPrint('📚 Stack trace: $stackTrace');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -284,4 +333,3 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
       }
     }
   }
-}
