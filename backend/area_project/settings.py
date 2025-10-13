@@ -424,12 +424,6 @@ if os.getenv("ENVIRONMENT") == "production":
         "formatter": "verbose",
     }
 
-# Development: Only use console logging to avoid SELinux permission issues
-if os.getenv("ENVIRONMENT") == "development":
-    LOGGING["root"]["handlers"] = ["console"]
-    LOGGING["loggers"]["django"]["handlers"] = ["console"]
-    LOGGING["loggers"]["celery"]["handlers"] = ["console"]
-
 # OAuth2 Provider Configuration
 OAUTH2_PROVIDERS = {
     "google": {
