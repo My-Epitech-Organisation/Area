@@ -47,6 +47,11 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = []
 
+# Frontend URL for OAuth redirects
+# In development: http://localhost:5173
+# In production: https://your-frontend-domain.com
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
 
 # Security Settings
 # Only enable SSL redirect and secure cookies in production
@@ -425,7 +430,7 @@ OAUTH2_PROVIDERS = {
         "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
         "client_secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
         "redirect_uri": os.getenv(
-            "GOOGLE_REDIRECT_URI", "http://localhost:8080/auth/google/callback"
+            "GOOGLE_REDIRECT_URI", "http://localhost:8080/auth/oauth/google/callback/"
         ),
         "authorization_endpoint": "https://accounts.google.com/o/oauth2/v2/auth",
         "token_endpoint": "https://oauth2.googleapis.com/token",
