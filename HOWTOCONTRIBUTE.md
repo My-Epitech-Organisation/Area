@@ -157,47 +157,58 @@ cd Area
 
 #### Step 2: Environment Configuration
 
-Create a `.env` file at the project root:
+**🎯 IMPORTANT: Centralized Environment Variables**
+
+All environment variables are managed from a **single `.env` file at the project root**. This file is shared by all services (backend, frontend, mobile) through Docker Compose.
+
+**Setup:**
 
 ```bash
+# Copy the template
 cp .env.example .env
+
+# Edit with your values
+nano .env  # or your preferred editor
+
+# Validate your configuration
+./scripts/validate-env.sh
 ```
 
-Edit `.env` with your configuration:
+**Configuration Files:**
+- `.env` - Your local development configuration (gitignored, contains secrets)
+- `.env.example` - Complete template with all 44 required variables documented
+- `.env.production` - Production-ready template for deployment
+- `scripts/validate-env.sh` - Validation script to check all variables
+
+**Key Variables to Configure:**
 
 ```env
-# Django
-SECRET_KEY=your-super-secret-key-change-in-production
+# Security (MUST change in production!)
+SECRET_KEY=your-super-secret-django-key-change-in-production
+JWT_SIGNING_KEY=your-jwt-signing-key-change-in-production
 DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
+ENVIRONMENT=development
 
-# Database
-DB_NAME=area_db
-DB_USER=area_user
-DB_PASSWORD=area_password
-DB_HOST=db
-DB_PORT=5432
+# Frontend (Vite needs VITE_ prefix for client-side access)
+VITE_API_BASE=http://localhost:8080
+FRONTEND_URL=http://localhost:8081
 
-# Redis
-REDIS_HOST=redis
-REDIS_PORT=6379
-REDIS_URL=redis://redis:6379/0
-
-# Ports
-BACKEND_PORT=8080
-FRONTEND_PORT=8081
-
-# OAuth2 - Google
+# OAuth2 - Google (Get from https://console.cloud.google.com/)
 GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 GOOGLE_REDIRECT_URI=http://localhost:8080/auth/oauth/google/callback/
 
-# OAuth2 - GitHub
+# OAuth2 - GitHub (Get from https://github.com/settings/developers)
 GITHUB_CLIENT_ID=your-github-client-id
 GITHUB_CLIENT_SECRET=your-github-client-secret
 GITHUB_REDIRECT_URI=http://localhost:8080/auth/oauth/github/callback/
 
-# Email (optional, for send_email reaction)
+# Webhook Secrets (Generate with: openssl rand -hex 32)
+GITHUB_WEBHOOK_SECRET=dev_secret_github_123
+GMAIL_WEBHOOK_SECRET=dev_secret_gmail_123
+WEBHOOK_SECRET=dev_secret_webhook_123
+
+# Email (for send_email reaction)
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_HOST_USER=your-email@gmail.com

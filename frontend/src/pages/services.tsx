@@ -56,7 +56,8 @@ const Services: React.FC = () => {
     const fetchAbout = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/about.json`);
+        const baseUrl = API_BASE.replace(/\/api$/, '');
+        const res = await fetch(`${baseUrl}/about.json`);
         if (!res.ok)
           throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -494,7 +495,7 @@ const Services: React.FC = () => {
                     }}
                   >
                   <div
-                    className="absolute w-[800px] h-[800px] rounded-full -bottom-[150px] left-1/2 transform -translate-x-1/2 bg-gradient-radial from-indigo-900/20 to-transparent" 
+                    className="absolute w-[800px] h-[800px] rounded-full -bottom-[150px] left-1/2 transform -translate-x-1/2 bg-gradient-radial from-indigo-900/20 to-transparent"
                     style={{
                       transform: 'rotateX(90deg) translateZ(-200px)',
                       filter: 'blur(5px)',
