@@ -18,7 +18,11 @@ from django.conf import settings
 from django.core.mail import send_mail
 
 from .models import User
-from .serializers import EmailTokenObtainPairSerializer, UserSerializer, UserProfileSerializer
+from .serializers import (
+    EmailTokenObtainPairSerializer,
+    UserProfileSerializer,
+    UserSerializer,
+)
 
 
 class RegisterView(generics.CreateAPIView):
