@@ -31,7 +31,8 @@ class ServiceActionSelectorCard extends StatefulWidget {
   });
 
   @override
-  State<ServiceActionSelectorCard> createState() => _ServiceActionSelectorCardState();
+  State<ServiceActionSelectorCard> createState() =>
+      _ServiceActionSelectorCardState();
 }
 
 class _ServiceActionSelectorCardState extends State<ServiceActionSelectorCard> {
@@ -89,10 +90,12 @@ class _ServiceActionSelectorCardState extends State<ServiceActionSelectorCard> {
             ? Icons.play_circle_outline
             : Icons.flash_on;
 
-        final serviceValidatorMessage = widget.selectorType == SelectorType.trigger
+        final serviceValidatorMessage =
+            widget.selectorType == SelectorType.trigger
             ? 'Please select a trigger service'
             : 'Please select an action service';
-        final actionValidatorMessage = widget.selectorType == SelectorType.trigger
+        final actionValidatorMessage =
+            widget.selectorType == SelectorType.trigger
             ? 'Please select a trigger action'
             : 'Please select a reaction';
 
@@ -116,9 +119,8 @@ class _ServiceActionSelectorCardState extends State<ServiceActionSelectorCard> {
                     Expanded(
                       child: Text(
                         widget.title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
                       ),
                     ),
                     // Toggle for filtering by connected services
@@ -143,9 +145,11 @@ class _ServiceActionSelectorCardState extends State<ServiceActionSelectorCard> {
                       ),
                   ],
                 ),
-                
+
                 // Info banner when filter is on but no services match
-                if (widget.filterByConnectedServices && _showOnlyConnected && filteredServices.isEmpty)
+                if (widget.filterByConnectedServices &&
+                    _showOnlyConnected &&
+                    filteredServices.isEmpty)
                   Container(
                     margin: const EdgeInsets.only(top: 12, bottom: 8),
                     padding: const EdgeInsets.all(12),
@@ -164,9 +168,12 @@ class _ServiceActionSelectorCardState extends State<ServiceActionSelectorCard> {
                         Expanded(
                           child: Text(
                             'No connected services available. Please connect a service or turn off the filter.',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onErrorContainer,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onErrorContainer,
+                                ),
                           ),
                         ),
                       ],
@@ -192,9 +199,13 @@ class _ServiceActionSelectorCardState extends State<ServiceActionSelectorCard> {
                       helperText: serviceHelperText,
                     ),
                     items: filteredServices.map((service) {
-                      final isConnected = connectedProvider.isServiceConnected(service.name);
-                      final requiresOAuth = ServiceProviderConfig.requiresOAuth(service.name);
-                      
+                      final isConnected = connectedProvider.isServiceConnected(
+                        service.name,
+                      );
+                      final requiresOAuth = ServiceProviderConfig.requiresOAuth(
+                        service.name,
+                      );
+
                       return DropdownMenuItem(
                         value: service.name,
                         child: Row(
@@ -248,7 +259,9 @@ class _ServiceActionSelectorCardState extends State<ServiceActionSelectorCard> {
                       items:
                           (widget.selectorType == SelectorType.trigger
                               ? serviceProvider
-                                    .getActionsForService(widget.selectedService!)
+                                    .getActionsForService(
+                                      widget.selectedService!,
+                                    )
                                     ?.map((action) {
                                       return DropdownMenuItem(
                                         value: action.name,
@@ -257,7 +270,9 @@ class _ServiceActionSelectorCardState extends State<ServiceActionSelectorCard> {
                                     })
                                     .toList()
                               : serviceProvider
-                                    .getReactionsForService(widget.selectedService!)
+                                    .getReactionsForService(
+                                      widget.selectedService!,
+                                    )
                                     ?.map((reaction) {
                                       return DropdownMenuItem(
                                         value: reaction.name,

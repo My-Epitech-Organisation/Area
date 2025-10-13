@@ -41,9 +41,7 @@ class _ConfigStepCardState extends State<ConfigStepCard> {
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -67,9 +65,9 @@ class _ConfigStepCardState extends State<ConfigStepCard> {
             const SizedBox(height: 8),
             Text(
               'Configure the parameters for your automation',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[600],
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
             ),
             const SizedBox(height: 24),
             DynamicConfigForm(

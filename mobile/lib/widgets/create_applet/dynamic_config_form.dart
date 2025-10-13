@@ -23,7 +23,10 @@ class ConfigField {
     this.validation,
   });
 
-  factory ConfigField.fromSchemaProperty(String name, Map<String, dynamic> property) {
+  factory ConfigField.fromSchemaProperty(
+    String name,
+    Map<String, dynamic> property,
+  ) {
     final type = property['type'] as String? ?? 'string';
     final description = property['description'] as String?;
     final defaultValue = property['default'];
@@ -49,7 +52,11 @@ class ConfigField {
   static String _formatLabel(String name) {
     return name
         .split('_')
-        .map((word) => word.isEmpty ? '' : '${word[0].toUpperCase()}${word.substring(1)}')
+        .map(
+          (word) => word.isEmpty
+              ? ''
+              : '${word[0].toUpperCase()}${word.substring(1)}',
+        )
         .join(' ');
   }
 }
@@ -78,6 +85,7 @@ class DynamicConfigForm extends StatefulWidget {
   @override
   State<DynamicConfigForm> createState() => _DynamicConfigFormState();
 }
+
 class _DynamicConfigFormState extends State<DynamicConfigForm> {
   final _schemaService = SchemaService();
   final _formKey = GlobalKey<FormState>();
@@ -104,8 +112,12 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
 
   Future<void> _loadSchemas() async {
     try {
-      final actionSchema = await _schemaService.getActionSchema(widget.actionName);
-      final reactionSchema = await _schemaService.getReactionSchema(widget.reactionName);
+      final actionSchema = await _schemaService.getActionSchema(
+        widget.actionName,
+      );
+      final reactionSchema = await _schemaService.getReactionSchema(
+        widget.reactionName,
+      );
 
       setState(() {
         _actionSchema = actionSchema;
@@ -126,8 +138,12 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
     final required = schema['required'] as List<dynamic>? ?? [];
 
     return properties.entries.map((entry) {
-      final property = Map<String, dynamic>.from(entry.value as Map<String, dynamic>);
-      property['required'] = required.contains(entry.key); // Check if field name is in required list
+      final property = Map<String, dynamic>.from(
+        entry.value as Map<String, dynamic>,
+      );
+      property['required'] = required.contains(
+        entry.key,
+      ); // Check if field name is in required list
       return ConfigField.fromSchemaProperty(entry.key, property);
     }).toList();
   }
@@ -161,12 +177,14 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
           children: [
             Text(
               title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 16),
-            ...fields.map((field) => _buildFieldWidget(field, config, onChanged)),
+            ...fields.map(
+              (field) => _buildFieldWidget(field, config, onChanged),
+            ),
           ],
         ),
       ),
@@ -194,17 +212,15 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
                 border: const OutlineInputBorder(),
               ),
               items: field.enumValues!.map((value) {
-                return DropdownMenuItem(
-                  value: value,
-                  child: Text(value),
-                );
+                return DropdownMenuItem(value: value, child: Text(value));
               }).toList(),
               onChanged: (value) {
                 config[field.name] = value ?? '';
                 onChanged(config);
               },
               validator: field.required
-                  ? (value) => value == null || value.isEmpty ? 'Required field' : null
+                  ? (value) =>
+                        value == null || value.isEmpty ? 'Required field' : null
                   : null,
             ),
           );
@@ -224,7 +240,8 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
                 onChanged(config);
               },
               validator: field.required
-                  ? (value) => value == null || value.isEmpty ? 'Required field' : null
+                  ? (value) =>
+                        value == null || value.isEmpty ? 'Required field' : null
                   : null,
             ),
           );
@@ -266,7 +283,9 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
           padding: const EdgeInsets.only(bottom: 16),
           child: CheckboxListTile(
             title: Text(field.label + (field.required ? ' *' : '')),
-            subtitle: field.description != null ? Text(field.description!) : null,
+            subtitle: field.description != null
+                ? Text(field.description!)
+                : null,
             value: currentValue is bool ? currentValue : false,
             onChanged: (value) {
               config[field.name] = value ?? false;
@@ -280,7 +299,9 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: TextFormField(
-            initialValue: currentValue is List ? currentValue.join(', ') : currentValue.toString(),
+            initialValue: currentValue is List
+                ? currentValue.join(', ')
+                : currentValue.toString(),
             decoration: InputDecoration(
               labelText: field.label + (field.required ? ' *' : ''),
               hintText: field.description ?? 'Comma-separated values',
@@ -288,12 +309,17 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
             ),
             onChanged: (value) {
               // Split by comma and trim whitespace
-              final arrayValue = value.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+              final arrayValue = value
+                  .split(',')
+                  .map((s) => s.trim())
+                  .where((s) => s.isNotEmpty)
+                  .toList();
               config[field.name] = arrayValue;
               onChanged(config);
             },
             validator: field.required
-                ? (value) => value == null || value.isEmpty ? 'Required field' : null
+                ? (value) =>
+                      value == null || value.isEmpty ? 'Required field' : null
                 : null,
           ),
         );
@@ -313,7 +339,8 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
               onChanged(config);
             },
             validator: field.required
-                ? (value) => value == null || value.isEmpty ? 'Required field' : null
+                ? (value) =>
+                      value == null || value.isEmpty ? 'Required field' : null
                 : null,
           ),
         );

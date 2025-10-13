@@ -31,9 +31,7 @@ class AutomationPreviewCard extends StatelessWidget {
 
     return Card(
       elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
@@ -74,9 +72,7 @@ class AutomationPreviewCard extends StatelessWidget {
               Row(
                 children: [
                   // Trigger side
-                  Expanded(
-                    child: _buildTriggerSection(context),
-                  ),
+                  Expanded(child: _buildTriggerSection(context)),
 
                   // Arrow
                   Padding(
@@ -89,9 +85,7 @@ class AutomationPreviewCard extends StatelessWidget {
                   ),
 
                   // Reaction side
-                  Expanded(
-                    child: _buildReactionSection(context),
-                  ),
+                  Expanded(child: _buildReactionSection(context)),
                 ],
               ),
             ],
@@ -180,11 +174,7 @@ class AutomationPreviewCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     if (reactionServiceName == null) {
-      return _buildEmptySection(
-        context,
-        'Select action',
-        Icons.flash_on,
-      );
+      return _buildEmptySection(context, 'Select action', Icons.flash_on);
     }
 
     return Column(
@@ -267,11 +257,7 @@ class AutomationPreviewCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(
-            icon,
-            size: 32,
-            color: theme.colorScheme.outline,
-          ),
+          Icon(icon, size: 32, color: theme.colorScheme.outline),
           const SizedBox(height: 8),
           Text(
             text,
@@ -286,7 +272,10 @@ class AutomationPreviewCard extends StatelessWidget {
     );
   }
 
-  Widget _buildConfigSummary(BuildContext context, Map<String, dynamic> config) {
+  Widget _buildConfigSummary(
+    BuildContext context,
+    Map<String, dynamic> config,
+  ) {
     final theme = Theme.of(context);
 
     // Show only first 2 config items
@@ -320,9 +309,7 @@ class AutomationPreviewCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       '${_formatFieldName(entry.key)}: $displayValue',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontSize: 10,
-                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -347,22 +334,31 @@ class AutomationPreviewCard extends StatelessWidget {
 
   String _formatServiceName(String name) {
     // Convert service_name to Service Name
-    return name.split('_').map((word) {
-      return word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1);
-    }).join(' ');
+    return name
+        .split('_')
+        .map((word) {
+          return word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1);
+        })
+        .join(' ');
   }
 
   String _formatActionName(String name) {
     // Convert action_name to Action Name
-    return name.split('_').map((word) {
-      return word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1);
-    }).join(' ');
+    return name
+        .split('_')
+        .map((word) {
+          return word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1);
+        })
+        .join(' ');
   }
 
   String _formatFieldName(String name) {
     // Convert field_name to Field Name
-    return name.split('_').map((word) {
-      return word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1);
-    }).join(' ');
+    return name
+        .split('_')
+        .map((word) {
+          return word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1);
+        })
+        .join(' ');
   }
 }

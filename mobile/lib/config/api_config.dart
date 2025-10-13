@@ -19,7 +19,7 @@ class ApiConfig {
       rethrow;
     }
   }
-  
+
   static String? _overrideBaseUrl;
   static String? _autoDetectedBase;
 
@@ -97,8 +97,7 @@ class ApiConfig {
       '$authBaseUrl/services/$provider/disconnect/';
 
   static String automationUrl(int id) => '$baseUrl/api/areas/$id/';
-  static String automationToggleUrl(int id) =>
-      '$baseUrl/api/areas/$id/toggle/';
+  static String automationToggleUrl(int id) => '$baseUrl/api/areas/$id/toggle/';
   static String serviceActionsUrl(int serviceId) =>
       '$baseUrl/api/services/$serviceId/actions/';
   static String serviceReactionsUrl(int serviceId) =>
