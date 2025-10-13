@@ -139,7 +139,9 @@ class _ServiceActionSelectorCardState extends State<ServiceActionSelectorCard> {
                                 _showOnlyConnected = value;
                               });
                             },
-                            activeColor: Theme.of(context).colorScheme.primary,
+                            activeThumbColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
                           ),
                         ],
                       ),

@@ -1,8 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/create_applet/create_applet_widgets.dart';
-import '../widgets/create_applet/automation_preview_card.dart';
 import '../providers/service_catalog_provider.dart';
 import '../providers/connected_services_provider.dart';
 import '../providers/navigation_provider.dart';

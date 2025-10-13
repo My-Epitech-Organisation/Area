@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import 'token_service.dart';
@@ -166,7 +167,7 @@ class HttpClientService {
       throw HttpException('Authentication required', statusCode: 401);
     }
 
-    print('HTTP Error ${response.statusCode}: ${response.body}');
+    debugPrint('HTTP Error ${response.statusCode}: ${response.body}');
 
     throw HttpException(
       'Request failed: ${response.statusCode}',
