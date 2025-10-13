@@ -280,6 +280,33 @@ REACTION_SCHEMAS = {
         "required": ["message"],
         "additionalProperties": False,
     },
+    "webhook_post": {
+        "type": "object",
+        "properties": {
+            "url": {
+                "type": "string",
+                "format": "uri",
+                "description": "Target webhook URL to POST to",
+            },
+            "method": {
+                "type": "string",
+                "enum": ["POST", "PUT", "PATCH"],
+                "default": "POST",
+                "description": "HTTP method to use",
+            },
+            "headers": {
+                "type": "object",
+                "description": "Custom HTTP headers (optional)",
+                "additionalProperties": {"type": "string"},
+            },
+            "body": {
+                "type": "string",
+                "description": "Request body (can contain template variables)",
+            },
+        },
+        "required": ["url"],
+        "additionalProperties": False,
+    },
 }
 
 
