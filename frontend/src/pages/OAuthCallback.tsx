@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'http://localhost:8080';
+import { API_BASE } from '../utils/helper';
 
 const OAuthCallback: React.FC = () => {
   const { provider } = useParams<{ provider: string }>();
