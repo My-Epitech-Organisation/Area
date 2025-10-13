@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { getStoredUser } from "../utils/helper";
-import type { User } from "../types";
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { getStoredUser } from '../utils/helper';
+import type { User } from '../types';
 
 const Navbar: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -24,7 +24,7 @@ const Navbar: React.FC = () => {
     };
 
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "user" || e.key === "access" || e.key === null) {
+      if (e.key === 'user' || e.key === 'access' || e.key === null) {
         checkAndUpdateUser();
       }
     };
@@ -39,13 +39,13 @@ const Navbar: React.FC = () => {
   }, [user, location.pathname]);
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("access");
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("token");
-    localStorage.removeItem("refresh");
-    localStorage.removeItem("username");
-    localStorage.removeItem("email");
+    localStorage.removeItem('user');
+    localStorage.removeItem('access');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh');
+    localStorage.removeItem('username');
+    localStorage.removeItem('email');
 
     setUser(null);
 
@@ -57,22 +57,40 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-16 flex items-center justify-center">
           <div className="flex items-center space-x-8">
-            <Link to="/homepage" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
+            <Link
+              to="/homepage"
+              className="text-white text-lg font-semibold hover:text-indigo-300 transition"
+            >
               Home
             </Link>
-            <Link to="/Areaction" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
+            <Link
+              to="/Areaction"
+              className="text-white text-lg font-semibold hover:text-indigo-300 transition"
+            >
               Area
             </Link>
-            <Link to="/services" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
+            <Link
+              to="/services"
+              className="text-white text-lg font-semibold hover:text-indigo-300 transition"
+            >
               Services
             </Link>
-            <Link to="/about" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
+            <Link
+              to="/about"
+              className="text-white text-lg font-semibold hover:text-indigo-300 transition"
+            >
               About Us
             </Link>
-            <Link to="/dashboard" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
+            <Link
+              to="/dashboard"
+              className="text-white text-lg font-semibold hover:text-indigo-300 transition"
+            >
               Dashboard
             </Link>
-            <Link to="/profile" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
+            <Link
+              to="/profile"
+              className="text-white text-lg font-semibold hover:text-indigo-300 transition"
+            >
               Profile
             </Link>
           </div>
@@ -94,10 +112,16 @@ const Navbar: React.FC = () => {
           </>
         ) : (
           <>
-            <Link to="/login" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
+            <Link
+              to="/login"
+              className="text-white text-lg font-semibold hover:text-indigo-300 transition"
+            >
               Log In
             </Link>
-            <Link to="/signup" className="text-white text-lg font-semibold hover:text-indigo-300 transition">
+            <Link
+              to="/signup"
+              className="text-white text-lg font-semibold hover:text-indigo-300 transition"
+            >
               Sign Up
             </Link>
           </>
