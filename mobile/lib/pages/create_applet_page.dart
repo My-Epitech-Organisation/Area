@@ -185,7 +185,7 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
     );
   }
 
-  void _createAutomation() async {
+  Future<void> _createAutomation() async {
     debugPrint('🚀 Starting automation creation...');
     debugPrint('📊 Current state:');
     debugPrint('  - _selectedTriggerService: $_selectedTriggerService');
