@@ -30,14 +30,17 @@ backend/.env
 *.log
 db.sqlite3
 /media/
+backend/staticfiles/
 
 # IDEs
 .vscode/
 .idea/
 
-# Environment variables
+# Environment variables - Keep templates, ignore actual credentials
 *.env
 *.env.local
+!.env.example
+!.env.production
 
 # PoC
 Poc/

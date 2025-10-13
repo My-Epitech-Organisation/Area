@@ -114,3 +114,12 @@ if not DEBUG:
     # Use cache for sessions in production
     SESSION_ENGINE = "django.contrib.sessions.backends.cache"
     SESSION_CACHE_ALIAS = "default"
+
+# Development: Override logging to console-only to avoid SELinux permission issues
+# with mounted volumes in Docker development environments
+if os.getenv("ENVIRONMENT") == "development":
+    LOGGING["root"]["handlers"] = ["console"]
+    LOGGING["loggers"]["django"]["handlers"] = ["console"]
+    # Only override celery logger if it exists
+    if "celery" in LOGGING.get("loggers", {}):
+        LOGGING["loggers"]["celery"]["handlers"] = ["console"]
