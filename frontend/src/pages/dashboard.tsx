@@ -440,7 +440,7 @@ const Dashboard: React.FC = () => {
                   <span className="font-medium">New Automation</span>
                 </button>
                 <button
-                  onClick={() => navigate('/templates')}
+                  onClick={() => navigate('/profile')}
                   className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
