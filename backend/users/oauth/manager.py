@@ -4,10 +4,12 @@ import hashlib
 import logging
 import secrets
 from typing import Optional
+from uuid import UUID
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from users.models import ServiceToken
