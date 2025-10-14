@@ -12,12 +12,13 @@ class ServiceProviderConfig {
 
   static bool requiresOAuth(String serviceName) {
     // Map gmail to google for OAuth purposes
-    final mappedName = _mapServiceName(serviceName);
+    final mappedName = mapServiceName(serviceName);
     return oauthServices.contains(mappedName.toLowerCase());
   }
 
   /// Map service names for consistency (gmail -> google)
-  static String _mapServiceName(String serviceName) {
+  /// This is used to normalize service names across the application
+  static String mapServiceName(String serviceName) {
     switch (serviceName.toLowerCase()) {
       case 'gmail':
         return 'google';
@@ -45,7 +46,7 @@ class ServiceProviderConfig {
 
   /// Get provider icon URL from web (PNG images)
   static String getIconUrl(String provider) {
-    final mappedProvider = _mapServiceName(provider);
+    final mappedProvider = mapServiceName(provider);
     switch (mappedProvider.toLowerCase()) {
       case 'github':
         return 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Flogos-world.net%2Fwp-content%2Fuploads%2F2020%2F11%2FGitHub-Symbol.png&f=1&nofb=1&ipt=1e8fe0d0c31dac1d47abf59a23130ec2b31975a34721d1ea9284db059ba4a957';
