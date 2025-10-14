@@ -88,11 +88,7 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
           );
         }
 
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            _loadConnectedServices();
-          }
-        });
+        _pollForOAuthCompletion(serviceName);
       } catch (e) {
         throw Exception('Could not launch authorization URL: ${e.toString()}');
       }
@@ -107,6 +103,58 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
       }
     } finally {
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _pollForOAuthCompletion(String serviceName) async {
+    const int maxAttempts = 30;
+    const Duration initialDelay = Duration(milliseconds: 500);
+    const double backoffMultiplier = 1.2;
+
+    Duration currentDelay = initialDelay;
+    int attempt = 0;
+
+    while (attempt < maxAttempts && mounted) {
+      attempt++;
+
+      try {
+        final services = await _oauthService.getConnectedServices();
+        final isConnected = services.connectedServices
+            .any((token) => token.serviceName.toLowerCase() == serviceName.toLowerCase());
+
+        if (isConnected) {
+          if (mounted) {
+            _loadConnectedServices();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('${ServiceProviderConfig.getDisplayName(serviceName)} connected successfully!'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
+        }
+
+        await Future.delayed(currentDelay);
+        currentDelay = Duration(milliseconds: (currentDelay.inMilliseconds * backoffMultiplier).round());
+
+      } catch (e) {
+        await Future.delayed(currentDelay);
+        currentDelay = Duration(milliseconds: (currentDelay.inMilliseconds * backoffMultiplier).round());
+      }
+    }
+
+    // Timeout reached
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Connection timeout. Please check if you completed the authorization in your browser.'),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+      _loadConnectedServices();
     }
   }
 
