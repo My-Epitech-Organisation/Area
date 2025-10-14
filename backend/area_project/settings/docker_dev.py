@@ -130,21 +130,21 @@ CSRF_COOKIE_SECURE = False
 if IS_DOCKER:
     try:
         os.makedirs("/app/logs", exist_ok=True)
-        
+
         LOGGING["handlers"]["file"] = {
             "level": os.getenv("LOG_LEVEL", "INFO"),
             "class": "logging.FileHandler",
             "filename": "/app/logs/django.log",
             "formatter": "verbose",
         }
-        
+
         # Add file handler to all loggers
         for logger in LOGGING["loggers"].values():
             if "file" not in logger["handlers"]:
                 logger["handlers"].append("file")
-        
+
         LOGGING["root"]["handlers"].append("file")
-        
+
     except Exception as e:
         print(f"  ⚠ Warning: Could not setup file logging: {e}")
 
