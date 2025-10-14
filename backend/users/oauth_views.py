@@ -371,15 +371,12 @@ class ServiceConnectionListView(APIView):
             # Get user's connected services
             service_tokens = ServiceToken.objects.filter(user=request.user)
 
-            # Serialize tokens
-            token_serializer = ServiceTokenSerializer(service_tokens, many=True)
-
             # Get available providers
             available_providers = OAuthManager.list_available_providers()
 
-            # Prepare response
+            # Prepare response - pass objects directly to serializer
             response_data = {
-                "connected_services": token_serializer.data,
+                "connected_services": service_tokens,
                 "available_providers": available_providers,
                 "total_connected": service_tokens.count(),
             }
