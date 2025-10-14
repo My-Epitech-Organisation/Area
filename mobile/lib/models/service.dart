@@ -1,3 +1,5 @@
+import '../config/service_provider_config.dart';
+
 /// Model representing a service from the about.json endpoint
 class Service {
   final int id;
@@ -47,7 +49,10 @@ class Service {
   /// Get display name with proper capitalization
   String get displayName {
     if (name.isEmpty) return 'Unknown Service';
-    return name
+
+    String mappedName = ServiceProviderConfig.mapServiceName(name);
+
+    return mappedName
         .split('_')
         .map((word) {
           if (word.isEmpty) return '';

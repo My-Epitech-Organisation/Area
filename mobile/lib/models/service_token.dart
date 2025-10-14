@@ -1,5 +1,20 @@
 import '../config/service_provider_config.dart';
 
+class ServiceTokenParseException implements Exception {
+  final String message;
+  final Map<String, dynamic>? json;
+  final Object? originalError;
+
+  ServiceTokenParseException(this.message, {this.json, this.originalError});
+
+  @override
+  String toString() {
+    return 'ServiceTokenParseException: $message\n'
+        'JSON: $json\n'
+        'Original Error: $originalError';
+  }
+}
+
 /// Model representing a connected OAuth2 service token
 class ServiceToken {
   final String serviceName;
@@ -19,16 +34,26 @@ class ServiceToken {
   });
 
   factory ServiceToken.fromJson(Map<String, dynamic> json) {
-    return ServiceToken(
-      serviceName: json['service_name'] as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      expiresAt: json['expires_at'] != null
-          ? DateTime.parse(json['expires_at'] as String)
-          : null,
-      isExpired: json['is_expired'] as bool? ?? false,
-      expiresInMinutes: json['expires_in_minutes'] as int?,
-      hasRefreshToken: json['has_refresh_token'] as bool? ?? false,
-    );
+    try {
+      return ServiceToken(
+        serviceName: json['service_name'] as String? ?? '',
+        createdAt: json['created_at'] != null
+            ? DateTime.parse(json['created_at'] as String)
+            : DateTime.now(),
+        expiresAt: json['expires_at'] != null
+            ? DateTime.parse(json['expires_at'] as String)
+            : null,
+        isExpired: json['is_expired'] as bool? ?? false,
+        expiresInMinutes: json['expires_in_minutes'] as int?,
+        hasRefreshToken: json['has_refresh_token'] as bool? ?? false,
+      );
+    } catch (e) {
+      throw ServiceTokenParseException(
+        'Failed to parse ServiceToken from JSON: $e',
+        json: json,
+        originalError: e,
+      );
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -44,9 +69,6 @@ class ServiceToken {
 
   /// Get user-friendly service name
   String get displayName => ServiceProviderConfig.getDisplayName(serviceName);
-
-  /// Get service icon path
-  String get iconPath => ServiceProviderConfig.getIconPath(serviceName);
 
   /// Get status color
   String get statusColor {
@@ -104,14 +126,35 @@ class ServiceConnectionList {
   });
 
   factory ServiceConnectionList.fromJson(Map<String, dynamic> json) {
+    final connectedServices = <ServiceToken>[];
+
+    final servicesList = json['connected_services'] as List<dynamic>? ?? [];
+    for (final serviceJson in servicesList) {
+      if (serviceJson == null) continue;
+
+      try {
+        final serviceToken = ServiceToken.fromJson(
+          serviceJson as Map<String, dynamic>,
+        );
+        connectedServices.add(serviceToken);
+      } catch (e) {
+        if (e is ServiceTokenParseException) {
+        } else {
+          rethrow;
+        }
+      }
+    }
+
     return ServiceConnectionList(
-      connectedServices: (json['connected_services'] as List<dynamic>)
-          .map((e) => ServiceToken.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      availableProviders: (json['available_providers'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      totalConnected: json['total_connected'] as int,
+      connectedServices: connectedServices,
+      availableProviders:
+          (json['available_providers'] as List<dynamic>?)
+              ?.where((e) => e != null)
+              .map((e) => e as String)
+              .toList() ??
+          [],
+      totalConnected:
+          json['total_connected'] as int? ?? connectedServices.length,
     );
   }
 

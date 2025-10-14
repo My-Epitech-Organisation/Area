@@ -109,7 +109,7 @@ class OAuthService {
       }
 
       final response = await http.get(
-        Uri.parse(ApiConfig.servicesUrl),
+        Uri.parse(ApiConfig.connectedServicesUrl),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

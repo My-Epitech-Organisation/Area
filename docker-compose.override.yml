@@ -82,7 +82,7 @@ services:
     container_name: area_flower
     user: "root"  # Run as root in dev to avoid permission issues
     ports:
-      - "${FLOWER_PORT:-5555}:5555"  # Expose Celery monitoring UI
+      - "${FLOWER_PORT:-5566}:5566"  # Expose Celery monitoring UI
     volumes:
       - ./backend:/app:z  # HOT RELOAD: Mount source code (z for SELinux)
 
