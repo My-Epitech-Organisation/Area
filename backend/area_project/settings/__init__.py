@@ -209,4 +209,3 @@ else:
 print_configuration_summary(
     ENVIRONMENT or ("docker" if IS_DOCKER else "local"), LOADED_SETTINGS
 )
-
