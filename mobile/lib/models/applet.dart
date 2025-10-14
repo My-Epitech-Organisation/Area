@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class ServiceData {
   final int id;
   final String name;
@@ -12,12 +14,19 @@ class ServiceData {
   });
 
   factory ServiceData.fromJson(Map<String, dynamic> json) {
-    return ServiceData(
-      id: json['id'],
-      name: json['name'],
-      description: json['description'],
-      status: json['status'],
-    );
+    try {
+      return ServiceData(
+        id: json['id'] ?? 0,
+        name: json['name'] ?? 'Unknown Service',
+        description: json['description'] ?? 'Service loaded from backend',
+        status: json['status'] ?? 'active',
+      );
+    } catch (e, stackTrace) {
+      debugPrint('❌ ERROR in ServiceData.fromJson: $e');
+      debugPrint('📊 JSON data: $json');
+      debugPrint('📚 Stack trace: $stackTrace');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -43,13 +52,41 @@ class ActionData {
     required this.service,
   });
 
-  factory ActionData.fromJson(Map<String, dynamic> json) {
-    return ActionData(
-      id: json['id'],
-      name: json['name'],
-      description: json['description'],
-      service: ServiceData.fromJson(json['service']),
-    );
+  factory ActionData.fromJson(dynamic json) {
+    // Handle both formats: full object or just ID
+    if (json is Map<String, dynamic>) {
+      try {
+        return ActionData(
+          id: json['id'],
+          name: json['name'] ?? 'Unknown Action',
+          description: json['description'] ?? 'Action loaded from backend',
+          service: ServiceData.fromJson(json['service']),
+        );
+      } catch (e, stackTrace) {
+        debugPrint('❌ ERROR parsing ActionData Map: $e');
+        debugPrint('📊 Action JSON: $json');
+        debugPrint('📚 Stack trace: $stackTrace');
+        rethrow;
+      }
+    } else if (json is int) {
+      // Backend returns just the ID - create minimal object
+      return ActionData(
+        id: json,
+        name: 'Unknown Action',
+        description: 'Action loaded from backend',
+        service: ServiceData(
+          id: 0,
+          name: 'Unknown Service',
+          description: 'Service loaded from backend',
+          status: 'active',
+        ),
+      );
+    } else {
+      debugPrint(
+        '❌ ERROR: Invalid action data format: $json (type: ${json.runtimeType})',
+      );
+      throw FormatException('Invalid action data format: $json');
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -75,13 +112,41 @@ class ReactionData {
     required this.service,
   });
 
-  factory ReactionData.fromJson(Map<String, dynamic> json) {
-    return ReactionData(
-      id: json['id'],
-      name: json['name'],
-      description: json['description'],
-      service: ServiceData.fromJson(json['service']),
-    );
+  factory ReactionData.fromJson(dynamic json) {
+    // Handle both formats: full object or just ID
+    if (json is Map<String, dynamic>) {
+      try {
+        return ReactionData(
+          id: json['id'],
+          name: json['name'] ?? 'Unknown Reaction',
+          description: json['description'] ?? 'Reaction loaded from backend',
+          service: ServiceData.fromJson(json['service']),
+        );
+      } catch (e, stackTrace) {
+        debugPrint('❌ ERROR parsing ReactionData Map: $e');
+        debugPrint('📊 Reaction JSON: $json');
+        debugPrint('📚 Stack trace: $stackTrace');
+        rethrow;
+      }
+    } else if (json is int) {
+      // Backend returns just the ID - create minimal object
+      return ReactionData(
+        id: json,
+        name: 'Unknown Reaction',
+        description: 'Reaction loaded from backend',
+        service: ServiceData(
+          id: 0,
+          name: 'Unknown Service',
+          description: 'Service loaded from backend',
+          status: 'active',
+        ),
+      );
+    } else {
+      debugPrint(
+        '❌ ERROR: Invalid reaction data format: $json (type: ${json.runtimeType})',
+      );
+      throw FormatException('Invalid reaction data format: $json');
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -119,17 +184,26 @@ class Applet {
 
   // Factory to create from JSON (backend format)
   factory Applet.fromJson(Map<String, dynamic> json) {
-    return Applet(
-      id: json['id'],
-      name: json['name'],
-      description: json['description'] ?? '',
-      action: ActionData.fromJson(json['action']),
-      reaction: ReactionData.fromJson(json['reaction']),
-      actionConfig: json['action_config'] ?? {},
-      reactionConfig: json['reaction_config'] ?? {},
-      status: json['status'],
-      createdAt: DateTime.parse(json['created_at']),
-    );
+    try {
+      return Applet(
+        id: json['id'],
+        name: json['name'] ?? '',
+        description: json['description'] ?? '',
+        action: ActionData.fromJson(json['action']),
+        reaction: ReactionData.fromJson(json['reaction']),
+        actionConfig: json['action_config'] ?? {},
+        reactionConfig: json['reaction_config'] ?? {},
+        status: json['status'] ?? 'active',
+        createdAt: DateTime.parse(
+          json['created_at'] ?? DateTime.now().toIso8601String(),
+        ),
+      );
+    } catch (e, stackTrace) {
+      debugPrint('❌ ERROR in Applet.fromJson: $e');
+      debugPrint('📊 JSON data: $json');
+      debugPrint('📚 Stack trace: $stackTrace');
+      rethrow;
+    }
   }
 
   // Convert to JSON for backend

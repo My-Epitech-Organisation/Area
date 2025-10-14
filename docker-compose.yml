@@ -54,6 +54,7 @@ services:
       - db
       - redis
     volumes:
+      - ./.env:/.env
       - backend_static:/app/staticfiles
       - backend_media:/app/mediafiles
       - backend_logs:/app/logs

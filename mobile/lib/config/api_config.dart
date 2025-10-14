@@ -2,9 +2,24 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class ApiConfig {
-  static String get appletsUrl => '$baseUrl/applets/';
+  static String get appletsUrl {
+    try {
+      return '$baseUrl/applets/';
+    } catch (e) {
+      debugPrint('⚠️ ERROR in appletsUrl: $e');
+      rethrow;
+    }
+  }
 
-  static String get googleLoginUrl => '$authBaseUrl/google-login/';
+  static String get googleLoginUrl {
+    try {
+      return '$authBaseUrl/google-login/';
+    } catch (e) {
+      debugPrint('⚠️ ERROR in googleLoginUrl: $e');
+      rethrow;
+    }
+  }
+
   static String? _overrideBaseUrl;
   static String? _autoDetectedBase;
 
@@ -61,11 +76,14 @@ class ApiConfig {
   static String get forgotPasswordUrl => '$authBaseUrl/password-reset/';
   static String get resetPasswordUrl => '$authBaseUrl/password-reset/confirm/';
 
-  static String get automationsUrl => '$authBaseUrl/automations/';
-  static String get servicesUrl => '$authBaseUrl/services/';
+  static String get automationsUrl => '$baseUrl/api/areas/';
+  static String get servicesUrl => '$baseUrl/api/services/';
+  static String get actionsUrl => '$baseUrl/api/actions/';
+  static String get reactionsUrl => '$baseUrl/api/reactions/';
+  static String get schemasUrl => '$baseUrl/api/schemas/';
   static String get aboutUrl => '$baseUrl/about.json';
   static String get statisticsUrl => '$authBaseUrl/statistics';
-  static String get userStatisticsUrl => '$authBaseUrl/users/statistics/';
+  static String get userStatisticsUrl => '$baseUrl/api/users/statistics/';
 
   // OAuth2 URLs
   static String oauthInitiateUrl(String provider) =>
@@ -78,17 +96,16 @@ class ApiConfig {
   static String serviceDisconnectUrl(String provider) =>
       '$authBaseUrl/services/$provider/disconnect/';
 
-  static String automationUrl(int id) => '$authBaseUrl/automations/$id/';
-  static String automationToggleUrl(int id) =>
-      '$authBaseUrl/automations/$id/toggle/';
+  static String automationUrl(int id) => '$baseUrl/api/areas/$id/';
+  static String automationToggleUrl(int id) => '$baseUrl/api/areas/$id/toggle/';
   static String serviceActionsUrl(int serviceId) =>
-      '$authBaseUrl/services/$serviceId/actions/';
+      '$baseUrl/api/services/$serviceId/actions/';
   static String serviceReactionsUrl(int serviceId) =>
-      '$authBaseUrl/services/$serviceId/reactions/';
+      '$baseUrl/api/services/$serviceId/reactions/';
   static String appletLogsUrl(int appletId, {int limit = 50}) =>
-      '$authBaseUrl/applets/$appletId/logs?limit=$limit';
+      '$baseUrl/api/applets/$appletId/logs?limit=$limit';
   static String userAutomationsUrl(String userId) =>
-      '$authBaseUrl/users/$userId/automations/';
+      '$baseUrl/api/users/$userId/areas/';
 
   static const int maxRetries = 3;
   static const Duration timeout = Duration(seconds: 30);
