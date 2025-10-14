@@ -287,8 +287,10 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
 
       // Refresh statistics to reflect the new automation
       if (mounted) {
-        final statsProvider = context.read<AutomationStatsProvider>();
-        await statsProvider.loadAllStats(forceRefresh: true);
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          final statsProvider = context.read<AutomationStatsProvider>();
+          await statsProvider.loadAllStats(forceRefresh: true);
+        });
       }
 
       if (mounted) {
