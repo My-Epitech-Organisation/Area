@@ -240,6 +240,23 @@ jobs:
           cd mobile
           flutter build apk --release
 
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: area-mobile-${{ github.sha }}
+          path: mobile/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Upload APK artifact (latest)
+        uses: actions/upload-artifact@v4
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        with:
+          name: area-mobile-latest
+          path: mobile/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 90
+          if-no-files-found: error
+
   docker-compose-validation:
     name: Docker Compose Validation
     runs-on: ubuntu-latest
