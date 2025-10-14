@@ -101,13 +101,13 @@ class ConnectionHistoryEntry {
     final difference = now.difference(timestamp);
 
     if (difference.inDays > 0) {
-      return '${difference.inDays}j';
+      return '${difference.inDays}d';
     } else if (difference.inHours > 0) {
       return '${difference.inHours}h';
     } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}min';
+      return '${difference.inMinutes}m';
     } else {
-      return 'maintenant';
+      return 'now';
     }
   }
 
