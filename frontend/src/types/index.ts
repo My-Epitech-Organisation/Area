@@ -1,9 +1,9 @@
 /*
-** EPITECH PROJECT, 2025
-** Area
-** File description:
-** index
-*/
+ ** EPITECH PROJECT, 2025
+ ** Area
+ ** File description:
+ ** index
+ */
 
 export interface ActionReaction {
   name: string;

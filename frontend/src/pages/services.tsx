@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState, useRef } from "react";
-import { Link } from "react-router-dom";
-import { API_BASE } from "../utils/helper";
+import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { API_BASE } from '../utils/helper';
+import type { ServiceModel } from '../types/services';
 
 type AboutService = {
   id: number | string;
@@ -24,29 +25,44 @@ const Services: React.FC = () => {
   const rotationSpeed = 5;
   const radius = 350;
 
-  const imageModules = import.meta.glob("../assets/*.{png,jpg,jpeg,svg,gif}", { eager: true }) as Record<string, { default: string }>;
-  const imagesByName: Record<string, string> = {};
-  Object.keys(imageModules).forEach((p) => {
-    const parts = p.split("/");
-    const file = parts[parts.length - 1];
-    const name = file.replace(/\.[^/.]+$/, "").toLowerCase();
-    imagesByName[name] = (imageModules as any)[p].default;
-  });
+  const imageModules = import.meta.glob('../assets/*.{png,jpg,jpeg,svg,gif}', {
+    eager: true,
+  }) as Record<string, { default: string }>;
 
-  const resolveLogo = (rawLogo: any, nameRaw?: string) => {
-    if (rawLogo) {
-      const raw = String(rawLogo);
-      if (/^(https?:)?\/\//.test(raw) || raw.startsWith("/")) {
-        return raw;
+  const imagesByName = React.useMemo(() => {
+    const result: Record<string, string> = {};
+    Object.keys(imageModules).forEach((p) => {
+      const parts = p.split('/');
+      const file = parts[parts.length - 1];
+      const name = file.replace(/\.[^/.]+$/, '').toLowerCase();
+      result[name] = imageModules[p].default;
+    });
+    return result;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const resolveLogo = React.useCallback(
+    (rawLogo: string | unknown, nameRaw?: string) => {
+      if (rawLogo) {
+        const raw = String(rawLogo);
+        if (/^(https?:)?\/\//.test(raw) || raw.startsWith('/')) {
+          return raw;
+        }
+        const base =
+          raw
+            .split('/')
+            .pop()
+            ?.replace(/\.[^/.]+$/, '')
+            .toLowerCase() ?? '';
+        if (imagesByName[base]) return imagesByName[base];
       }
-      const base = raw.split("/").pop()?.replace(/\.[^/.]+$/, "").toLowerCase() ?? "";
-      if (imagesByName[base]) return imagesByName[base];
-    }
-    const key = (nameRaw ?? "").toString().toLowerCase();
-    return imagesByName[key] ?? null;
-  };
+      const key = (nameRaw ?? '').toString().toLowerCase();
+      return imagesByName[key] ?? null;
+    },
+    [imagesByName]
+  );
   const [services, setServices] = useState<AboutService[]>([]);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,25 +73,29 @@ const Services: React.FC = () => {
       try {
         const baseUrl = API_BASE.replace(/\/api$/, '');
         const res = await fetch(`${baseUrl}/about.json`);
-        if (!res.ok)
-          throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        const list: any[] = data?.server?.services ?? [];
+        const list: ServiceModel[] = data?.server?.services ?? [];
         if (!cancelled) {
           setServices(
             list.map((s) => {
               const id = s.id ?? s.pk ?? s.name;
-              const name = (s.Name ?? s.name ?? "").toString();
-              const description = s.description ?? s.Description ?? "";
+              const name = (s.Name ?? s.name ?? '').toString();
+              const description = s.description ?? s.Description ?? '';
 
               const rawLogo = s.logo ?? s.icon ?? null;
               let logo: string | null = null;
               if (rawLogo) {
                 const raw = String(rawLogo);
-                if (/^(https?:)?\/\//.test(raw) || raw.startsWith("/")) {
+                if (/^(https?:)?\/\//.test(raw) || raw.startsWith('/')) {
                   logo = raw;
                 } else {
-                  const base = raw.split("/").pop()?.replace(/\.[^/.]+$/, "").toLowerCase() ?? "";
+                  const base =
+                    raw
+                      .split('/')
+                      .pop()
+                      ?.replace(/\.[^/.]+$/, '')
+                      .toLowerCase() ?? '';
                   logo = imagesByName[base] ?? null;
                 }
               }
@@ -89,12 +109,10 @@ const Services: React.FC = () => {
           );
           setError(null);
         }
-      } catch (e: any) {
-        if (!cancelled)
-          setError(e.message ?? "Failed to load services");
+      } catch (e: unknown) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load services');
       } finally {
-        if (!cancelled)
-          setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
@@ -102,6 +120,7 @@ const Services: React.FC = () => {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -111,23 +130,24 @@ const Services: React.FC = () => {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q)
-      return services;
-    return services.filter((s) => (s.Name || s.name || "").toLowerCase().includes(q));
+    if (!q) return services;
+    return services.filter((s) => (s.Name || s.name || '').toLowerCase().includes(q));
   }, [services, query]);
 
-  const HISTORY_KEY = "area_service_history";
+  const HISTORY_KEY = 'area_service_history';
   const [history, setHistory] = useState<AboutService[]>(() => {
     try {
       const raw = localStorage.getItem(HISTORY_KEY);
       const parsed = raw ? JSON.parse(raw) : [];
-      if (!Array.isArray(parsed))
-        return [];
-      return parsed.map((p: any) => ({
-        id: p.id,
-        Name: p.Name ?? p.name ?? "",
-        description: p.description ?? "",
-        logo: resolveLogo(p.logo ?? p.icon ?? null, p.Name ?? p.name ?? "")
+      if (!Array.isArray(parsed)) return [];
+      return parsed.map((p: Record<string, unknown>) => ({
+        id: p.id as string,
+        Name: (p.Name as string) ?? (p.name as string) ?? '',
+        description: (p.description as string) ?? '',
+        logo: resolveLogo(
+          (p.logo as string | null) ?? null,
+          (p.Name as string | undefined) ?? (p.name as string | undefined) ?? ''
+        ),
       }));
     } catch {
       return [];
@@ -138,15 +158,17 @@ const Services: React.FC = () => {
     const normalized: AboutService = {
       id: svc.id,
       Name: svc.Name,
-      description: svc.description ?? "",
-      logo: resolveLogo(svc.logo ?? null, svc.Name ?? svc.name ?? ""),
+      description: svc.description ?? '',
+      logo: resolveLogo(svc.logo ?? null, svc.Name ?? svc.name ?? ''),
     };
     setHistory((prev) => {
       const next = [normalized, ...prev.filter((p) => p.id !== normalized.id)];
       const limited = next.slice(0, 100);
       try {
         localStorage.setItem(HISTORY_KEY, JSON.stringify(limited));
-      } catch {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_) {
+        console.error('Could not save service history to localStorage');
       }
       return limited;
     });
@@ -160,7 +182,7 @@ const Services: React.FC = () => {
       if (!lastTime) lastTime = currentTime;
 
       if (isAutoRotating && !isDragging) {
-        setWheelRotation(prev => prev + 0.03);
+        setWheelRotation((prev) => prev + 0.03);
       }
 
       lastTime = currentTime;
@@ -176,21 +198,23 @@ const Services: React.FC = () => {
       cancelAnimationFrame(animationFrameId);
       clearTimeout(timeoutId);
     };
-  }, [isDragging, isAutoRotating]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDragging]);
 
   const [hoverCarousel, setHoverCarousel] = useState(false);
   const [hoverHistory, setHoverHistory] = useState(false);
   const [hoverFlat, setHoverFlat] = useState(false);
 
   useEffect(() => {
+    if (!hoverCarousel && !hoverHistory) return;
+
     const handler = (e: WheelEvent) => {
-      if (hoverCarousel) {
+      if (hoverCarousel && !isDragging) {
         if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
           e.preventDefault();
-          setWheelRotation((prev) => prev + (e.deltaY * 0.2));
+          setWheelRotation((prev) => prev + e.deltaY * 0.2);
         }
-      }
-      else if (hoverHistory) {
+      } else if (hoverHistory) {
         if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
           e.preventDefault();
           const el = historyContainerRef.current;
@@ -201,49 +225,58 @@ const Services: React.FC = () => {
 
     document.addEventListener('wheel', handler as EventListener, { passive: false, capture: true });
     return () => document.removeEventListener('wheel', handler as EventListener, true);
-  }, [hoverCarousel, hoverHistory]);
+  }, [hoverCarousel, hoverHistory, isDragging]);
 
   useEffect(() => {
     const wheelEl = wheelRef.current;
     const historyEl = historyContainerRef.current;
     const flatEl = flatListRef.current;
 
+    if (!wheelEl && !historyEl && !flatEl) return;
+
     const onWheelCarousel = (e: WheelEvent) => {
       try {
-        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-          e.preventDefault();
-          setWheelRotation((prev) => prev + (e.deltaY * 0.2));
+        if (wheelEl && !isDragging) {
+          setWheelRotation((prev) => prev + e.deltaY * 0.2);
         }
-      } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_) {
+        console.error('Could not scroll carousel');
       }
     };
 
     const onWheelHistory = (e: WheelEvent) => {
       try {
-        const el = (historyContainerRef.current as HTMLDivElement) ?? (e.currentTarget as HTMLDivElement);
+        const el = historyEl ?? (e.currentTarget as HTMLDivElement);
         if (!el) return;
         if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
           e.preventDefault();
           el.scrollLeft += e.deltaY;
         }
-      } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_) {
+        console.error('Could not scroll history');
       }
     };
 
     const onWheelFlat = (e: WheelEvent) => {
       try {
-        const el = (flatListRef.current as HTMLDivElement) ?? (e.currentTarget as HTMLDivElement);
+        const el = flatEl ?? (e.currentTarget as HTMLDivElement);
         if (!el) return;
         if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
           e.preventDefault();
           el.scrollLeft += e.deltaY;
         }
-      } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_) {
+        console.error('Could not scroll flat list');
       }
     };
 
-    if (wheelEl) wheelEl.addEventListener('wheel', onWheelCarousel as EventListener, { passive: false });
-    if (historyEl) historyEl.addEventListener('wheel', onWheelHistory as EventListener, { passive: false });
+    if (wheelEl)
+      wheelEl.addEventListener('wheel', onWheelCarousel as EventListener, { passive: false });
+    if (historyEl)
+      historyEl.addEventListener('wheel', onWheelHistory as EventListener, { passive: false });
     if (flatEl) flatEl.addEventListener('wheel', onWheelFlat as EventListener, { passive: false });
 
     return () => {
@@ -251,7 +284,7 @@ const Services: React.FC = () => {
       if (historyEl) historyEl.removeEventListener('wheel', onWheelHistory as EventListener);
       if (flatEl) flatEl.removeEventListener('wheel', onWheelFlat as EventListener);
     };
-  }, [flatMode]);
+  }, [flatMode, isDragging]);
 
   useEffect(() => {
     if (!flatMode) return;
@@ -283,20 +316,21 @@ const Services: React.FC = () => {
   const [lastMoveTime, setLastMoveTime] = useState(0);
 
   useEffect(() => {
-    if (isDragging || !momentum)
-      return;
+    if (isDragging || !momentum) return;
 
     let inertiaAnimationId: number;
-    let friction = 0.95;
+    const initialMomentum = momentum;
+    let currentMomentum = initialMomentum;
+    const friction = 0.95;
 
     const applyInertia = () => {
-      if (Math.abs(momentum) < 0.01) {
+      if (Math.abs(currentMomentum) < 0.01) {
         setMomentum(0);
         return;
       }
 
-      setWheelRotation(prev => prev + momentum);
-      setMomentum(momentum * friction);
+      setWheelRotation((prev) => prev + currentMomentum);
+      currentMomentum *= friction;
       inertiaAnimationId = requestAnimationFrame(applyInertia);
     };
 
@@ -316,8 +350,7 @@ const Services: React.FC = () => {
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging)
-      return;
+    if (!isDragging) return;
 
     const now = Date.now();
     const deltaTime = now - lastMoveTime;
@@ -325,7 +358,7 @@ const Services: React.FC = () => {
     const deltaX = e.clientX - currentX;
     const rotationDelta = deltaX * rotationSpeed * 0.1;
 
-    setWheelRotation(prev => prev + rotationDelta);
+    setWheelRotation((prev) => prev + rotationDelta);
     setCurrentX(e.clientX);
     setLastMoveTime(now);
 
@@ -358,8 +391,7 @@ const Services: React.FC = () => {
   };
 
   const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!isDragging)
-      return;
+    if (!isDragging) return;
 
     const now = Date.now();
     const deltaTime = now - lastMoveTime;
@@ -367,7 +399,7 @@ const Services: React.FC = () => {
     const deltaX = e.touches[0].clientX - currentX;
     const rotationDelta = deltaX * rotationSpeed * 0.15;
 
-    setWheelRotation(prev => prev + rotationDelta);
+    setWheelRotation((prev) => prev + rotationDelta);
     setCurrentX(e.touches[0].clientX);
     setLastMoveTime(now);
 
@@ -387,10 +419,10 @@ const Services: React.FC = () => {
 
   const calculatePosition = (index: number, total: number) => {
     const angleStep = (2 * Math.PI) / total;
-    const angleInRadians = (index * angleStep) + (wheelRotation * Math.PI / 180);
+    const angleInRadians = index * angleStep + (wheelRotation * Math.PI) / 180;
     const x = Math.sin(angleInRadians) * radius;
     const z = Math.cos(angleInRadians) * radius;
-    const rotationY = (angleInRadians * 180 / Math.PI);
+    const rotationY = (angleInRadians * 180) / Math.PI;
     const normalizedZ = (z + radius) / (radius * 2);
     const isVisible = z > -radius * 0.7;
     const opacity = isVisible ? Math.pow(normalizedZ, 0.8) * 0.7 + 0.3 : 0;
@@ -410,7 +442,12 @@ const Services: React.FC = () => {
       <main className="w-full max-w-7xl mt-10">
         <div className="flex items-center justify-end gap-4 mb-4">
           <label className="flex items-center gap-2 text-sm text-gray-300">
-            <input type="checkbox" checked={flatMode} onChange={(e) => setFlatMode(e.target.checked)} className="h-4 w-4" />
+            <input
+              type="checkbox"
+              checked={flatMode}
+              onChange={(e) => setFlatMode(e.target.checked)}
+              className="h-4 w-4"
+            />
             Display as flat list
           </label>
         </div>
@@ -431,12 +468,16 @@ const Services: React.FC = () => {
         ) : filtered.length === 0 ? (
           <div className="py-12 text-center text-gray-300">
             <p className="text-2xl">No services found</p>
-            <p className="mt-2 text-sm text-gray-400">Try a different search term or check back later.</p>
+            <p className="mt-2 text-sm text-gray-400">
+              Try a different search term or check back later.
+            </p>
           </div>
         ) : (
           <>
-      <div className="w-full h-[600px] relative overflow-hidden my-10 group"
-        style={{ perspective: '1800px' }}>
+            <div
+              className="w-full h-[600px] relative overflow-hidden my-10 group"
+              style={{ perspective: '1800px' }}
+            >
               <div className="absolute top-1/2 left-4 transform -translate-y-1/2 text-white/30 text-4xl animate-pulse pointer-events-none z-50">
                 &lt;
               </div>
@@ -450,7 +491,10 @@ const Services: React.FC = () => {
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
-                onMouseLeave={() => { setHoverCarousel(false); handleMouseLeave(); }}
+                onMouseLeave={() => {
+                  setHoverCarousel(false);
+                  handleMouseLeave();
+                }}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
@@ -471,12 +515,26 @@ const Services: React.FC = () => {
                         className="snap-start min-w-[220px] h-[260px] flex-shrink-0 group rounded-lg bg-gradient-to-br from-white/30 to-white/12 p-4 transition-colors duration-200 hover:bg-indigo-700/20"
                         style={{ animationDelay: `${mounted ? idx * 70 : 0}ms` }}
                       >
-                        <div className={`flex flex-col items-center gap-3 h-full ${mounted ? 'animate-appear' : 'opacity-0'}`}>
+                        <div
+                          className={`flex flex-col items-center gap-3 h-full ${mounted ? 'animate-appear' : 'opacity-0'}`}
+                        >
                           <div className="w-28 h-28 rounded-xl bg-white/28 flex items-center justify-center overflow-hidden">
-                            {s.logo ? <img src={s.logo} alt={`${s.Name} logo`} className="w-full h-full object-contain" /> : <div className="text-2xl font-semibold text-white/80">{(s.Name || '?').charAt(0)}</div>}
+                            {s.logo ? (
+                              <img
+                                src={s.logo}
+                                alt={`${s.Name} logo`}
+                                className="w-full h-full object-contain"
+                              />
+                            ) : (
+                              <div className="text-2xl font-semibold text-white/80">
+                                {(s.Name || '?').charAt(0)}
+                              </div>
+                            )}
                           </div>
                           <div className="text-center mt-2">
-                            <div className="text-sm font-medium text-white group-hover:text-indigo-200 transition-colors">{s.Name}</div>
+                            <div className="text-sm font-medium text-white group-hover:text-indigo-200 transition-colors">
+                              {s.Name}
+                            </div>
                           </div>
                         </div>
                       </Link>
@@ -493,71 +551,79 @@ const Services: React.FC = () => {
                       transition: isDragging ? 'none' : 'transform 0.5s ease-out',
                     }}
                   >
-                  <div
-                    className="absolute w-[800px] h-[800px] rounded-full -bottom-[150px] left-1/2 transform -translate-x-1/2 bg-gradient-radial from-indigo-900/20 to-transparent"
-                    style={{
-                      transform: 'rotateX(90deg) translateZ(-200px)',
-                      filter: 'blur(5px)',
-                      opacity: 0.7,
-                    }}
-                  />
-                  {filtered.map((s, index) => {
-                    const { x, z, rotationY, isVisible, opacity, scale } = calculatePosition(index, filtered.length);
-                    return (
-                      <Link
-                        to={`/services/${s.id}`}
-                        key={s.id}
-                        onClick={() => pushHistory(s)}
-                        className={`absolute top-1/2 left-1/2 w-[200px] h-[220px] -ml-[100px] -mt-[110px] cursor-pointer select-none ${!isVisible ? 'pointer-events-none' : ''}`}
-                        style={{
-                          transform: `translateX(${x}px) translateZ(${z}px) translateY(${-calculatePosition(index, filtered.length).elevationY}px) rotateY(${rotationY}deg) scale(${scale})`,
-                          transformStyle: 'preserve-3d',
-                          transition: isDragging ? 'none' : 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                          opacity: opacity,
-                          zIndex: Math.floor(z + 1000),
-                        }}
-                        title={s.description || s.Name}
-                      >
-                        <div
-                          className={`w-full h-full rounded-xl bg-gradient-to-br from-white/30 to-white/18 backdrop-blur-sm p-5 flex flex-col items-center justify-center shadow-2xl overflow-hidden group hover:from-blue-300/30 hover:to-white/10 transition-colors duration-300 ${mounted ? 'animate-appear' : 'opacity-0'}`}
+                    <div
+                      className="absolute w-[800px] h-[800px] rounded-full -bottom-[150px] left-1/2 transform -translate-x-1/2 bg-gradient-radial from-indigo-900/20 to-transparent"
+                      style={{
+                        transform: 'rotateX(90deg) translateZ(-200px)',
+                        filter: 'blur(5px)',
+                        opacity: 0.7,
+                      }}
+                    />
+                    {filtered.map((s, index) => {
+                      const { x, z, rotationY, isVisible, opacity, scale } = calculatePosition(
+                        index,
+                        filtered.length
+                      );
+                      return (
+                        <Link
+                          to={`/services/${s.id}`}
+                          key={s.id}
+                          onClick={() => pushHistory(s)}
+                          className={`absolute top-1/2 left-1/2 w-[200px] h-[220px] -ml-[100px] -mt-[110px] cursor-pointer select-none ${!isVisible ? 'pointer-events-none' : ''}`}
                           style={{
+                            transform: `translateX(${x}px) translateZ(${z}px) translateY(${-calculatePosition(index, filtered.length).elevationY}px) rotateY(${rotationY}deg) scale(${scale})`,
                             transformStyle: 'preserve-3d',
-                            transform: `rotateY(${-rotationY}deg)`,
-                            animationDelay: `${mounted ? index * 60 : 0}ms`,
-                            boxShadow: z > 0
-                              ? '0 10px 30px -5px rgba(0, 0, 0, 0.3), 0 0 15px -3px rgba(255, 255, 255, 0.1), inset 0 0 10px rgba(255, 255, 255, 0.1)'
-                              : 'none',
+                            transition: isDragging
+                              ? 'none'
+                              : 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                            opacity: opacity,
+                            zIndex: Math.floor(z + 1000),
                           }}
+                          title={s.description || s.Name}
                         >
-                          <div className="w-24 h-24 rounded-xl bg-white/28 mb-3 flex items-center justify-center overflow-hidden">
-                            {s.logo ? (
-                              <img
-                                src={s.logo}
-                                alt={`${s.Name} logo`}
-                                className="w-full h-full object-contain p-2"
-                                loading="lazy"
-                                decoding="async"
-                              />
-                            ) : (
-                              <div className="text-3xl font-bold text-white/80">{(s.Name || "?").charAt(0)}</div>
+                          <div
+                            className={`w-full h-full rounded-xl bg-gradient-to-br from-white/30 to-white/18 backdrop-blur-sm p-5 flex flex-col items-center justify-center shadow-2xl overflow-hidden group hover:from-blue-300/30 hover:to-white/10 transition-colors duration-300 ${mounted ? 'animate-appear' : 'opacity-0'}`}
+                            style={{
+                              transformStyle: 'preserve-3d',
+                              transform: `rotateY(${-rotationY}deg)`,
+                              animationDelay: `${mounted ? index * 60 : 0}ms`,
+                              boxShadow:
+                                z > 0
+                                  ? '0 10px 30px -5px rgba(0, 0, 0, 0.3), 0 0 15px -3px rgba(255, 255, 255, 0.1), inset 0 0 10px rgba(255, 255, 255, 0.1)'
+                                  : 'none',
+                            }}
+                          >
+                            <div className="w-24 h-24 rounded-xl bg-white/28 mb-3 flex items-center justify-center overflow-hidden">
+                              {s.logo ? (
+                                <img
+                                  src={s.logo}
+                                  alt={`${s.Name} logo`}
+                                  className="w-full h-full object-contain p-2"
+                                  loading="lazy"
+                                  decoding="async"
+                                />
+                              ) : (
+                                <div className="text-3xl font-bold text-white/80">
+                                  {(s.Name || '?').charAt(0)}
+                                </div>
+                              )}
+                            </div>
+                            <h3 className="text-lg font-semibold text-white text-center line-clamp-1">
+                              {s.Name}
+                            </h3>
+                            {s.description && (
+                              <p className="text-xs text-gray-300 mt-2 text-center line-clamp-2 overflow-hidden">
+                                {s.description}
+                              </p>
                             )}
+                            <div className="mt-3 px-4 py-1.5 rounded-full bg-blue-300/30 text-blue-100 text-xs font-medium transform transition-all duration-300 group-hover:bg-blue-400/60 group-hover:text-white group-hover:scale-110">
+                              Explorer
+                            </div>
                           </div>
-                          <h3 className="text-lg font-semibold text-white text-center line-clamp-1">
-                            {s.Name}
-                          </h3>
-                          {s.description &&
-                            <p className="text-xs text-gray-300 mt-2 text-center line-clamp-2 overflow-hidden">
-                              {s.description}
-                            </p>
-                          }
-                          <div className="mt-3 px-4 py-1.5 rounded-full bg-blue-300/30 text-blue-100 text-xs font-medium transform transition-all duration-300 group-hover:bg-blue-400/60 group-hover:text-white group-hover:scale-110">
-                            Explorer
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             </div>
@@ -565,7 +631,9 @@ const Services: React.FC = () => {
             <section className="mt-16">
               <h2 className="text-2xl font-semibold text-white mb-4">History</h2>
               {history.length === 0 ? (
-                <div className="py-8 px-6 rounded-lg bg-white/5 text-center text-gray-300">No services visited recently.</div>
+                <div className="py-8 px-6 rounded-lg bg-white/5 text-center text-gray-300">
+                  No services visited recently.
+                </div>
               ) : (
                 <div
                   ref={historyContainerRef}
@@ -581,7 +649,10 @@ const Services: React.FC = () => {
                       onClick={() => pushHistory(h)}
                       className="snap-start min-w-[240px] h-[260px] flex-shrink-0 group rounded-lg bg-gradient-to-br from-white/18 to-indigo-700/6 p-4 hover:from-white/24 hover:to-indigo-700/8 transition transform hover:scale-105 hover:-translate-y-1 duration-200 backdrop-blur-sm"
                     >
-                      <div className={`${mounted ? 'animate-appear' : 'opacity-0'} flex flex-col items-center gap-3 h-full`} style={{ animationDelay: `${mounted ? idx * 70 : 0}ms` }}>
+                      <div
+                        className={`${mounted ? 'animate-appear' : 'opacity-0'} flex flex-col items-center gap-3 h-full`}
+                        style={{ animationDelay: `${mounted ? idx * 70 : 0}ms` }}
+                      >
                         <div className="w-28 h-28 rounded-xl bg-white/36 flex items-center justify-center overflow-hidden">
                           {h.logo ? (
                             <img
@@ -592,13 +663,21 @@ const Services: React.FC = () => {
                               decoding="async"
                             />
                           ) : (
-                            <div className="text-2xl font-semibold text-white/80">{(h.Name || "?").charAt(0)}</div>
+                            <div className="text-2xl font-semibold text-white/80">
+                              {(h.Name || '?').charAt(0)}
+                            </div>
                           )}
                         </div>
 
                         <div className="text-center mt-2">
-                          <div className="text-sm font-medium text-white group-hover:text-indigo-200 transition-colors">{h.Name}</div>
-                          {h.description && <div className="text-xs text-gray-400 line-clamp-3 mt-2">{h.description}</div>}
+                          <div className="text-sm font-medium text-white group-hover:text-indigo-200 transition-colors">
+                            {h.Name}
+                          </div>
+                          {h.description && (
+                            <div className="text-xs text-gray-400 line-clamp-3 mt-2">
+                              {h.description}
+                            </div>
+                          )}
                         </div>
                         <div className="mt-auto text-xs text-gray-400">Recently visited</div>
                       </div>
