@@ -315,15 +315,15 @@ const Areaction: React.FC = () => {
                     id="actionService"
                     value={selectedActionService || ''}
                     onChange={handleActionServiceChange}
-                    className="block w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="block w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 backdrop-blur-sm shadow-lg"
                   >
-                    <option value="" disabled>
+                    <option value="" disabled hidden className="text-gray-400">
                       Select a service
                     </option>
                     {services
                       .filter((s) => s.actions && s.actions.length > 0)
                       .map((service) => (
-                        <option key={`action-service-${service.name}`} value={service.name}>
+                        <option key={`action-service-${service.name}`} value={service.name} className="text-white bg-gray-800">
                           {service.name.charAt(0).toUpperCase() + service.name.slice(1)}
                         </option>
                       ))}
@@ -378,14 +378,14 @@ const Areaction: React.FC = () => {
                       id="action"
                       value={selectedAction || ''}
                       onChange={(e) => setSelectedAction(e.target.value)}
-                      className="block w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="block w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 backdrop-blur-sm shadow-lg"
                       disabled={!selectedActionService}
                     >
-                      <option value="" disabled>
+                      <option value="" disabled hidden className="text-gray-400">
                         Select a trigger
                       </option>
                       {getActionsForService(selectedActionService).map((action) => (
-                        <option key={`action-${action.name}`} value={action.name}>
+                        <option key={`action-${action.name}`} value={action.name} className="text-white bg-gray-800">
                           {formatName(action.name)}
                         </option>
                       ))}
@@ -477,15 +477,15 @@ const Areaction: React.FC = () => {
                     id="reactionService"
                     value={selectedReactionService || ''}
                     onChange={handleReactionServiceChange}
-                    className="block w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="block w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 backdrop-blur-sm shadow-lg"
                   >
-                    <option value="" disabled>
+                    <option value="" disabled hidden className="text-gray-400">
                       Select a service
                     </option>
                     {services
                       .filter((s) => s.reactions && s.reactions.length > 0)
                       .map((service) => (
-                        <option key={`reaction-service-${service.name}`} value={service.name}>
+                        <option key={`reaction-service-${service.name}`} value={service.name} className="text-white bg-gray-800">
                           {service.name.charAt(0).toUpperCase() + service.name.slice(1)}
                         </option>
                       ))}
@@ -540,14 +540,14 @@ const Areaction: React.FC = () => {
                       id="reaction"
                       value={selectedReaction || ''}
                       onChange={(e) => setSelectedReaction(e.target.value)}
-                      className="block w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="block w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 backdrop-blur-sm shadow-lg"
                       disabled={!selectedReactionService}
                     >
-                      <option value="" disabled>
+                      <option value="" disabled hidden className="text-gray-400">
                         Select an action
                       </option>
                       {getReactionsForService(selectedReactionService).map((reaction) => (
-                        <option key={`reaction-${reaction.name}`} value={reaction.name}>
+                        <option key={`reaction-${reaction.name}`} value={reaction.name} className="text-white bg-gray-800">
                           {formatName(reaction.name)}
                         </option>
                       ))}
