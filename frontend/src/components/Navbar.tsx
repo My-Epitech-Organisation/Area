@@ -5,6 +5,7 @@ import type { User } from '../types';
 
 const Navbar: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -54,77 +55,138 @@ const Navbar: React.FC = () => {
 
   return (
     <nav className="w-full fixed top-0 left-0 z-50 bg-black/50 backdrop-blur-sm border-b border-white/5">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-16 flex items-center justify-center">
-          <div className="flex items-center space-x-8">
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="h-16 flex items-center justify-between">
+          {/* Hamburger menu for mobile */}
+          <button
+            className="md:hidden text-white text-2xl focus:outline-none"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            ☰
+          </button>
+
+          {/* Desktop links */}
+          <div className="hidden md:flex items-center space-x-4 lg:space-x-8">
             <Link
               to="/homepage"
-              className="text-white text-lg font-semibold hover:text-indigo-300 transition"
+              className="text-white text-sm lg:text-lg font-semibold hover:text-indigo-300 transition"
             >
               Home
             </Link>
             <Link
               to="/Areaction"
-              className="text-white text-lg font-semibold hover:text-indigo-300 transition"
+              className="text-white text-sm lg:text-lg font-semibold hover:text-indigo-300 transition"
             >
               Area
             </Link>
             <Link
               to="/services"
-              className="text-white text-lg font-semibold hover:text-indigo-300 transition"
+              className="text-white text-sm lg:text-lg font-semibold hover:text-indigo-300 transition"
             >
               Services
             </Link>
             <Link
               to="/about"
-              className="text-white text-lg font-semibold hover:text-indigo-300 transition"
+              className="text-white text-sm lg:text-lg font-semibold hover:text-indigo-300 transition"
             >
               About Us
             </Link>
             <Link
               to="/dashboard"
-              className="text-white text-lg font-semibold hover:text-indigo-300 transition"
+              className="text-white text-sm lg:text-lg font-semibold hover:text-indigo-300 transition"
             >
               Dashboard
             </Link>
             <Link
               to="/profile"
-              className="text-white text-lg font-semibold hover:text-indigo-300 transition"
+              className="text-white text-sm lg:text-lg font-semibold hover:text-indigo-300 transition"
             >
               Profile
             </Link>
           </div>
-        </div>
-      </div>
 
-      <div className="absolute right-4 top-0 h-16 flex items-center space-x-8">
-        {user ? (
-          <>
-            <span className="text-indigo-300 text-lg font-semibold">
-              {user.username || user.name}
-            </span>
-            <button
-              onClick={handleLogout}
-              className="text-white text-lg font-semibold hover:text-red-400 transition"
-            >
-              Log Out
-            </button>
-          </>
-        ) : (
-          <>
-            <Link
-              to="/login"
-              className="text-white text-lg font-semibold hover:text-indigo-300 transition"
-            >
-              Log In
-            </Link>
-            <Link
-              to="/signup"
-              className="text-white text-lg font-semibold hover:text-indigo-300 transition"
-            >
-              Sign Up
-            </Link>
-          </>
+          {/* User actions */}
+          <div className="flex items-center space-x-2 md:space-x-4 lg:space-x-8">
+            {user ? (
+              <>
+                <span className="hidden sm:inline text-indigo-300 text-sm lg:text-lg font-semibold">
+                  {user.username || user.name}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="text-white text-sm lg:text-lg font-semibold hover:text-red-400 transition"
+                >
+                  Log Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="text-white text-sm lg:text-lg font-semibold hover:text-indigo-300 transition"
+                >
+                  Log In
+                </Link>
+                <Link
+                  to="/signup"
+                  className="text-white text-sm lg:text-lg font-semibold hover:text-indigo-300 transition"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-black/80 backdrop-blur-sm border-t border-white/5">
+            <div className="px-4 py-4 space-y-4">
+              <Link
+                to="/homepage"
+                className="block text-white text-lg font-semibold hover:text-indigo-300 transition"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Home
+              </Link>
+              <Link
+                to="/Areaction"
+                className="block text-white text-lg font-semibold hover:text-indigo-300 transition"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Area
+              </Link>
+              <Link
+                to="/services"
+                className="block text-white text-lg font-semibold hover:text-indigo-300 transition"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Services
+              </Link>
+              <Link
+                to="/about"
+                className="block text-white text-lg font-semibold hover:text-indigo-300 transition"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                About Us
+              </Link>
+              <Link
+                to="/dashboard"
+                className="block text-white text-lg font-semibold hover:text-indigo-300 transition"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+              <Link
+                to="/profile"
+                className="block text-white text-lg font-semibold hover:text-indigo-300 transition"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Profile
+              </Link>
+            </div>
+          </div>
         )}
       </div>
     </nav>
