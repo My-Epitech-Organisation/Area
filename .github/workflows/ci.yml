@@ -165,6 +165,16 @@ jobs:
           cd frontend
           npm install
 
+      - name: Run linting
+        run: |
+          cd frontend
+          if ./scripts/lint-check.sh; then
+            echo "Linting succeeded"
+          else
+            echo "Linting failed"
+            exit 1
+          fi
+
       # - name: Run tests
       #   run: |
       #     cd frontend

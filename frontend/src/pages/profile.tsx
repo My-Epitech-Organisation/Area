@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { getStoredUser, getAccessToken, fetchUserData, API_BASE } from "../utils/helper";
-import type { User } from "../types";
-import ProfileModal from "../components/ProfileModal";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getStoredUser, getAccessToken, fetchUserData, API_BASE } from '../utils/helper';
+import type { User } from '../types';
+import ProfileModal from '../components/ProfileModal';
 
 const Profile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -11,12 +11,18 @@ const Profile: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [pendingProfileUpdate, setPendingProfileUpdate] = useState<Record<string, any> | null>(null);
+  interface ProfileUpdate {
+    username?: string;
+    email?: string;
+    password?: string;
+  }
+
+  const [pendingProfileUpdate, setPendingProfileUpdate] = useState<ProfileUpdate | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,14 +32,14 @@ const Profile: React.FC = () => {
       const accessToken = getAccessToken();
 
       if (!accessToken) {
-        navigate("/login");
+        navigate('/login');
         return;
       }
 
       if (storedUser) {
         setUser(storedUser);
-        setUsername(storedUser.username || "");
-        setEmail(storedUser.email || "");
+        setUsername(storedUser.username || '');
+        setEmail(storedUser.email || '');
       }
 
       try {
@@ -41,14 +47,14 @@ const Profile: React.FC = () => {
 
         if (updatedUser) {
           setUser(updatedUser);
-          setUsername(updatedUser.username || "");
-          setEmail(updatedUser.email || "");
+          setUsername(updatedUser.username || '');
+          setEmail(updatedUser.email || '');
         } else if (!storedUser) {
-          navigate("/login");
+          navigate('/login');
         }
       } catch (err) {
-        console.error("Error loading profile data:", err);
-        setError("Failed to load profile data. Please try again later.");
+        console.error('Error loading profile data:', err);
+        setError('Failed to load profile data. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -63,7 +69,7 @@ const Profile: React.FC = () => {
     setSuccess(null);
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError('Passwords do not match');
       return;
     }
 
@@ -71,7 +77,7 @@ const Profile: React.FC = () => {
     const accessToken = getAccessToken();
 
     if (!accessToken) {
-      setError("You must be logged in to update your profile");
+      setError('You must be logged in to update your profile');
       setSaving(false);
       return;
     }
@@ -91,7 +97,7 @@ const Profile: React.FC = () => {
     }
 
     if (Object.keys(updateData).length === 0) {
-      setSuccess("No changes to save");
+      setSuccess('No changes to save');
       setSaving(false);
       return;
     }
@@ -110,25 +116,25 @@ const Profile: React.FC = () => {
 
     try {
       let hasUpdates = false;
-      let successMessage = "";
+      let successMessage = '';
 
       if (pendingProfileUpdate?.password) {
         const passwordResponse = await fetch(`${API_BASE}/auth/password/change/`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             old_password: oldPassword,
             new_password: pendingProfileUpdate.password,
-            confirm_password: pendingProfileUpdate.password
-          })
+            confirm_password: pendingProfileUpdate.password,
+          }),
         });
 
         if (passwordResponse.ok) {
           hasUpdates = true;
-          successMessage = "Password updated successfully. ";
+          successMessage = 'Password updated successfully. ';
 
           try {
             const refreshedUser = await fetchUserData();
@@ -136,11 +142,14 @@ const Profile: React.FC = () => {
               setUser(refreshedUser);
             }
           } catch (refreshErr) {
-            console.warn("Could not refresh user data after password update:", refreshErr);
+            console.warn('Could not refresh user data after password update:', refreshErr);
           }
         } else {
           const errorData = await passwordResponse.json().catch(() => ({}));
-          setError(errorData.detail || "Failed to update password. Password change may require your current password.");
+          setError(
+            errorData.detail ||
+              'Failed to update password. Password change may require your current password.'
+          );
           setSaving(false);
           setPendingProfileUpdate(null);
           setIsPasswordModalOpen(false);
@@ -151,18 +160,21 @@ const Profile: React.FC = () => {
       const newUsername = pendingProfileUpdate?.username;
       const newEmail = pendingProfileUpdate?.email;
 
-      if ((newUsername && newUsername !== user?.username) || (newEmail && newEmail !== user?.email)) {
+      if (
+        (newUsername && newUsername !== user?.username) ||
+        (newEmail && newEmail !== user?.email)
+      ) {
         try {
           const profileResponse = await fetch(`${API_BASE}/auth/me/`, {
             method: 'PUT',
             headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
             },
             body: JSON.stringify({
               username: newUsername || user?.username,
-              email: newEmail || user?.email
-            })
+              email: newEmail || user?.email,
+            }),
           });
 
           if (profileResponse.ok) {
@@ -171,7 +183,7 @@ const Profile: React.FC = () => {
                 name: newUsername || user.name,
                 username: newUsername || user.username,
                 email: newEmail || user.email,
-                id: user.id
+                id: user.id,
               };
 
               localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -180,14 +192,15 @@ const Profile: React.FC = () => {
               setUser(updatedUser);
               hasUpdates = true;
 
-              successMessage += "Profile updated successfully. ";
+              successMessage += 'Profile updated successfully. ';
             }
           } else {
             const errorData = await profileResponse.json().catch(() => ({}));
-            const errorMessage = errorData.detail ||
-                               errorData.email?.[0] ||
-                               errorData.username?.[0] ||
-                               "Failed to update profile information.";
+            const errorMessage =
+              errorData.detail ||
+              errorData.email?.[0] ||
+              errorData.username?.[0] ||
+              'Failed to update profile information.';
 
             setError(errorMessage);
             setSaving(false);
@@ -196,20 +209,20 @@ const Profile: React.FC = () => {
             return;
           }
         } catch (err) {
-          console.error("Failed to update profile on server:", err);
-          setError("Connection error: Failed to update profile. Please try again later.");
+          console.error('Failed to update profile on server:', err);
+          setError('Connection error: Failed to update profile. Please try again later.');
           setSaving(false);
           return;
         }
       }
 
-      setPassword("");
-      setConfirmPassword("");
+      setPassword('');
+      setConfirmPassword('');
 
       if (hasUpdates) {
         setSuccess(successMessage);
       } else {
-        setSuccess("No changes to save");
+        setSuccess('No changes to save');
       }
 
       setPendingProfileUpdate(null);
@@ -219,8 +232,8 @@ const Profile: React.FC = () => {
         setIsEditMode(false);
       }
     } catch (err) {
-      console.error("Error updating profile:", err);
-      setError("An error occurred while updating your profile. Please try again.");
+      console.error('Error updating profile:', err);
+      setError('An error occurred while updating your profile. Please try again.');
       setPendingProfileUpdate(null);
       setIsPasswordModalOpen(false);
     } finally {
@@ -230,11 +243,11 @@ const Profile: React.FC = () => {
 
   const handleCancelEdit = () => {
     if (user) {
-      setUsername(user.username || "");
-      setEmail(user.email || "");
+      setUsername(user.username || '');
+      setEmail(user.email || '');
     }
-    setPassword("");
-    setConfirmPassword("");
+    setPassword('');
+    setConfirmPassword('');
     setIsEditMode(false);
     setError(null);
   };
@@ -276,7 +289,7 @@ const Profile: React.FC = () => {
 
             <div className="flex items-center gap-6 mb-8">
               <div className="w-24 h-24 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white text-4xl font-bold shadow-lg transition-transform duration-300 hover:scale-105">
-                {user?.username?.[0]?.toUpperCase() || user?.name?.[0]?.toUpperCase() || "U"}
+                {user?.username?.[0]?.toUpperCase() || user?.name?.[0]?.toUpperCase() || 'U'}
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-white">{user?.username || user?.name}</h2>
@@ -290,7 +303,10 @@ const Profile: React.FC = () => {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-4">
                     <div>
-                      <label htmlFor="username" className="block text-sm font-medium text-indigo-200 mb-1">
+                      <label
+                        htmlFor="username"
+                        className="block text-sm font-medium text-indigo-200 mb-1"
+                      >
                         Username
                       </label>
                       <input
@@ -303,7 +319,10 @@ const Profile: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-indigo-200 mb-1">
+                      <label
+                        htmlFor="email"
+                        className="block text-sm font-medium text-indigo-200 mb-1"
+                      >
                         Email Address
                       </label>
                       <input
@@ -316,7 +335,10 @@ const Profile: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label htmlFor="password" className="block text-sm font-medium text-indigo-200 mb-1">
+                      <label
+                        htmlFor="password"
+                        className="block text-sm font-medium text-indigo-200 mb-1"
+                      >
                         New Password (leave blank to keep current)
                       </label>
                       <input
@@ -329,7 +351,10 @@ const Profile: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label htmlFor="confirmPassword" className="block text-sm font-medium text-indigo-200 mb-1">
+                      <label
+                        htmlFor="confirmPassword"
+                        className="block text-sm font-medium text-indigo-200 mb-1"
+                      >
                         Confirm New Password
                       </label>
                       <input
@@ -368,13 +393,13 @@ const Profile: React.FC = () => {
                     <div>
                       <h4 className="text-sm font-medium text-indigo-200 mb-1">Username</h4>
                       <p className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white">
-                        {user?.username || "Not set"}
+                        {user?.username || 'Not set'}
                       </p>
                     </div>
                     <div>
                       <h4 className="text-sm font-medium text-indigo-200 mb-1">Email Address</h4>
                       <p className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white">
-                        {user?.email || "Not set"}
+                        {user?.email || 'Not set'}
                       </p>
                     </div>
                     <div>

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { useConnectedServices, useInitiateOAuth, useDisconnectService } from "../hooks/useOAuth";
-import { API_BASE } from "../utils/helper";
+import React, { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { useConnectedServices, useInitiateOAuth, useDisconnectService } from '../hooks/useOAuth';
+import { API_BASE } from '../utils/helper';
 
 type ServiceAction = {
   name: string;
@@ -31,22 +31,29 @@ const ServiceDetail: React.FC = () => {
   const { initiateOAuth, loading: connectingOAuth } = useInitiateOAuth();
   const { disconnectService, loading: disconnectingOAuth } = useDisconnectService();
 
-  const imageModules = import.meta.glob("../assets/*.{png,jpg,jpeg,svg,gif}", { eager: true }) as Record<string, { default: string }>;
+  const imageModules = import.meta.glob('../assets/*.{png,jpg,jpeg,svg,gif}', {
+    eager: true,
+  }) as Record<string, { default: string }>;
   const imagesByName: Record<string, string> = {};
 
   Object.keys(imageModules).forEach((p) => {
-    const parts = p.split("/");
+    const parts = p.split('/');
     const file = parts[parts.length - 1];
-    const name = file.replace(/\.[^/.]+$/, "").toLowerCase();
-    imagesByName[name] = (imageModules as any)[p].default;
+    const name = file.replace(/\.[^/.]+$/, '').toLowerCase();
+    imagesByName[name] = (imageModules as Record<string, { default: string }>)[p].default;
   });
 
   const resolveLogo = (rawLogo: string | null, name: string): string | null => {
     if (rawLogo) {
-      if (/^(https?:)?\/\//.test(rawLogo) || rawLogo.startsWith("/")) {
+      if (/^(https?:)?\/\//.test(rawLogo) || rawLogo.startsWith('/')) {
         return rawLogo;
       }
-      const base = rawLogo.split("/").pop()?.replace(/\.[^/.]+$/, "").toLowerCase() ?? "";
+      const base =
+        rawLogo
+          .split('/')
+          .pop()
+          ?.replace(/\.[^/.]+$/, '')
+          .toLowerCase() ?? '';
       if (imagesByName[base]) return imagesByName[base];
     }
 
@@ -65,17 +72,18 @@ const ServiceDetail: React.FC = () => {
         }
         const data = await res.json();
         const serviceList = data?.server?.services || [];
-        const foundService = serviceList.find((s: any) =>
-          (s.id?.toString() === serviceId || s.name?.toLowerCase() === serviceId?.toLowerCase())
+        const foundService = serviceList.find(
+          (s: { id?: string | number; name?: string }) =>
+            s.id?.toString() === serviceId || s.name?.toLowerCase() === serviceId?.toLowerCase()
         );
         if (foundService) {
           setService(foundService);
           setError(null);
         } else {
-          setError("Service not found");
+          setError('Service not found');
         }
-      } catch (e: any) {
-        setError(e.message || "Failed to load service details");
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : 'Failed to load service details');
       } finally {
         setLoading(false);
       }
@@ -97,8 +105,11 @@ const ServiceDetail: React.FC = () => {
       <div className="w-screen min-h-screen bg-gradient-to-br from-black/90 via-gray-900/80 to-indigo-950 flex flex-col items-center justify-center p-6">
         <div className="max-w-2xl w-full bg-white/10 backdrop-blur-lg rounded-xl p-8 text-center">
           <h2 className="text-2xl font-bold text-white mb-4">Error</h2>
-          <p className="text-rose-300">{error || "Service not found"}</p>
-          <Link to="/services" className="mt-6 inline-block px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition">
+          <p className="text-rose-300">{error || 'Service not found'}</p>
+          <Link
+            to="/services"
+            className="mt-6 inline-block px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
+          >
             Back to Services
           </Link>
         </div>
@@ -111,9 +122,11 @@ const ServiceDetail: React.FC = () => {
   // Check if this service requires OAuth and if it's connected
   const oauthProviders = ['github', 'google', 'gmail'];
   const requiresOAuth = service && oauthProviders.includes(service.name.toLowerCase());
-  const isConnected = requiresOAuth && connectedServices.some(
-    s => s.service_name.toLowerCase() === service.name.toLowerCase() && !s.is_expired
-  );
+  const isConnected =
+    requiresOAuth &&
+    connectedServices.some(
+      (s) => s.service_name.toLowerCase() === service.name.toLowerCase() && !s.is_expired
+    );
 
   const handleConnect = async () => {
     if (service) {
@@ -134,9 +147,21 @@ const ServiceDetail: React.FC = () => {
   return (
     <div className="w-screen min-h-screen bg-page-service-detail p-6">
       <div className="max-w-6xl mx-auto pt-20">
-        <Link to="/services" className="text-indigo-300 hover:text-indigo-100 flex items-center gap-2 mb-8 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+        <Link
+          to="/services"
+          className="text-indigo-300 hover:text-indigo-100 flex items-center gap-2 mb-8 transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+              clipRule="evenodd"
+            />
           </svg>
           Back to services
         </Link>
@@ -151,7 +176,9 @@ const ServiceDetail: React.FC = () => {
                   className="w-full h-full object-contain"
                 />
               ) : (
-                <span className="text-4xl font-bold text-white">{service.name.charAt(0).toUpperCase()}</span>
+                <span className="text-4xl font-bold text-white">
+                  {service.name.charAt(0).toUpperCase()}
+                </span>
               )}
             </div>
 
@@ -167,8 +194,17 @@ const ServiceDetail: React.FC = () => {
                     {isConnected ? (
                       <>
                         <div className="flex items-center gap-2 bg-green-500/20 text-green-300 px-4 py-2 rounded-lg border border-green-500/30">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                              clipRule="evenodd"
+                            />
                           </svg>
                           <span className="font-medium">Connected</span>
                         </div>
@@ -193,8 +229,17 @@ const ServiceDetail: React.FC = () => {
                           </>
                         ) : (
                           <>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                                clipRule="evenodd"
+                              />
                             </svg>
                             <span>Connect {service.name}</span>
                           </>
@@ -208,8 +253,19 @@ const ServiceDetail: React.FC = () => {
               <div className="mt-8 grid gap-8 md:grid-cols-2">
                 <div>
                   <h2 className="text-xl font-semibold text-indigo-300 mb-4 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
                     </svg>
                     Actions
                   </h2>
@@ -220,7 +276,12 @@ const ServiceDetail: React.FC = () => {
                           key={`action-${index}`}
                           className="bg-white/5 rounded-lg p-4 hover:bg-white/10 transition"
                         >
-                          <h3 className="font-medium text-white">{action.name.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}</h3>
+                          <h3 className="font-medium text-white">
+                            {action.name
+                              .split('_')
+                              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                              .join(' ')}
+                          </h3>
                           <p className="text-sm text-gray-300 mt-1">{action.description}</p>
                         </div>
                       ))}
@@ -231,8 +292,19 @@ const ServiceDetail: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold text-indigo-300 mb-4 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
                     </svg>
                     Reactions
                   </h2>
@@ -243,7 +315,12 @@ const ServiceDetail: React.FC = () => {
                           key={`reaction-${index}`}
                           className="bg-white/5 rounded-lg p-4 hover:bg-white/10 transition"
                         >
-                          <h3 className="font-medium text-white">{reaction.name.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}</h3>
+                          <h3 className="font-medium text-white">
+                            {reaction.name
+                              .split('_')
+                              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                              .join(' ')}
+                          </h3>
                           <p className="text-sm text-gray-300 mt-1">{reaction.description}</p>
                         </div>
                       ))}
@@ -259,8 +336,17 @@ const ServiceDetail: React.FC = () => {
                   to={`/Areaction?service=${service.name}${service.actions && service.actions.length > 0 ? `&action=${service.actions[0].name}` : ''}${service.reactions && service.reactions.length > 0 ? `&reaction=${service.reactions[0].name}` : ''}`}
                   className="px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium flex items-center gap-2 transition-colors"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   Add Automation with this Service
                 </Link>

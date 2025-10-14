@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../models/applet.dart';
 import '../config/api_config.dart';
 import 'http_client_service.dart';
@@ -47,7 +48,7 @@ class AppletService {
     final response = await _httpClient.post(
       ApiConfig.automationsUrl,
       body: {
-        'description': description,
+        'name': description,
         'action': actionId,
         'reaction': reactionId,
         'action_config': actionConfig,
@@ -55,10 +56,16 @@ class AppletService {
       },
     );
 
-    final applet = _httpClient.parseResponse<Applet>(
-      response,
-      (data) => Applet.fromJson(data),
-    );
+    final applet = _httpClient.parseResponse<Applet>(response, (data) {
+      try {
+        return Applet.fromJson(data);
+      } catch (e, stackTrace) {
+        debugPrint('❌ ERROR parsing Applet from JSON: $e');
+        debugPrint('📊 Raw data: $data');
+        debugPrint('📚 Stack trace: $stackTrace');
+        rethrow;
+      }
+    });
 
     // Clear cache to force refresh
     _cache.remove(_cacheKeyPrefix);
