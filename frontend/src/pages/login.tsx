@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import parseErrors from "../utils/parseErrors";
-
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
+import { API_BASE } from "../utils/helper";
 
 const Login: React.FC = () => {
   const [email, setemail] = useState("");
@@ -26,7 +25,47 @@ const Login: React.FC = () => {
       if (res.ok) {
         if (data.access) localStorage.setItem('access', data.access);
         if (data.refresh) localStorage.setItem('refresh', data.refresh);
-        window.location.href = '/dashboard';
+
+        if (email)
+          localStorage.setItem('email', email);
+
+        try {
+          const userRes = await fetch(`${API_BASE}/auth/me/`, {
+            headers: {
+              'Authorization': `Bearer ${data.access}`
+            }
+          });
+
+          if (userRes.ok) {
+            const userData = await userRes.json();
+            const userToStore = {
+              name: userData.username || userData.email || email || "User",
+              username: userData.username || email || "User",
+              email: userData.email || email,
+              id: userData.id || userData.pk
+            };
+            localStorage.setItem('user', JSON.stringify(userToStore));
+          } else {
+            const basicUser = {
+              name: email.split('@')[0] || "User",
+              username: email.split('@')[0] || "User",
+              email: email,
+              id: "temp-user"
+            };
+            localStorage.setItem('user', JSON.stringify(basicUser));
+          }
+        } catch (userErr) {
+          console.error("Could not fetch user details:", userErr);
+          const fallbackUser = {
+            name: email.split('@')[0] || "User",
+            username: email.split('@')[0] || "User",
+            email: email,
+            id: "temp-user"
+          };
+          localStorage.setItem('user', JSON.stringify(fallbackUser));
+        }
+
+        window.location.replace('/dashboard');
         return;
       }
       const parsed = parseErrors(data);

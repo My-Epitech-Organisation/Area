@@ -18,18 +18,11 @@ export interface Service {
 
 export interface User {
   name: string;
-}
-
-export interface ServiceSelectorProps {
-  services: Service[];
-  selectedService: Service | null;
-  onSelect: (service: Service) => void;
+  username?: string;
+  email?: string;
+  id?: number | string;
 }
 
 export interface ServiceCardProps {
   service: Service | null;
-}
-
-export interface UserGreetingProps {
-  user: User | null;
 }
