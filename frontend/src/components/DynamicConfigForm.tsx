@@ -8,10 +8,13 @@ interface DynamicConfigFormProps {
   title?: string;
 }
 
-/**  return (
-    <div className="bg-black/20 p-4 rounded-lg border border-gray-600">
-      {title && <h3 className="text-sm font-semibold text-white mb-3">{title}</h3>} Dynamic form component that generates input fields based on JSON Schema
+/**
+ * DynamicConfigForm is a dynamic form component that generates input fields based on a provided JSON Schema.
+ * It renders appropriate input elements for each property in the schema and manages their values.
+ *
+ * @param {DynamicConfigFormProps} props - The props for the component, including schema, values, onChange, and optional title.
  */
+
 export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
   schema,
   values,
