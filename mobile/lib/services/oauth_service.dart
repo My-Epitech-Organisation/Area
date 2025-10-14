@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../models/service_token.dart';
+import '../models/connection_history.dart';
 import 'token_service.dart';
 
 /// Custom exception for OAuth errors
@@ -126,6 +127,37 @@ class OAuthService {
     } catch (e) {
       if (e is OAuthException) rethrow;
       throw OAuthException('Failed to fetch services: ${e.toString()}');
+    }
+  }
+
+  /// Get connection history for troubleshooting
+  Future<ConnectionHistoryList> getConnectionHistory({int limit = 20}) async {
+    try {
+      final token = await _tokenService.getAuthToken();
+      if (token == null) {
+        throw OAuthException('User not authenticated');
+      }
+
+      final response = await http.get(
+        Uri.parse('${ApiConfig.connectionHistoryUrl}?limit=$limit'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return ConnectionHistoryList.fromJson(data);
+      }
+
+      final errorMessage = _parseErrorResponse(response);
+      throw OAuthException(errorMessage, statusCode: response.statusCode);
+    } catch (e) {
+      if (e is OAuthException) rethrow;
+      throw OAuthException(
+        'Failed to fetch connection history: ${e.toString()}',
+      );
     }
   }
 
