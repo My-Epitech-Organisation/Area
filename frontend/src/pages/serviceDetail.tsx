@@ -125,13 +125,18 @@ const ServiceDetail: React.FC = () => {
   const logo = resolveLogo(service.logo, service.name);
 
   // Check if this service requires OAuth and if it's connected
-  const oauthProviders = ['github', 'google', 'gmail'];
+  // Google Calendar uses the same OAuth as Google/Gmail
+  const oauthProviders = ['github', 'google', 'gmail', 'google_calendar'];
   const requiresOAuth = service && oauthProviders.includes(service.name.toLowerCase());
+
+  // For google_calendar, check if 'google' OAuth is connected
+  const oauthServiceName = service.name.toLowerCase() === 'google_calendar' ? 'google' : service.name.toLowerCase();
 
   // Debug: Log the connected services and comparison
   console.log('🔍 Debug OAuth Connection:', {
     serviceName: service?.name,
     serviceNameLower: service?.name.toLowerCase(),
+    oauthServiceName,
     requiresOAuth,
     connectedServices: connectedServices.map((s) => ({
       service_name: s.service_name,
@@ -143,8 +148,8 @@ const ServiceDetail: React.FC = () => {
   const isConnected =
     requiresOAuth &&
     connectedServices.some((s) => {
-      const match = s.service_name.toLowerCase() === service.name.toLowerCase() && !s.is_expired;
-      console.log('  Checking:', s.service_name, 'vs', service.name, '→', match);
+      const match = s.service_name.toLowerCase() === oauthServiceName && !s.is_expired;
+      console.log('  Checking:', s.service_name, 'vs', oauthServiceName, '→', match);
       return match;
     });
 
@@ -152,14 +157,14 @@ const ServiceDetail: React.FC = () => {
 
   const handleConnect = async () => {
     if (service) {
-      await initiateOAuth(service.name.toLowerCase());
+      await initiateOAuth(oauthServiceName);
     }
   };
 
   const handleDisconnect = async () => {
     if (service && window.confirm(`Are you sure you want to disconnect ${service.name}?`)) {
       try {
-        const result = await disconnectService(service.name.toLowerCase());
+        const result = await disconnectService(oauthServiceName);
         if (result) {
           success(`${service.name} has been disconnected successfully!`);
           // Refresh the connected services list without reloading the page
