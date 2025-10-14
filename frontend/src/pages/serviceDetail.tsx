@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useConnectedServices, useInitiateOAuth, useDisconnectService } from "../hooks/useOAuth";
+import { useNotifications } from "../hooks/useNotifications";
+import Notification from "../components/Notification";
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
 
@@ -28,9 +30,12 @@ const ServiceDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // OAuth hooks
-  const { services: connectedServices, loading: loadingOAuth } = useConnectedServices();
+  const { services: connectedServices, loading: loadingOAuth, refetch: refetchServices } = useConnectedServices();
   const { initiateOAuth, loading: connectingOAuth } = useInitiateOAuth();
   const { disconnectService, loading: disconnectingOAuth } = useDisconnectService();
+
+  // Notifications
+  const { notifications, removeNotification, success, error: showError } = useNotifications();
 
   const imageModules = import.meta.glob("../assets/*.{png,jpg,jpeg,svg,gif}", { eager: true }) as Record<string, { default: string }>;
   const imagesByName: Record<string, string> = {};
@@ -112,9 +117,28 @@ const ServiceDetail: React.FC = () => {
   // Check if this service requires OAuth and if it's connected
   const oauthProviders = ['github', 'google', 'gmail'];
   const requiresOAuth = service && oauthProviders.includes(service.name.toLowerCase());
+  
+  // Debug: Log the connected services and comparison
+  console.log('🔍 Debug OAuth Connection:', {
+    serviceName: service?.name,
+    serviceNameLower: service?.name.toLowerCase(),
+    requiresOAuth,
+    connectedServices: connectedServices.map(s => ({
+      service_name: s.service_name,
+      service_name_lower: s.service_name.toLowerCase(),
+      is_expired: s.is_expired,
+    })),
+  });
+  
   const isConnected = requiresOAuth && connectedServices.some(
-    s => s.service_name.toLowerCase() === service.name.toLowerCase() && !s.is_expired
+    s => {
+      const match = s.service_name.toLowerCase() === service.name.toLowerCase() && !s.is_expired;
+      console.log('  Checking:', s.service_name, 'vs', service.name, '→', match);
+      return match;
+    }
   );
+  
+  console.log('✅ Final isConnected:', isConnected);
 
   const handleConnect = async () => {
     if (service) {
@@ -124,17 +148,51 @@ const ServiceDetail: React.FC = () => {
 
   const handleDisconnect = async () => {
     if (service && window.confirm(`Are you sure you want to disconnect ${service.name}?`)) {
-      const success = await disconnectService(service.name.toLowerCase());
-      if (success) {
-        // Refresh the page or show a success message
-        window.location.reload();
+      try {
+        const result = await disconnectService(service.name.toLowerCase());
+        if (result) {
+          success(`${service.name} has been disconnected successfully!`);
+          // Refresh the connected services list without reloading the page
+          await refetchServices();
+        } else {
+          showError(`Failed to disconnect ${service.name}. Please try again.`);
+        }
+      } catch (err) {
+        showError(`An error occurred while disconnecting ${service.name}.`);
       }
     }
   };
 
   return (
     <div className="w-screen min-h-screen bg-page-service-detail p-6">
+      {/* Notifications */}
+      {notifications.map((notification) => (
+        <Notification
+          key={notification.id}
+          type={notification.type}
+          message={notification.message}
+          onClose={() => removeNotification(notification.id)}
+        />
+      ))}
+
       <div className="max-w-6xl mx-auto pt-20">
+        {/* Debug panel - Remove after fixing */}
+        {service && (
+          <div className="mb-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-xs text-yellow-300 font-mono">
+            <div><strong>Debug Info:</strong></div>
+            <div>Service: {service.name} (requires OAuth: {requiresOAuth ? 'yes' : 'no'})</div>
+            <div>Is Connected: {isConnected ? 'YES ✅' : 'NO ❌'}</div>
+            <div>Connected Services ({connectedServices.length}):</div>
+            <ul className="ml-4">
+              {connectedServices.map((s, i) => (
+                <li key={i}>
+                  • {s.service_name} (expired: {s.is_expired ? 'yes' : 'no'})
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        
         <Link to="/services" className="text-indigo-300 hover:text-indigo-100 flex items-center gap-2 mb-8 transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
