@@ -18,7 +18,7 @@ from .password_views import (
 )
 from .views import (
     EmailTokenObtainPairView,
-    OAuthNotificationListView,  # Ajouté
+    OAuthNotificationListView,  # Added
     RegisterView,
     SendEmailVerificationView,
     UserDetailView,
