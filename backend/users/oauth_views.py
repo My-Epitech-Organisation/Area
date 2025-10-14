@@ -204,9 +204,7 @@ class OAuthCallbackView(APIView):
             token_data = oauth_provider.exchange_code_for_token(code)
 
             # Step 3: Calculate token expiration
-            expires_at = oauth_provider.calculate_expiry(
-                token_data.get("expires_in")
-            )
+            expires_at = oauth_provider.calculate_expiry(token_data.get("expires_in"))
 
             # Step 4: Store or update token in database
             service_token, created = ServiceToken.objects.update_or_create(
@@ -217,9 +215,7 @@ class OAuthCallbackView(APIView):
                     "refresh_token": token_data.get("refresh_token", ""),
                     "expires_at": expires_at,
                     "token_type": token_data.get("token_type", "Bearer"),
-                    "scopes": " ".join(
-                        oauth_provider.scopes
-                    ),  # Store granted scopes
+                    "scopes": " ".join(oauth_provider.scopes),  # Store granted scopes
                 },
             )
 
@@ -302,9 +298,9 @@ class OAuthCallbackView(APIView):
             user = User.objects.get(id=user_uuid)
             return user
         except (ValueError, TypeError) as e:
-            raise OAuthStateError(f"Invalid user identifier in state: {e}")
-        except User.DoesNotExist:
-            raise OAuthStateError(f"User not found for id: {user_id}")
+            raise OAuthStateError(f"Invalid user identifier in state: {e}") from e
+        except User.DoesNotExist as e:
+            raise OAuthStateError(f"User not found for id: {user_id}") from e
 
     def _redirect_with_success(
         self, base_url: str, provider: str, created: bool, expires_at
@@ -327,7 +323,9 @@ class OAuthCallbackView(APIView):
         if expires_at:
             redirect_url += f"&expires_at={expires_at.isoformat()}"
 
-        return Response(status=status.HTTP_302_FOUND, headers={"Location": redirect_url})
+        return Response(
+            status=status.HTTP_302_FOUND, headers={"Location": redirect_url}
+        )
 
     def _redirect_with_error(self, base_url: str, error_type: str, message: str):
         """
@@ -344,7 +342,9 @@ class OAuthCallbackView(APIView):
         from urllib.parse import quote
 
         redirect_url = f"{base_url}?error={error_type}&message={quote(message)}"
-        return Response(status=status.HTTP_302_FOUND, headers={"Location": redirect_url})
+        return Response(
+            status=status.HTTP_302_FOUND, headers={"Location": redirect_url}
+        )
 
 
 class ServiceConnectionListView(APIView):

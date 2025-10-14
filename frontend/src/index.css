@@ -3,109 +3,260 @@
 @tailwind utilities;
 
 :root {
-	/* quadrant gradients */
-	--tl-start: #2b2496; /* indigo-800 */
-	--tl-mid: #000000; /* black */
-	--tl-end: #763dd2; /* purple-600 */
+  /* quadrant gradients */
+  --tl-start: #2b2496; /* indigo-800 */
+  --tl-mid: #000; /* black */
+  --tl-end: #763dd2; /* purple-600 */
+  --tr-start: #352daf; /* indigo-800 */
+  --tr-mid: #000;
+  --tr-end: #245190; /* slate-600 */
+  --br-start: #a22; /* rose-700 */
+  --br-mid: #000;
+  --br-end: #5929ad; /* violet-600 */
+  --bl-start: #1b63c7; /* slate-600 */
+  --bl-mid: #000;
+  --bl-end: #1b9b73; /* emerald-600 */
 
-	--tr-start: #352daf; /* indigo-800 */
-	--tr-mid: #000000;
-	--tr-end: #245190; /* slate-600 */
+  /* Services page */
+  --page-services-start: #261450; /* deep indigo */
+  --page-services-mid: #000;
+  --page-services-end: #5b21b6; /* violet-600 */
 
-	--br-start: #aa2222; /* rose-700 */
-	--br-mid: #000000;
-	--br-end: #5929ad; /* violet-600 */
+  /* Service Detail page */
+  --page-service-detail-start: #0a3b77; /* deep blue */
+  --page-service-detail-mid: #000;
+  --page-service-detail-end: #0ea5b7; /* cyan-400 */
 
-	--bl-start: #1b63c7; /* slate-600 */
-	--bl-mid: #000000;
-	--bl-end: #1b9b73; /* emerald-600 */
+  /* Areaction page */
+  --page-areaction-start: #3a519b; /* blue-900 */
+  --page-areaction-mid: #000;
+  --page-areaction-end: #721ab9; /* blue-800 */
 
-	/* Services page */
-	--page-services-start: #261450; /* deep indigo */
-	--page-services-mid: #000000;
-	--page-services-end: #5b21b6; /* violet-600 */
+  /* signup / login - background */
+  --auth-signup-start: #0d05a3; /* indigo-600 */
+  --auth-signup-mid: #000;
+  --auth-signup-end: #097191; /* violet-600 */
+  --auth-login-start: #066d4c; /* emerald-600 / teal */
+  --auth-login-mid: #000;
+  --auth-login-end: #5a22a3; /* indigo-600 */
 
-	/* Service Detail page */
-	--page-service-detail-start: #0a3b77; /* deep blue */
-	--page-service-detail-mid: #000000;
-	--page-service-detail-end: #0ea5b7; /* cyan-400 */
+  /* dashboard - background */
+  --dashboard-start: #2a7c91; /* teal-600 */
+  --dashboard-mid: #000;
+  --dashboard-end: #342fce; /* indigo-900 */
 
-	/* Areaction page */
-	--page-areaction-start: #3a519b; /* blue-900 */
-	--page-areaction-mid: #000000;
-	--page-areaction-end: #721ab9; /* blue-800 */
+  /* profile - background */
+  --profile-start: #623fa5; /* purple-900 */
+  --profile-mid: #000;
+  --profile-end: #4f3fff; /* indigo-700 */
 
-	/* signup / login - background */
-	--auth-signup-start: #0d05a3; /* indigo-600 */
-	--auth-signup-mid: #000000;
-	--auth-signup-end: #097191; /* violet-600 */
+  /* typography */
+  --text-primary: #fff;
+  --text-muted: #d1d5db; /* gray-300 */
+  --accent: #c7d2fe; /* indigo-200 */
 
-	--auth-login-start: #066d4c; /* emerald-600 / teal */
-	--auth-login-mid: #000000;
-	--auth-login-end: #5a22a3; /* indigo-600 */
+  /* cards / surfaces */
+  --card-bg: rgb(255 255 255 / 4%);
+  --card-border: rgb(255 255 255 / 8%);
 
-	/* typography */
-	--text-primary: #ffffff;
-	--text-muted: #d1d5db; /* gray-300 */
-	--accent: #c7d2fe; /* indigo-200 */
-
-	/* cards / surfaces */
-	--card-bg: rgba(255,255,255,0.04);
-	--card-border: rgba(255,255,255,0.08);
-
-	/* buttons */
-	--btn-bg: #eef2ff; /* indigo-100 */
-	--btn-text: #000000;
-	--btn-hover: #c7d2fe; /* indigo-200 */
+  /* buttons */
+  --btn-bg: #eef2ff; /* indigo-100 */
+  --btn-text: #000;
+  --btn-hover: #c7d2fe; /* indigo-200 */
 }
 
-.bg-tl { background: linear-gradient(to bottom right, var(--tl-start), var(--tl-mid), var(--tl-end)); }
-.bg-tr { background: linear-gradient(to bottom right, var(--tr-start), var(--tr-mid), var(--tr-end)); }
-.bg-br { background: linear-gradient(to bottom right, var(--br-start), var(--br-mid), var(--br-end)); }
-.bg-bl { background: linear-gradient(to bottom right, var(--bl-start), var(--bl-mid), var(--bl-end)); }
+.bg-tl {
+  background: linear-gradient(to bottom right, var(--tl-start), var(--tl-mid), var(--tl-end));
+}
+
+.bg-tr {
+  background: linear-gradient(to bottom right, var(--tr-start), var(--tr-mid), var(--tr-end));
+}
+
+.bg-br {
+  background: linear-gradient(to bottom right, var(--br-start), var(--br-mid), var(--br-end));
+}
+
+.bg-bl {
+  background: linear-gradient(to bottom right, var(--bl-start), var(--bl-mid), var(--bl-end));
+}
 
 /* page specific background utilities */
-.bg-page-services { background: linear-gradient(135deg, var(--page-services-start) 0%, var(--page-services-mid) 50%, var(--page-services-end) 100%); }
-.bg-page-service-detail { background: linear-gradient(135deg, var(--page-service-detail-start) 0%, var(--page-service-detail-mid) 50%, var(--page-service-detail-end) 100%); }
-.bg-page-areaction { background: linear-gradient(135deg, var(--page-areaction-start) 0%, var(--page-areaction-mid) 50%, var(--page-areaction-end) 100%); }
 
-.bg-auth-signup { background: linear-gradient(135deg, var(--auth-signup-start) 0%, var(--auth-signup-mid) 40%, var(--auth-signup-end) 100%); }
-.bg-auth-login { background: linear-gradient(135deg, var(--auth-login-start) 0%, var(--auth-login-mid) 40%, var(--auth-login-end) 100%); }
+.bg-page-services {
+  background: linear-gradient(
+    135deg,
+    var(--page-services-start) 0%,
+    var(--page-services-mid) 50%,
+    var(--page-services-end) 100%
+  );
+}
 
-.text-primary { color: var(--text-primary) !important; }
-.text-muted { color: var(--text-muted) !important; }
-.icon-accent { color: var(--accent) !important; }
+.bg-page-service-detail {
+  background: linear-gradient(
+    135deg,
+    var(--page-service-detail-start) 0%,
+    var(--page-service-detail-mid) 50%,
+    var(--page-service-detail-end) 100%
+  );
+}
 
-.card-bg { background: var(--card-bg) !important; }
-.card-border { border: 1px solid var(--card-border) !important; }
+.bg-page-areaction {
+  background: linear-gradient(
+    135deg,
+    var(--page-areaction-start) 0%,
+    var(--page-areaction-mid) 50%,
+    var(--page-areaction-end) 100%
+  );
+}
 
-.btn-primary { background: var(--btn-bg) !important; color: var(--btn-text) !important; }
-.btn-primary:hover { background: var(--btn-hover) !important; }
+.bg-auth-signup {
+  background: linear-gradient(
+    135deg,
+    var(--auth-signup-start) 0%,
+    var(--auth-signup-mid) 40%,
+    var(--auth-signup-end) 100%
+  );
+}
 
+.bg-auth-login {
+  background: linear-gradient(
+    135deg,
+    var(--auth-login-start) 0%,
+    var(--auth-login-mid) 40%,
+    var(--auth-login-end) 100%
+  );
+}
 
-.scrollbar-visible::-webkit-scrollbar { height: 12px; width: 12px; }
-.scrollbar-visible::-webkit-scrollbar-track { background: transparent; }
-.scrollbar-visible::-webkit-scrollbar-thumb { background-color: rgba(99,102,241,0.9); border-radius: 10px; border: 3px solid rgba(0,0,0,0.0); }
-.scrollbar-visible { scrollbar-color: rgba(99,102,241,0.9) transparent; scrollbar-width: thin; }
+.bg-dashboard {
+  background: linear-gradient(
+    135deg,
+    var(--dashboard-start) 0%,
+    var(--dashboard-mid) 40%,
+    var(--dashboard-end) 100%
+  );
+}
+
+.bg-profile {
+  background: linear-gradient(
+    135deg,
+    var(--profile-start) 0%,
+    var(--profile-mid) 40%,
+    var(--profile-end) 100%
+  );
+}
+
+.text-primary {
+  color: var(--text-primary) !important;
+}
+
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+.icon-accent {
+  color: var(--accent) !important;
+}
+
+.card-bg {
+  background: var(--card-bg) !important;
+}
+
+.card-border {
+  border: 1px solid var(--card-border) !important;
+}
+
+.btn-primary {
+  background: var(--btn-bg) !important;
+  color: var(--btn-text) !important;
+}
+
+.btn-primary:hover {
+  background: var(--btn-hover) !important;
+}
+
+.scrollbar-visible::-webkit-scrollbar {
+  height: 12px;
+  width: 12px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background-color: rgb(99 102 241 / 90%);
+  border-radius: 10px;
+  border: 3px solid rgb(0 0 0 / 0%);
+}
+
+.scrollbar-visible {
+  scrollbar-color: rgb(99 102 241 / 90%) transparent;
+  scrollbar-width: thin;
+}
 
 /* appear animation for cards */
 @keyframes appear {
-	from { opacity: 0; transform: translateY(8px) scale(0.995); }
-	to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.995);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
-.animate-appear { animation: appear 360ms cubic-bezier(.2,.9,.2,1) both; }
+
+.animate-appear {
+  animation: appear 360ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
 
 /* slide-up animation for bottom notifications */
 @keyframes slide-up {
-	from { opacity: 0; transform: translateY(12px); }
-	to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.animate-slide-up { animation: slide-up 360ms cubic-bezier(.2,.9,.2,1) both; }
+
+.animate-slide-up {
+  animation: slide-up 360ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
 
 /* slide-in-right animation for notifications */
 @keyframes slide-in-right {
-	from { opacity: 0; transform: translateX(100%); }
-	to   { opacity: 1; transform: translateX(0); }
-}
-.animate-slide-in-right { animation: slide-in-right 360ms cubic-bezier(.2,.9,.2,1) both; }
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
 
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 360ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+/* fadeIn animation for active service selector underline */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 1s ease-in-out;
+}

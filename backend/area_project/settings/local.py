@@ -120,11 +120,11 @@ CORS_ALLOW_CREDENTIALS = True
 
 # Additional allowed origins (redundant with ALLOW_ALL, but explicit)
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",   # React dev server
-    "http://localhost:5173",   # Vite dev server (default frontend)
-    "http://localhost:8000",   # Django dev server
-    "http://localhost:8080",   # Alternative frontend port
-    "http://localhost:8081",   # Alternative frontend port
+    "http://localhost:3000",  # React dev server
+    "http://localhost:5173",  # Vite dev server (default frontend)
+    "http://localhost:8000",  # Django dev server
+    "http://localhost:8080",  # Alternative frontend port
+    "http://localhost:8081",  # Alternative frontend port
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:8000",

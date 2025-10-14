@@ -11,8 +11,8 @@
 *.tmp
 *.ref
 my_refs(do_not_delete)
+backend/staticfiles/
 
-package-lock.json
 node_modules/
 
 # Python

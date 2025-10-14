@@ -35,7 +35,8 @@ def validate_critical_settings():
 
     # Check SECRET_KEY
     secret_key = globals().get("SECRET_KEY", "")
-    if not secret_key or secret_key == "your-secret-key-here":
+    default_secret = "your-secret-key-here"  # noqa: S105
+    if not secret_key or secret_key == default_secret:
         errors.append("SECRET_KEY is not set or using default value")
 
     # Check DEBUG mode in production
@@ -48,7 +49,9 @@ def validate_critical_settings():
     if environment == "production":
         allowed_hosts = globals().get("ALLOWED_HOSTS", [])
         if not allowed_hosts or "*" in allowed_hosts:
-            errors.append("ALLOWED_HOSTS must be properly configured in production (no wildcards)")
+            errors.append(
+                "ALLOWED_HOSTS must be properly configured in production (no wildcards)"
+            )
 
     # Check FRONTEND_URL
     frontend_url = globals().get("FRONTEND_URL", "")
@@ -87,11 +90,15 @@ def print_configuration_summary(environment: str, settings_module: str):
             print(f"💾 Database: {db_engine}")
 
         # Cache info
-        cache_backend = globals().get("CACHES", {}).get("default", {}).get("BACKEND", "default")
+        cache_backend = (
+            globals().get("CACHES", {}).get("default", {}).get("BACKEND", "default")
+        )
         if "redis" in cache_backend.lower():
             print(f"⚡ Cache: Redis")
         else:
-            print(f"⚡ Cache: {cache_backend.split('.')[-1] if cache_backend != 'default' else 'Local memory'}")
+            print(
+                f"⚡ Cache: {cache_backend.split('.')[-1] if cache_backend != 'default' else 'Local memory'}"
+            )
 
         # Celery info
         celery_broker = globals().get("CELERY_BROKER_URL", "")
@@ -103,11 +110,15 @@ def print_configuration_summary(environment: str, settings_module: str):
         ssl_redirect = globals().get("SECURE_SSL_REDIRECT", False)
         secure_cookies = globals().get("SESSION_COOKIE_SECURE", False)
         cors_all = globals().get("CORS_ALLOW_ALL_ORIGINS", False)
-        print(f"🔒 Security: SSL={'✓' if ssl_redirect else '✗'}, SecureCookies={'✓' if secure_cookies else '✗'}, CORS={'OPEN' if cors_all else 'RESTRICTED'}")
+        print(
+            f"🔒 Security: SSL={'✓' if ssl_redirect else '✗'}, SecureCookies={'✓' if secure_cookies else '✗'}, CORS={'OPEN' if cors_all else 'RESTRICTED'}"
+        )
 
         # Logging info
         log_handlers = list(globals().get("LOGGING", {}).get("handlers", {}).keys())
-        print(f"📝 Log handlers: {', '.join(log_handlers) if log_handlers else 'console (default)'}")
+        print(
+            f"📝 Log handlers: {', '.join(log_handlers) if log_handlers else 'console (default)'}"
+        )
 
         # Frontend integration
         frontend_url = globals().get("FRONTEND_URL", "Not set")
@@ -152,27 +163,33 @@ if ENVIRONMENT == "production":
     print("🔴 Loading PRODUCTION settings...")
     try:
         from .production import *  # noqa: F401, F403
+
         LOADED_SETTINGS = "production"
     except ImportError as e:
         print(f"⚠️  Production settings not found: {e}")
         print("   Falling back to docker_dev settings with production overrides...")
         from .docker_dev import *  # noqa: F401, F403
+
         LOADED_SETTINGS = "docker_dev (production mode)"
         # Apply production overrides
         DEBUG = False
         if not os.getenv("ALLOWED_HOSTS"):
             print("❌ ERROR: ALLOWED_HOSTS must be set in production!")
 
-elif ENVIRONMENT == "docker" or (IS_DOCKER and ENVIRONMENT not in ["local", "production"]):
+elif ENVIRONMENT == "docker" or (
+    IS_DOCKER and ENVIRONMENT not in ["local", "production"]
+):
     # Docker development environment
     print("🐳 Loading DOCKER development settings...")
     from .docker_dev import *  # noqa: F401, F403
+
     LOADED_SETTINGS = "docker_dev"
 
 elif ENVIRONMENT == "local":
     # Explicit local development
     print("💻 Loading LOCAL development settings (venv)...")
     from .local import *  # noqa: F401, F403
+
     LOADED_SETTINGS = "local"
 
 else:
@@ -180,14 +197,15 @@ else:
     if IS_DOCKER:
         print("🐳 Auto-detected Docker environment, loading docker_dev settings...")
         from .docker_dev import *  # noqa: F401, F403
+
         LOADED_SETTINGS = "docker_dev (auto-detected)"
     else:
         print("💻 Auto-detected local environment, loading local settings...")
         from .local import *  # noqa: F401, F403
+
         LOADED_SETTINGS = "local (auto-detected)"
 
 # Print detailed configuration summary
-print_configuration_summary(ENVIRONMENT or ("docker" if IS_DOCKER else "local"), LOADED_SETTINGS)
-
-# Print detailed configuration summary
-print_configuration_summary(ENVIRONMENT or ("docker" if IS_DOCKER else "local"), LOADED_SETTINGS)
+print_configuration_summary(
+    ENVIRONMENT or ("docker" if IS_DOCKER else "local"), LOADED_SETTINGS
+)

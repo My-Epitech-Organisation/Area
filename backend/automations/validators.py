@@ -321,7 +321,7 @@ COMPATIBILITY_RULES = {
         "slack_message",
         "teams_message",
         "log_message",
-        "github_create_issue",  # Allowed but should target different repo
+        # github_create_issue removed to prevent same-service loops
         "webhook_post",
     ],
     "github_new_pr": [
@@ -329,7 +329,7 @@ COMPATIBILITY_RULES = {
         "slack_message",
         "teams_message",
         "log_message",
-        "github_create_issue",
+        # github_create_issue removed to prevent same-service loops
         "webhook_post",
     ],
     # Gmail actions

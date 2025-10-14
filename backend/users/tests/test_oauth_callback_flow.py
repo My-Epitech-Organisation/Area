@@ -56,7 +56,10 @@ class OAuthCallbackBackendFirstTestCase(TestCase):
 
         # Mock cache for state data
         with patch("django.core.cache.cache") as mock_cache:
-            mock_cache.get.return_value = {"user_id": str(self.user.id), "provider": "google"}
+            mock_cache.get.return_value = {
+                "user_id": str(self.user.id),
+                "provider": "google",
+            }
 
             response = self.client.get(
                 "/auth/oauth/google/callback/",
@@ -132,7 +135,10 @@ class OAuthCallbackBackendFirstTestCase(TestCase):
 
         # Mock cache for state data
         with patch("django.core.cache.cache") as mock_cache:
-            mock_cache.get.return_value = {"user_id": str(self.user.id), "provider": "google"}
+            mock_cache.get.return_value = {
+                "user_id": str(self.user.id),
+                "provider": "google",
+            }
 
             response = self.client.get(
                 "/auth/oauth/google/callback/",
@@ -147,7 +153,9 @@ class OAuthCallbackBackendFirstTestCase(TestCase):
 
     @patch("users.oauth_views.OAuthManager")
     @patch("users.oauth_views.settings")
-    def test_oauth_callback_reconnect_existing_service(self, mock_settings, mock_manager):
+    def test_oauth_callback_reconnect_existing_service(
+        self, mock_settings, mock_manager
+    ):
         """Test OAuth callback when service is already connected (reconnect)."""
         # Create existing token
         ServiceToken.objects.create(
@@ -178,7 +186,10 @@ class OAuthCallbackBackendFirstTestCase(TestCase):
 
         # Mock cache for state data
         with patch("django.core.cache.cache") as mock_cache:
-            mock_cache.get.return_value = {"user_id": str(self.user.id), "provider": "google"}
+            mock_cache.get.return_value = {
+                "user_id": str(self.user.id),
+                "provider": "google",
+            }
 
             response = self.client.get(
                 "/auth/oauth/google/callback/",
