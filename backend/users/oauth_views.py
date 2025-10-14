@@ -298,9 +298,9 @@ class OAuthCallbackView(APIView):
             user = User.objects.get(id=user_uuid)
             return user
         except (ValueError, TypeError) as e:
-            raise OAuthStateError(f"Invalid user identifier in state: {e}")
-        except User.DoesNotExist:
-            raise OAuthStateError(f"User not found for id: {user_id}")
+            raise OAuthStateError(f"Invalid user identifier in state: {e}") from e
+        except User.DoesNotExist as e:
+            raise OAuthStateError(f"User not found for id: {user_id}") from e
 
     def _redirect_with_success(
         self, base_url: str, provider: str, created: bool, expires_at
