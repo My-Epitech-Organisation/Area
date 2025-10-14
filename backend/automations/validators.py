@@ -280,6 +280,33 @@ REACTION_SCHEMAS = {
         "required": ["message"],
         "additionalProperties": False,
     },
+    "webhook_post": {
+        "type": "object",
+        "properties": {
+            "url": {
+                "type": "string",
+                "format": "uri",
+                "description": "Target webhook URL to POST to",
+            },
+            "method": {
+                "type": "string",
+                "enum": ["POST", "PUT", "PATCH"],
+                "default": "POST",
+                "description": "HTTP method to use",
+            },
+            "headers": {
+                "type": "object",
+                "description": "Custom HTTP headers (optional)",
+                "additionalProperties": {"type": "string"},
+            },
+            "body": {
+                "type": "string",
+                "description": "Request body (can contain template variables)",
+            },
+        },
+        "required": ["url"],
+        "additionalProperties": False,
+    },
 }
 
 
@@ -293,9 +320,18 @@ COMPATIBILITY_RULES = {
         "send_email",
         "slack_message",
         "teams_message",
-        "log_message",  # Pas github_create_issue pour éviter les boucles
+        "log_message",
+        # github_create_issue removed to prevent same-service loops
+        "webhook_post",
     ],
-    "github_new_pr": ["send_email", "slack_message", "teams_message", "log_message"],
+    "github_new_pr": [
+        "send_email",
+        "slack_message",
+        "teams_message",
+        "log_message",
+        # github_create_issue removed to prevent same-service loops
+        "webhook_post",
+    ],
     # Gmail actions
     "gmail_new_email": [
         "save_to_dropbox",
