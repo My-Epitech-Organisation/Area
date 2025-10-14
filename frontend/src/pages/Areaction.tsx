@@ -274,7 +274,7 @@ const Areaction: React.FC = () => {
   return (
     <div className="w-screen min-h-screen bg-page-areaction flex flex-col items-center p-6">
       <header className="w-full pt-20 flex flex-col items-center">
-        <h1 className="text-4xl font-bold text-white">Create Automation</h1>
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white">Create Automation</h1>
         <p className="text-gray-300 mt-2">
           Connect actions and reactions to automate your workflow
         </p>
