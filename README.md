@@ -165,8 +165,8 @@ The project uses Docker Compose with 8 services:
 
 ## 📚 Additional Documentation
 
-- `HOWTOCONTRIBUTE.md` - Development guidelines
-- `docs/OAUTH2.md` - OAuth2 integration guide
+- `HOWTOCONTRIBUTE.md` - Development guidelines and OAuth2 integration guide
+- `docs/OAUTH2_IMPLEMENTATION.md` - Comprehensive OAuth2 Backend-First flow documentation
 - `docs/docker-compose.md` - Docker Compose detailed documentation
 - `backend/README.md` - Backend API documentation
 

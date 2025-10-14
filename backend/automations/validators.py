@@ -320,9 +320,18 @@ COMPATIBILITY_RULES = {
         "send_email",
         "slack_message",
         "teams_message",
-        "log_message",  # Pas github_create_issue pour éviter les boucles
+        "log_message",
+        # github_create_issue removed to prevent same-service loops
+        "webhook_post",
     ],
-    "github_new_pr": ["send_email", "slack_message", "teams_message", "log_message"],
+    "github_new_pr": [
+        "send_email",
+        "slack_message",
+        "teams_message",
+        "log_message",
+        # github_create_issue removed to prevent same-service loops
+        "webhook_post",
+    ],
     # Gmail actions
     "gmail_new_email": [
         "save_to_dropbox",

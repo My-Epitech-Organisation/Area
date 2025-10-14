@@ -20,6 +20,34 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
+def _create_token_refresh_notification(service_token: ServiceToken, error: str) -> None:
+    """
+    Create a notification when token refresh fails.
+
+    Args:
+        service_token: ServiceToken that failed to refresh
+        error: Error message describing the failure
+    """
+    from users.models import OAuthNotification
+
+    message = (
+        f"Your {service_token.service_name} connection has expired and "
+        f"could not be automatically refreshed. Please reconnect your account "
+        f"to continue using {service_token.service_name} services.\n\n"
+        f"Error: {error}"
+    )
+
+    OAuthNotification.create_notification(
+        user=service_token.user,
+        service_name=service_token.service_name,
+        notification_type=OAuthNotification.NotificationType.REFRESH_FAILED,
+        message=message,
+    )
+    logger.info(
+        f"Created notification for {service_token.user.username}/{service_token.service_name}"
+    )
+
+
 class OAuthManager:
     """
     Manages OAuth2 providers and token lifecycle.
@@ -91,7 +119,9 @@ class OAuthManager:
         """
         Get a valid access token for a user and service.
 
-        Automatically refreshes expired tokens if refresh token is available.
+        Automatically refreshes expired tokens or tokens expiring soon
+        (within 5 minutes) if refresh token is available. This proactive
+        approach prevents API calls from failing due to token expiration.
 
         Args:
             user: Django User instance
@@ -102,6 +132,12 @@ class OAuthManager:
 
         Raises:
             InvalidProviderError: If service_name is not a valid provider
+
+        Example:
+            >>> token = OAuthManager.get_valid_token(user, "google")
+            >>> if token:
+            ...     headers = {"Authorization": f"Bearer {token}"}
+            ...     response = requests.get(api_url, headers=headers)
         """
         try:
             service_token = ServiceToken.objects.get(
@@ -113,56 +149,134 @@ class OAuthManager:
             )
             return None
 
-        # Check if token is expired
-        if service_token.expires_at and timezone.now() >= service_token.expires_at:
+        # Check if token needs refresh (expired or expiring soon)
+        if service_token.is_expired or service_token.needs_refresh:
+            refresh_status = "expired" if service_token.is_expired else "expiring soon"
             logger.info(
-                f"Token expired for {user.username}/{service_name}, attempting refresh"
+                f"Token {refresh_status} for {user.username}/{service_name}, "
+                f"attempting refresh"
             )
 
             # Try to refresh if refresh token exists
             if service_token.refresh_token:
-                try:
-                    provider = cls.get_provider(service_name)
-
-                    # Some providers don't support refresh
-                    if not provider.requires_refresh:
-                        logger.warning(
-                            f"Provider {service_name} doesn't support token refresh"
-                        )
-                        return service_token.access_token  # Token might still be valid
-
-                    # Perform refresh
-                    refreshed = provider.refresh_access_token(
-                        service_token.refresh_token
-                    )
-
-                    # Update token in database
-                    service_token.access_token = refreshed["access_token"]
-                    service_token.expires_at = provider.calculate_expiry(
-                        refreshed["expires_in"]
-                    )
-                    service_token.save(update_fields=["access_token", "expires_at"])
-
-                    logger.info(f"Successfully refreshed token for {service_name}")
-                    return service_token.access_token
-
-                except TokenRefreshError as e:
+                refreshed_token = cls.refresh_if_needed(service_token)
+                if refreshed_token:
+                    # Mark token as used and return
+                    service_token.mark_used()
+                    return refreshed_token
+                else:
+                    # Refresh failed
                     logger.error(
-                        f"Failed to refresh token for "
-                        f"{user.username}/{service_name}: {e}"
+                        f"Token refresh failed for {user.username}/{service_name}"
                     )
                     return None
-                except NotImplementedError:
-                    # Provider doesn't support refresh (e.g., GitHub)
-                    return service_token.access_token
             else:
                 logger.warning(
-                    f"Token expired for {service_name} but no refresh token available"
+                    f"Token {refresh_status} for {service_name} "
+                    f"but no refresh token available"
                 )
                 return None
 
-        # Token is valid
+        # Token is valid - mark as used and return
+        service_token.mark_used()
         return service_token.access_token
+
+    @classmethod
+    def refresh_if_needed(cls, service_token: ServiceToken) -> Optional[str]:
+        """
+        Refresh an OAuth2 token if it's expired or expiring soon.
+
+        This method handles the token refresh logic including error handling,
+        database updates, and provider-specific behavior.
+
+        Args:
+            service_token: ServiceToken instance to refresh
+
+        Returns:
+            str: New access token if refresh successful, None otherwise
+
+        Example:
+            >>> service_token = ServiceToken.objects.get(user=user, service_name="google")
+            >>> new_token = OAuthManager.refresh_if_needed(service_token)
+            >>> if new_token:
+            ...     print("Token refreshed successfully")
+        """
+        service_name = service_token.service_name
+
+        try:
+            provider = cls.get_provider(service_name)
+
+            # Some providers don't support refresh (e.g., GitHub)
+            if not provider.requires_refresh:
+                logger.debug(
+                    f"Provider {service_name} doesn't support token refresh "
+                    f"(tokens are long-lived)"
+                )
+                # Return existing token - it might still be valid
+                return service_token.access_token
+
+            # Perform refresh
+            refreshed = provider.refresh_access_token(service_token.refresh_token)
+
+            # Update token in database
+            service_token.access_token = refreshed["access_token"]
+
+            # Update refresh token if provided (some providers rotate it)
+            if "refresh_token" in refreshed:
+                service_token.refresh_token = refreshed["refresh_token"]
+
+            # Update expiry
+            if "expires_in" in refreshed:
+                service_token.expires_at = provider.calculate_expiry(
+                    refreshed["expires_in"]
+                )
+
+            # Update token type if provided
+            if "token_type" in refreshed:
+                service_token.token_type = refreshed["token_type"]
+
+            # Save with all updated fields
+            service_token.save(
+                update_fields=[
+                    "access_token",
+                    "refresh_token",
+                    "expires_at",
+                    "token_type",
+                    "updated_at",  # auto_now field
+                ]
+            )
+
+            logger.info(
+                f"Successfully refreshed token for {service_name} "
+                f"(user: {service_token.user.username})"
+            )
+            return service_token.access_token
+
+        except TokenRefreshError as e:
+            error_msg = str(e)
+            logger.error(
+                f"Failed to refresh token for {service_name} "
+                f"(user: {service_token.user.username}): {error_msg}"
+            )
+            # Create notification for user
+            _create_token_refresh_notification(service_token, error_msg)
+            return None
+        except NotImplementedError:
+            # Provider doesn't support refresh
+            logger.warning(
+                f"Token refresh not implemented for {service_name}, "
+                f"returning existing token"
+            )
+            return service_token.access_token
+        except Exception as e:
+            error_msg = f"Unexpected error: {str(e)}"
+            logger.error(
+                f"Unexpected error refreshing token for {service_name}: {e}",
+                exc_info=True,
+            )
+            # Create notification for unexpected errors too
+            _create_token_refresh_notification(service_token, error_msg)
+            return None
 
     @classmethod
     def generate_state(cls, user_id: str, provider: str) -> str:

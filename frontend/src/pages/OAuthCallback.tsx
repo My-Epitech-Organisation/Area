@@ -1,6 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { API_BASE } from '../utils/helper';
+
+/**
+ * OAuth Callback Handler Component
+ *
+ * This component handles OAuth2 callback redirects from the backend.
+ * It displays the connection status and redirects users to the services page.
+ *
+ * Backend-First Flow:
+ * 1. User clicks "Connect Service" → Frontend initiates OAuth
+ * 2. Backend generates auth URL and returns it
+ * 3. Frontend redirects to OAuth provider (Google, GitHub, etc.)
+ * 4. Provider redirects to backend callback endpoint
+ * 5. Backend validates, stores token, and redirects to this component
+ * 6. This component shows success/error and redirects to /services
+ *
+ * Expected Query Parameters:
+ * - On Success: ?success=true&service={provider}&created={true|false}
+ * - On Error: ?error={type}&message={description}
+ */
 
 const OAuthCallback: React.FC = () => {
   const { provider } = useParams<{ provider: string }>();
@@ -11,86 +29,50 @@ const OAuthCallback: React.FC = () => {
   const [message, setMessage] = useState('Completing authentication...');
 
   useEffect(() => {
-    const handleCallback = async () => {
-      const code = searchParams.get('code');
-      const state = searchParams.get('state');
+    const handleCallback = () => {
+      // Extract query parameters from backend redirect
+      const success = searchParams.get('success') === 'true';
       const service = searchParams.get('service');
-      const created = searchParams.get('created');
+      const created = searchParams.get('created') === 'true';
       const error = searchParams.get('error');
-      const errorDescription = searchParams.get('error_description');
+      const errorMessage = searchParams.get('message');
 
-      // If backend already redirected to frontend with summary params
-      if (service) {
-        // Show success or error based on query params
-        if (error) {
-          setStatus('error');
-          setMessage(errorDescription || `Authentication failed: ${error}`);
-          return;
-        }
+      // Validate required parameters
+      if (!service && !error) {
+        setStatus('error');
+        setMessage('Invalid OAuth callback - missing required parameters');
+        setTimeout(() => navigate('/services'), 3000);
+        return;
+      }
 
-        // Successful server-side connection
+      // Handle error case
+      if (error) {
+        setStatus('error');
+        const errorMsg = errorMessage
+          ? decodeURIComponent(errorMessage)
+          : `Authentication failed: ${error}`;
+        setMessage(errorMsg);
+
+        // Redirect after showing error
+        setTimeout(() => navigate('/services'), 3000);
+        return;
+      }
+
+      // Handle success case
+      if (success && service) {
         setStatus('success');
-        setMessage(
-          `Successfully ${created === 'true' ? 'connected' : 'reconnected'} to ${service}`
-        );
+        const action = created ? 'connected' : 'reconnected';
+        setMessage(`Successfully ${action} to ${service}`);
+
+        // Redirect to services page after brief success display
         setTimeout(() => navigate('/services'), 2000);
         return;
       }
 
-      // Handle OAuth error from provider (client-side flow)
-      if (error) {
-        setStatus('error');
-        setMessage(errorDescription || `Authentication failed: ${error}`);
-        return;
-      }
-
-      // Client-side flow: frontend must exchange code/state with backend
-      if (!code || !state || !provider) {
-        setStatus('error');
-        setMessage('Missing required authentication parameters');
-        return;
-      }
-
-      try {
-        const token = localStorage.getItem('access');
-        if (!token) {
-          setStatus('error');
-          setMessage('You must be logged in to connect services');
-          setTimeout(() => navigate('/login'), 2000);
-          return;
-        }
-
-        // Call the backend callback endpoint (API mode)
-        const response = await fetch(
-          `${API_BASE}/auth/oauth/${provider}/callback/?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          setStatus('error');
-          setMessage(data.message || data.error || 'Failed to connect service');
-          return;
-        }
-
-        // Success!
-        setStatus('success');
-        setMessage(data.message || `Successfully connected to ${provider}!`);
-
-        // Redirect to services page after 2 seconds
-        setTimeout(() => {
-          navigate('/services');
-        }, 2000);
-      } catch (err) {
-        setStatus('error');
-        setMessage(err instanceof Error ? err.message : 'An unexpected error occurred');
-      }
+      // Fallback for unexpected state
+      setStatus('error');
+      setMessage('Unexpected authentication state');
+      setTimeout(() => navigate('/services'), 3000);
     };
 
     handleCallback();
