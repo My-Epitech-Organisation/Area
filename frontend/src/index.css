@@ -44,6 +44,16 @@
 	--auth-login-mid: #000000;
 	--auth-login-end: #5a22a3; /* indigo-600 */
 
+	/* dashboard - background */
+	--dashboard-start: #2a7c91; /* teal-600 */
+	--dashboard-mid: #000000;
+	--dashboard-end: #342fce; /* indigo-900 */
+
+	/* profile - background */
+	--profile-start: #623fa5; /* purple-900 */
+	--profile-mid: #000000;
+	--profile-end: #4f3fff; /* indigo-700 */
+
 	/* typography */
 	--text-primary: #ffffff;
 	--text-muted: #d1d5db; /* gray-300 */
@@ -71,6 +81,10 @@
 
 .bg-auth-signup { background: linear-gradient(135deg, var(--auth-signup-start) 0%, var(--auth-signup-mid) 40%, var(--auth-signup-end) 100%); }
 .bg-auth-login { background: linear-gradient(135deg, var(--auth-login-start) 0%, var(--auth-login-mid) 40%, var(--auth-login-end) 100%); }
+
+.bg-dashboard { background: linear-gradient(135deg, var(--dashboard-start) 0%, var(--dashboard-mid) 40%, var(--dashboard-end) 100%); }
+
+.bg-profile { background: linear-gradient(135deg, var(--profile-start) 0%, var(--profile-mid) 40%, var(--profile-end) 100%); }
 
 .text-primary { color: var(--text-primary) !important; }
 .text-muted { color: var(--text-muted) !important; }
@@ -102,3 +116,13 @@
 }
 .animate-slide-up { animation: slide-up 360ms cubic-bezier(.2,.9,.2,1) both; }
 
+/* fadeIn animation for active service selector underline */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.animate-fadeIn { animation: fadeIn 1s ease-in-out; }

@@ -20,7 +20,6 @@ from django.core.mail import send_mail
 from .models import User, OAuthNotification
 from .serializers import EmailTokenObtainPairSerializer, UserSerializer, OAuthNotificationSerializer
 
-
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (AllowAny,)
@@ -29,11 +28,20 @@ class RegisterView(generics.CreateAPIView):
 
 class UserDetailView(APIView):
     permission_classes = (IsAuthenticated,)
-    serializer_class = UserSerializer
 
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+    def put(self, request):
+        user = request.user
+
+        serializer = UserProfileSerializer(user, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SendEmailVerificationView(APIView):
