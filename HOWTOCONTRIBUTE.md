@@ -922,25 +922,25 @@ logger = logging.getLogger(__name__)
 class SlackOAuthProvider(BaseOAuthProvider):
     """
     OAuth2 provider for Slack workspace integration.
-    
+
     Implements the OAuth2 flow for Slack's API including:
     - User authorization with custom scopes
     - Token exchange via oauth.v2.access endpoint
     - Token refresh (Slack tokens don't expire)
     - User info retrieval via users.identity
     """
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.scopes = self.config.get("scopes", ["channels:read", "chat:write"])
-    
+
     def get_authorization_url(self, state: str) -> str:
         """
         Generate Slack OAuth2 authorization URL.
-        
+
         Args:
             state: CSRF protection token
-            
+
         Returns:
             Full authorization URL for user redirect
         """
@@ -951,22 +951,22 @@ class SlackOAuthProvider(BaseOAuthProvider):
             "state": state,
             "response_type": "code",
         }
-        
+
         auth_url = self.config["authorization_endpoint"]
         query_string = "&".join(f"{k}={v}" for k, v in params.items())
         return f"{auth_url}?{query_string}"
-    
+
     def exchange_code_for_token(self, code: str) -> dict:
         """
         Exchange authorization code for access token.
-        
+
         Args:
             code: Authorization code from OAuth callback
-            
+
         Returns:
             dict with keys: access_token, refresh_token (optional),
                            expires_in (optional), token_type
-                           
+
         Raises:
             requests.RequestException: If token exchange fails
         """
@@ -977,77 +977,77 @@ class SlackOAuthProvider(BaseOAuthProvider):
             "code": code,
             "redirect_uri": self.redirect_uri,
         }
-        
+
         response = requests.post(token_url, data=data, timeout=10)
         response.raise_for_status()
-        
+
         result = response.json()
-        
+
         if not result.get("ok"):
             error_msg = result.get("error", "Unknown error")
             raise ValueError(f"Slack OAuth error: {error_msg}")
-        
+
         return {
             "access_token": result["authed_user"]["access_token"],
             "token_type": "Bearer",
             # Slack tokens don't expire
             "expires_in": None,
         }
-    
+
     def refresh_access_token(self, refresh_token: str) -> dict:
         """
         Refresh an expired access token.
-        
+
         Slack tokens don't expire, so this returns None.
         Override if your provider supports refresh.
-        
+
         Args:
             refresh_token: Not used for Slack
-            
+
         Returns:
             None (Slack tokens don't require refresh)
         """
         logger.info("Slack tokens don't expire - refresh not needed")
         return None
-    
+
     def get_user_info(self, access_token: str) -> dict:
         """
         Fetch user information from Slack API.
-        
+
         Args:
             access_token: Valid OAuth2 access token
-            
+
         Returns:
             dict with user profile information
-            
+
         Raises:
             requests.RequestException: If API call fails
         """
         userinfo_url = self.config["userinfo_endpoint"]
         headers = {"Authorization": f"Bearer {access_token}"}
-        
+
         response = requests.get(userinfo_url, headers=headers, timeout=10)
         response.raise_for_status()
-        
+
         result = response.json()
-        
+
         if not result.get("ok"):
             error_msg = result.get("error", "Unknown error")
             raise ValueError(f"Slack API error: {error_msg}")
-        
+
         return {
             "id": result["user"]["id"],
             "name": result["user"]["name"],
             "email": result["user"]["email"],
         }
-    
+
     def revoke_token(self, token: str) -> bool:
         """
         Revoke an OAuth2 token.
-        
+
         Args:
             token: Access token to revoke
-            
+
         Returns:
             True if revocation successful, False otherwise
         """
@@ -1055,7 +1055,7 @@ class SlackOAuthProvider(BaseOAuthProvider):
         if not revoke_url:
             logger.warning("Slack revoke endpoint not configured")
             return False
-        
+
         try:
             response = requests.post(
                 revoke_url,
@@ -1094,7 +1094,7 @@ Update `backend/area_project/settings.py`:
 ```python
 OAUTH2_PROVIDERS = {
     # ... existing providers ...
-    
+
     "slack": {
         "client_id": os.getenv("SLACK_CLIENT_ID", ""),
         "client_secret": os.getenv("SLACK_CLIENT_SECRET", ""),
@@ -1156,23 +1156,23 @@ def check_slack_messages():
         status=Area.Status.ACTIVE,
         action__name="slack_new_message"
     ).select_related("owner", "action")
-    
+
     for area in areas:
         try:
             # Get valid OAuth2 token (auto-refreshes if needed)
             access_token = OAuthManager.get_valid_token(area.owner, "slack")
-            
+
             if not access_token:
                 logger.error(
                     f"No valid Slack token for user {area.owner.id} "
                     f"(AREA #{area.pk})"
                 )
                 continue
-            
+
             # Use token to call Slack API
             channel_id = area.action_config.get("channel")
             headers = {"Authorization": f"Bearer {access_token}"}
-            
+
             response = requests.get(
                 "https://slack.com/api/conversations.history",
                 headers=headers,
@@ -1180,10 +1180,10 @@ def check_slack_messages():
                 timeout=10
             )
             response.raise_for_status()
-            
+
             # Process messages and create executions
             # ... (see Section 4 for full implementation)
-            
+
         except requests.RequestException as e:
             logger.error(f"Slack API error for AREA #{area.pk}: {e}")
             continue
@@ -1286,27 +1286,27 @@ The `ServiceToken` model stores OAuth2 credentials with tracking metadata:
 class ServiceToken(models.Model):
     """
     Store OAuth2 tokens for external service authentication.
-    
+
     Tracks token lifecycle including creation, updates (refreshes),
     and last usage for monitoring and debugging.
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     service_name = models.CharField(max_length=100)
-    
+
     # Token data
     access_token = models.TextField()
     refresh_token = models.TextField(blank=True)
     expires_at = models.DateTimeField(null=True, blank=True)
-    
+
     # Metadata (Phase 1 enhancements)
     scopes = models.TextField(blank=True)  # Space-separated
     token_type = models.CharField(max_length=20, default="Bearer")
-    
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)  # Tracks refreshes
     last_used_at = models.DateTimeField(null=True, blank=True)
-    
+
     class Meta:
         unique_together = ("user", "service_name")
         indexes = [
@@ -1377,25 +1377,25 @@ User = get_user_model()
 
 class OAuthCallbackBackendFirstTestCase(TestCase):
     """Test Backend-First OAuth callback flow."""
-    
+
     def setUp(self):
         self.user = User.objects.create_user(
             username="testuser",
             email="test@example.com",
             password="testpass123"
         )
-    
+
     @patch("users.oauth_views.OAuthManager")
     @patch("users.oauth_views.cache")
     def test_successful_oauth_callback(self, mock_cache, mock_oauth_manager):
         """Test successful OAuth callback with Backend-First flow."""
-        
+
         # Mock cache state retrieval
         mock_cache.get.return_value = {
             "user_id": str(self.user.id),
             "provider": "slack"
         }
-        
+
         # Mock OAuth provider
         mock_provider = MagicMock()
         mock_provider.exchange_code_for_token.return_value = {
@@ -1406,7 +1406,7 @@ class OAuthCallbackBackendFirstTestCase(TestCase):
         }
         mock_provider.scopes = ["channels:read", "chat:write"]
         mock_oauth_manager.get_provider.return_value = mock_provider
-        
+
         # Make callback request
         response = self.client.get(
             "/auth/oauth/slack/callback/",
@@ -1415,12 +1415,12 @@ class OAuthCallbackBackendFirstTestCase(TestCase):
                 "state": "test_state_token"
             }
         )
-        
+
         # Assertions
         self.assertEqual(response.status_code, 302)  # Redirect
         self.assertIn("success=true", response.url)
         self.assertIn("service=slack", response.url)
-        
+
         # Verify token created
         token = ServiceToken.objects.get(
             user=self.user,
@@ -1428,7 +1428,7 @@ class OAuthCallbackBackendFirstTestCase(TestCase):
         )
         self.assertEqual(token.access_token, "test_access_token")
         self.assertEqual(token.scopes, "channels:read chat:write")
-        
+
         # Verify cache delete called (one-time use)
         mock_cache.delete.assert_called_once_with("oauth_state_test_state_token")
 ```
