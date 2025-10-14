@@ -268,7 +268,10 @@ STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesSto
 # Template caching (only in production with DEBUG=False)
 if not DEBUG:
     for template_engine in TEMPLATES:
-        if template_engine["BACKEND"] == "django.template.backends.django.DjangoTemplates":
+        if (
+            template_engine["BACKEND"]
+            == "django.template.backends.django.DjangoTemplates"
+        ):
             # Remove app_dirs when using cached loader
             if template_engine["APP_DIRS"]:
                 template_engine["APP_DIRS"] = False

@@ -17,8 +17,13 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from django.conf import settings
 from django.core.mail import send_mail
 
-from .models import User, OAuthNotification
-from .serializers import EmailTokenObtainPairSerializer, UserSerializer, OAuthNotificationSerializer
+from .models import OAuthNotification, User
+from .serializers import (
+    EmailTokenObtainPairSerializer,
+    OAuthNotificationSerializer,
+    UserSerializer,
+)
+
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -137,4 +142,6 @@ class OAuthNotificationListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return OAuthNotification.objects.filter(user=self.request.user).order_by("-created_at")
+        return OAuthNotification.objects.filter(user=self.request.user).order_by(
+            "-created_at"
+        )

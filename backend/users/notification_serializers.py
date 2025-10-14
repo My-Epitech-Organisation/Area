@@ -40,8 +40,9 @@ class OAuthNotificationSerializer(serializers.ModelSerializer):
         Returns:
             str: Human-readable time delta (e.g., "5 minutes ago")
         """
-        from django.utils import timezone
         from datetime import timedelta
+
+        from django.utils import timezone
 
         delta = timezone.now() - obj.created_at
 
