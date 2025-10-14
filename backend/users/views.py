@@ -21,6 +21,7 @@ from .models import OAuthNotification, User
 from .serializers import (
     EmailTokenObtainPairSerializer,
     OAuthNotificationSerializer,
+    UserProfileSerializer,
     UserSerializer,
 )
 
