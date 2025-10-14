@@ -1,4 +1,5 @@
 import '../config/service_provider_config.dart';
+import 'package:flutter/material.dart';
 
 class ServiceTokenParseException implements Exception {
   final String message;
@@ -164,5 +165,120 @@ class ServiceConnectionList {
     return availableProviders
         .where((p) => !connectedNames.contains(p))
         .toList();
+  }
+}
+
+/// Model representing a connection history entry
+class ConnectionHistoryEntry {
+  final String serviceName;
+  final String
+  eventType; // 'connected', 'disconnected', 'expired', 'refreshed', 'failed'
+  final DateTime timestamp;
+  final String? message;
+  final bool isError;
+
+  ConnectionHistoryEntry({
+    required this.serviceName,
+    required this.eventType,
+    required this.timestamp,
+    this.message,
+    this.isError = false,
+  });
+
+  factory ConnectionHistoryEntry.fromJson(Map<String, dynamic> json) {
+    return ConnectionHistoryEntry(
+      serviceName: json['service_name'] as String? ?? '',
+      eventType: json['event_type'] as String? ?? 'unknown',
+      timestamp: json['timestamp'] != null
+          ? DateTime.parse(json['timestamp'] as String)
+          : DateTime.now(),
+      message: json['message'] as String?,
+      isError: json['is_error'] as bool? ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'service_name': serviceName,
+      'event_type': eventType,
+      'timestamp': timestamp.toIso8601String(),
+      'message': message,
+      'is_error': isError,
+    };
+  }
+
+  /// Get display name for the service
+  String get displayServiceName =>
+      ServiceProviderConfig.getDisplayName(serviceName);
+
+  /// Get event icon
+  IconData get eventIcon {
+    switch (eventType.toLowerCase()) {
+      case 'connected':
+        return Icons.link;
+      case 'disconnected':
+        return Icons.link_off;
+      case 'expired':
+        return Icons.warning;
+      case 'refreshed':
+        return Icons.refresh;
+      case 'failed':
+        return Icons.error;
+      default:
+        return Icons.info;
+    }
+  }
+
+  /// Get event color
+  Color get eventColor {
+    if (isError) return Colors.red;
+    switch (eventType.toLowerCase()) {
+      case 'connected':
+        return Colors.green;
+      case 'disconnected':
+        return Colors.orange;
+      case 'expired':
+        return Colors.red;
+      case 'refreshed':
+        return Colors.blue;
+      case 'failed':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  /// Get event display text
+  String get eventDisplayText {
+    switch (eventType.toLowerCase()) {
+      case 'connected':
+        return 'Connected';
+      case 'disconnected':
+        return 'Disconnected';
+      case 'expired':
+        return 'Expired';
+      case 'refreshed':
+        return 'Refreshed';
+      case 'failed':
+        return 'Failed';
+      default:
+        return eventType;
+    }
+  }
+
+  /// Get formatted timestamp
+  String get formattedTimestamp {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays}d';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}min';
+    } else {
+      return 'Now';
+    }
   }
 }
