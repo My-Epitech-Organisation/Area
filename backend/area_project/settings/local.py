@@ -175,7 +175,7 @@ LOGGING["loggers"]["django.db.backends"] = {
 # Automatically detected when running tests
 if "test" in sys.argv or "pytest" in sys.modules:
     print("  🧪 Test mode detected - optimizing for speed")
-    
+
     # Use in-memory SQLite for tests (fastest)
     DATABASES["default"] = {
         "ENGINE": "django.db.backends.sqlite3",
