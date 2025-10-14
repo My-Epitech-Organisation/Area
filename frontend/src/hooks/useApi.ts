@@ -79,14 +79,14 @@ function usePaginatedApi<T>(endpoint: string): UseApiResult<T[]> {
  * Hook for fetching all available actions
  */
 export function useActions(): UseApiResult<Action[]> {
-  return usePaginatedApi<Action>('/actions/');
+  return usePaginatedApi<Action>('/api/actions/');
 }
 
 /**
  * Hook for fetching all available reactions
  */
 export function useReactions(): UseApiResult<Reaction[]> {
-  return usePaginatedApi<Reaction>('/reactions/');
+  return usePaginatedApi<Reaction>('/api/reactions/');
 }
 
 /**
@@ -114,7 +114,7 @@ export function useCreateArea() {
         throw new Error('Authentication required. Please login.');
       }
 
-      const response = await fetch(`${API_BASE}/areas/`, {
+      const response = await fetch(`${API_BASE}/api/areas/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
