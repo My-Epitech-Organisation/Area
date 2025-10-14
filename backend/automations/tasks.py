@@ -391,21 +391,149 @@ def check_github_actions(self):
                     no_token_count += 1
                     continue
 
-                # TODO: Implement actual GitHub API polling with the token
-                # Example:
-                # import requests
-                # headers = {"Authorization": f"Bearer {access_token}"}
-                # response = requests.get(
-                #     "https://api.github.com/user/repos",
-                #     headers=headers
-                # )
-                # Check for new issues/PRs based on area.action_config
+                # Get repository from action_config
+                repository = area.action_config.get("repository")
+                if not repository:
+                    logger.warning(
+                        f"Area {area.id}: No repository configured in action_config"
+                    )
+                    skipped_count += 1
+                    continue
+
+                owner_repo, repo_name = repository.split("/")
+
+                # Get or create ActionState for tracking
+                from .models import ActionState
+
+                action_state, created = ActionState.objects.get_or_create(area=area)
+
+                # Prepare API request
+                api_url = f"https://api.github.com/repos/{owner_repo}/{repo_name}/issues"
+                headers = {
+                    "Authorization": f"Bearer {access_token}",
+                    "Accept": "application/vnd.github+json",
+                    "X-GitHub-Api-Version": "2022-11-28",
+                }
+
+                # Use 'since' parameter if we have a last_checked_at
+                params = {
+                    "state": "all",  # Get both open and closed
+                    "sort": "created",
+                    "direction": "desc",
+                    "per_page": 30,
+                }
+
+                if action_state.last_checked_at:
+                    # Only get issues created since last check
+                    params["since"] = action_state.last_checked_at.isoformat()
 
                 logger.debug(
-                    f"Would poll GitHub API for area {area.id} "
-                    f"(action: {area.action.name})"
+                    f"Polling GitHub API for area {area.id}: "
+                    f"{api_url} (since={action_state.last_checked_at})"
                 )
-                skipped_count += 1
+
+                # Call GitHub API
+                response = requests.get(
+                    api_url, headers=headers, params=params, timeout=10
+                )
+
+                if response.status_code == 200:
+                    issues = response.json()
+
+                    # Filter: only process new issues (not pull requests)
+                    new_issues = [
+                        issue
+                        for issue in issues
+                        if "pull_request" not in issue  # PRs are returned as issues
+                    ]
+
+                    # Apply label filter if specified
+                    label_filter = area.action_config.get("labels", [])
+                    if label_filter:
+                        new_issues = [
+                            issue
+                            for issue in new_issues
+                            if any(
+                                label["name"] in label_filter
+                                for label in issue.get("labels", [])
+                            )
+                        ]
+
+                    logger.info(
+                        f"Area {area.id}: Found {len(new_issues)} new issues in {repository}"
+                    )
+
+                    # Create executions for each new issue
+                    for issue in new_issues:
+                        issue_id = issue["id"]
+                        issue_number = issue["number"]
+                        issue_title = issue["title"]
+                        issue_url = issue["html_url"]
+
+                        # Create unique event ID
+                        event_id = f"github_issue_{repository}_{issue_id}"
+
+                        # Prepare trigger data
+                        trigger_data = {
+                            "issue_id": issue_id,
+                            "issue_number": issue_number,
+                            "issue_title": issue_title,
+                            "issue_url": issue_url,
+                            "repository": repository,
+                            "author": issue["user"]["login"],
+                            "created_at": issue["created_at"],
+                            "labels": [l["name"] for l in issue.get("labels", [])],
+                        }
+
+                        # Create execution (with idempotency)
+                        execution, was_created = create_execution_safe(
+                            area=area,
+                            external_event_id=event_id,
+                            trigger_data=trigger_data,
+                        )
+
+                        if was_created and execution:
+                            logger.info(
+                                f"✅ Created execution for issue #{issue_number} "
+                                f"in {repository}"
+                            )
+
+                            # Execute reaction asynchronously
+                            execute_reaction.delay(execution.pk)
+                            triggered_count += 1
+                        else:
+                            logger.debug(
+                                f"Skipped duplicate issue #{issue_number} in {repository}"
+                            )
+
+                    # Update last_checked_at to now
+                    action_state.last_checked_at = timezone.now()
+                    action_state.save(update_fields=["last_checked_at"])
+
+                elif response.status_code == 304:
+                    # Not modified (when using ETag)
+                    logger.debug(f"Area {area.id}: No changes in {repository}")
+                    skipped_count += 1
+
+                elif response.status_code in [401, 403]:
+                    logger.error(
+                        f"Area {area.id}: GitHub auth error {response.status_code} "
+                        f"for {repository}"
+                    )
+                    no_token_count += 1
+
+                elif response.status_code == 404:
+                    logger.error(
+                        f"Area {area.id}: Repository {repository} not found or no access"
+                    )
+                    skipped_count += 1
+
+                else:
+                    logger.error(
+                        f"Area {area.id}: GitHub API error {response.status_code}: "
+                        f"{response.text}"
+                    )
+                    skipped_count += 1
 
             except Exception as e:
                 logger.error(
@@ -795,6 +923,96 @@ def _execute_reaction_logic(
             "webhook_url": webhook_url,
             "note": "Teams integration not yet implemented",
         }
+
+    elif reaction_name == "github_create_issue":
+        # Real implementation: Create GitHub issue via API
+        repository = reaction_config.get("repository")
+        title = reaction_config.get("title", "Automated Issue")
+        body = reaction_config.get("body", "")
+        labels = reaction_config.get("labels", [])
+        assignees = reaction_config.get("assignees", [])
+
+        if not repository:
+            raise ValueError("Repository is required for github_create_issue")
+
+        # Get valid GitHub OAuth token for the user
+        from users.oauth.manager import OAuthManager
+
+        try:
+            access_token = OAuthManager.get_valid_token(area.owner, "github")
+            if not access_token:
+                raise ValueError(
+                    f"No valid GitHub token for user {area.owner.username}"
+                )
+
+            # Prepare API request
+            owner, repo = repository.split("/")
+            api_url = f"https://api.github.com/repos/{owner}/{repo}/issues"
+
+            payload = {
+                "title": title,
+                "body": body,
+            }
+
+            if labels:
+                payload["labels"] = labels
+            if assignees:
+                payload["assignees"] = assignees
+
+            # Call GitHub API
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
+            }
+
+            logger.info(
+                f"[REACTION GITHUB] Creating issue in {repository}: {title}"
+            )
+
+            response = requests.post(api_url, json=payload, headers=headers, timeout=10)
+
+            # Handle responses
+            if response.status_code == 201:
+                issue_data = response.json()
+                issue_url = issue_data.get("html_url")
+                issue_number = issue_data.get("number")
+
+                logger.info(
+                    f"[REACTION GITHUB] ✅ Issue created: {issue_url} (#{issue_number})"
+                )
+
+                return {
+                    "success": True,
+                    "issue_url": issue_url,
+                    "issue_number": issue_number,
+                    "repository": repository,
+                }
+
+            elif response.status_code == 401:
+                error_msg = "GitHub authentication failed. Token may be invalid or expired."
+                logger.error(f"[REACTION GITHUB] ❌ {error_msg}")
+                raise ValueError(error_msg)
+
+            elif response.status_code == 403:
+                error_msg = "GitHub API rate limit exceeded or access forbidden."
+                logger.error(f"[REACTION GITHUB] ❌ {error_msg}")
+                raise ValueError(error_msg)
+
+            elif response.status_code == 404:
+                error_msg = f"Repository {repository} not found or no access."
+                logger.error(f"[REACTION GITHUB] ❌ {error_msg}")
+                raise ValueError(error_msg)
+
+            else:
+                error_msg = f"GitHub API error: {response.status_code} - {response.text}"
+                logger.error(f"[REACTION GITHUB] ❌ {error_msg}")
+                raise ValueError(error_msg)
+
+        except requests.exceptions.Timeout:
+            raise ValueError("GitHub API request timed out")
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"GitHub API request failed: {str(e)}")
 
     else:
         # Unknown reaction - log and continue
