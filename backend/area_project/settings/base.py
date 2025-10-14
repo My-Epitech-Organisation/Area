@@ -197,7 +197,7 @@ OAUTH2_PROVIDERS = {
         "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
         "client_secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
         "redirect_uri": os.getenv(
-            "GOOGLE_REDIRECT_URI", "http://localhost:8080/auth/google/callback"
+            "GOOGLE_REDIRECT_URI", "http://localhost:8080/auth/oauth/google/callback/"
         ),
         "authorization_endpoint": "https://accounts.google.com/o/oauth2/v2/auth",
         "token_endpoint": "https://oauth2.googleapis.com/token",
@@ -207,6 +207,10 @@ OAUTH2_PROVIDERS = {
             "email",
             "profile",
             "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/gmail.modify",
+            "https://www.googleapis.com/auth/calendar.readonly",
+            "https://www.googleapis.com/auth/calendar.events",
         ],
         "requires_refresh": True,
     },
@@ -225,7 +229,7 @@ OAUTH2_PROVIDERS = {
 }
 
 # OAuth2 state expiry time (seconds)
-OAUTH2_STATE_EXPIRY = 600  # 10 minutes
+OAUTH2_STATE_EXPIRY = 1200  # 20 minutes (increased for slow authorization)
 
 # Security Settings (base - extended per environment)
 SECURE_BROWSER_XSS_FILTER = True
