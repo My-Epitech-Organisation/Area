@@ -1,3 +1,5 @@
+import '../config/service_provider_config.dart';
+
 /// Model representing a service from the about.json endpoint
 class Service {
   final int id;
@@ -48,10 +50,7 @@ class Service {
   String get displayName {
     if (name.isEmpty) return 'Unknown Service';
 
-    String mappedName = name;
-    if (name.toLowerCase() == 'gmail') {
-      mappedName = 'google';
-    }
+    String mappedName = ServiceProviderConfig.mapServiceName(name);
 
     return mappedName
         .split('_')
