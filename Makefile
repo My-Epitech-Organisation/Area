@@ -58,6 +58,8 @@ dev: ## Start development (hot reload, Vite on :5173)
 	@echo "   Frontend: http://localhost:5173 (Vite hot reload)"
 	@echo "   Backend:  http://localhost:8080"
 	@echo "   Flower:   http://localhost:5555"
+	@echo "📦 Checking for dependency changes..."
+	@docker-compose build client_web 2>/dev/null || true
 	@docker-compose up -d --remove-orphans
 	@echo "✅ Services started! Run 'make logs-dev' to see logs"
 
@@ -187,6 +189,21 @@ db-dump: ## Create database backup
 
 build: ## Build all Docker images
 	@docker-compose build
+
+rebuild: ## Rebuild Docker images (no cache)
+	@echo "🔨 Rebuilding all images without cache..."
+	@docker-compose build --no-cache
+	@echo "✅ Rebuild complete!"
+
+rebuild-frontend: ## Rebuild frontend only (no cache) - useful after package.json changes
+	@echo "🔨 Rebuilding frontend without cache..."
+	@docker-compose build --no-cache client_web
+	@echo "✅ Frontend rebuild complete!"
+
+rebuild-backend: ## Rebuild backend only (no cache) - useful after requirements.txt changes
+	@echo "🔨 Rebuilding backend without cache..."
+	@docker-compose build --no-cache server worker beat
+	@echo "✅ Backend rebuild complete!"
 
 status: ## Show container status
 	@docker-compose ps
