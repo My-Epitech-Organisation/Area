@@ -10,8 +10,8 @@ class ServiceTokenParseException implements Exception {
   @override
   String toString() {
     return 'ServiceTokenParseException: $message\n'
-           'JSON: $json\n'
-           'Original Error: $originalError';
+        'JSON: $json\n'
+        'Original Error: $originalError';
   }
 }
 
@@ -133,7 +133,9 @@ class ServiceConnectionList {
       if (serviceJson == null) continue;
 
       try {
-        final serviceToken = ServiceToken.fromJson(serviceJson as Map<String, dynamic>);
+        final serviceToken = ServiceToken.fromJson(
+          serviceJson as Map<String, dynamic>,
+        );
         connectedServices.add(serviceToken);
       } catch (e) {
         if (e is ServiceTokenParseException) {
@@ -152,7 +154,8 @@ class ServiceConnectionList {
               .map((e) => e as String)
               .toList() ??
           [],
-      totalConnected: json['total_connected'] as int? ?? connectedServices.length,
+      totalConnected:
+          json['total_connected'] as int? ?? connectedServices.length,
     );
   }
 
