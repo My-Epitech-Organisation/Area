@@ -32,16 +32,24 @@ from django.core.exceptions import ImproperlyConfigured
 BASE_DIR = Path(__file__).resolve().parent.parent.parent  # backend/
 PROJECT_ROOT = BASE_DIR.parent  # project root
 
-# Load environment variables from project root .env file
-env_path = PROJECT_ROOT / ".env"
-if env_path.exists():
-    load_dotenv(env_path)
-else:
-    print(f"Warning: .env file not found at {env_path}")
-
 # Environment detection
 ENVIRONMENT = os.getenv("ENVIRONMENT", "local")
 IS_DOCKER = os.path.exists("/.dockerenv")
+
+# Load environment variables from project root .env file
+# In Docker, env vars are injected via docker-compose env_file
+# In local dev, try to load from .env
+if not IS_DOCKER:
+    env_path = PROJECT_ROOT / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+    else:
+        # Try current directory
+        env_path = Path(".env")
+        if env_path.exists():
+            load_dotenv(env_path)
+        else:
+            print(f"Warning: .env file not found")
 
 # Create logs directory
 if not IS_DOCKER:
