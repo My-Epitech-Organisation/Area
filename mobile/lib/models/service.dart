@@ -47,7 +47,13 @@ class Service {
   /// Get display name with proper capitalization
   String get displayName {
     if (name.isEmpty) return 'Unknown Service';
-    return name
+
+    String mappedName = name;
+    if (name.toLowerCase() == 'gmail') {
+      mappedName = 'google';
+    }
+
+    return mappedName
         .split('_')
         .map((word) {
           if (word.isEmpty) return '';
