@@ -19,16 +19,28 @@ class ServiceToken {
   });
 
   factory ServiceToken.fromJson(Map<String, dynamic> json) {
-    return ServiceToken(
-      serviceName: json['service_name'] as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      expiresAt: json['expires_at'] != null
-          ? DateTime.parse(json['expires_at'] as String)
-          : null,
-      isExpired: json['is_expired'] as bool? ?? false,
-      expiresInMinutes: json['expires_in_minutes'] as int?,
-      hasRefreshToken: json['has_refresh_token'] as bool? ?? false,
-    );
+    try {
+      return ServiceToken(
+        serviceName: json['service_name'] as String? ?? '',
+        createdAt: json['created_at'] != null
+            ? DateTime.parse(json['created_at'] as String)
+            : DateTime.now(),
+        expiresAt: json['expires_at'] != null
+            ? DateTime.parse(json['expires_at'] as String)
+            : null,
+        isExpired: json['is_expired'] as bool? ?? false,
+        expiresInMinutes: json['expires_in_minutes'] as int?,
+        hasRefreshToken: json['has_refresh_token'] as bool? ?? false,
+      );
+    } catch (e) {
+      // Return a default ServiceToken if parsing fails
+      return ServiceToken(
+        serviceName: 'unknown',
+        createdAt: DateTime.now(),
+        isExpired: true,
+        hasRefreshToken: false,
+      );
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -44,9 +56,6 @@ class ServiceToken {
 
   /// Get user-friendly service name
   String get displayName => ServiceProviderConfig.getDisplayName(serviceName);
-
-  /// Get service icon path
-  String get iconPath => ServiceProviderConfig.getIconPath(serviceName);
 
   /// Get status color
   String get statusColor {
@@ -105,13 +114,19 @@ class ServiceConnectionList {
 
   factory ServiceConnectionList.fromJson(Map<String, dynamic> json) {
     return ServiceConnectionList(
-      connectedServices: (json['connected_services'] as List<dynamic>)
-          .map((e) => ServiceToken.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      availableProviders: (json['available_providers'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      totalConnected: json['total_connected'] as int,
+      connectedServices:
+          (json['connected_services'] as List<dynamic>?)
+              ?.where((e) => e != null)
+              .map((e) => ServiceToken.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      availableProviders:
+          (json['available_providers'] as List<dynamic>?)
+              ?.where((e) => e != null)
+              .map((e) => e as String)
+              .toList() ??
+          [],
+      totalConnected: json['total_connected'] as int? ?? 0,
     );
   }
 
