@@ -3,10 +3,10 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
 /**
  * OAuth Callback Handler Component
- * 
+ *
  * This component handles OAuth2 callback redirects from the backend.
  * It displays the connection status and redirects users to the services page.
- * 
+ *
  * Backend-First Flow:
  * 1. User clicks "Connect Service" → Frontend initiates OAuth
  * 2. Backend generates auth URL and returns it
@@ -14,7 +14,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
  * 4. Provider redirects to backend callback endpoint
  * 5. Backend validates, stores token, and redirects to this component
  * 6. This component shows success/error and redirects to /services
- * 
+ *
  * Expected Query Parameters:
  * - On Success: ?success=true&service={provider}&created={true|false}
  * - On Error: ?error={type}&message={description}
@@ -47,11 +47,11 @@ const OAuthCallback: React.FC = () => {
       // Handle error case
       if (error) {
         setStatus('error');
-        const errorMsg = errorMessage 
+        const errorMsg = errorMessage
           ? decodeURIComponent(errorMessage)
           : `Authentication failed: ${error}`;
         setMessage(errorMsg);
-        
+
         // Redirect after showing error
         setTimeout(() => navigate('/services'), 3000);
         return;
@@ -62,7 +62,7 @@ const OAuthCallback: React.FC = () => {
         setStatus('success');
         const action = created ? 'connected' : 'reconnected';
         setMessage(`Successfully ${action} to ${service}`);
-        
+
         // Redirect to services page after brief success display
         setTimeout(() => navigate('/services'), 2000);
         return;
