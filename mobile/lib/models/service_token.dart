@@ -1,5 +1,20 @@
 import '../config/service_provider_config.dart';
 
+class ServiceTokenParseException implements Exception {
+  final String message;
+  final Map<String, dynamic>? json;
+  final Object? originalError;
+
+  ServiceTokenParseException(this.message, {this.json, this.originalError});
+
+  @override
+  String toString() {
+    return 'ServiceTokenParseException: $message\n'
+           'JSON: $json\n'
+           'Original Error: $originalError';
+  }
+}
+
 /// Model representing a connected OAuth2 service token
 class ServiceToken {
   final String serviceName;
@@ -33,12 +48,10 @@ class ServiceToken {
         hasRefreshToken: json['has_refresh_token'] as bool? ?? false,
       );
     } catch (e) {
-      // Return a default ServiceToken if parsing fails
-      return ServiceToken(
-        serviceName: 'unknown',
-        createdAt: DateTime.now(),
-        isExpired: true,
-        hasRefreshToken: false,
+      throw ServiceTokenParseException(
+        'Failed to parse ServiceToken from JSON: $e',
+        json: json,
+        originalError: e,
       );
     }
   }
@@ -113,20 +126,33 @@ class ServiceConnectionList {
   });
 
   factory ServiceConnectionList.fromJson(Map<String, dynamic> json) {
+    final connectedServices = <ServiceToken>[];
+
+    final servicesList = json['connected_services'] as List<dynamic>? ?? [];
+    for (final serviceJson in servicesList) {
+      if (serviceJson == null) continue;
+
+      try {
+        final serviceToken = ServiceToken.fromJson(serviceJson as Map<String, dynamic>);
+        connectedServices.add(serviceToken);
+      } catch (e) {
+        if (e is ServiceTokenParseException) {
+          print('⚠️ Skipping malformed service token: ${e.message}');
+        } else {
+          rethrow;
+        }
+      }
+    }
+
     return ServiceConnectionList(
-      connectedServices:
-          (json['connected_services'] as List<dynamic>?)
-              ?.where((e) => e != null)
-              .map((e) => ServiceToken.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
+      connectedServices: connectedServices,
       availableProviders:
           (json['available_providers'] as List<dynamic>?)
               ?.where((e) => e != null)
               .map((e) => e as String)
               .toList() ??
           [],
-      totalConnected: json['total_connected'] as int? ?? 0,
+      totalConnected: json['total_connected'] as int? ?? connectedServices.length,
     );
   }
 
