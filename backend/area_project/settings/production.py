@@ -272,7 +272,7 @@ if not DEBUG:
             # Remove app_dirs when using cached loader
             if template_engine["APP_DIRS"]:
                 template_engine["APP_DIRS"] = False
-            
+
             # Set up cached loader
             template_engine["OPTIONS"]["loaders"] = [
                 (
