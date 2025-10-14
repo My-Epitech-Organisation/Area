@@ -35,7 +35,8 @@ def validate_critical_settings():
 
     # Check SECRET_KEY
     secret_key = globals().get("SECRET_KEY", "")
-    if not secret_key or secret_key == "your-secret-key-here":
+    default_secret = "your-secret-key-here"  # noqa: S105
+    if not secret_key or secret_key == default_secret:
         errors.append("SECRET_KEY is not set or using default value")
 
     # Check DEBUG mode in production
