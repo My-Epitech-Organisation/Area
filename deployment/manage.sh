@@ -276,9 +276,10 @@ full_update() {
     echo -e "${YELLOW}Pulling latest code...${NC}"
     git pull origin main
 
-    # Rebuild
-    echo -e "${YELLOW}Rebuilding containers...${NC}"
-    docker-compose -f docker-compose.yml -f docker-compose.prod.yml build
+    # Rebuild with no-cache for frontend and backend to ensure all code changes are applied
+    echo -e "${YELLOW}Rebuilding containers (no-cache for frontend and backend)...${NC}"
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache client_web server
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml build worker beat
 
     # Stop services
     echo -e "${YELLOW}Stopping services...${NC}"

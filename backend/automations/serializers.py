@@ -14,6 +14,8 @@ from users.oauth.manager import OAuthManager
 
 from .models import Action, Area, Execution, Reaction, Service
 from .validators import (
+    ACTION_SCHEMAS,
+    REACTION_SCHEMAS,
     validate_action_config,
     validate_action_reaction_compatibility,
     validate_reaction_config,
@@ -61,11 +63,30 @@ class ActionSerializer(serializers.ModelSerializer):
 
     service_name = serializers.CharField(source="service.name", read_only=True)
     service_id = serializers.IntegerField(source="service.id", read_only=True)
+    config_schema = serializers.SerializerMethodField()
 
     class Meta:
         model = Action
-        fields = ["id", "name", "description", "service_id", "service_name"]
-        read_only_fields = ["id", "name", "description", "service_id", "service_name"]
+        fields = [
+            "id",
+            "name",
+            "description",
+            "service_id",
+            "service_name",
+            "config_schema",
+        ]
+        read_only_fields = [
+            "id",
+            "name",
+            "description",
+            "service_id",
+            "service_name",
+            "config_schema",
+        ]
+
+    def get_config_schema(self, obj):
+        """Return the JSON schema for this action's configuration."""
+        return ACTION_SCHEMAS.get(obj.name, {})
 
 
 class ReactionSerializer(serializers.ModelSerializer):
@@ -73,11 +94,30 @@ class ReactionSerializer(serializers.ModelSerializer):
 
     service_name = serializers.CharField(source="service.name", read_only=True)
     service_id = serializers.IntegerField(source="service.id", read_only=True)
+    config_schema = serializers.SerializerMethodField()
 
     class Meta:
         model = Reaction
-        fields = ["id", "name", "description", "service_id", "service_name"]
-        read_only_fields = ["id", "name", "description", "service_id", "service_name"]
+        fields = [
+            "id",
+            "name",
+            "description",
+            "service_id",
+            "service_name",
+            "config_schema",
+        ]
+        read_only_fields = [
+            "id",
+            "name",
+            "description",
+            "service_id",
+            "service_name",
+            "config_schema",
+        ]
+
+    def get_config_schema(self, obj):
+        """Return the JSON schema for this reaction's configuration."""
+        return REACTION_SCHEMAS.get(obj.name, {})
 
 
 class AreaSerializer(serializers.ModelSerializer):
@@ -180,6 +220,27 @@ class AreaSerializer(serializers.ModelSerializer):
             # Validation des configurations si elles sont fournies
             action_config = attrs.get("action_config", {})
             reaction_config = attrs.get("reaction_config", {})
+
+            # ⚠️ Special validation: Prevent infinite loops for GitHub
+            # If action is github_new_issue and reaction is github_create_issue,
+            # they must target different repositories
+            if (
+                action.name == "github_new_issue"
+                and reaction.name == "github_create_issue"
+            ):
+                action_repo = action_config.get("repository", "").lower()
+                reaction_repo = reaction_config.get("repository", "").lower()
+
+                if action_repo and reaction_repo and action_repo == reaction_repo:
+                    raise serializers.ValidationError(
+                        {
+                            "non_field_errors": (
+                                "⚠️ Infinite loop detected! Cannot create GitHub issues in the same "
+                                "repository that triggers the action. Please use a different target "
+                                "repository to avoid infinite loops."
+                            )
+                        }
+                    )
 
             # Valider les configurations avec les schémas des actions/reactions
             try:

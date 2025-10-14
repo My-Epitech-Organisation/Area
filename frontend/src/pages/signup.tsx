@@ -1,17 +1,15 @@
-import React, { useState } from "react";
-import parseErrors from "../utils/parseErrors";
-
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
+import React, { useState } from 'react';
+import parseErrors from '../utils/parseErrors';
+import { API_BASE } from '../utils/helper';
 
 const Signup: React.FC = () => {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [password2, setPassword2] = useState("");
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [password2, setPassword2] = useState('');
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,17 +24,15 @@ const Signup: React.FC = () => {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        if (data.access)
-          localStorage.setItem('access', data.access);
-        if (data.refresh)
-          localStorage.setItem('refresh', data.refresh);
+        if (data.access) localStorage.setItem('access', data.access);
+        if (data.refresh) localStorage.setItem('refresh', data.refresh);
         window.location.href = '/dashboard';
         return;
       }
       const parsed = parseErrors(data);
       setGeneralError(parsed.message || 'Registration failed');
       setFieldErrors(parsed.fields || {});
-    } catch (err) {
+    } catch {
       setGeneralError('Network error');
     } finally {
       setLoading(false);
@@ -54,7 +50,9 @@ const Signup: React.FC = () => {
           className="w-full max-w-md bg-white/5 p-8 rounded-xl backdrop-blur-sm border border-white/10"
         >
           <div className="flex flex-col gap-4">
-            {generalError && <div className="text-red-400 text-sm p-3 bg-red-900/20 rounded">{generalError}</div>}
+            {generalError && (
+              <div className="text-red-400 text-sm p-3 bg-red-900/20 rounded">{generalError}</div>
+            )}
 
             <label className="text-sm text-gray-300">Username</label>
             <input
@@ -64,7 +62,9 @@ const Signup: React.FC = () => {
               className="px-4 py-3 rounded-md bg-transparent border border-white/20 text-white"
               placeholder="username"
             />
-            {fieldErrors.username && <div className="text-red-400 text-sm">{fieldErrors.username.join(' ')}</div>}
+            {fieldErrors.username && (
+              <div className="text-red-400 text-sm">{fieldErrors.username.join(' ')}</div>
+            )}
 
             <label className="text-sm text-gray-300">Email</label>
             <input
@@ -75,7 +75,9 @@ const Signup: React.FC = () => {
               className="px-4 py-3 rounded-md bg-transparent border border-white/20 text-white"
               placeholder="you@example.com"
             />
-            {fieldErrors.email && <div className="text-red-400 text-sm">{fieldErrors.email.join(' ')}</div>}
+            {fieldErrors.email && (
+              <div className="text-red-400 text-sm">{fieldErrors.email.join(' ')}</div>
+            )}
 
             <label className="text-sm text-gray-300">Password</label>
             <input
@@ -86,7 +88,9 @@ const Signup: React.FC = () => {
               className="px-4 py-3 rounded-md bg-transparent border border-white/20 text-white"
               placeholder="password"
             />
-            {fieldErrors.password && <div className="text-red-400 text-sm">{fieldErrors.password.join(' ')}</div>}
+            {fieldErrors.password && (
+              <div className="text-red-400 text-sm">{fieldErrors.password.join(' ')}</div>
+            )}
 
             <label className="text-sm text-gray-300">Verify password</label>
             <input
@@ -97,7 +101,9 @@ const Signup: React.FC = () => {
               className="px-4 py-3 rounded-md bg-transparent border border-white/20 text-white"
               placeholder="repeat password"
             />
-            {fieldErrors.password2 && <div className="text-red-400 text-sm">{fieldErrors.password2.join(' ')}</div>}
+            {fieldErrors.password2 && (
+              <div className="text-red-400 text-sm">{fieldErrors.password2.join(' ')}</div>
+            )}
 
             <button
               type="submit"
@@ -107,10 +113,7 @@ const Signup: React.FC = () => {
               {loading ? 'Registering…' : 'Register'}
             </button>
 
-            <a
-              href="/login"
-              className="mt-2 text-sm text-gray-300 underline text-center block"
-            >
+            <a href="/login" className="mt-2 text-sm text-gray-300 underline text-center block">
               Already have an account? Log in
             </a>
           </div>
