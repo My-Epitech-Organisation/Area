@@ -17,9 +17,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from django.conf import settings
 from django.core.mail import send_mail
 
-from .models import User
+from .models import OAuthNotification, User
 from .serializers import (
     EmailTokenObtainPairSerializer,
+    OAuthNotificationSerializer,
     UserProfileSerializer,
     UserSerializer,
 )
@@ -135,3 +136,13 @@ class EmailTokenObtainPairView(TokenObtainPairView):
     """Obtain JWT token pair using email as credential."""
 
     serializer_class = EmailTokenObtainPairSerializer
+
+
+class OAuthNotificationListView(generics.ListAPIView):
+    serializer_class = OAuthNotificationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return OAuthNotification.objects.filter(user=self.request.user).order_by(
+            "-created_at"
+        )
