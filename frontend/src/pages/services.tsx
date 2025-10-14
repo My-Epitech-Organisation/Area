@@ -23,7 +23,7 @@ const Services: React.FC = () => {
   const flatListRef = useRef<HTMLDivElement | null>(null);
   const [mounted, setMounted] = useState(false);
   const rotationSpeed = 5;
-  const radius = 350;
+  const radius = window.innerWidth < 768 ? 200 : 350;
 
   const imageModules = import.meta.glob('../assets/*.{png,jpg,jpeg,svg,gif}', {
     eager: true,
@@ -435,7 +435,7 @@ const Services: React.FC = () => {
   return (
     <div className="w-screen min-h-screen bg-page-services flex flex-col items-center p-6">
       <header className="w-full pt-20 flex flex-col items-center">
-        <h1 className="text-5xl font-bold text-white">Services</h1>
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">Services</h1>
         <p className="text-gray-300 mt-3">Explore available action → reaction services</p>
       </header>
 
@@ -478,10 +478,10 @@ const Services: React.FC = () => {
               className="w-full h-[600px] relative overflow-hidden my-10 group"
               style={{ perspective: '1800px' }}
             >
-              <div className="absolute top-1/2 left-4 transform -translate-y-1/2 text-white/30 text-4xl animate-pulse pointer-events-none z-50">
+              <div className="absolute top-1/2 left-4 transform -translate-y-1/2 text-white/30 text-2xl md:text-4xl animate-pulse pointer-events-none z-50">
                 &lt;
               </div>
-              <div className="absolute top-1/2 right-4 transform -translate-y-1/2 text-white/30 text-4xl animate-pulse pointer-events-none z-50">
+              <div className="absolute top-1/2 right-4 transform -translate-y-1/2 text-white/30 text-2xl md:text-4xl animate-pulse pointer-events-none z-50">
                 &gt;
               </div>
               <div
@@ -526,7 +526,7 @@ const Services: React.FC = () => {
                                 className="w-full h-full object-contain"
                               />
                             ) : (
-                              <div className="text-2xl font-semibold text-white/80">
+                              <div className="text-xl md:text-2xl font-semibold text-white/80">
                                 {(s.Name || '?').charAt(0)}
                               </div>
                             )}
@@ -603,7 +603,7 @@ const Services: React.FC = () => {
                                   decoding="async"
                                 />
                               ) : (
-                                <div className="text-3xl font-bold text-white/80">
+                                <div className="text-2xl md:text-3xl font-bold text-white/80">
                                   {(s.Name || '?').charAt(0)}
                                 </div>
                               )}
@@ -629,7 +629,7 @@ const Services: React.FC = () => {
             </div>
 
             <section className="mt-16">
-              <h2 className="text-2xl font-semibold text-white mb-4">History</h2>
+              <h2 className="text-xl md:text-2xl font-semibold text-white mb-4">History</h2>
               {history.length === 0 ? (
                 <div className="py-8 px-6 rounded-lg bg-white/5 text-center text-gray-300">
                   No services visited recently.
@@ -663,7 +663,7 @@ const Services: React.FC = () => {
                               decoding="async"
                             />
                           ) : (
-                            <div className="text-2xl font-semibold text-white/80">
+                            <div className="text-xl md:text-2xl font-semibold text-white/80">
                               {(h.Name || '?').charAt(0)}
                             </div>
                           )}
