@@ -139,7 +139,6 @@ class ServiceConnectionList {
         connectedServices.add(serviceToken);
       } catch (e) {
         if (e is ServiceTokenParseException) {
-          print('⚠️ Skipping malformed service token: ${e.message}');
         } else {
           rethrow;
         }
