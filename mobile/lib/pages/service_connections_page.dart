@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/service.dart';
+import '../models/service_token.dart';
 import '../providers/service_catalog_provider.dart';
+import '../services/oauth_service.dart';
 import '../utils/service_icons.dart';
 import '../config/service_provider_config.dart';
 
@@ -13,20 +16,229 @@ class ServiceConnectionsPage extends StatefulWidget {
 }
 
 class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
+  final OAuthService _oauthService = OAuthService();
+  List<ServiceToken> _connectedServices = [];
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
+    _loadConnectedServices();
+  }
+
+  Future<void> _loadConnectedServices() async {
+    setState(() => _isLoading = true);
+    try {
+      final services = await _oauthService.getConnectedServices();
+      setState(() => _connectedServices = services.connectedServices);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading services: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  bool _isServiceConnected(String serviceName) {
+    final oauthProvider = ServiceProviderConfig.mapServiceName(serviceName);
+    return _connectedServices.any(
+      (service) =>
+          service.serviceName.toLowerCase() == oauthProvider.toLowerCase(),
+    );
+  }
+
+  Future<void> _connectOAuthService(String serviceName) async {
+    final oauthProvider = ServiceProviderConfig.mapServiceName(serviceName);
+
+    setState(() => _isLoading = true);
+
+    try {
+      final oauthResponse = await _oauthService.initiateOAuth(oauthProvider);
+
+      final url = Uri.parse(oauthResponse.redirectUrl);
+
+      try {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Open your browser and authorize ${ServiceProviderConfig.getDisplayName(serviceName)}. '
+                'Then return to the app to see the connection.',
+              ),
+              duration: const Duration(seconds: 5),
+              backgroundColor: Colors.blue,
+            ),
+          );
+        }
+
+        _pollForOAuthCompletion(serviceName);
+      } catch (e) {
+        throw Exception('Could not launch authorization URL: ${e.toString()}');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('OAuth connection error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _pollForOAuthCompletion(String serviceName) async {
+    const int maxAttempts = 30;
+    const Duration initialDelay = Duration(milliseconds: 500);
+    const double backoffMultiplier = 1.2;
+
+    Duration currentDelay = initialDelay;
+    int attempt = 0;
+
+    while (attempt < maxAttempts && mounted) {
+      attempt++;
+
+      try {
+        final services = await _oauthService.getConnectedServices();
+        final isConnected = services.connectedServices.any(
+          (token) =>
+              token.serviceName.toLowerCase() == serviceName.toLowerCase(),
+        );
+
+        if (isConnected) {
+          if (mounted) {
+            _loadConnectedServices();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '${ServiceProviderConfig.getDisplayName(serviceName)} connected successfully!',
+                ),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
+        }
+
+        await Future.delayed(currentDelay);
+        currentDelay = Duration(
+          milliseconds: (currentDelay.inMilliseconds * backoffMultiplier)
+              .round(),
+        );
+      } catch (e) {
+        await Future.delayed(currentDelay);
+        currentDelay = Duration(
+          milliseconds: (currentDelay.inMilliseconds * backoffMultiplier)
+              .round(),
+        );
+      }
+    }
+
+    // Timeout reached
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Connection timeout. Please check if you completed the authorization in your browser.',
+          ),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+      _loadConnectedServices();
+    }
+  }
+
+  Future<void> _disconnectService(String serviceName) async {
+    // Map service name for OAuth
+    final oauthProvider = ServiceProviderConfig.mapServiceName(serviceName);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Disconnect Service'),
+        content: Text(
+          'Are you sure you want to disconnect ${ServiceProviderConfig.getDisplayName(serviceName)}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Disconnect'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _oauthService.disconnectService(oauthProvider);
+      await _loadConnectedServices();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${ServiceProviderConfig.getDisplayName(serviceName)} disconnected',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error disconnecting service: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Connected Services')),
+      appBar: AppBar(
+        title: const Text('Connected Services'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _isLoading ? null : _loadConnectedServices,
+            tooltip: 'Refresh services',
+          ),
+        ],
+      ),
       body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
+    if (_isLoading && _connectedServices.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Consumer<ServiceCatalogProvider>(
       builder: (context, serviceProvider, child) {
         final allServices = serviceProvider.services;
@@ -41,89 +253,92 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
             return a.displayName.compareTo(b.displayName);
           });
 
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            const Text(
-              'Services Requiring Connection',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'These services need OAuth authentication to access your accounts',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            const SizedBox(height: 12),
-            ...sortedServices
-                .where(
-                  (service) =>
-                      ServiceProviderConfig.requiresOAuth(service.name),
-                )
-                .map((service) => _buildServiceCard(service)),
-
-            const SizedBox(height: 24),
-
-            const Text(
-              'Built-in Services',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'These services are always available and don\'t require external connections',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            const SizedBox(height: 12),
-            ...sortedServices
-                .where(
-                  (service) =>
-                      !ServiceProviderConfig.requiresOAuth(service.name),
-                )
-                .map((service) => _buildServiceCard(service)),
-
-            const SizedBox(height: 24),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.info_outline, color: Colors.blue),
-                        SizedBox(width: 8),
-                        Text(
-                          'About Service Connections',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Connect your services to create powerful automations '
-                      'between different platforms.',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Total services: ${allServices.length}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+        return RefreshIndicator(
+          onRefresh: _loadConnectedServices,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              const Text(
+                'Services Requiring Connection',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              const Text(
+                'These services need OAuth authentication to access your accounts',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              const SizedBox(height: 12),
+              ...sortedServices
+                  .where(
+                    (service) =>
+                        ServiceProviderConfig.requiresOAuth(service.name),
+                  )
+                  .map((service) => _buildServiceCard(service)),
+
+              const SizedBox(height: 24),
+
+              const Text(
+                'Built-in Services',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'These services are always available and don\'t require external connections',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              const SizedBox(height: 12),
+              ...sortedServices
+                  .where(
+                    (service) =>
+                        !ServiceProviderConfig.requiresOAuth(service.name),
+                  )
+                  .map((service) => _buildServiceCard(service)),
+
+              const SizedBox(height: 24),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.info_outline, color: Colors.blue),
+                          SizedBox(width: 8),
+                          Text(
+                            'About Service Connections',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Connect your services to create powerful automations '
+                        'between different platforms.',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Total services: ${allServices.length}, Connected: ${_connectedServices.length}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -131,51 +346,79 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
 
   Widget _buildServiceCard(Service service) {
     final requiresOAuth = ServiceProviderConfig.requiresOAuth(service.name);
+    final isConnected = _isServiceConnected(service.name);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: requiresOAuth
-              ? Colors.blue.withValues(alpha: 0.2)
+              ? (isConnected
+                    ? Colors.green.withValues(alpha: 0.2)
+                    : Colors.blue.withValues(alpha: 0.2))
               : Colors.green.withValues(alpha: 0.2),
           child: Image.network(
             ServiceProviderConfig.getIconUrl(service.name),
             width: 24,
             height: 24,
             errorBuilder: (context, error, stackTrace) {
-              // Fallback to default icon if image fails to load
               return Icon(
                 ServiceIcons.getServiceIcon(service.name),
-                color: requiresOAuth ? Colors.blue : Colors.green,
+                color: requiresOAuth
+                    ? (isConnected ? Colors.green : Colors.blue)
+                    : Colors.green,
                 size: 20,
               );
             },
           ),
         ),
-        title: Text(service.displayName),
-        subtitle: Text(
-          'Actions: ${service.actions.length}, Reactions: ${service.reactions.length}',
-          style: const TextStyle(fontSize: 12),
+        title: Row(
+          children: [
+            Text(service.displayName),
+            if (isConnected) ...[
+              const SizedBox(width: 8),
+              const Icon(Icons.check_circle, color: Colors.green, size: 16),
+            ],
+          ],
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Actions: ${service.actions.length}, Reactions: ${service.reactions.length}',
+              style: const TextStyle(fontSize: 12),
+            ),
+            if (isConnected)
+              const Text(
+                'Connected',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+          ],
         ),
         trailing: requiresOAuth
-            ? ElevatedButton(
-                onPressed: () {
-                  // TODO: Implement OAuth connection logic
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        '${service.displayName} OAuth connection not implemented yet',
+            ? isConnected
+                  ? ElevatedButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () => _disconnectService(service.name),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
                       ),
-                      backgroundColor: Colors.orange,
-                    ),
-                  );
-                },
-                child: const Text('Connect OAuth'),
-              )
+                      child: const Text('Disconnect'),
+                    )
+                  : ElevatedButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () => _connectOAuthService(service.name),
+                      child: const Text('Connect OAuth'),
+                    )
             : ElevatedButton(
                 onPressed: () {
-                  // Services without OAuth are always "available"
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(

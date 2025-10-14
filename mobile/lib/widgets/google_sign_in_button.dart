@@ -15,8 +15,8 @@ class GoogleSignInButton extends StatelessWidget {
     return SizedBox(
       height: 50,
       child: OutlinedButton.icon(
-        icon: Image.asset(
-          ServiceProviderConfig.getIconPath('google'),
+        icon: Image.network(
+          ServiceProviderConfig.getIconUrl('google'),
           height: 24,
           width: 24,
         ),
