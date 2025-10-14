@@ -138,13 +138,68 @@ class Command(BaseCommand):
                 "actions": [
                     {
                         "name": "gmail_new_email",
+                        "description": "Triggered when any new unread email is received",
+                    },
+                    {
+                        "name": "gmail_new_from_sender",
                         "description": (
-                            "Triggered when a new email is received "
-                            "matching specific criteria"
+                            "Triggered when email from specific sender is received"
+                        ),
+                    },
+                    {
+                        "name": "gmail_new_with_label",
+                        "description": (
+                            "Triggered when email with specific label is received"
+                        ),
+                    },
+                    {
+                        "name": "gmail_new_with_subject",
+                        "description": (
+                            "Triggered when email with subject containing text is received"
                         ),
                     },
                 ],
-                "reactions": [],
+                "reactions": [
+                    {
+                        "name": "gmail_send_email",
+                        "description": "Send an email via Gmail",
+                    },
+                    {
+                        "name": "gmail_mark_read",
+                        "description": "Mark an email as read",
+                    },
+                    {
+                        "name": "gmail_add_label",
+                        "description": "Add a label to an email",
+                    },
+                ],
+            },
+            {
+                "name": "google_calendar",
+                "description": "Google Calendar integration for events and scheduling",
+                "status": Service.Status.ACTIVE,
+                "actions": [
+                    {
+                        "name": "calendar_event_starting_soon",
+                        "description": (
+                            "Triggered when event starts in X minutes"
+                        ),
+                    },
+                    {
+                        "name": "calendar_new_event",
+                        "description": "Triggered when new event is created",
+                    },
+                ],
+                "reactions": [
+                    {
+                        "name": "calendar_create_event",
+                        "description": "Create a new calendar event",
+                    },
+                    {
+                        "name": "calendar_update_event",
+                        "description": "Update an existing calendar event",
+                    },
+                ],
             },
             {
                 "name": "email",
