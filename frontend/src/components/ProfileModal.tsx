@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from 'react';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -12,10 +12,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   isOpen,
   onClose,
   onConfirm,
-  title = "Confirm Action",
-  message = "Please enter your current password to confirm changes"
+  title = 'Confirm Action',
+  message = 'Please enter your current password to confirm changes',
 }) => {
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -30,12 +30,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
     e.preventDefault();
     if (password) {
       onConfirm(password);
-      setPassword("");
+      setPassword('');
     }
   };
 
   const handleCancel = () => {
-    setPassword("");
+    setPassword('');
     onClose();
   };
 
@@ -52,7 +52,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="current-password" className="block text-sm font-medium text-indigo-200 mb-1">
+            <label
+              htmlFor="current-password"
+              className="block text-sm font-medium text-indigo-200 mb-1"
+            >
               Current Password
             </label>
             <input
