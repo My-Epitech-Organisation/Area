@@ -69,12 +69,12 @@ def print_configuration_summary(environment: str, settings_module: str):
         print("\n" + "=" * 70)
         print(f"🚀 Django Settings Loaded: {settings_module}")
         print("=" * 70)
-        
+
         # Environment info
         print(f"📍 Environment: {environment or 'local (default)'}")
         print(f"🐍 Python: {sys.version.split()[0]}")
         print(f"🔧 DEBUG mode: {globals().get('DEBUG', 'Unknown')}")
-        
+
         # Database info
         db_config = globals().get("DATABASES", {}).get("default", {})
         db_engine = db_config.get("ENGINE", "Unknown")
@@ -85,53 +85,53 @@ def print_configuration_summary(environment: str, settings_module: str):
             print(f"💾 Database: {db_engine} ({db_name} @ {db_host})")
         else:
             print(f"💾 Database: {db_engine}")
-        
+
         # Cache info
         cache_backend = globals().get("CACHES", {}).get("default", {}).get("BACKEND", "default")
         if "redis" in cache_backend.lower():
             print(f"⚡ Cache: Redis")
         else:
             print(f"⚡ Cache: {cache_backend.split('.')[-1] if cache_backend != 'default' else 'Local memory'}")
-        
+
         # Celery info
         celery_broker = globals().get("CELERY_BROKER_URL", "")
         if celery_broker:
             broker_type = "Redis" if "redis" in celery_broker else "Other"
             print(f"📨 Celery broker: {broker_type}")
-        
+
         # Security info
         ssl_redirect = globals().get("SECURE_SSL_REDIRECT", False)
         secure_cookies = globals().get("SESSION_COOKIE_SECURE", False)
         cors_all = globals().get("CORS_ALLOW_ALL_ORIGINS", False)
         print(f"🔒 Security: SSL={'✓' if ssl_redirect else '✗'}, SecureCookies={'✓' if secure_cookies else '✗'}, CORS={'OPEN' if cors_all else 'RESTRICTED'}")
-        
+
         # Logging info
         log_handlers = list(globals().get("LOGGING", {}).get("handlers", {}).keys())
         print(f"📝 Log handlers: {', '.join(log_handlers) if log_handlers else 'console (default)'}")
-        
+
         # Frontend integration
         frontend_url = globals().get("FRONTEND_URL", "Not set")
         print(f"🌐 Frontend URL: {frontend_url}")
-        
+
         # Validation
         errors, warnings = validate_critical_settings()
-        
+
         if errors:
             print("\n❌ CRITICAL ERRORS:")
             for error in errors:
                 print(f"   - {error}")
             print("\n⚠️  Application may not work correctly with these errors!")
-        
+
         if warnings:
             print("\n⚠️  WARNINGS:")
             for warning in warnings:
                 print(f"   - {warning}")
-        
+
         if not errors and not warnings:
             print("\n✅ All critical settings validated successfully")
-        
+
         print("=" * 70 + "\n")
-        
+
     except Exception as e:
         print(f"\n⚠️  Configuration summary error: {e}\n")
 
