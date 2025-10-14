@@ -67,7 +67,7 @@ const Homepage: React.FC = () => {
             className="absolute left-0 top-0 w-[200%] h-[200%] grid grid-cols-2 grid-rows-2 transition-transform duration-700 ease-in-out"
             style={{ transform }}
           >
-            <section className="w-full h-full flex items-center justify-center p-8 relative">
+            <section className="w-full h-full flex items-center justify-center p-8 md:pl-44 lg:pl-48 relative">
               <div
                 className="absolute inset-0"
                 style={{ transition: 'opacity 210ms ease', opacity: getOverlayOpacity(0) }}
@@ -75,22 +75,24 @@ const Homepage: React.FC = () => {
                 <div className="w-full h-full bg-tl" />
               </div>
               <div className="relative z-10 text-center">
-                <h2 className="mb-16 text-9xl text-primary font-semibold">AREA</h2>
-                <p className="text-5xl text-muted mt-4">
+                <h2 className="mb-16 text-4xl md:text-6xl lg:text-9xl text-primary font-semibold">
+                  AREA
+                </h2>
+                <p className="text-xl md:text-3xl lg:text-5xl text-muted mt-4">
                   &quot;Connect services, trigger actions: automate your routine and let your tools
                   work for you.&quot;
                 </p>
                 <div className="mt-8">
                   <button
                     onClick={nextQuad}
-                    className="px-20 py-6 text-3xl bg-indigo-100 text-black rounded-full hover:bg-indigo-300 transition animate-pulse"
+                    className="px-8 md:px-12 lg:px-20 py-4 md:py-5 lg:py-6 text-xl md:text-2xl lg:text-3xl bg-indigo-100 text-black rounded-full hover:bg-indigo-300 transition animate-pulse"
                   >
                     GET STARTED
                   </button>
                 </div>
               </div>
             </section>
-            <section className="w-full h-full flex items-center justify-center p-8 relative">
+            <section className="w-full h-full flex items-center justify-center p-8 md:pl-44 lg:pl-48 relative">
               <div
                 className="absolute inset-0"
                 style={{ transition: 'opacity 210ms ease', opacity: getOverlayOpacity(1) }}
@@ -98,18 +100,20 @@ const Homepage: React.FC = () => {
                 <div className="w-full h-full bg-tr" />
               </div>
               <div className="relative z-10 text-center">
-                <h2 className="mb-16 text-9xl text-white font-semibold">Discover AREA</h2>
-                <p className="text-5xl text-gray-300 mt-4">
+                <h2 className="mb-16 text-4xl md:text-6xl lg:text-9xl text-white font-semibold">
+                  Discover AREA
+                </h2>
+                <p className="text-xl md:text-3xl lg:text-5xl text-gray-300 mt-4">
                   AREA connects your favorite services and creates action→reaction rules to automate
                   daily tasks. Start by exploring the sections below.
                 </p>
-                <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
                   <div className="card-bg p-6 rounded-xl backdrop-blur-sm card-border flex flex-col items-start gap-4">
-                    <div className="icon-accent text-4xl">
+                    <div className="icon-accent text-2xl md:text-4xl">
                       <i className="fa-solid fa-bolt"></i>
                     </div>
-                    <h3 className="text-2xl text-primary font-semibold">Areaction</h3>
-                    <p className="text-lg text-muted">
+                    <h3 className="text-xl md:text-2xl text-primary font-semibold">Areaction</h3>
+                    <p className="text-sm md:text-lg text-muted">
                       Create your own automation by connecting actions and reactions.
                     </p>
                     <a
@@ -120,11 +124,11 @@ const Homepage: React.FC = () => {
                     </a>
                   </div>
                   <div className="bg-white/5 p-6 rounded-xl backdrop-blur-sm border border-white/10 flex flex-col items-start gap-4">
-                    <div className="icon-accent text-4xl">
+                    <div className="icon-accent text-2xl md:text-4xl">
                       <i className="fa-solid fa-gear"></i>
                     </div>
-                    <h3 className="text-2xl text-primary font-semibold">Services</h3>
-                    <p className="text-lg text-muted">
+                    <h3 className="text-xl md:text-2xl text-primary font-semibold">Services</h3>
+                    <p className="text-sm md:text-lg text-muted">
                       Browse available actions and reactions to connect your apps.
                     </p>
                     <a
@@ -136,11 +140,11 @@ const Homepage: React.FC = () => {
                   </div>
 
                   <div className="card-bg p-6 rounded-xl backdrop-blur-sm card-border flex flex-col items-start gap-4">
-                    <div className="icon-accent text-4xl">
+                    <div className="icon-accent text-2xl md:text-4xl">
                       <i className="fa-solid fa-users"></i>
                     </div>
-                    <h3 className="text-2xl text-primary font-semibold">About</h3>
-                    <p className="text-lg text-muted">
+                    <h3 className="text-xl md:text-2xl text-primary font-semibold">About</h3>
+                    <p className="text-sm md:text-lg text-muted">
                       Meet the team and learn the vision behind AREA project and its goals.
                     </p>
                     <a
@@ -152,11 +156,11 @@ const Homepage: React.FC = () => {
                   </div>
 
                   <div className="card-bg p-6 rounded-xl backdrop-blur-sm card-border flex flex-col items-start gap-4">
-                    <div className="icon-accent text-4xl">
+                    <div className="icon-accent text-2xl md:text-4xl">
                       <i className="fa-solid fa-table-columns"></i>
                     </div>
-                    <h3 className="text-2xl text-primary font-semibold">Dashboard</h3>
-                    <p className="text-lg text-muted">
+                    <h3 className="text-xl md:text-2xl text-primary font-semibold">Dashboard</h3>
+                    <p className="text-sm md:text-lg text-muted">
                       Access your automations, history, stats and personal settings.
                     </p>
                     <a
@@ -170,14 +174,14 @@ const Homepage: React.FC = () => {
                 <div className="mt-8">
                   <button
                     onClick={nextQuad}
-                    className="px-20 py-6 text-3xl btn-primary text-black rounded-full hover:btn-primary transition animate-pulse"
+                    className="px-8 md:px-12 lg:px-20 py-4 md:py-5 lg:py-6 text-xl md:text-2xl lg:text-3xl btn-primary text-black rounded-full hover:btn-primary transition animate-pulse"
                   >
                     Next
                   </button>
                 </div>
               </div>
             </section>
-            <section className="w-full h-full flex items-center justify-center p-8 relative">
+            <section className="w-full h-full flex items-center justify-center p-8 md:pl-44 lg:pl-48 relative">
               <div
                 className="absolute inset-0"
                 style={{ transition: 'opacity 210ms ease', opacity: getOverlayOpacity(2) }}
@@ -185,21 +189,23 @@ const Homepage: React.FC = () => {
                 <div className="w-full h-full bg-bl" />
               </div>
               <div className="relative z-10 text-center max-w-6xl">
-                <h2 className="text-9xl text-primary font-semibold">Get started with AREA</h2>
-                <p className="text-5xl text-muted mt-4">
+                <h2 className="text-4xl md:text-6xl lg:text-9xl text-primary font-semibold">
+                  Get started with AREA
+                </h2>
+                <p className="text-xl md:text-3xl lg:text-5xl text-muted mt-4">
                   Sign up or log in to start creating automations, manage your integrations and
                   access your personal dashboard.
                 </p>
                 <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
                   <a
                     href="/login"
-                    className="px-10 py-4 text-xl btn-primary rounded-full hover:btn-primary transition"
+                    className="px-6 md:px-8 lg:px-10 py-3 md:py-4 lg:py-4 text-lg md:text-xl lg:text-xl btn-primary rounded-full hover:btn-primary transition"
                   >
                     Log in
                   </a>
                   <a
                     href="/signup"
-                    className="px-10 py-4 text-xl btn-primary rounded-full hover:btn-primary transition"
+                    className="px-6 md:px-8 lg:px-10 py-3 md:py-4 lg:py-4 text-lg md:text-xl lg:text-xl btn-primary rounded-full hover:btn-primary transition"
                   >
                     Sign up
                   </a>
@@ -207,14 +213,14 @@ const Homepage: React.FC = () => {
                 <div className="mt-8">
                   <button
                     onClick={nextQuad}
-                    className="px-20 py-6 text-3xl bg-indigo-100 text-black rounded-full hover:bg-indigo-300 transition animate-pulse"
+                    className="px-8 md:px-12 lg:px-20 py-4 md:py-5 lg:py-6 text-xl md:text-2xl lg:text-3xl bg-indigo-100 text-black rounded-full hover:bg-indigo-300 transition animate-pulse"
                   >
                     BACK
                   </button>
                 </div>
               </div>
             </section>
-            <section className="w-full h-full flex items-center justify-center p-8 relative">
+            <section className="w-full h-full flex items-center justify-center p-8 md:pl-44 lg:pl-48 relative">
               <div
                 className="absolute inset-0"
                 style={{ transition: 'opacity 210ms ease', opacity: getOverlayOpacity(3) }}
@@ -222,28 +228,36 @@ const Homepage: React.FC = () => {
                 <div className="w-full h-full bg-br" />
               </div>
               <div className="relative z-10 text-center max-w-4xl">
-                <h2 className="mb-16 -mt-16 text-8xl text-white font-semibold">
+                <h2 className="mb-16 -mt-16 text-3xl md:text-5xl lg:text-8xl text-white font-semibold">
                   Examples of what you can automate
                 </h2>
-                <p className="text-5xl text-gray-300 my-24">With AREA you can create rules like:</p>
+                <p className="text-xl md:text-3xl lg:text-5xl text-gray-300 my-24">
+                  With AREA you can create rules like:
+                </p>
                 <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="bg-white/5 p-6 rounded-xl border border-white/10 text-left">
-                    <h3 className="text-lg text-white font-semibold">Email → Save to Dropbox</h3>
-                    <p className="text-lg text-gray-300 mt-2">
+                    <h3 className="text-lg md:text-lg text-white font-semibold">
+                      Email → Save to Dropbox
+                    </h3>
+                    <p className="text-sm md:text-lg text-gray-300 mt-2">
                       When you receive an email with attachment, automatically save it to your
                       Dropbox folder.
                     </p>
                   </div>
                   <div className="bg-white/5 p-6 rounded-xl border border-white/10 text-left">
-                    <h3 className="text-lg text-white font-semibold">Weather → Notify</h3>
-                    <p className="text-lg text-gray-300 mt-2">
+                    <h3 className="text-lg md:text-lg text-white font-semibold">
+                      Weather → Notify
+                    </h3>
+                    <p className="text-sm md:text-lg text-gray-300 mt-2">
                       If tomorrow&apos;s forecast predicts rain, send a notification to your phone
                       in the evening.
                     </p>
                   </div>
                   <div className="bg-white/5 p-6 rounded-xl border border-white/10 text-left">
-                    <h3 className="text-lg text-white font-semibold">Calendar → Teams</h3>
-                    <p className="text-lg text-gray-300 mt-2">
+                    <h3 className="text-lg md:text-lg text-white font-semibold">
+                      Calendar → Teams
+                    </h3>
+                    <p className="text-sm md:text-lg text-gray-300 mt-2">
                       When a meeting starts, post a message to your team&apos;s Teams channel to
                       remind attendees.
                     </p>
@@ -252,13 +266,13 @@ const Homepage: React.FC = () => {
                 <div className="mt-16 flex justify-center gap-4">
                   <a
                     href="/services"
-                    className="px-20 py-6 text-3xl btn-primary rounded-full hover:btn-primary transition"
+                    className="px-8 md:px-12 lg:px-20 py-4 md:py-5 lg:py-6 text-xl md:text-2xl lg:text-3xl btn-primary rounded-full hover:btn-primary transition"
                   >
                     See all services
                   </a>
                   <button
                     onClick={nextQuad}
-                    className="px-20 py-6 text-3xl btn-primary rounded-full hover:btn-primary transition animate-pulse"
+                    className="px-8 md:px-12 lg:px-20 py-4 md:py-5 lg:py-6 text-xl md:text-2xl lg:text-3xl btn-primary rounded-full hover:btn-primary transition animate-pulse"
                   >
                     Next
                   </button>
