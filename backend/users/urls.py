@@ -1,7 +1,9 @@
 from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework.routers import DefaultRouter
 
-from django.urls import path
+from django.urls import include, path
 
+from .notification_views import OAuthNotificationViewSet
 from .oauth.google_signin import GoogleLoginView
 from .oauth_views import (
     OAuthCallbackView,
@@ -20,7 +22,12 @@ from .views import (
     SendEmailVerificationView,
     UserDetailView,
     VerifyEmailView,
+    OAuthNotificationListView,  # Ajouté
 )
+
+# Router for ViewSets
+router = DefaultRouter()
+router.register(r"notifications", OAuthNotificationViewSet, basename="notification")
 
 urlpatterns = [
     # Authentication endpoints
@@ -72,4 +79,7 @@ urlpatterns = [
         ServiceDisconnectView.as_view(),
         name="service_disconnect",
     ),
+    path("oauth/notifications/", OAuthNotificationListView.as_view(), name="oauth_notification_list"),
+    # Include router URLs for notifications
+    path("", include(router.urls)),
 ]
