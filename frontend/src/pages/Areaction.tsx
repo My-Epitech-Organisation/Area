@@ -3,8 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useActions, useReactions, useCreateArea } from "../hooks/useApi";
 import { findActionByName, findReactionByName, generateAreaName } from "../utils/areaHelpers";
 import { DynamicConfigForm } from "../components/DynamicConfigForm";
-
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
+import { API_BASE } from "../utils/helper";
 
 type ServiceAction = {
   name: string;

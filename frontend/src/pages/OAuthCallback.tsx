@@ -19,6 +19,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
  * - On Success: ?success=true&service={provider}&created={true|false}
  * - On Error: ?error={type}&message={description}
  */
+
 const OAuthCallback: React.FC = () => {
   const { provider } = useParams<{ provider: string }>();
   const [searchParams] = useSearchParams();
