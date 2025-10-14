@@ -441,15 +441,37 @@ const Services: React.FC = () => {
 
       <main className="w-full max-w-7xl mt-10">
         <div className="flex items-center justify-end gap-4 mb-4">
-          <label className="flex items-center gap-2 text-sm text-gray-300">
-            <input
-              type="checkbox"
-              checked={flatMode}
-              onChange={(e) => setFlatMode(e.target.checked)}
-              className="h-4 w-4"
-            />
-            Display as flat list
-          </label>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-300">View mode:</span>
+            <div className="flex items-center bg-white/10 rounded-lg p-1 backdrop-blur-sm">
+              <button
+                onClick={() => setFlatMode(false)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                  !flatMode
+                    ? 'bg-indigo-600 text-white shadow-lg'
+                    : 'text-gray-300 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                Carousel
+              </button>
+              <button
+                onClick={() => setFlatMode(true)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                  flatMode
+                    ? 'bg-purple-600 text-white shadow-lg'
+                    : 'text-gray-300 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                List
+              </button>
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-4 mb-6">
           <input
