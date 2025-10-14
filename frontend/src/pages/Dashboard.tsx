@@ -508,24 +508,24 @@ const Dashboard: React.FC = () => {
                         onClick={() => handleServiceClick(service.name)}
                         className="bg-white bg-opacity-10 rounded-xl p-3 cursor-pointer transform transition-all duration-300 hover:bg-opacity-20 hover:scale-105 hover:shadow-lg flex flex-col items-center text-center aspect-square"
                       >
-                        <div className="w-14 h-14 rounded-full bg-white bg-opacity-10 flex items-center justify-center overflow-hidden mb-3 mt-1">
+                        <div className="w-24 h-24 rounded-full bg-white bg-opacity-10 flex items-center justify-center overflow-hidden mb-3 mt-1">
                           {logo ? (
                             <img
                               src={logo}
                               alt={`${service.name} logo`}
-                              className="w-10 h-10 object-contain"
+                              className="w-16 h-16 object-contain"
                             />
                           ) : (
-                            <div className="text-2xl font-bold text-white opacity-50">
+                            <div className="text-4xl font-bold text-white opacity-50">
                               {service.name.charAt(0)}
                             </div>
                           )}
                         </div>
-                        <h3 className="text-sm font-semibold text-white mb-2 line-clamp-2">
+                        <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
                           {service.name}
                         </h3>
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium mt-auto mb-1 ${isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+                          className={`px-4 py-1 rounded-full text-base font-medium mt-auto mb-1 ${isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
                         >
                           {isActive ? 'Active' : 'Inactive'}
                         </span>
