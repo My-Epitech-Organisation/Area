@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'providers/applet_provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/navigation_provider.dart';
+import 'providers/automation_stats_provider.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -13,11 +14,24 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    final statsProvider = context.read<AutomationStatsProvider>();
+    await statsProvider.loadAllStats();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Consumer2<UserProvider, AppletProvider>(
-      builder: (context, userProvider, appletProvider, child) {
+    return Consumer3<UserProvider, AppletProvider, AutomationStatsProvider>(
+      builder: (context, userProvider, appletProvider, statsProvider, child) {
         final userProfile = userProvider.profile;
         final applets = appletProvider.applets;
+        final areasStats = statsProvider.areasStats;
+        final executionsStats = statsProvider.executionsStats;
 
         return Scaffold(
           body: SafeArea(
@@ -30,7 +44,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                   const SizedBox(height: 32),
 
-                  _buildMetricsCards(applets),
+                  _buildMetricsCards(applets, areasStats, executionsStats),
 
                   const SizedBox(height: 32),
 
@@ -90,31 +104,91 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildMetricsCards(List<dynamic>? applets) {
+  Widget _buildMetricsCards(
+    List<dynamic>? applets,
+    Map<String, dynamic>? areasStats,
+    Map<String, dynamic>? executionsStats,
+  ) {
     final totalApplets = applets?.length ?? 0;
     final activeApplets =
         applets?.where((applet) => applet['enabled'] == true).length ?? 0;
 
-    return Row(
+    // Areas stats
+    final totalAreas = areasStats?['total'] ?? 0;
+    final activeAreas = areasStats?['active'] ?? 0;
+
+    // Executions stats
+    final totalExecutions = executionsStats?['total'] ?? 0;
+    final successfulExecutions = executionsStats?['success'] ?? 0;
+    final failedExecutions = executionsStats?['failed'] ?? 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: _buildMetricCard(
-            title: 'Total Applets',
-            value: totalApplets.toString(),
-            icon: Icons.apps,
-            color: Colors.blue,
-            subtitle: 'Created',
+        const Text(
+          'Your Statistics',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
           ),
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildMetricCard(
-            title: 'Active',
-            value: activeApplets.toString(),
-            icon: Icons.check_circle,
-            color: Colors.green,
-            subtitle: 'Running',
-          ),
+        const SizedBox(height: 16),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          children: [
+            _buildMetricCard(
+              title: 'Total Applets',
+              value: totalApplets.toString(),
+              icon: Icons.apps,
+              color: Colors.blue,
+              subtitle: 'Created',
+            ),
+            _buildMetricCard(
+              title: 'Active Applets',
+              value: activeApplets.toString(),
+              icon: Icons.check_circle,
+              color: Colors.green,
+              subtitle: 'Running',
+            ),
+            _buildMetricCard(
+              title: 'Total Areas',
+              value: totalAreas.toString(),
+              icon: Icons.link,
+              color: Colors.purple,
+              subtitle: 'Automations',
+            ),
+            _buildMetricCard(
+              title: 'Active Areas',
+              value: activeAreas.toString(),
+              icon: Icons.play_circle,
+              color: Colors.orange,
+              subtitle: 'Running',
+            ),
+            _buildMetricCard(
+              title: 'Executions',
+              value: totalExecutions.toString(),
+              icon: Icons.play_arrow,
+              color: Colors.teal,
+              subtitle: 'Total runs',
+            ),
+            _buildMetricCard(
+              title: 'Success Rate',
+              value: totalExecutions > 0
+                  ? '${((successfulExecutions / totalExecutions) * 100).round()}%'
+                  : '0%',
+              icon: Icons.trending_up,
+              color: successfulExecutions > failedExecutions
+                  ? Colors.green
+                  : Colors.red,
+              subtitle:
+                  '$successfulExecutions/${totalExecutions - successfulExecutions}',
+            ),
+          ],
         ),
       ],
     );
