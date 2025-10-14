@@ -11,7 +11,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
-from .models import User
+from .models import User, OAuthNotification
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -70,3 +70,19 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):  # type: ignore[override]
         # SimpleJWT internally expects a field matching USERNAME_FIELD
         return super().validate(attrs)
+
+
+class OAuthNotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OAuthNotification
+        fields = [
+            "id",
+            "service_name",
+            "notification_type",
+            "message",
+            "is_read",
+            "is_resolved",
+            "created_at",
+            "resolved_at",
+        ]
+        read_only_fields = ["id", "created_at", "resolved_at"]
