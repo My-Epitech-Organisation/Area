@@ -20,7 +20,7 @@ from django.conf import settings
 
 from .models import ServiceToken
 from .oauth import OAuthManager
-from .oauth.exceptions import InvalidProviderError, OAuthError
+from .oauth.exceptions import InvalidProviderError, OAuthError, OAuthStateError
 from .oauth_serializers import (
     OAuthCallbackSerializer,
     OAuthInitiateResponseSerializer,
@@ -124,12 +124,21 @@ class OAuthInitiateView(APIView):
 
 class OAuthCallbackView(APIView):
     """
-    Handle OAuth2 authorization callback.
+    Handle OAuth2 authorization callback (Backend-First flow).
 
     GET /auth/oauth/{provider}/callback/?code=xxx&state=yyy
 
-    Exchanges the authorization code for an access token and stores it.
     This endpoint is called by the OAuth2 provider after user authorization.
+    It validates the state token, exchanges the code for an access token,
+    stores it in the database, and redirects the user to the frontend
+    with the result.
+
+    Flow:
+        1. OAuth provider redirects browser here with code & state
+        2. Backend validates state and retrieves user_id from cache
+        3. Backend exchanges code for access token
+        4. Backend stores token in database
+        5. Backend redirects to frontend with success/error parameters
 
     Path Parameters:
         provider: OAuth2 provider name (google, github, etc.)
@@ -140,218 +149,66 @@ class OAuthCallbackView(APIView):
         error: Error code (on failure)
         error_description: Error description (on failure)
 
-    Returns:
-        - message: Success/error message
-        - service: Provider name
-        - created: Whether this is a new connection
-        - expires_at: Token expiration timestamp (if applicable)
+    Redirects to:
+        Frontend callback URL with query parameters:
+        - On success: ?success=true&service={provider}&created={true|false}
+        - On error: ?error={error_type}&message={error_description}
     """
 
-    # NOTE: We intentionally do NOT require IsAuthenticated for the callback
-    # because the OAuth provider will redirect the browser to this endpoint
-    # without an Authorization header. We support two modes:
-    # 1) Browser navigation: no Authorization header and Accept prefers HTML ->
-    #    we validate the state, look up the user_id stored in cache and complete
-    #    the flow on behalf of that user, then redirect to the frontend callback
-    #    route so the SPA can show a success page.
-    # 2) API/AJAX client: includes Authorization header or X-Requested-With ->
-    #    we require authentication and behave as before returning JSON.
-    # Override global DEFAULT_PERMISSION_CLASSES (IsAuthenticated) so that
-    # providers can redirect the browser here without a Bearer token.
-    permission_classes = [AllowAny]
+    permission_classes = [AllowAny]  # OAuth providers redirect without auth header
     serializer_class = OAuthCallbackSerializer
 
     def get(self, request, provider: str):
-        """Process OAuth2 callback and exchange code for token.
+        """
+        Process OAuth2 callback and redirect to frontend with result.
 
-        Support both browser redirects (no auth header) and API calls
-        (with Authorization header)."""
+        This method implements the Backend-First OAuth flow where all token
+        handling is done server-side for security.
+        """
+        # Get frontend URL for redirects
+        frontend_url = getattr(
+            settings, "FRONTEND_URL", None
+        ) or request.build_absolute_uri("/").rstrip("/")
+        callback_base = f"{frontend_url}/auth/callback/{provider}"
 
-        # Validate callback parameters first
+        # Validate callback parameters
         serializer = OAuthCallbackSerializer(data=request.query_params)
         if not serializer.is_valid():
-            return Response(
-                {"error": "invalid_callback", "details": serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST,
+            logger.error(
+                f"Invalid OAuth callback parameters for {provider}: "
+                f"{serializer.errors}"
+            )
+            return self._redirect_with_error(
+                callback_base, "invalid_callback", "Invalid callback parameters"
             )
 
         validated_data = serializer.validated_data
 
-        # If provider returned an error, show it
+        # Handle OAuth provider error
         if validated_data.get("error"):
             error_msg = validated_data.get("error_description", validated_data["error"])
-            logger.warning(f"OAuth2 callback error for {provider}: {error_msg}")
-            return Response(
-                {"error": validated_data["error"], "message": error_msg},
-                status=status.HTTP_400_BAD_REQUEST,
+            logger.warning(f"OAuth2 callback error from {provider}: {error_msg}")
+            return self._redirect_with_error(
+                callback_base, validated_data["error"], error_msg
             )
 
         code = validated_data["code"]
         state = validated_data["state"]
 
-        # Determine whether this is a browser navigation or an API/fetch call
-        has_auth = bool(
-            request.headers.get("Authorization")
-            or request.headers.get("X-Requested-With")
-        )
-        accepts_html = "text/html" in request.headers.get("Accept", "")
-
-        # If this looks like an API call, require authentication
-        if has_auth:
-            # API mode - behave like before (require authenticated user)
-            if not request.user or not request.user.is_authenticated:
-                return Response(
-                    {"detail": "Authentication credentials were not provided."},
-                    status=status.HTTP_401_UNAUTHORIZED,
-                )
-
-            try:
-                # Validate CSRF state against this user's id
-                is_valid, error_msg = OAuthManager.validate_state(
-                    state=state, user_id=str(request.user.id), provider=provider
-                )
-
-                if not is_valid:
-                    logger.warning(
-                        f"Invalid OAuth2 state for user {request.user.email}: {error_msg}"
-                    )
-                    return Response(
-                        {"error": "invalid_state", "message": error_msg},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
-                oauth_provider = OAuthManager.get_provider(provider)
-                token_data = oauth_provider.exchange_code_for_token(code)
-                expires_at = oauth_provider.calculate_expiry(
-                    token_data.get("expires_in")
-                )
-
-                service_token, created = ServiceToken.objects.update_or_create(
-                    user=request.user,
-                    service_name=provider,
-                    defaults={
-                        "access_token": token_data["access_token"],
-                        "refresh_token": token_data.get("refresh_token", ""),
-                        "expires_at": expires_at,
-                    },
-                )
-
-                action = "connected" if created else "reconnected"
-                logger.info(f"User {request.user.email} {action} to {provider}")
-
-                return Response(
-                    {
-                        "message": f"Successfully {action} to {provider}",
-                        "service": provider,
-                        "created": created,
-                        "expires_at": expires_at.isoformat() if expires_at else None,
-                    },
-                    status=status.HTTP_200_OK,
-                )
-
-            except OAuthError as e:
-                logger.error(f"OAuth2 error during callback: {str(e)}")
-                return Response(
-                    {"error": "oauth_error", "message": str(e)},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            except Exception as e:
-                logger.error(
-                    f"Unexpected error in OAuth2 callback: {str(e)}", exc_info=True
-                )
-                return Response(
-                    {
-                        "error": "internal_error",
-                        "message": "Failed to complete OAuth2 flow",
-                    },
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
-
-        # Browser navigation mode - complete flow on behalf of user stored in state
         try:
-            # Validate state: read cached state to find the initiating user
-            from django.core.cache import cache as _cache
+            # Step 1: Validate state and retrieve user
+            user = self._validate_state_and_get_user(state, provider)
 
-            cache_key = OAuthManager._get_state_cache_key(state)
-            state_data = _cache.get(cache_key)
-
-            if not state_data:
-                # If invalid state, return JSON for API clients or redirect to frontend with error
-                logger.warning(
-                    f"OAuth2 state missing or expired for provider {provider}"
-                )
-                if accepts_html:
-                    frontend = getattr(
-                        settings, "FRONTEND_URL", None
-                    ) or request.build_absolute_uri("/").rstrip("/")
-                    redirect_to = (
-                        f"{frontend}/auth/callback/{provider}?error=invalid_state"
-                    )
-                    return Response(
-                        status=status.HTTP_302_FOUND, headers={"Location": redirect_to}
-                    )
-                return Response(
-                    {"error": "invalid_state", "message": "State invalid or expired"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            user_id = state_data.get("user_id")
-            if not user_id:
-                logger.warning("State missing user_id")
-                return Response(
-                    {
-                        "error": "invalid_state",
-                        "message": "State missing user information",
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            # Now validate state atomically (this will also delete it from cache)
-            is_valid, err = OAuthManager.validate_state(
-                state=state, user_id=str(user_id), provider=provider
-            )
-            if not is_valid:
-                logger.warning(f"State validation failed after lookup: {err}")
-                if accepts_html:
-                    frontend = getattr(
-                        settings, "FRONTEND_URL", None
-                    ) or request.build_absolute_uri("/").rstrip("/")
-                    redirect_to = (
-                        f"{frontend}/auth/callback/{provider}?error=invalid_state"
-                    )
-                    return Response(
-                        status=status.HTTP_302_FOUND, headers={"Location": redirect_to}
-                    )
-                return Response(
-                    {"error": "invalid_state", "message": err},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            # Load user by id with proper UUID validation
-            from django.contrib.auth import get_user_model
-            from django.shortcuts import get_object_or_404
-
-            User = get_user_model()
-            try:
-                # Validate that user_id is a valid UUID (User.id is a UUIDField)
-                user_uuid = UUID(user_id)
-                user = get_object_or_404(User, id=user_uuid)
-            except (ValueError, TypeError) as e:
-                logger.error(f"Invalid UUID from OAuth state: {user_id} - {e}")
-                return Response(
-                    {"error": "invalid_state", "message": "Invalid user identifier"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            except Exception as e:
-                logger.error(f"User lookup failed for id {user_id}: {e}")
-                return Response(
-                    {"error": "invalid_state", "message": "User not found"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
+            # Step 2: Exchange code for access token
             oauth_provider = OAuthManager.get_provider(provider)
             token_data = oauth_provider.exchange_code_for_token(code)
-            expires_at = oauth_provider.calculate_expiry(token_data.get("expires_in"))
 
+            # Step 3: Calculate token expiration
+            expires_at = oauth_provider.calculate_expiry(
+                token_data.get("expires_in")
+            )
+
+            # Step 4: Store or update token in database
             service_token, created = ServiceToken.objects.update_or_create(
                 user=user,
                 service_name=provider,
@@ -359,61 +216,135 @@ class OAuthCallbackView(APIView):
                     "access_token": token_data["access_token"],
                     "refresh_token": token_data.get("refresh_token", ""),
                     "expires_at": expires_at,
+                    "token_type": token_data.get("token_type", "Bearer"),
+                    "scopes": " ".join(
+                        oauth_provider.scopes
+                    ),  # Store granted scopes
                 },
             )
 
+            # Log successful connection
             action = "connected" if created else "reconnected"
             logger.info(
-                f"User {user.email} {action} to {provider} via browser callback"
+                f"User {user.email} successfully {action} to {provider} "
+                f"(expires: {expires_at or 'never'})"
             )
 
-            # Redirect to frontend callback route with summary params
-            frontend = getattr(
-                settings, "FRONTEND_URL", None
-            ) or request.build_absolute_uri("/").rstrip("/")
-            redirect_to = f"{frontend}/auth/callback/{provider}?service={provider}&created={str(created).lower()}"
-            if expires_at:
-                redirect_to += f"&expires_at={expires_at.isoformat()}"
+            # Resolve any existing notifications for this service
+            from users.models import OAuthNotification
 
-            return Response(
-                status=status.HTTP_302_FOUND, headers={"Location": redirect_to}
+            resolved_count = OAuthNotification.resolve_for_service(user, provider)
+            if resolved_count > 0:
+                logger.info(
+                    f"Resolved {resolved_count} OAuth notifications for "
+                    f"{user.email}/{provider}"
+                )
+
+            # Step 5: Redirect to frontend with success
+            return self._redirect_with_success(
+                callback_base, provider, created, expires_at
             )
 
         except OAuthError as e:
-            logger.error(f"OAuth2 error during browser callback: {str(e)}")
-            if accepts_html:
-                frontend = getattr(
-                    settings, "FRONTEND_URL", None
-                ) or request.build_absolute_uri("/").rstrip("/")
-                redirect_to = f"{frontend}/auth/callback/{provider}?error=oauth_error"
-                return Response(
-                    status=status.HTTP_302_FOUND, headers={"Location": redirect_to}
-                )
-            return Response(
-                {"error": "oauth_error", "message": str(e)},
-                status=status.HTTP_400_BAD_REQUEST,
+            logger.error(
+                f"OAuth error during {provider} callback: {str(e)}", exc_info=True
             )
+            return self._redirect_with_error(callback_base, "oauth_error", str(e))
+
         except Exception as e:
             logger.error(
-                f"Unexpected error in browser OAuth2 callback: {str(e)}", exc_info=True
+                f"Unexpected error in {provider} callback: {str(e)}", exc_info=True
             )
-            if accepts_html:
-                frontend = getattr(
-                    settings, "FRONTEND_URL", None
-                ) or request.build_absolute_uri("/").rstrip("/")
-                redirect_to = (
-                    f"{frontend}/auth/callback/{provider}?error=internal_error"
-                )
-                return Response(
-                    status=status.HTTP_302_FOUND, headers={"Location": redirect_to}
-                )
-            return Response(
-                {
-                    "error": "internal_error",
-                    "message": "Failed to complete OAuth2 flow",
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            return self._redirect_with_error(
+                callback_base, "internal_error", "Failed to complete OAuth flow"
             )
+
+    def _validate_state_and_get_user(self, state: str, provider: str):
+        """
+        Validate OAuth state token and retrieve associated user.
+
+        Args:
+            state: OAuth state token from callback
+            provider: OAuth provider name
+
+        Returns:
+            User: Django User instance
+
+        Raises:
+            OAuthError: If state is invalid or user not found
+        """
+        from django.contrib.auth import get_user_model
+        from django.core.cache import cache
+
+        User = get_user_model()
+
+        # Retrieve state data from cache
+        cache_key = OAuthManager._get_state_cache_key(state)
+        state_data = cache.get(cache_key)
+
+        if not state_data:
+            raise OAuthStateError("OAuth state token is invalid or expired")
+
+        user_id = state_data.get("user_id")
+        if not user_id:
+            raise OAuthStateError("OAuth state missing user information")
+
+        # Validate state (this also deletes it from cache for one-time use)
+        is_valid, error_msg = OAuthManager.validate_state(
+            state=state, user_id=str(user_id), provider=provider
+        )
+        if not is_valid:
+            raise OAuthStateError(f"State validation failed: {error_msg}")
+
+        # Retrieve user by UUID
+        try:
+            user_uuid = UUID(user_id)
+            user = User.objects.get(id=user_uuid)
+            return user
+        except (ValueError, TypeError) as e:
+            raise OAuthStateError(f"Invalid user identifier in state: {e}")
+        except User.DoesNotExist:
+            raise OAuthStateError(f"User not found for id: {user_id}")
+
+    def _redirect_with_success(
+        self, base_url: str, provider: str, created: bool, expires_at
+    ):
+        """
+        Redirect to frontend with success parameters.
+
+        Args:
+            base_url: Frontend callback base URL
+            provider: OAuth provider name
+            created: Whether this was a new connection
+            expires_at: Token expiration datetime or None
+
+        Returns:
+            Response: HTTP 302 redirect
+        """
+        redirect_url = (
+            f"{base_url}?success=true&service={provider}&created={str(created).lower()}"
+        )
+        if expires_at:
+            redirect_url += f"&expires_at={expires_at.isoformat()}"
+
+        return Response(status=status.HTTP_302_FOUND, headers={"Location": redirect_url})
+
+    def _redirect_with_error(self, base_url: str, error_type: str, message: str):
+        """
+        Redirect to frontend with error parameters.
+
+        Args:
+            base_url: Frontend callback base URL
+            error_type: Type of error (invalid_state, oauth_error, etc.)
+            message: Human-readable error message
+
+        Returns:
+            Response: HTTP 302 redirect
+        """
+        from urllib.parse import quote
+
+        redirect_url = f"{base_url}?error={error_type}&message={quote(message)}"
+        return Response(status=status.HTTP_302_FOUND, headers={"Location": redirect_url})
 
 
 class ServiceConnectionListView(APIView):
