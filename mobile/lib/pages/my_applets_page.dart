@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/applet_provider.dart';
+import '../providers/navigation_provider.dart';
 import '../models/applet.dart';
 import '../widgets/state_widgets.dart';
 
@@ -34,6 +35,98 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('Tapped on: ${applet.name}')));
+  }
+
+  void _onDeleteApplet(Applet applet) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Automation'),
+          content: Text(
+            'Are you sure you want to delete "${applet.name}"? This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => _confirmDelete(applet),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _onToggleApplet(Applet applet) async {
+    try {
+      final provider = context.read<AppletProvider>();
+      final success = await provider.toggleApplet(applet.id);
+
+      if (success && mounted) {
+        final newStatus = applet.status == 'active' ? 'disabled' : 'active';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Automation "${applet.name}" is now $newStatus'),
+            backgroundColor: Colors.blue,
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to toggle automation: ${provider.error}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error toggling automation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _confirmDelete(Applet applet) async {
+    Navigator.of(context).pop(); // Close the dialog
+
+    try {
+      final provider = context.read<AppletProvider>();
+      final success = await provider.deleteApplet(applet.id);
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Automation "${applet.name}" deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete automation: ${provider.error}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting automation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -83,7 +176,11 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.pushNamed(context, '/create-applet');
+          final navigationProvider = Provider.of<NavigationProvider>(
+            context,
+            listen: false,
+          );
+          navigationProvider.navigateToPage(1); // Navigate to Create Automation tab
         },
         tooltip: 'Create new automation',
         child: const Icon(Icons.add),
@@ -115,6 +212,48 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
                     ),
                   ),
                   _buildStatusChip(applet.status),
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'toggle':
+                          _onToggleApplet(applet);
+                          break;
+                        case 'delete':
+                          _onDeleteApplet(applet);
+                          break;
+                      }
+                    },
+                    itemBuilder: (BuildContext context) => [
+                      PopupMenuItem<String>(
+                        value: 'toggle',
+                        child: Row(
+                          children: [
+                            Icon(
+                              applet.status == 'active'
+                                  ? Icons.pause
+                                  : Icons.play_arrow,
+                              color: Colors.blue,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              applet.status == 'active' ? 'Disable' : 'Enable',
+                              style: const TextStyle(color: Colors.blue),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Delete', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -227,7 +366,11 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () {
-                Navigator.pushNamed(context, '/create-applet');
+                final navigationProvider = Provider.of<NavigationProvider>(
+                  context,
+                  listen: false,
+                );
+                navigationProvider.navigateToPage(1);
               },
               icon: const Icon(Icons.add),
               label: const Text('Create Automation'),
