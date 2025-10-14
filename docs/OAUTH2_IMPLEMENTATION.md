@@ -122,30 +122,30 @@ Disconnect a service and revoke tokens.
 class ServiceToken(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     service_name = models.CharField(max_length=100)
-    
+
     # Token data
     access_token = models.TextField()
     refresh_token = models.TextField(blank=True)
     expires_at = models.DateTimeField(null=True, blank=True)
-    
+
     # Metadata (Phase 1 enhancements)
     scopes = models.TextField(blank=True)  # Space-separated
     token_type = models.CharField(max_length=20, default="Bearer")
-    
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)  # Tracks refreshes
     last_used_at = models.DateTimeField(null=True, blank=True)
-    
+
     # Properties
     @property
     def is_expired(self) -> bool:
         """Check if token is expired."""
-        
+
     @property
     def needs_refresh(self) -> bool:
         """Check if token expires in < 5 minutes."""
-        
+
     def mark_used(self) -> None:
         """Update last_used_at timestamp."""
 ```
@@ -244,18 +244,18 @@ from users.oauth.manager import OAuthManager
 def check_gmail_actions():
     """
     Check for new Gmail messages.
-    
+
     Token refresh is handled automatically by OAuthManager.
     """
     areas = Area.objects.filter(
         status=Area.Status.ACTIVE,
         action__name="gmail_new_email"
     ).select_related("owner")
-    
+
     for area in areas:
         # Get valid token - automatically refreshes if needed
         access_token = OAuthManager.get_valid_token(area.owner, "google")
-        
+
         if not access_token:
             # Token couldn't be refreshed - user has been notified
             logger.warning(
@@ -263,7 +263,7 @@ def check_gmail_actions():
                 f"(AREA #{area.pk}). User notification created."
             )
             continue
-        
+
         # Use token for API calls
         headers = {"Authorization": f"Bearer {access_token}"}
         response = requests.get(
@@ -449,7 +449,7 @@ from celery.schedules import crontab
 
 app.conf.beat_schedule = {
     # ... existing tasks ...
-    
+
     'check-oauth-token-health': {
         'task': 'users.tasks.check_oauth_health',
         'schedule': crontab(hour='*/6'),  # Every 6 hours
@@ -470,7 +470,7 @@ from django.core.management import call_command
 def check_oauth_health():
     """
     Check OAuth token health and notify users.
-    
+
     Runs periodically to identify token issues proactively.
     """
     call_command('check_token_health', '--notify-users')
@@ -486,7 +486,7 @@ def check_oauth_health():
    token = OAuthManager.get_valid_token(user, "google")
    if token:
        # Use token
-   
+
    # ❌ BAD - Manual token access
    service_token = ServiceToken.objects.get(user=user, service_name="google")
    token = service_token.access_token  # Might be expired!
@@ -533,7 +533,7 @@ def check_oauth_health():
            expires_at=timezone.now() + timedelta(minutes=3),
            refresh_token="test_refresh"
        )
-       
+
        # Should trigger refresh
        access_token = OAuthManager.get_valid_token(self.user, "myservice")
        self.assertIsNotNone(access_token)
@@ -585,7 +585,7 @@ python manage.py shell
    from datetime import timedelta
    from django.utils import timezone
    from users.models import OAuthNotification
-   
+
    cutoff = timezone.now() - timedelta(days=30)
    OAuthNotification.objects.filter(
        is_resolved=True,
@@ -679,19 +679,19 @@ class MyProviderOAuthProvider(BaseOAuthProvider):
     def get_authorization_url(self, state: str) -> str:
         # Implementation
         pass
-    
+
     def exchange_code_for_token(self, code: str) -> dict:
         # Implementation
         pass
-    
+
     def refresh_access_token(self, refresh_token: str) -> dict:
         # Implementation
         pass
-    
+
     def get_user_info(self, access_token: str) -> dict:
         # Implementation
         pass
-    
+
     def revoke_token(self, token: str) -> bool:
         # Implementation
         pass
@@ -780,7 +780,7 @@ python manage.py test users.tests.test_oauth_callback_flow.OAuthCallbackBackendF
 
 **Cause:** State token expired (> 10 minutes) or Redis cache cleared.
 
-**Solution:** 
+**Solution:**
 - Restart OAuth flow
 - Check Redis is running: `docker-compose ps redis`
 - Verify `OAUTH2_STATE_EXPIRY` setting
