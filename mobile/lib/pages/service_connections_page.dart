@@ -48,7 +48,8 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
   bool _isServiceConnected(String serviceName) {
     final oauthProvider = _mapServiceNameForOAuth(serviceName);
     return _connectedServices.any(
-      (service) => service.serviceName.toLowerCase() == oauthProvider.toLowerCase(),
+      (service) =>
+          service.serviceName.toLowerCase() == oauthProvider.toLowerCase(),
     );
   }
 
@@ -72,10 +73,7 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
       final url = Uri.parse(oauthResponse.redirectUrl);
 
       try {
-        await launchUrl(
-          url,
-          mode: LaunchMode.externalApplication,
-        );
+        await launchUrl(url, mode: LaunchMode.externalApplication);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -95,11 +93,9 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
             _loadConnectedServices();
           }
         });
-
       } catch (e) {
         throw Exception('Could not launch authorization URL: ${e.toString()}');
       }
-
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -150,7 +146,9 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${ServiceProviderConfig.getDisplayName(serviceName)} disconnected'),
+            content: Text(
+              '${ServiceProviderConfig.getDisplayName(serviceName)} disconnected',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -188,9 +186,7 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
 
   Widget _buildBody() {
     if (_isLoading && _connectedServices.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     return Consumer<ServiceCatalogProvider>(
@@ -307,7 +303,9 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: requiresOAuth
-              ? (isConnected ? Colors.green.withValues(alpha: 0.2) : Colors.blue.withValues(alpha: 0.2))
+              ? (isConnected
+                    ? Colors.green.withValues(alpha: 0.2)
+                    : Colors.blue.withValues(alpha: 0.2))
               : Colors.green.withValues(alpha: 0.2),
           child: Image.network(
             ServiceProviderConfig.getIconUrl(service.name),
@@ -353,22 +351,22 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
         ),
         trailing: requiresOAuth
             ? isConnected
-                ? ElevatedButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () => _disconnectService(service.name),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('Disconnect'),
-                  )
-                : ElevatedButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () => _connectOAuthService(service.name),
-                    child: const Text('Connect OAuth'),
-                  )
+                  ? ElevatedButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () => _disconnectService(service.name),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Disconnect'),
+                    )
+                  : ElevatedButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () => _connectOAuthService(service.name),
+                      child: const Text('Connect OAuth'),
+                    )
             : ElevatedButton(
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
