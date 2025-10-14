@@ -211,3 +211,56 @@ class Execution(models.Model):
             self.Status.FAILED,
             self.Status.SKIPPED,
         ]
+
+
+class ActionState(models.Model):
+    """
+    Stores the last check state for polling-based actions.
+
+    This model is used to track when an action was last checked and what
+    the last processed event was, preventing duplicate processing and
+    enabling incremental polling.
+
+    For example, for GitHub actions:
+    - last_checked_at: When we last polled the GitHub API
+    - last_event_id: ID of the last processed issue/PR
+    - metadata: Additional state data (e.g., ETag for conditional requests)
+    """
+
+    area = models.OneToOneField(
+        Area,
+        on_delete=models.CASCADE,
+        related_name="action_state",
+        help_text="The Area this state belongs to",
+    )
+
+    last_checked_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp of the last successful check",
+    )
+
+    last_event_id = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="ID of the last processed event (issue ID, commit SHA, etc.)",
+    )
+
+    metadata = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Additional state data (ETags, cursor tokens, etc.)",
+    )
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Action State"
+        verbose_name_plural = "Action States"
+        indexes = [
+            models.Index(fields=["last_checked_at"]),
+        ]
+
+    def __str__(self):
+        return f"State for Area #{self.area.id} ({self.area.action.name})"
