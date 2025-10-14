@@ -7,6 +7,7 @@ import '../providers/service_catalog_provider.dart';
 import '../services/oauth_service.dart';
 import '../utils/service_icons.dart';
 import '../config/service_provider_config.dart';
+import '../widgets/connection_history_widget.dart';
 
 class ServiceConnectionsPage extends StatefulWidget {
   const ServiceConnectionsPage({super.key});
@@ -337,6 +338,8 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 16),
+              const ConnectionHistoryWidget(),
             ],
           ),
         );
