@@ -1,13 +1,20 @@
 /// Model representing a service from the about.json endpoint
 class Service {
+  final int id;
   final String name;
   final List<ServiceAction> actions;
   final List<ServiceReaction> reactions;
 
-  Service({required this.name, required this.actions, required this.reactions});
+  Service({
+    required this.id,
+    required this.name,
+    required this.actions,
+    required this.reactions,
+  });
 
   factory Service.fromJson(Map<String, dynamic> json) {
     return Service(
+      id: json['id'] as int? ?? 0,
       name: (json['name'] as String?)?.trim() ?? '',
       actions:
           (json['actions'] as List<dynamic>?)
@@ -30,6 +37,7 @@ class Service {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'name': name,
       'actions': actions.map((action) => action.toJson()).toList(),
       'reactions': reactions.map((reaction) => reaction.toJson()).toList(),
@@ -54,20 +62,26 @@ class Service {
 
 /// Model representing an action
 class ServiceAction {
+  final int id;
   final String name;
   final String description;
 
-  ServiceAction({required this.name, required this.description});
+  ServiceAction({
+    required this.id,
+    required this.name,
+    required this.description,
+  });
 
   factory ServiceAction.fromJson(Map<String, dynamic> json) {
     return ServiceAction(
+      id: json['id'] as int? ?? 0,
       name: (json['name'] as String?)?.trim() ?? '',
       description: (json['description'] as String?)?.trim() ?? '',
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'name': name, 'description': description};
+    return {'id': id, 'name': name, 'description': description};
   }
 
   /// Get display name with proper formatting
@@ -85,20 +99,26 @@ class ServiceAction {
 
 /// Model representing a reaction
 class ServiceReaction {
+  final int id;
   final String name;
   final String description;
 
-  ServiceReaction({required this.name, required this.description});
+  ServiceReaction({
+    required this.id,
+    required this.name,
+    required this.description,
+  });
 
   factory ServiceReaction.fromJson(Map<String, dynamic> json) {
     return ServiceReaction(
+      id: json['id'] as int? ?? 0,
       name: (json['name'] as String?)?.trim() ?? '',
       description: (json['description'] as String?)?.trim() ?? '',
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'name': name, 'description': description};
+    return {'id': id, 'name': name, 'description': description};
   }
 
   /// Get display name with proper formatting

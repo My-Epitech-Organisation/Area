@@ -14,7 +14,7 @@ class ServiceCatalogService {
   factory ServiceCatalogService() => _instance;
   ServiceCatalogService._internal();
 
-  /// Get all available services from about.json
+  /// Get all available services from API
   Future<List<Service>> getAvailableServices({
     bool forceRefresh = false,
   }) async {
@@ -25,26 +25,87 @@ class ServiceCatalogService {
       if (cached != null) return cached;
     }
 
-    final response = await _httpClient.get(ApiConfig.aboutUrl);
-
-    final aboutData = _httpClient.parseResponse<Map<String, dynamic>>(
-      response,
-      (data) => data as Map<String, dynamic>,
+    // Get services from about.json endpoint
+    final servicesResponse = await _httpClient.get(ApiConfig.aboutUrl);
+    final servicesData = _httpClient.parseResponse<List<dynamic>>(
+      servicesResponse,
+      (data) {
+        // Extract services from server.services
+        if (data is Map && data.containsKey('server')) {
+          final server = data['server'] as Map<String, dynamic>;
+          if (server.containsKey('services')) {
+            return server['services'] as List<dynamic>;
+          }
+        }
+        throw Exception('Unexpected about.json response format: $data');
+      },
     );
 
-    final serverData = aboutData['server'] as Map<String, dynamic>?;
-    if (serverData == null) {
-      throw Exception('Invalid about.json format: missing server data');
+    // Get real actions from API
+    final actionsResponse = await _httpClient.get(ApiConfig.actionsUrl);
+    final actionsData = _httpClient.parseResponse<List<dynamic>>(
+      actionsResponse,
+      (data) {
+        // API returns paginated response: {"results": [...]}
+        if (data is Map && data.containsKey('results')) {
+          return data['results'] as List<dynamic>;
+        }
+        return data as List<dynamic>;
+      },
+    );
+
+    // Get real reactions from API
+    final reactionsResponse = await _httpClient.get(ApiConfig.reactionsUrl);
+    final reactionsData = _httpClient.parseResponse<List<dynamic>>(
+      reactionsResponse,
+      (data) {
+        // API returns paginated response: {"results": [...]}
+        if (data is Map && data.containsKey('results')) {
+          return data['results'] as List<dynamic>;
+        }
+        return data as List<dynamic>;
+      },
+    );
+
+    // Group actions and reactions by service_id
+    final actionsByService = <int, List<ServiceAction>>{};
+    final reactionsByService = <int, List<ServiceReaction>>{};
+
+    for (final actionJson in actionsData) {
+      final action = ServiceAction.fromJson(actionJson);
+      final serviceId = actionJson['service_id'] as int;
+      actionsByService.putIfAbsent(serviceId, () => []).add(action);
     }
 
-    final servicesData = serverData['services'] as List<dynamic>?;
-    if (servicesData == null) {
-      throw Exception('Invalid about.json format: missing services data');
+    for (final reactionJson in reactionsData) {
+      final reaction = ServiceReaction.fromJson(reactionJson);
+      final serviceId = reactionJson['service_id'] as int;
+      reactionsByService.putIfAbsent(serviceId, () => []).add(reaction);
     }
 
-    final services = servicesData
-        .map((item) => Service.fromJson(item as Map<String, dynamic>))
-        .toList();
+    // Create services with their actions and reactions
+    final serviceNameToId = <String, int>{};
+    for (final action in actionsData) {
+      final serviceName = action['service_name'] as String;
+      final serviceId = action['service_id'] as int;
+      serviceNameToId[serviceName] = serviceId;
+    }
+    for (final reaction in reactionsData) {
+      final serviceName = reaction['service_name'] as String;
+      final serviceId = reaction['service_id'] as int;
+      serviceNameToId[serviceName] = serviceId;
+    }
+
+    final services = servicesData.map((serviceJson) {
+      final serviceName = serviceJson['name'] as String;
+      final serviceId = serviceNameToId[serviceName] ?? 0;
+      return Service(
+        id: serviceId,
+        name: serviceName,
+        actions: actionsByService[serviceId] ?? [],
+        reactions: reactionsByService[serviceId] ?? [],
+      );
+    }).toList();
 
     _cache.set(cacheKey, services);
     return services;
