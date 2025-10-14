@@ -11,7 +11,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
-from .models import User, OAuthNotification
+from .models import OAuthNotification, User
 
 
 class UserSerializer(serializers.ModelSerializer):

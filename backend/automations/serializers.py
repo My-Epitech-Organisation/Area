@@ -224,19 +224,23 @@ class AreaSerializer(serializers.ModelSerializer):
             # ⚠️ Special validation: Prevent infinite loops for GitHub
             # If action is github_new_issue and reaction is github_create_issue,
             # they must target different repositories
-            if (action.name == "github_new_issue" and
-                reaction.name == "github_create_issue"):
+            if (
+                action.name == "github_new_issue"
+                and reaction.name == "github_create_issue"
+            ):
                 action_repo = action_config.get("repository", "").lower()
                 reaction_repo = reaction_config.get("repository", "").lower()
 
                 if action_repo and reaction_repo and action_repo == reaction_repo:
-                    raise serializers.ValidationError({
-                        "non_field_errors": (
-                            "⚠️ Infinite loop detected! Cannot create GitHub issues in the same "
-                            "repository that triggers the action. Please use a different target "
-                            "repository to avoid infinite loops."
-                        )
-                    })
+                    raise serializers.ValidationError(
+                        {
+                            "non_field_errors": (
+                                "⚠️ Infinite loop detected! Cannot create GitHub issues in the same "
+                                "repository that triggers the action. Please use a different target "
+                                "repository to avoid infinite loops."
+                            )
+                        }
+                    )
 
             # Valider les configurations avec les schémas des actions/reactions
             try:
