@@ -323,7 +323,11 @@ const Areaction: React.FC = () => {
                     {services
                       .filter((s) => s.actions && s.actions.length > 0)
                       .map((service) => (
-                        <option key={`action-service-${service.name}`} value={service.name} className="text-white bg-gray-800">
+                        <option
+                          key={`action-service-${service.name}`}
+                          value={service.name}
+                          className="text-white bg-gray-800"
+                        >
                           {service.name.charAt(0).toUpperCase() + service.name.slice(1)}
                         </option>
                       ))}
@@ -385,7 +389,11 @@ const Areaction: React.FC = () => {
                         Select a trigger
                       </option>
                       {getActionsForService(selectedActionService).map((action) => (
-                        <option key={`action-${action.name}`} value={action.name} className="text-white bg-gray-800">
+                        <option
+                          key={`action-${action.name}`}
+                          value={action.name}
+                          className="text-white bg-gray-800"
+                        >
                           {formatName(action.name)}
                         </option>
                       ))}
@@ -485,7 +493,11 @@ const Areaction: React.FC = () => {
                     {services
                       .filter((s) => s.reactions && s.reactions.length > 0)
                       .map((service) => (
-                        <option key={`reaction-service-${service.name}`} value={service.name} className="text-white bg-gray-800">
+                        <option
+                          key={`reaction-service-${service.name}`}
+                          value={service.name}
+                          className="text-white bg-gray-800"
+                        >
                           {service.name.charAt(0).toUpperCase() + service.name.slice(1)}
                         </option>
                       ))}
@@ -547,7 +559,11 @@ const Areaction: React.FC = () => {
                         Select an action
                       </option>
                       {getReactionsForService(selectedReactionService).map((reaction) => (
-                        <option key={`reaction-${reaction.name}`} value={reaction.name} className="text-white bg-gray-800">
+                        <option
+                          key={`reaction-${reaction.name}`}
+                          value={reaction.name}
+                          className="text-white bg-gray-800"
+                        >
                           {formatName(reaction.name)}
                         </option>
                       ))}
