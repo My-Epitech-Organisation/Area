@@ -133,7 +133,11 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
                       : String(enumOption);
 
                   return (
-                    <option key={String(optionValue)} value={String(optionValue)} className="text-white bg-gray-700">
+                    <option
+                      key={String(optionValue)}
+                      value={String(optionValue)}
+                      className="text-white bg-gray-700"
+                    >
                       {String(optionValue)}
                     </option>
                   );
