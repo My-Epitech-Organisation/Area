@@ -8,6 +8,8 @@ class ServiceCatalogProvider extends ChangeNotifier {
   List<Service> _services = [];
   final Map<String, List<ServiceAction>> _actionsCache = {};
   final Map<String, List<ServiceReaction>> _reactionsCache = {};
+  final Map<String, int> _actionIdsCache = {}; // name -> id
+  final Map<String, int> _reactionIdsCache = {}; // name -> id
 
   bool _isLoadingServices = false;
   String? _error;
@@ -24,6 +26,14 @@ class ServiceCatalogProvider extends ChangeNotifier {
     return _reactionsCache[serviceName];
   }
 
+  int? getActionId(String actionName) {
+    return _actionIdsCache[actionName];
+  }
+
+  int? getReactionId(String reactionName) {
+    return _reactionIdsCache[reactionName];
+  }
+
   Future<void> loadServices({bool forceRefresh = false}) async {
     try {
       _isLoadingServices = true;
@@ -37,6 +47,13 @@ class ServiceCatalogProvider extends ChangeNotifier {
       for (final service in _services) {
         _actionsCache[service.name] = service.actions;
         _reactionsCache[service.name] = service.reactions;
+
+        for (final action in service.actions) {
+          _actionIdsCache[action.name] = action.id;
+        }
+        for (final reaction in service.reactions) {
+          _reactionIdsCache[reaction.name] = reaction.id;
+        }
       }
 
       _isLoadingServices = false;
@@ -52,6 +69,8 @@ class ServiceCatalogProvider extends ChangeNotifier {
     _services.clear();
     _actionsCache.clear();
     _reactionsCache.clear();
+    _actionIdsCache.clear();
+    _reactionIdsCache.clear();
     _error = null;
     _catalogService.clearCache();
     notifyListeners();

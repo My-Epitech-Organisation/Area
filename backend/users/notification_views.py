@@ -110,7 +110,9 @@ class OAuthNotificationViewSet(viewsets.ModelViewSet):
             user=request.user, is_read=False
         ).update(is_read=True)
 
-        logger.info(f"User {request.user.username} marked {count} notifications as read")
+        logger.info(
+            f"User {request.user.username} marked {count} notifications as read"
+        )
 
         return Response(
             {"message": f"{count} notifications marked as read", "count": count},

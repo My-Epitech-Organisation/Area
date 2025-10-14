@@ -3,7 +3,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../config/api_config.dart';
-import '../config/google_signin_config.dart';
 import 'token_service.dart';
 import 'cache_service.dart';
 
@@ -23,8 +22,12 @@ class AuthService {
   final TokenService _tokenService = TokenService();
   final CacheService _cache = CacheService();
 
-  // Google Sign-In singleton instance
-  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  // Google Sign-In singleton instance - lazy initialization
+  GoogleSignIn? _googleSignInInstance;
+  GoogleSignIn get _googleSignIn {
+    _googleSignInInstance ??= GoogleSignIn.instance;
+    return _googleSignInInstance!;
+  }
 
   bool _isGoogleSignInInitialized = false;
 
@@ -117,11 +120,8 @@ class AuthService {
   Future<void> _ensureGoogleSignInInitialized() async {
     if (!_isGoogleSignInInitialized) {
       _logDebug('🔧 Initializing Google Sign-In...');
-      _logDebug('📋 Web Client ID: ${GoogleSignInConfig.webClientId}');
 
-      await _googleSignIn.initialize(
-        serverClientId: GoogleSignInConfig.webClientId,
-      );
+      await _googleSignIn.initialize();
 
       _isGoogleSignInInitialized = true;
       _logDebug('✅ Google Sign-In initialized successfully');
@@ -135,9 +135,7 @@ class AuthService {
       await _ensureGoogleSignInInitialized();
 
       _logDebug('🔐 Authenticating with Google...');
-      final GoogleSignInAccount account = await _googleSignIn.authenticate(
-        scopeHint: <String>['email'],
-      );
+      final GoogleSignInAccount account = await _googleSignIn.authenticate();
 
       _logDebug('✅ Google authentication successful');
       _logDebug('📧 Account email: ${account.email}');
@@ -156,8 +154,6 @@ class AuthService {
         body: json.encode({'id_token': idToken}),
       );
 
-      _logDebug('📡 Backend response: ${response.statusCode}');
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         await _storeTokensFromResponse(data);
@@ -168,8 +164,10 @@ class AuthService {
       final errorMessage = _parseErrorResponse(response);
       _logDebug('❌ Backend error: $errorMessage');
       throw AuthException(errorMessage, statusCode: response.statusCode);
-    } catch (e) {
+    } catch (e, stackTrace) {
       _logDebug('❌ Google sign-in error: $e');
+      _logDebug('📍 Error type: ${e.runtimeType}');
+      _logDebug('📚 Stack trace: $stackTrace');
       if (e is AuthException) rethrow;
       throw AuthException('Google sign-in error: ${e.toString()}');
     }

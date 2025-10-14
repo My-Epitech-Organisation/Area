@@ -1,5 +1,5 @@
-from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenRefreshView
 
 from django.urls import include, path
 
@@ -18,11 +18,11 @@ from .password_views import (
 )
 from .views import (
     EmailTokenObtainPairView,
+    OAuthNotificationListView,  # Added
     RegisterView,
     SendEmailVerificationView,
     UserDetailView,
     VerifyEmailView,
-    OAuthNotificationListView,  # Ajouté
 )
 
 # Router for ViewSets
@@ -79,7 +79,11 @@ urlpatterns = [
         ServiceDisconnectView.as_view(),
         name="service_disconnect",
     ),
-    path("oauth/notifications/", OAuthNotificationListView.as_view(), name="oauth_notification_list"),
+    path(
+        "oauth/notifications/",
+        OAuthNotificationListView.as_view(),
+        name="oauth_notification_list",
+    ),
     # Include router URLs for notifications
     path("", include(router.urls)),
 ]

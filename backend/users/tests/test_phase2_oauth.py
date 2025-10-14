@@ -72,7 +72,7 @@ class AutomaticTokenRefreshTestCase(TestCase):
         """Test that tokens expiring within 5 minutes are refreshed proactively."""
         # Create token expiring in 3 minutes
         expires_at = timezone.now() + timedelta(minutes=3)
-        service_token = ServiceToken.objects.create(
+        ServiceToken.objects.create(
             user=self.user,
             service_name="google",
             access_token="old_access_token",
@@ -360,7 +360,6 @@ class ServiceTokenModelTestCase(TestCase):
             expires_at=timezone.now() + timedelta(hours=1),
         )
 
-        original_updated_at = token.updated_at
         self.assertIsNone(token.last_used_at)
 
         # Mark as used

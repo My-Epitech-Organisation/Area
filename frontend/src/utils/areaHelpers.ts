@@ -8,14 +8,14 @@ import type { Action, Reaction } from '../types/api';
  * Find an action by its name
  */
 export function findActionByName(actions: Action[], name: string): Action | undefined {
-  return actions.find(action => action.name === name);
+  return actions.find((action) => action.name === name);
 }
 
 /**
  * Find a reaction by its name
  */
 export function findReactionByName(reactions: Reaction[], name: string): Reaction | undefined {
-  return reactions.find(reaction => reaction.name === name);
+  return reactions.find((reaction) => reaction.name === name);
 }
 
 /**
@@ -25,7 +25,7 @@ export function findReactionByName(reactions: Reaction[], name: string): Reactio
 export function formatActionName(name: string): string {
   return name
     .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
 

@@ -20,7 +20,6 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from users.models import OAuthNotification, ServiceToken
-from users.oauth.manager import OAuthManager
 
 logger = logging.getLogger(__name__)
 
@@ -107,9 +106,7 @@ class Command(BaseCommand):
                     if verbose:
                         hours = time_until_expiry.total_seconds() / 3600
                         self.stdout.write(
-                            self.style.WARNING(
-                                f"  ⚠️  Expires in {hours:.1f} hours"
-                            )
+                            self.style.WARNING(f"  ⚠️  Expires in {hours:.1f} hours")
                         )
 
                     # Check refresh capability
@@ -127,9 +124,7 @@ class Command(BaseCommand):
                 # No expiration (e.g., GitHub)
                 healthy_tokens.append(token)
                 if verbose:
-                    self.stdout.write(
-                        self.style.SUCCESS("  ✓ Healthy (no expiration)")
-                    )
+                    self.stdout.write(self.style.SUCCESS("  ✓ Healthy (no expiration)"))
 
         # Print summary
         self.stdout.write("\n" + "=" * 60)
@@ -139,17 +134,11 @@ class Command(BaseCommand):
             self.style.SUCCESS(f"  Healthy tokens: {len(healthy_tokens)}")
         )
         self.stdout.write(
-            self.style.WARNING(
-                f"  Expiring soon (< 24h): {len(expiring_soon_tokens)}"
-            )
+            self.style.WARNING(f"  Expiring soon (< 24h): {len(expiring_soon_tokens)}")
         )
+        self.stdout.write(self.style.ERROR(f"  Expired tokens: {len(expired_tokens)}"))
         self.stdout.write(
-            self.style.ERROR(f"  Expired tokens: {len(expired_tokens)}")
-        )
-        self.stdout.write(
-            self.style.ERROR(
-                f"  Without refresh token: {len(no_refresh_tokens)}"
-            )
+            self.style.ERROR(f"  Without refresh token: {len(no_refresh_tokens)}")
         )
 
         # Show tokens needing attention
@@ -180,9 +169,7 @@ class Command(BaseCommand):
                 )
             )
             for token in no_refresh_tokens:
-                self.stdout.write(
-                    f"  - {token.user.email}/{token.service_name}"
-                )
+                self.stdout.write(f"  - {token.user.email}/{token.service_name}")
 
         # Show notification status
         if notify_users:
@@ -224,7 +211,5 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"  ✉️  Created notification for {token.user.email}"
-            )
+            self.style.SUCCESS(f"  ✉️  Created notification for {token.user.email}")
         )

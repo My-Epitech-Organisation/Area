@@ -4,8 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import type { Action, Reaction, PaginatedResponse, ApiError } from '../types/api';
-
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'http://localhost:8080';
+import { API_BASE } from '../utils/helper';
 
 interface UseApiResult<T> {
   data: T | null;
@@ -35,7 +34,7 @@ function usePaginatedApi<T>(endpoint: string): UseApiResult<T[]> {
 
         const response = await fetch(`${API_BASE}${endpoint}`, {
           headers: {
-            'Authorization': token ? `Bearer ${token}` : '',
+            Authorization: token ? `Bearer ${token}` : '',
             'Content-Type': 'application/json',
           },
         });
@@ -70,7 +69,7 @@ function usePaginatedApi<T>(endpoint: string): UseApiResult<T[]> {
     };
   }, [endpoint, refetchTrigger]);
 
-  const refetch = () => setRefetchTrigger(prev => prev + 1);
+  const refetch = () => setRefetchTrigger((prev) => prev + 1);
 
   return { data, loading, error, refetch };
 }
@@ -100,8 +99,8 @@ export function useCreateArea() {
     name: string;
     action: number;
     reaction: number;
-    action_config?: Record<string, any>;
-    reaction_config?: Record<string, any>;
+    action_config?: Record<string, unknown>;
+    reaction_config?: Record<string, unknown>;
     status?: 'active' | 'disabled' | 'paused';
   }) => {
     setLoading(true);
@@ -118,7 +117,7 @@ export function useCreateArea() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -129,15 +128,17 @@ export function useCreateArea() {
         }
 
         const errorData: ApiError = await response.json().catch(() => ({}));
-        const errorMessage = errorData.detail ||
-                            Object.values(errorData)[0] ||
-                            `HTTP ${response.status}: ${response.statusText}`;
+        const errorMessage: string =
+          (errorData.detail as string) ||
+          (Array.isArray(Object.values(errorData)[0])
+            ? (Object.values(errorData)[0] as string[])[0]
+            : (Object.values(errorData)[0] as string)) ||
+          `HTTP ${response.status}: ${response.statusText}`;
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
       return data;
-
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create automation';
       setError(errorMessage);

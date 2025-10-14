@@ -40,8 +40,9 @@ class OAuthNotificationSerializer(serializers.ModelSerializer):
         Returns:
             str: Human-readable time delta (e.g., "5 minutes ago")
         """
-        from django.utils import timezone
         from datetime import timedelta
+
+        from django.utils import timezone
 
         delta = timezone.now() - obj.created_at
 
@@ -74,13 +75,7 @@ class OAuthNotificationUpdateSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         """Validate update data."""
-        # Can't unresolve a notification
-        if "is_resolved" in attrs and not attrs["is_resolved"]:
-            instance = self.instance
-            if instance and instance.is_resolved:
-                raise serializers.ValidationError(
-                    {"is_resolved": "Cannot unresolve a notification"}
-                )
+        # Allow unresolving notifications (no restriction)
         return attrs
 
     def update(self, instance, validated_data):

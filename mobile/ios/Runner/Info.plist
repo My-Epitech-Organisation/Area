@@ -45,6 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Google Sign-In Configuration -->
+	<key>GIDClientID</key>
+	<string>810500685105-bsetto3ag8e6n45p1j3378e6ommfeq7e.apps.googleusercontent.com</string>
 	<!-- Deep Link Configuration for Password Reset -->
 	<key>CFBundleURLTypes</key>
 	<array>
@@ -56,6 +59,16 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>area</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.googleusercontent.apps.810500685105-bsetto3ag8e6n45p1j3378e6ommfeq7e</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.810500685105-bsetto3ag8e6n45p1j3378e6ommfeq7e</string>
 			</array>
 		</dict>
 	</array>
