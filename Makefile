@@ -58,8 +58,6 @@ dev: ## Start development (hot reload, Vite on :5173)
 	@echo "   Frontend: http://localhost:5173 (Vite hot reload)"
 	@echo "   Backend:  http://localhost:8080"
 	@echo "   Flower:   http://localhost:5555"
-	@echo "📦 Checking for dependency changes..."
-	@docker-compose build client_web 2>/dev/null || true
 	@docker-compose up -d --remove-orphans
 	@echo "✅ Services started! Run 'make logs-dev' to see logs"
 
@@ -67,6 +65,8 @@ prod: ## Start production (nginx on :8081)
 	@echo "🚀 Starting AREA in PRODUCTION mode..."
 	@echo "   Frontend: http://localhost:8081 (nginx)"
 	@echo "   ⚠️  For production servers, use: ./deployment/manage.sh start"
+	@echo "📦 Checking for dependency changes..."
+	@docker-compose build client_web 2>/dev/null || true
 	@docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 	@echo "✅ Production services started!"
 
