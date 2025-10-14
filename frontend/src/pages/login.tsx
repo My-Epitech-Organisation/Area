@@ -1,14 +1,13 @@
-import React, { useState } from "react";
-import parseErrors from "../utils/parseErrors";
-import { API_BASE } from "../utils/helper";
+import React, { useState } from 'react';
+import parseErrors from '../utils/parseErrors';
+import { API_BASE } from '../utils/helper';
 
 const Login: React.FC = () => {
-  const [email, setemail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setemail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,8 +16,8 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/auth/login/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email, password }),
       });
       const data = await res.json().catch(() => ({}));
@@ -26,41 +25,40 @@ const Login: React.FC = () => {
         if (data.access) localStorage.setItem('access', data.access);
         if (data.refresh) localStorage.setItem('refresh', data.refresh);
 
-        if (email)
-          localStorage.setItem('email', email);
+        if (email) localStorage.setItem('email', email);
 
         try {
           const userRes = await fetch(`${API_BASE}/auth/me/`, {
             headers: {
-              'Authorization': `Bearer ${data.access}`
-            }
+              Authorization: `Bearer ${data.access}`,
+            },
           });
 
           if (userRes.ok) {
             const userData = await userRes.json();
             const userToStore = {
-              name: userData.username || userData.email || email || "User",
-              username: userData.username || email || "User",
+              name: userData.username || userData.email || email || 'User',
+              username: userData.username || email || 'User',
               email: userData.email || email,
-              id: userData.id || userData.pk
+              id: userData.id || userData.pk,
             };
             localStorage.setItem('user', JSON.stringify(userToStore));
           } else {
             const basicUser = {
-              name: email.split('@')[0] || "User",
-              username: email.split('@')[0] || "User",
+              name: email.split('@')[0] || 'User',
+              username: email.split('@')[0] || 'User',
               email: email,
-              id: "temp-user"
+              id: 'temp-user',
             };
             localStorage.setItem('user', JSON.stringify(basicUser));
           }
         } catch (userErr) {
-          console.error("Could not fetch user details:", userErr);
+          console.error('Could not fetch user details:', userErr);
           const fallbackUser = {
-            name: email.split('@')[0] || "User",
-            username: email.split('@')[0] || "User",
+            name: email.split('@')[0] || 'User',
+            username: email.split('@')[0] || 'User',
             email: email,
-            id: "temp-user"
+            id: 'temp-user',
           };
           localStorage.setItem('user', JSON.stringify(fallbackUser));
         }
@@ -71,7 +69,7 @@ const Login: React.FC = () => {
       const parsed = parseErrors(data);
       setGeneralError(parsed.message || 'Login failed');
       setFieldErrors(parsed.fields || {});
-    } catch (err) {
+    } catch {
       setGeneralError('Network error');
     } finally {
       setLoading(false);
@@ -126,11 +124,8 @@ const Login: React.FC = () => {
               {loading ? 'Logging in…' : 'Log in'}
             </button>
 
-            <a
-              href="/signup"
-              className="mt-2 text-sm text-gray-300 underline block text-center"
-            >
-              Don't have an account? Sign up
+            <a href="/signup" className="mt-2 text-sm text-gray-300 underline block text-center">
+              Don&apos;t have an account? Sign up
             </a>
           </div>
         </form>

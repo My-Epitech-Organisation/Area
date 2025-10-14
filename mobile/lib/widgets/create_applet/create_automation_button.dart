@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CreateAutomationButton extends StatelessWidget {
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final String label;
 
   const CreateAutomationButton({
@@ -47,8 +47,20 @@ class CreateAutomationButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.add, color: Colors.white),
-              const SizedBox(width: 8),
+              if (onPressed == null) ...[
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ] else ...[
+                const Icon(Icons.add, color: Colors.white),
+                const SizedBox(width: 8),
+              ],
               Text(
                 label,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(

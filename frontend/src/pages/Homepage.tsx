@@ -1,25 +1,25 @@
 /*
-** EPITECH PROJECT, 2025
-** Area
-** File description:
-** Homepage
-*/
+ ** EPITECH PROJECT, 2025
+ ** Area
+ ** File description:
+ ** Homepage
+ */
 
-import React, { useState, useMemo, useRef, useEffect } from "react";
-import HomePageVerticalNav from "../components/HomepageVerticalNav";
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import HomePageVerticalNav from '../components/HomepageVerticalNav';
 
 const quadrantTransforms = [
-  "translate(0%, 0%)",
-  "translate(-50%, 0%)",
-  "translate(-50%, -50%)",
-  "translate(0%, -50%)",
+  'translate(0%, 0%)',
+  'translate(-50%, 0%)',
+  'translate(-50%, -50%)',
+  'translate(0%, -50%)',
 ];
 
 const Homepage: React.FC = () => {
   const [quad, setQuad] = useState<number>(0);
   const [overlayVisible, setOverlayVisible] = useState(true);
   const [transitioning, setTransitioning] = useState(false);
-  const viewBgMap = ["bg-tl", "bg-tr", "bg-br", "bg-bl"];
+  const viewBgMap = ['bg-tl', 'bg-tr', 'bg-br', 'bg-bl'];
   const [baseBgClass, setBaseBgClass] = useState<string>(viewBgMap[0]);
   const transform = useMemo(() => quadrantTransforms[quad] ?? quadrantTransforms[0], [quad]);
   const fadeInRef = useRef<number | null>(null);
@@ -36,10 +36,9 @@ const Homepage: React.FC = () => {
   }, []);
 
   const animateTo = (target: number) => {
-    if (transitioning)
-      return;
+    if (transitioning) return;
     setTransitioning(true);
-  setBaseBgClass(viewBgMap[Math.max(0, Math.min(3, target))] ?? baseBgClass);
+    setBaseBgClass(viewBgMap[Math.max(0, Math.min(3, target))] ?? baseBgClass);
     setQuad(() => Math.max(0, Math.min(3, target)));
     setOverlayVisible(false);
     fadeInRef.current = window.setTimeout(() => {
@@ -58,7 +57,9 @@ const Homepage: React.FC = () => {
   };
 
   return (
-    <div className={`w-screen min-h-screen ${baseBgClass} flex flex-col items-center overflow-hidden`}>
+    <div
+      className={`w-screen min-h-screen ${baseBgClass} flex flex-col items-center overflow-hidden`}
+    >
       <main className="w-full flex-1 flex items-center justify-center relative">
         <HomePageVerticalNav quad={quad} setQuad={animateTo} />
         <div className="w-full h-[100vh] bg-transparent relative overflow-hidden">
@@ -67,12 +68,18 @@ const Homepage: React.FC = () => {
             style={{ transform }}
           >
             <section className="w-full h-full flex items-center justify-center p-8 relative">
-              <div className="absolute inset-0" style={{ transition: 'opacity 210ms ease', opacity: getOverlayOpacity(0) }}>
+              <div
+                className="absolute inset-0"
+                style={{ transition: 'opacity 210ms ease', opacity: getOverlayOpacity(0) }}
+              >
                 <div className="w-full h-full bg-tl" />
               </div>
               <div className="relative z-10 text-center">
                 <h2 className="mb-16 text-9xl text-primary font-semibold">AREA</h2>
-                <p className="text-5xl text-muted mt-4">"Connect services, trigger actions: automate your routine and let your tools work for you."</p>
+                <p className="text-5xl text-muted mt-4">
+                  &quot;Connect services, trigger actions: automate your routine and let your tools
+                  work for you.&quot;
+                </p>
                 <div className="mt-8">
                   <button
                     onClick={nextQuad}
@@ -84,28 +91,48 @@ const Homepage: React.FC = () => {
               </div>
             </section>
             <section className="w-full h-full flex items-center justify-center p-8 relative">
-              <div className="absolute inset-0" style={{ transition: 'opacity 210ms ease', opacity: getOverlayOpacity(1) }}>
+              <div
+                className="absolute inset-0"
+                style={{ transition: 'opacity 210ms ease', opacity: getOverlayOpacity(1) }}
+              >
                 <div className="w-full h-full bg-tr" />
               </div>
               <div className="relative z-10 text-center">
                 <h2 className="mb-16 text-9xl text-white font-semibold">Discover AREA</h2>
-                <p className="text-5xl text-gray-300 mt-4">AREA connects your favorite services and creates action→reaction rules to automate daily tasks. Start by exploring the sections below.</p>
+                <p className="text-5xl text-gray-300 mt-4">
+                  AREA connects your favorite services and creates action→reaction rules to automate
+                  daily tasks. Start by exploring the sections below.
+                </p>
                 <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-6 max-w-6xl mx-auto">
                   <div className="card-bg p-6 rounded-xl backdrop-blur-sm card-border flex flex-col items-start gap-4">
                     <div className="icon-accent text-4xl">
                       <i className="fa-solid fa-bolt"></i>
                     </div>
                     <h3 className="text-2xl text-primary font-semibold">Areaction</h3>
-                    <p className="text-lg text-muted">Create your own automation by connecting actions and reactions.</p>
-                    <a href="/Areaction" className="mt-4 self-stretch inline-block text-center px-4 py-2 btn-primary rounded-full hover:btn-primary transition">Make it</a>
+                    <p className="text-lg text-muted">
+                      Create your own automation by connecting actions and reactions.
+                    </p>
+                    <a
+                      href="/Areaction"
+                      className="mt-4 self-stretch inline-block text-center px-4 py-2 btn-primary rounded-full hover:btn-primary transition"
+                    >
+                      Make it
+                    </a>
                   </div>
                   <div className="bg-white/5 p-6 rounded-xl backdrop-blur-sm border border-white/10 flex flex-col items-start gap-4">
                     <div className="icon-accent text-4xl">
                       <i className="fa-solid fa-gear"></i>
                     </div>
                     <h3 className="text-2xl text-primary font-semibold">Services</h3>
-                    <p className="text-lg text-muted">Browse available actions and reactions to connect your apps.</p>
-                    <a href="/services" className="mt-4 self-stretch inline-block text-center px-4 py-2 btn-primary rounded-full hover:btn-primary transition">Explore</a>
+                    <p className="text-lg text-muted">
+                      Browse available actions and reactions to connect your apps.
+                    </p>
+                    <a
+                      href="/services"
+                      className="mt-4 self-stretch inline-block text-center px-4 py-2 btn-primary rounded-full hover:btn-primary transition"
+                    >
+                      Explore
+                    </a>
                   </div>
 
                   <div className="card-bg p-6 rounded-xl backdrop-blur-sm card-border flex flex-col items-start gap-4">
@@ -113,8 +140,15 @@ const Homepage: React.FC = () => {
                       <i className="fa-solid fa-users"></i>
                     </div>
                     <h3 className="text-2xl text-primary font-semibold">About</h3>
-                    <p className="text-lg text-muted">Meet the team and learn the vision behind AREA project and its goals.</p>
-                    <a href="/about" className="mt-4 self-stretch inline-block text-center px-4 py-2 btn-primary rounded-full hover:btn-primary transition">Learn more</a>
+                    <p className="text-lg text-muted">
+                      Meet the team and learn the vision behind AREA project and its goals.
+                    </p>
+                    <a
+                      href="/about"
+                      className="mt-4 self-stretch inline-block text-center px-4 py-2 btn-primary rounded-full hover:btn-primary transition"
+                    >
+                      Learn more
+                    </a>
                   </div>
 
                   <div className="card-bg p-6 rounded-xl backdrop-blur-sm card-border flex flex-col items-start gap-4">
@@ -122,8 +156,15 @@ const Homepage: React.FC = () => {
                       <i className="fa-solid fa-table-columns"></i>
                     </div>
                     <h3 className="text-2xl text-primary font-semibold">Dashboard</h3>
-                    <p className="text-lg text-muted">Access your automations, history, stats and personal settings.</p>
-                    <a href="/dashboard" className="mt-4 self-stretch inline-block text-center px-4 py-2 btn-primary rounded-full hover:btn-primary transition">Open</a>
+                    <p className="text-lg text-muted">
+                      Access your automations, history, stats and personal settings.
+                    </p>
+                    <a
+                      href="/dashboard"
+                      className="mt-4 self-stretch inline-block text-center px-4 py-2 btn-primary rounded-full hover:btn-primary transition"
+                    >
+                      Open
+                    </a>
                   </div>
                 </div>
                 <div className="mt-8">
@@ -137,15 +178,31 @@ const Homepage: React.FC = () => {
               </div>
             </section>
             <section className="w-full h-full flex items-center justify-center p-8 relative">
-              <div className="absolute inset-0" style={{ transition: 'opacity 210ms ease', opacity: getOverlayOpacity(2) }}>
+              <div
+                className="absolute inset-0"
+                style={{ transition: 'opacity 210ms ease', opacity: getOverlayOpacity(2) }}
+              >
                 <div className="w-full h-full bg-bl" />
               </div>
               <div className="relative z-10 text-center max-w-6xl">
                 <h2 className="text-9xl text-primary font-semibold">Get started with AREA</h2>
-                <p className="text-5xl text-muted mt-4">Sign up or log in to start creating automations, manage your integrations and access your personal dashboard.</p>
+                <p className="text-5xl text-muted mt-4">
+                  Sign up or log in to start creating automations, manage your integrations and
+                  access your personal dashboard.
+                </p>
                 <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <a href="/login" className="px-10 py-4 text-xl btn-primary rounded-full hover:btn-primary transition">Log in</a>
-                  <a href="/signup" className="px-10 py-4 text-xl btn-primary rounded-full hover:btn-primary transition">Sign up</a>
+                  <a
+                    href="/login"
+                    className="px-10 py-4 text-xl btn-primary rounded-full hover:btn-primary transition"
+                  >
+                    Log in
+                  </a>
+                  <a
+                    href="/signup"
+                    className="px-10 py-4 text-xl btn-primary rounded-full hover:btn-primary transition"
+                  >
+                    Sign up
+                  </a>
                 </div>
                 <div className="mt-8">
                   <button
@@ -158,28 +215,47 @@ const Homepage: React.FC = () => {
               </div>
             </section>
             <section className="w-full h-full flex items-center justify-center p-8 relative">
-              <div className="absolute inset-0" style={{ transition: 'opacity 210ms ease', opacity: getOverlayOpacity(3) }}>
+              <div
+                className="absolute inset-0"
+                style={{ transition: 'opacity 210ms ease', opacity: getOverlayOpacity(3) }}
+              >
                 <div className="w-full h-full bg-br" />
               </div>
               <div className="relative z-10 text-center max-w-4xl">
-                <h2 className="mb-16 -mt-16 text-8xl text-white font-semibold">Examples of what you can automate</h2>
+                <h2 className="mb-16 -mt-16 text-8xl text-white font-semibold">
+                  Examples of what you can automate
+                </h2>
                 <p className="text-5xl text-gray-300 my-24">With AREA you can create rules like:</p>
                 <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="bg-white/5 p-6 rounded-xl border border-white/10 text-left">
                     <h3 className="text-lg text-white font-semibold">Email → Save to Dropbox</h3>
-                    <p className="text-lg text-gray-300 mt-2">When you receive an email with attachment, automatically save it to your Dropbox folder.</p>
+                    <p className="text-lg text-gray-300 mt-2">
+                      When you receive an email with attachment, automatically save it to your
+                      Dropbox folder.
+                    </p>
                   </div>
                   <div className="bg-white/5 p-6 rounded-xl border border-white/10 text-left">
                     <h3 className="text-lg text-white font-semibold">Weather → Notify</h3>
-                    <p className="text-lg text-gray-300 mt-2">If tomorrow's forecast predicts rain, send a notification to your phone in the evening.</p>
+                    <p className="text-lg text-gray-300 mt-2">
+                      If tomorrow&apos;s forecast predicts rain, send a notification to your phone
+                      in the evening.
+                    </p>
                   </div>
                   <div className="bg-white/5 p-6 rounded-xl border border-white/10 text-left">
                     <h3 className="text-lg text-white font-semibold">Calendar → Teams</h3>
-                    <p className="text-lg text-gray-300 mt-2">When a meeting starts, post a message to your team's Teams channel to remind attendees.</p>
+                    <p className="text-lg text-gray-300 mt-2">
+                      When a meeting starts, post a message to your team&apos;s Teams channel to
+                      remind attendees.
+                    </p>
                   </div>
                 </div>
                 <div className="mt-16 flex justify-center gap-4">
-                  <a href="/services" className="px-20 py-6 text-3xl btn-primary rounded-full hover:btn-primary transition">See all services</a>
+                  <a
+                    href="/services"
+                    className="px-20 py-6 text-3xl btn-primary rounded-full hover:btn-primary transition"
+                  >
+                    See all services
+                  </a>
                   <button
                     onClick={nextQuad}
                     className="px-20 py-6 text-3xl btn-primary rounded-full hover:btn-primary transition animate-pulse"
