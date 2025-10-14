@@ -46,24 +46,15 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
   }
 
   bool _isServiceConnected(String serviceName) {
-    final oauthProvider = _mapServiceNameForOAuth(serviceName);
+    final oauthProvider = ServiceProviderConfig.mapServiceName(serviceName);
     return _connectedServices.any(
       (service) =>
           service.serviceName.toLowerCase() == oauthProvider.toLowerCase(),
     );
   }
 
-  String _mapServiceNameForOAuth(String serviceName) {
-    switch (serviceName.toLowerCase()) {
-      case 'gmail':
-        return 'google';
-      default:
-        return serviceName;
-    }
-  }
-
   Future<void> _connectOAuthService(String serviceName) async {
-    final oauthProvider = _mapServiceNameForOAuth(serviceName);
+    final oauthProvider = ServiceProviderConfig.mapServiceName(serviceName);
 
     setState(() => _isLoading = true);
 
@@ -119,15 +110,19 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
 
       try {
         final services = await _oauthService.getConnectedServices();
-        final isConnected = services.connectedServices
-            .any((token) => token.serviceName.toLowerCase() == serviceName.toLowerCase());
+        final isConnected = services.connectedServices.any(
+          (token) =>
+              token.serviceName.toLowerCase() == serviceName.toLowerCase(),
+        );
 
         if (isConnected) {
           if (mounted) {
             _loadConnectedServices();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('${ServiceProviderConfig.getDisplayName(serviceName)} connected successfully!'),
+                content: Text(
+                  '${ServiceProviderConfig.getDisplayName(serviceName)} connected successfully!',
+                ),
                 backgroundColor: Colors.green,
                 duration: const Duration(seconds: 3),
               ),
@@ -137,11 +132,16 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
         }
 
         await Future.delayed(currentDelay);
-        currentDelay = Duration(milliseconds: (currentDelay.inMilliseconds * backoffMultiplier).round());
-
+        currentDelay = Duration(
+          milliseconds: (currentDelay.inMilliseconds * backoffMultiplier)
+              .round(),
+        );
       } catch (e) {
         await Future.delayed(currentDelay);
-        currentDelay = Duration(milliseconds: (currentDelay.inMilliseconds * backoffMultiplier).round());
+        currentDelay = Duration(
+          milliseconds: (currentDelay.inMilliseconds * backoffMultiplier)
+              .round(),
+        );
       }
     }
 
@@ -149,7 +149,9 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Connection timeout. Please check if you completed the authorization in your browser.'),
+          content: Text(
+            'Connection timeout. Please check if you completed the authorization in your browser.',
+          ),
           backgroundColor: Colors.orange,
           duration: const Duration(seconds: 5),
         ),
@@ -160,7 +162,7 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
 
   Future<void> _disconnectService(String serviceName) async {
     // Map service name for OAuth
-    final oauthProvider = _mapServiceNameForOAuth(serviceName);
+    final oauthProvider = ServiceProviderConfig.mapServiceName(serviceName);
 
     final confirmed = await showDialog<bool>(
       context: context,
