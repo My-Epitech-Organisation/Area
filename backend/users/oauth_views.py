@@ -492,7 +492,7 @@ class ConnectionHistoryView(APIView):
         """Get connection history."""
         try:
             # Get limit parameter
-            limit = request.query_params.get('limit', 20)
+            limit = request.query_params.get("limit", 20)
             try:
                 limit = int(limit)
                 if limit < 1:
@@ -504,50 +504,54 @@ class ConnectionHistoryView(APIView):
 
             # Get user's OAuth notifications (connection history)
             from .models import OAuthNotification
+
             notifications = OAuthNotification.objects.filter(
                 user=request.user
-            ).order_by('-created_at')[:limit]
+            ).order_by("-created_at")[:limit]
 
             # Convert to history entries
             entries = []
             for notification in notifications:
                 entry = {
-                    'service_name': notification.service_name,
-                    'event_type': notification.notification_type,
-                    'timestamp': notification.created_at.isoformat(),
-                    'message': notification.message,
-                    'is_error': notification.notification_type in [
-                        'token_expired', 'refresh_failed', 'auth_error'
-                    ],
+                    "service_name": notification.service_name,
+                    "event_type": notification.notification_type,
+                    "timestamp": notification.created_at.isoformat(),
+                    "message": notification.message,
+                    "is_error": notification.notification_type
+                    in ["token_expired", "refresh_failed", "auth_error"],
                 }
                 entries.append(entry)
 
             # Also add successful connections from ServiceToken
             from .models import ServiceToken
-            tokens = ServiceToken.objects.filter(
-                user=request.user
-            ).order_by('-created_at')[:limit]
+
+            tokens = ServiceToken.objects.filter(user=request.user).order_by(
+                "-created_at"
+            )[:limit]
 
             for token in tokens:
                 # Only add if not already in notifications
-                if not any(e['service_name'] == token.service_name and
-                          e['event_type'] == 'connected' for e in entries):
+                if not any(
+                    e["service_name"] == token.service_name
+                    and e["event_type"] == "connected"
+                    for e in entries
+                ):
                     entry = {
-                        'service_name': token.service_name,
-                        'event_type': 'connected',
-                        'timestamp': token.created_at.isoformat(),
-                        'message': f'Successfully connected to {token.service_name}',
-                        'is_error': False,
+                        "service_name": token.service_name,
+                        "event_type": "connected",
+                        "timestamp": token.created_at.isoformat(),
+                        "message": f"Successfully connected to {token.service_name}",
+                        "is_error": False,
                     }
                     entries.append(entry)
 
             # Sort by timestamp (most recent first) and limit
-            entries.sort(key=lambda x: x['timestamp'], reverse=True)
+            entries.sort(key=lambda x: x["timestamp"], reverse=True)
             entries = entries[:limit]
 
             response_data = {
-                'entries': entries,
-                'total_entries': len(entries),  # Simplified for now
+                "entries": entries,
+                "total_entries": len(entries),  # Simplified for now
             }
 
             return Response(response_data, status=status.HTTP_200_OK)
@@ -555,6 +559,9 @@ class ConnectionHistoryView(APIView):
         except Exception as e:
             logger.error(f"Error fetching connection history: {str(e)}", exc_info=True)
             return Response(
-                {"error": "internal_error", "message": "Failed to fetch connection history"},
+                {
+                    "error": "internal_error",
+                    "message": "Failed to fetch connection history",
+                },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
