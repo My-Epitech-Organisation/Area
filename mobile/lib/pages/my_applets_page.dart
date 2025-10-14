@@ -180,7 +180,9 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
             context,
             listen: false,
           );
-          navigationProvider.navigateToPage(1); // Navigate to Create Automation tab
+          navigationProvider.navigateToPage(
+            1,
+          ); // Navigate to Create Automation tab
         },
         tooltip: 'Create new automation',
         child: const Icon(Icons.add),
