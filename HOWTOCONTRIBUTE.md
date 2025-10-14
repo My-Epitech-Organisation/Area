@@ -9,10 +9,11 @@ Welcome to the AREA (Action-Reaction) project! This guide will help you understa
 - [3. Adding a New Service](#3-adding-a-new-service)
 - [4. Adding an Action](#4-adding-an-action)
 - [5. Adding a Reaction](#5-adding-a-reaction)
-- [6. Code Standards](#6-code-standards)
-- [7. Git Workflow](#7-git-workflow)
-- [8. Testing](#8-testing)
-- [9. Troubleshooting](#9-troubleshooting)
+- [6. OAuth2 Integration](#6-oauth2-integration)
+- [7. Code Standards](#7-code-standards)
+- [8. Git Workflow](#8-git-workflow)
+- [9. Testing](#9-testing)
+- [10. Troubleshooting](#10-troubleshooting)
 
 ---
 
@@ -856,9 +857,634 @@ class SlackReactionTest(TestCase):
 
 ---
 
-## 6. Code Standards
+## 6. OAuth2 Integration
 
-### 6.1 Python (Backend)
+AREA uses a **Backend-First OAuth2 flow** to securely integrate with external services like Google, GitHub, and others. All token handling is done server-side to ensure maximum security.
+
+### 6.1 OAuth2 Architecture
+
+The Backend-First approach means:
+
+1. **Backend initiates OAuth flow** - Generates authorization URL with CSRF state token
+2. **User authorizes on provider's site** - Redirected to provider (Google, GitHub, etc.)
+3. **Provider redirects to backend callback** - Backend exchanges authorization code for access token
+4. **Backend stores tokens securely** - Tokens saved in database, never exposed to frontend
+5. **Backend redirects to frontend** - Frontend displays success/error message
+
+**Security Benefits:**
+- Access tokens never exposed to JavaScript (XSS protection)
+- CSRF protection with cryptographic state tokens
+- One-time use state validation
+- Automatic token refresh handled server-side
+
+### 6.2 OAuth2 Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant Backend
+    participant Provider as OAuth Provider
+    participant Database
+
+    User->>Frontend: Click "Connect Google"
+    Frontend->>Backend: GET /auth/oauth/google/
+    Backend->>Backend: Generate CSRF state token
+    Backend->>Database: Store state in cache (10 min)
+    Backend->>Frontend: Return authorization URL
+    Frontend->>Provider: Redirect user to OAuth provider
+    User->>Provider: Authorize application
+    Provider->>Backend: Redirect with code & state
+    Backend->>Backend: Validate state token
+    Backend->>Provider: Exchange code for access token
+    Provider->>Backend: Return access token + refresh token
+    Backend->>Database: Store tokens in ServiceToken model
+    Backend->>Frontend: Redirect with success=true
+    Frontend->>User: Display "Connected successfully!"
+```
+
+### 6.3 Adding OAuth2 Support to a Service
+
+#### Step 1: Create OAuth2 Provider Class
+
+Create a new provider class in `backend/users/oauth/`:
+
+```python
+# backend/users/oauth/slack.py
+import logging
+from typing import Optional
+import requests
+from .base import BaseOAuthProvider
+
+logger = logging.getLogger(__name__)
+
+
+class SlackOAuthProvider(BaseOAuthProvider):
+    """
+    OAuth2 provider for Slack workspace integration.
+    
+    Implements the OAuth2 flow for Slack's API including:
+    - User authorization with custom scopes
+    - Token exchange via oauth.v2.access endpoint
+    - Token refresh (Slack tokens don't expire)
+    - User info retrieval via users.identity
+    """
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.scopes = self.config.get("scopes", ["channels:read", "chat:write"])
+    
+    def get_authorization_url(self, state: str) -> str:
+        """
+        Generate Slack OAuth2 authorization URL.
+        
+        Args:
+            state: CSRF protection token
+            
+        Returns:
+            Full authorization URL for user redirect
+        """
+        params = {
+            "client_id": self.client_id,
+            "redirect_uri": self.redirect_uri,
+            "scope": " ".join(self.scopes),
+            "state": state,
+            "response_type": "code",
+        }
+        
+        auth_url = self.config["authorization_endpoint"]
+        query_string = "&".join(f"{k}={v}" for k, v in params.items())
+        return f"{auth_url}?{query_string}"
+    
+    def exchange_code_for_token(self, code: str) -> dict:
+        """
+        Exchange authorization code for access token.
+        
+        Args:
+            code: Authorization code from OAuth callback
+            
+        Returns:
+            dict with keys: access_token, refresh_token (optional),
+                           expires_in (optional), token_type
+                           
+        Raises:
+            requests.RequestException: If token exchange fails
+        """
+        token_url = self.config["token_endpoint"]
+        data = {
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+            "code": code,
+            "redirect_uri": self.redirect_uri,
+        }
+        
+        response = requests.post(token_url, data=data, timeout=10)
+        response.raise_for_status()
+        
+        result = response.json()
+        
+        if not result.get("ok"):
+            error_msg = result.get("error", "Unknown error")
+            raise ValueError(f"Slack OAuth error: {error_msg}")
+        
+        return {
+            "access_token": result["authed_user"]["access_token"],
+            "token_type": "Bearer",
+            # Slack tokens don't expire
+            "expires_in": None,
+        }
+    
+    def refresh_access_token(self, refresh_token: str) -> dict:
+        """
+        Refresh an expired access token.
+        
+        Slack tokens don't expire, so this returns None.
+        Override if your provider supports refresh.
+        
+        Args:
+            refresh_token: Not used for Slack
+            
+        Returns:
+            None (Slack tokens don't require refresh)
+        """
+        logger.info("Slack tokens don't expire - refresh not needed")
+        return None
+    
+    def get_user_info(self, access_token: str) -> dict:
+        """
+        Fetch user information from Slack API.
+        
+        Args:
+            access_token: Valid OAuth2 access token
+            
+        Returns:
+            dict with user profile information
+            
+        Raises:
+            requests.RequestException: If API call fails
+        """
+        userinfo_url = self.config["userinfo_endpoint"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        
+        response = requests.get(userinfo_url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        result = response.json()
+        
+        if not result.get("ok"):
+            error_msg = result.get("error", "Unknown error")
+            raise ValueError(f"Slack API error: {error_msg}")
+        
+        return {
+            "id": result["user"]["id"],
+            "name": result["user"]["name"],
+            "email": result["user"]["email"],
+        }
+    
+    def revoke_token(self, token: str) -> bool:
+        """
+        Revoke an OAuth2 token.
+        
+        Args:
+            token: Access token to revoke
+            
+        Returns:
+            True if revocation successful, False otherwise
+        """
+        revoke_url = self.config.get("revoke_endpoint")
+        if not revoke_url:
+            logger.warning("Slack revoke endpoint not configured")
+            return False
+        
+        try:
+            response = requests.post(
+                revoke_url,
+                data={"token": token},
+                timeout=10
+            )
+            response.raise_for_status()
+            return response.json().get("ok", False)
+        except requests.RequestException as e:
+            logger.error(f"Failed to revoke Slack token: {e}")
+            return False
+```
+
+#### Step 2: Register Provider in OAuthManager
+
+Update `backend/users/oauth/manager.py`:
+
+```python
+from .slack import SlackOAuthProvider
+
+class OAuthManager:
+    """
+    Factory and manager for OAuth2 providers.
+    """
+    _provider_classes = {
+        "google": GoogleOAuthProvider,
+        "github": GitHubOAuthProvider,
+        "slack": SlackOAuthProvider,  # Add your provider here
+    }
+```
+
+#### Step 3: Add Provider Configuration
+
+Update `backend/area_project/settings.py`:
+
+```python
+OAUTH2_PROVIDERS = {
+    # ... existing providers ...
+    
+    "slack": {
+        "client_id": os.getenv("SLACK_CLIENT_ID", ""),
+        "client_secret": os.getenv("SLACK_CLIENT_SECRET", ""),
+        "redirect_uri": os.getenv(
+            "SLACK_REDIRECT_URI",
+            "http://localhost:8080/auth/oauth/slack/callback/"
+        ),
+        "authorization_endpoint": "https://slack.com/oauth/v2/authorize",
+        "token_endpoint": "https://slack.com/api/oauth.v2.access",
+        "userinfo_endpoint": "https://slack.com/api/users.identity",
+        "revoke_endpoint": "https://slack.com/api/auth.revoke",
+        "scopes": [
+            "channels:read",
+            "channels:history",
+            "chat:write",
+        ],
+        "requires_refresh": False,  # Slack tokens don't expire
+    },
+}
+
+# OAuth2 state expiry (seconds)
+OAUTH2_STATE_EXPIRY = 600  # 10 minutes
+```
+
+#### Step 4: Add Environment Variables
+
+Update your `.env` file:
+
+```bash
+# Slack OAuth2 (Get from https://api.slack.com/apps)
+SLACK_CLIENT_ID=your-slack-client-id
+SLACK_CLIENT_SECRET=your-slack-client-secret
+SLACK_REDIRECT_URI=http://localhost:8080/auth/oauth/slack/callback/
+```
+
+#### Step 5: Update Frontend
+
+Add Slack to available providers in `frontend/src/pages/serviceDetail.tsx`:
+
+```typescript
+const oauthProviders = ['github', 'google', 'gmail', 'slack'];
+```
+
+### 6.4 Using OAuth Tokens in Tasks
+
+When implementing actions that need to call external APIs, use `OAuthManager.get_valid_token()`:
+
+```python
+from users.oauth.manager import OAuthManager
+from automations.models import Area, Execution
+
+@shared_task(name="automations.check_slack_messages")
+def check_slack_messages():
+    """
+    Check for new Slack messages in monitored channels.
+    """
+    # Get all active AREAs with Slack actions
+    areas = Area.objects.filter(
+        status=Area.Status.ACTIVE,
+        action__name="slack_new_message"
+    ).select_related("owner", "action")
+    
+    for area in areas:
+        try:
+            # Get valid OAuth2 token (auto-refreshes if needed)
+            access_token = OAuthManager.get_valid_token(area.owner, "slack")
+            
+            if not access_token:
+                logger.error(
+                    f"No valid Slack token for user {area.owner.id} "
+                    f"(AREA #{area.pk})"
+                )
+                continue
+            
+            # Use token to call Slack API
+            channel_id = area.action_config.get("channel")
+            headers = {"Authorization": f"Bearer {access_token}"}
+            
+            response = requests.get(
+                "https://slack.com/api/conversations.history",
+                headers=headers,
+                params={"channel": channel_id, "limit": 10},
+                timeout=10
+            )
+            response.raise_for_status()
+            
+            # Process messages and create executions
+            # ... (see Section 4 for full implementation)
+            
+        except requests.RequestException as e:
+            logger.error(f"Slack API error for AREA #{area.pk}: {e}")
+            continue
+```
+
+**Key Points:**
+
+- `OAuthManager.get_valid_token(user, provider)` returns a valid access token or `None`
+- **Automatically refreshes** expired tokens AND tokens expiring within 5 minutes
+- Returns `None` if token is expired and no refresh token available
+- **Proactive refresh** prevents API call failures during execution
+- **User notifications** are automatically created when refresh fails
+- Token usage is tracked (updates `last_used_at` timestamp)
+
+**Important:** The token is automatically refreshed if:
+1. It's expired (`is_expired = True`)
+2. It's expiring within 5 minutes (`needs_refresh = True`)
+
+This proactive approach ensures your tasks never fail due to token expiration!
+
+### 6.5 User Notifications for OAuth Issues
+
+When OAuth tokens cannot be refreshed, users are automatically notified:
+
+```python
+# Notifications are created automatically by OAuthManager
+# when token refresh fails
+
+# In your task code:
+access_token = OAuthManager.get_valid_token(area.owner, "google")
+
+if not access_token:
+    # User has already been notified via OAuthNotification
+    # Just log and skip this execution
+    logger.warning(
+        f"No valid Google token for user {area.owner.email}. "
+        f"User notification created. Skipping AREA #{area.pk}."
+    )
+    continue
+```
+
+**Notification Types:**
+- `TOKEN_EXPIRED`: Token has expired
+- `REFRESH_FAILED`: Automatic refresh failed
+- `AUTH_ERROR`: Authentication error
+- `REAUTH_REQUIRED`: User must reconnect manually
+
+**Frontend Integration:**
+```typescript
+// Fetch unread notifications
+const response = await fetch('/auth/notifications/?is_read=false');
+const notifications = await response.json();
+
+// Display notification banner
+if (notifications.count > 0) {
+  showNotificationBanner(notifications.results);
+}
+```
+
+**Notifications are automatically resolved when:**
+- User reconnects the service (via OAuth flow)
+- Token refresh succeeds after previous failure
+
+### 6.6 Token Health Monitoring
+
+Monitor OAuth token health proactively:
+
+```bash
+# Check all tokens
+python manage.py check_token_health
+
+# Check specific service
+python manage.py check_token_health --service google
+
+# Create notifications for users with token issues
+python manage.py check_token_health --notify-users
+
+# Detailed output
+python manage.py check_token_health --verbose
+```
+
+**Schedule periodic checks:**
+```python
+# area_project/celery.py
+from celery.schedules import crontab
+
+app.conf.beat_schedule = {
+    'check-oauth-health': {
+        'task': 'users.tasks.check_oauth_health',
+        'schedule': crontab(hour='*/6'),  # Every 6 hours
+    },
+}
+```
+
+### 6.7 OAuth Token Model
+
+The `ServiceToken` model stores OAuth2 credentials with tracking metadata:
+
+```python
+class ServiceToken(models.Model):
+    """
+    Store OAuth2 tokens for external service authentication.
+    
+    Tracks token lifecycle including creation, updates (refreshes),
+    and last usage for monitoring and debugging.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    service_name = models.CharField(max_length=100)
+    
+    # Token data
+    access_token = models.TextField()
+    refresh_token = models.TextField(blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    
+    # Metadata (Phase 1 enhancements)
+    scopes = models.TextField(blank=True)  # Space-separated
+    token_type = models.CharField(max_length=20, default="Bearer")
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)  # Tracks refreshes
+    last_used_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        unique_together = ("user", "service_name")
+        indexes = [
+            models.Index(fields=["user", "service_name"]),
+            models.Index(fields=["expires_at"]),
+            models.Index(fields=["service_name"]),
+        ]
+```
+
+**Useful Properties:**
+
+```python
+# Check if token is expired
+if service_token.is_expired:
+    # Token is expired - needs refresh
+
+# Check if token needs refresh soon (< 5 minutes)
+if service_token.needs_refresh:
+    # Proactively refresh token
+
+# Get time until expiry
+time_left = service_token.time_until_expiry
+# Returns timedelta or None if no expiry
+
+# Mark token as used (updates last_used_at)
+service_token.mark_used()
+```
+
+### 6.6 Testing OAuth Flow
+
+#### Manual Testing
+
+1. Start services:
+   ```bash
+   docker-compose up -d
+   ```
+
+2. Navigate to frontend: http://localhost:5173
+
+3. Login and go to Services page
+
+4. Click "Connect Slack" (or your provider)
+
+5. Authorize on provider's page
+
+6. Verify success message and redirection
+
+7. Check token in database:
+   ```bash
+   docker exec -it area_server python manage.py shell
+   >>> from users.models import ServiceToken
+   >>> ServiceToken.objects.filter(service_name="slack")
+   ```
+
+#### Unit Testing
+
+Create tests in `backend/users/tests/test_oauth_callback_flow.py`:
+
+```python
+from unittest.mock import patch, MagicMock
+from django.test import TestCase
+from django.contrib.auth import get_user_model
+from users.models import ServiceToken
+from users.oauth.manager import OAuthManager
+
+User = get_user_model()
+
+
+class OAuthCallbackBackendFirstTestCase(TestCase):
+    """Test Backend-First OAuth callback flow."""
+    
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123"
+        )
+    
+    @patch("users.oauth_views.OAuthManager")
+    @patch("users.oauth_views.cache")
+    def test_successful_oauth_callback(self, mock_cache, mock_oauth_manager):
+        """Test successful OAuth callback with Backend-First flow."""
+        
+        # Mock cache state retrieval
+        mock_cache.get.return_value = {
+            "user_id": str(self.user.id),
+            "provider": "slack"
+        }
+        
+        # Mock OAuth provider
+        mock_provider = MagicMock()
+        mock_provider.exchange_code_for_token.return_value = {
+            "access_token": "test_access_token",
+            "refresh_token": "test_refresh_token",
+            "expires_in": 3600,
+            "token_type": "Bearer"
+        }
+        mock_provider.scopes = ["channels:read", "chat:write"]
+        mock_oauth_manager.get_provider.return_value = mock_provider
+        
+        # Make callback request
+        response = self.client.get(
+            "/auth/oauth/slack/callback/",
+            {
+                "code": "test_auth_code",
+                "state": "test_state_token"
+            }
+        )
+        
+        # Assertions
+        self.assertEqual(response.status_code, 302)  # Redirect
+        self.assertIn("success=true", response.url)
+        self.assertIn("service=slack", response.url)
+        
+        # Verify token created
+        token = ServiceToken.objects.get(
+            user=self.user,
+            service_name="slack"
+        )
+        self.assertEqual(token.access_token, "test_access_token")
+        self.assertEqual(token.scopes, "channels:read chat:write")
+        
+        # Verify cache delete called (one-time use)
+        mock_cache.delete.assert_called_once_with("oauth_state_test_state_token")
+```
+
+### 6.7 OAuth Security Checklist
+
+When implementing OAuth2 integration:
+
+- [x] Use HTTPS in production (configured in nginx)
+- [x] Generate cryptographic state tokens (`secrets.token_urlsafe(32)`)
+- [x] Validate state token on callback (CSRF protection)
+- [x] One-time use state tokens (delete from cache after validation)
+- [x] Store tokens server-side only (never expose to frontend)
+- [x] Implement token refresh logic
+- [x] Handle token expiration gracefully
+- [x] Encrypt tokens at rest (database encryption)
+- [x] Request minimal scopes (only what you need)
+- [x] Provide token revocation endpoint
+- [x] Log OAuth errors for monitoring
+- [x] Test error scenarios (invalid state, expired tokens, API failures)
+
+### 6.8 OAuth Troubleshooting
+
+**Issue: "State invalid or expired"**
+
+- **Cause**: State token expired (> 10 minutes) or Redis cache cleared
+- **Solution**: Restart OAuth flow, check Redis is running, verify `OAUTH2_STATE_EXPIRY`
+
+**Issue: "Token exchange failed"**
+
+- **Cause**: Invalid OAuth credentials or redirect URI mismatch
+- **Solution**: Verify credentials in `.env`, check redirect URI matches exactly in provider console
+
+**Issue: "No valid token for user"**
+
+- **Cause**: Token expired and refresh failed, or user disconnected service
+- **Solution**: Check `ServiceToken` in database, verify refresh token exists, notify user to reconnect
+
+**Issue: "Tokens not refreshing"**
+
+- **Cause**: Provider doesn't support refresh or missing refresh token
+- **Solution**: Check `requires_refresh` in provider config, verify refresh token stored
+
+### 6.9 OAuth Resources
+
+- **Full OAuth2 Implementation Guide**: `/docs/OAUTH2_IMPLEMENTATION.md`
+- **OAuth2 RFC 6749**: https://tools.ietf.org/html/rfc6749
+- **Google OAuth2 Docs**: https://developers.google.com/identity/protocols/oauth2
+- **GitHub OAuth Docs**: https://docs.github.com/en/developers/apps/building-oauth-apps
+- **Slack OAuth Docs**: https://api.slack.com/authentication/oauth-v2
+
+---
+
+## 7. Code Standards
+
+### 7.1 Python (Backend)
 
 We use **Ruff** for linting and formatting, which replaces Black, flake8, and isort.
 
@@ -1045,9 +1671,9 @@ Fixes #58
 
 ---
 
-## 7. Git Workflow
+## 8. Git Workflow
 
-### 7.1 Branch Strategy
+### 8.1 Branch Strategy
 
 We use **Git Flow** with the following branches:
 
@@ -1136,9 +1762,9 @@ Our GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push:
 
 ---
 
-## 8. Testing
+## 9. Testing
 
-### 8.1 Test Structure
+### 9.1 Test Structure
 
 ```
 backend/automations/tests/
@@ -1278,9 +1904,9 @@ open backend/htmlcov/index.html
 
 ---
 
-## 9. Troubleshooting
+## 10. Troubleshooting
 
-### 9.1 Common Issues
+### 10.1 Common Issues
 
 #### Issue: Docker containers won't start
 
@@ -1493,7 +2119,7 @@ services:
 
 ---
 
-## 10. Resources & References
+## 11. Resources & References
 
 ### Documentation
 - [Django Documentation](https://docs.djangoproject.com/)
@@ -1503,7 +2129,7 @@ services:
 - [Flutter Documentation](https://flutter.dev/docs)
 
 ### Project-Specific Docs
-- [OAuth2 Integration Guide](backend/docs/OAUTH2.md)
+- [OAuth2 Integration Guide](docs/OAUTH2_IMPLEMENTATION.md)
 - [Docker Compose Guide](docs/docker-compose.md)
 - [MVP Development Plan](MVP_DEVELOPMENT_PLAN.md)
 
