@@ -44,6 +44,7 @@ if not IS_DOCKER:
     if env_path.exists():
         load_dotenv(env_path)
     else:
+        
         # Try current directory
         env_path = Path(".env")
         if env_path.exists():
