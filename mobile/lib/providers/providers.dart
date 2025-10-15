@@ -5,3 +5,4 @@ export 'service_catalog_provider.dart';
 export 'connected_services_provider.dart';
 export 'navigation_provider.dart';
 export 'provider_manager.dart';
+export 'automation_stats_provider.dart';

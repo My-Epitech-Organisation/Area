@@ -6,6 +6,7 @@ from django.urls import include, path
 from .notification_views import OAuthNotificationViewSet
 from .oauth.google_signin import GoogleLoginView
 from .oauth_views import (
+    ConnectionHistoryView,
     OAuthCallbackView,
     OAuthInitiateView,
     ServiceConnectionListView,
@@ -78,6 +79,11 @@ urlpatterns = [
         "services/<str:provider>/disconnect/",
         ServiceDisconnectView.as_view(),
         name="service_disconnect",
+    ),
+    path(
+        "oauth/history/",
+        ConnectionHistoryView.as_view(),
+        name="connection_history",
     ),
     path(
         "oauth/notifications/",
