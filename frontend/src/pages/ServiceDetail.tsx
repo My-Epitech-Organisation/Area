@@ -104,8 +104,8 @@ const ServiceDetail: React.FC = () => {
     return (
       <div className="w-screen min-h-screen bg-gradient-to-br from-black/90 via-gray-900/80 to-indigo-950 flex flex-col items-center justify-center p-6">
         <div className="max-w-2xl w-full bg-white/10 backdrop-blur-lg rounded-xl p-8 text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">Error</h2>
-          <p className="text-rose-300">{error || 'Service not found'}</p>
+          <h2 className="text-2xl font-bold text-theme-primary mb-4">Error</h2>
+          <p className="text-theme-error">{error || 'Service not found'}</p>
           <Link
             to="/services"
             className="mt-6 inline-block px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
@@ -149,7 +149,7 @@ const ServiceDetail: React.FC = () => {
       <div className="max-w-6xl mx-auto pt-20">
         <Link
           to="/services"
-          className="text-indigo-300 hover:text-indigo-100 flex items-center gap-2 mb-8 transition-colors"
+          className="text-theme-accent hover:text-theme-secondary flex items-center gap-2 mb-8 transition-colors"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

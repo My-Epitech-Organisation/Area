@@ -266,7 +266,7 @@ const Profile: React.FC = () => {
         message="Please enter your current password to save your changes"
       />
       <header className="w-full pt-20 pb-6 flex justify-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-white">Your Profile</h1>
+        <h1 className="text-4xl md:text-5xl font-bold text-theme-primary">Your Profile</h1>
       </header>
       <main className="w-full max-w-3xl px-4 flex-1 flex flex-col items-center pb-12">
         {loading ? (

@@ -59,7 +59,7 @@ const Navbar: React.FC = () => {
         <div className="h-16 flex items-center justify-between">
           {/* Hamburger menu for mobile */}
           <button
-            className="md:hidden text-white text-2xl focus:outline-none"
+            className="md:hidden text-theme-primary text-2xl focus:outline-none"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -70,37 +70,37 @@ const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center space-x-4 lg:space-x-8">
             <Link
               to="/homepage"
-              className="text-white text-sm lg:text-lg font-semibold hover:text-indigo-300 transition"
+              className="text-theme-primary text-sm lg:text-lg font-semibold hover:text-theme-accent transition"
             >
               Home
             </Link>
             <Link
               to="/Areaction"
-              className="text-white text-sm lg:text-lg font-semibold hover:text-indigo-300 transition"
+              className="text-theme-primary text-sm lg:text-lg font-semibold hover:text-theme-accent transition"
             >
               Area
             </Link>
             <Link
               to="/services"
-              className="text-white text-sm lg:text-lg font-semibold hover:text-indigo-300 transition"
+              className="text-theme-primary text-sm lg:text-lg font-semibold hover:text-theme-accent transition"
             >
               Services
             </Link>
             <Link
               to="/about"
-              className="text-white text-sm lg:text-lg font-semibold hover:text-indigo-300 transition"
+              className="text-theme-primary text-sm lg:text-lg font-semibold hover:text-theme-accent transition"
             >
               About Us
             </Link>
             <Link
               to="/dashboard"
-              className="text-white text-sm lg:text-lg font-semibold hover:text-indigo-300 transition"
+              className="text-theme-primary text-sm lg:text-lg font-semibold hover:text-theme-accent transition"
             >
               Dashboard
             </Link>
             <Link
               to="/profile"
-              className="text-white text-sm lg:text-lg font-semibold hover:text-indigo-300 transition"
+              className="text-theme-primary text-sm lg:text-lg font-semibold hover:text-theme-accent transition"
             >
               Profile
             </Link>
@@ -110,12 +110,12 @@ const Navbar: React.FC = () => {
           <div className="flex items-center space-x-2 md:space-x-4 lg:space-x-8">
             {user ? (
               <>
-                <span className="hidden sm:inline text-indigo-300 text-sm lg:text-lg font-semibold">
+                <span className="hidden sm:inline text-theme-accent text-sm lg:text-lg font-semibold">
                   {user.username || user.name}
                 </span>
                 <button
                   onClick={handleLogout}
-                  className="text-white text-sm lg:text-lg font-semibold hover:text-red-400 transition"
+                  className="text-theme-primary text-sm lg:text-lg font-semibold hover:text-theme-error transition"
                 >
                   Log Out
                 </button>
@@ -124,13 +124,13 @@ const Navbar: React.FC = () => {
               <>
                 <Link
                   to="/login"
-                  className="text-white text-sm lg:text-lg font-semibold hover:text-indigo-300 transition"
+                  className="text-theme-primary text-sm lg:text-lg font-semibold hover:text-theme-accent transition"
                 >
                   Log In
                 </Link>
                 <Link
                   to="/signup"
-                  className="text-white text-sm lg:text-lg font-semibold hover:text-indigo-300 transition"
+                  className="text-theme-primary text-sm lg:text-lg font-semibold hover:text-theme-accent transition"
                 >
                   Sign Up
                 </Link>
@@ -145,42 +145,42 @@ const Navbar: React.FC = () => {
             <div className="px-4 py-4 space-y-4">
               <Link
                 to="/homepage"
-                className="block text-white text-lg font-semibold hover:text-indigo-300 transition"
+                className="block text-theme-primary text-lg font-semibold hover:text-theme-accent transition"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Home
               </Link>
               <Link
                 to="/Areaction"
-                className="block text-white text-lg font-semibold hover:text-indigo-300 transition"
+                className="block text-theme-primary text-lg font-semibold hover:text-theme-accent transition"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Area
               </Link>
               <Link
                 to="/services"
-                className="block text-white text-lg font-semibold hover:text-indigo-300 transition"
+                className="block text-theme-primary text-lg font-semibold hover:text-theme-accent transition"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Services
               </Link>
               <Link
                 to="/about"
-                className="block text-white text-lg font-semibold hover:text-indigo-300 transition"
+                className="block text-theme-primary text-lg font-semibold hover:text-theme-accent transition"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 About Us
               </Link>
               <Link
                 to="/dashboard"
-                className="block text-white text-lg font-semibold hover:text-indigo-300 transition"
+                className="block text-theme-primary text-lg font-semibold hover:text-theme-accent transition"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Dashboard
               </Link>
               <Link
                 to="/profile"
-                className="block text-white text-lg font-semibold hover:text-indigo-300 transition"
+                className="block text-theme-primary text-lg font-semibold hover:text-theme-accent transition"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Profile

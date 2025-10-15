@@ -48,12 +48,12 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
 
         return (
           <div key={fieldName} className="mb-4">
-            <label htmlFor={fieldName} className="block text-sm font-medium text-white mb-1">
+            <label htmlFor={fieldName} className="form-label">
               {formatFieldName(fieldName)}
-              {isRequired && <span className="text-red-400 ml-1">*</span>}
+              {isRequired && <span className="text-required ml-1">*</span>}
             </label>
             {property.description && (
-              <p className="text-xs text-gray-300 mb-1">{property.description}</p>
+              <p className="text-xs text-theme-muted mb-1">{property.description}</p>
             )}
             <input
               id={fieldName}
@@ -69,7 +69,7 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
               min={property.minimum}
               max={property.maximum}
               required={isRequired}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="form-input"
               placeholder={property.description}
             />
           </div>
@@ -91,12 +91,12 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
               id={fieldName}
               checked={boolValue}
               onChange={(e) => handleFieldChange(fieldName, e.target.checked)}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 rounded bg-gray-700"
+              className="h-4 w-4 text-theme-accent focus:ring-theme-accent border-theme-secondary rounded bg-theme-tertiary"
             />
-            <label htmlFor={fieldName} className="ml-2 block text-sm text-white">
+            <label htmlFor={fieldName} className="ml-2 block text-sm text-theme-secondary">
               {formatFieldName(fieldName)}
               {property.description && (
-                <span className="text-xs text-gray-300 ml-2">({property.description})</span>
+                <span className="text-xs text-theme-muted ml-2">({property.description})</span>
               )}
             </label>
           </div>
@@ -114,19 +114,19 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
 
           return (
             <div key={fieldName} className="mb-4">
-              <label htmlFor={fieldName} className="block text-sm font-medium text-white mb-1">
+              <label htmlFor={fieldName} className="form-label">
                 {formatFieldName(fieldName)}
-                {isRequired && <span className="text-red-400 ml-1">*</span>}
+                {isRequired && <span className="text-required ml-1">*</span>}
               </label>
               {property.description && (
-                <p className="text-xs text-gray-300 mb-1">{property.description}</p>
+                <p className="text-xs text-theme-muted mb-1">{property.description}</p>
               )}
               <select
                 id={fieldName}
                 value={stringValue}
                 onChange={(e) => handleFieldChange(fieldName, e.target.value)}
                 required={isRequired}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="form-select"
               >
                 <option value="">Select {formatFieldName(fieldName)}</option>
                 {property.enum.map((enumOption) => {
@@ -139,7 +139,7 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
                     <option
                       key={String(optionValue)}
                       value={String(optionValue)}
-                      className="text-white bg-gray-700"
+                      className="text-theme-primary bg-theme-primary"
                     >
                       {String(optionValue)}
                     </option>
@@ -159,12 +159,12 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
 
         return (
           <div key={fieldName} className="mb-4">
-            <label htmlFor={fieldName} className="block text-sm font-medium text-white mb-1">
+            <label htmlFor={fieldName} className="form-label">
               {formatFieldName(fieldName)}
-              {isRequired && <span className="text-red-400 ml-1">*</span>}
+              {isRequired && <span className="text-required ml-1">*</span>}
             </label>
             {property.description && (
-              <p className="text-xs text-gray-300 mb-1">{property.description}</p>
+              <p className="text-xs text-theme-muted mb-1">{property.description}</p>
             )}
             <input
               id={fieldName}
@@ -177,7 +177,7 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
               minLength={property.minLength}
               maxLength={property.maxLength}
               pattern={property.pattern}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="form-input"
               placeholder={property.description}
             />
           </div>
@@ -193,12 +193,12 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
 
         return (
           <div key={fieldName} className="mb-4">
-            <label htmlFor={fieldName} className="block text-sm font-medium text-white mb-1">
+            <label htmlFor={fieldName} className="form-label">
               {formatFieldName(fieldName)}
-              {isRequired && <span className="text-red-400 ml-1">*</span>}
+              {isRequired && <span className="text-required ml-1">*</span>}
             </label>
             {property.description && (
-              <p className="text-xs text-gray-300 mb-1">{property.description}</p>
+              <p className="text-xs text-theme-muted mb-1">{property.description}</p>
             )}
             <input
               id={fieldName}
@@ -212,7 +212,7 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
                 handleFieldChange(fieldName, arr);
               }}
               required={isRequired}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="form-input"
               placeholder="Enter comma-separated values"
             />
           </div>
@@ -233,12 +233,12 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
 
         return (
           <div key={fieldName} className="mb-4">
-            <label htmlFor={fieldName} className="block text-sm font-medium text-white mb-1">
+            <label htmlFor={fieldName} className="form-label">
               {formatFieldName(fieldName)}
-              {isRequired && <span className="text-red-400 ml-1">*</span>}
+              {isRequired && <span className="text-required ml-1">*</span>}
             </label>
             {property.description && (
-              <p className="text-xs text-gray-300 mb-1">{property.description}</p>
+              <p className="text-xs text-theme-muted mb-1">{property.description}</p>
             )}
             <textarea
               id={fieldName}
@@ -253,7 +253,7 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
               }}
               required={isRequired}
               rows={4}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+              className="form-input font-mono text-sm"
               placeholder='{"key": "value"}'
             />
           </div>
