@@ -132,19 +132,6 @@ const ServiceDetail: React.FC = () => {
   // For google_calendar, check if 'google' OAuth is connected
   const oauthServiceName = service.name.toLowerCase() === 'google_calendar' ? 'google' : service.name.toLowerCase();
 
-  // Debug: Log the connected services and comparison
-  console.log('🔍 Debug OAuth Connection:', {
-    serviceName: service?.name,
-    serviceNameLower: service?.name.toLowerCase(),
-    oauthServiceName,
-    requiresOAuth,
-    connectedServices: connectedServices.map((s) => ({
-      service_name: s.service_name,
-      service_name_lower: s.service_name.toLowerCase(),
-      is_expired: s.is_expired,
-    })),
-  });
-
   const isConnected =
     requiresOAuth &&
     connectedServices.some((s) => {
