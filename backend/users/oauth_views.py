@@ -171,7 +171,7 @@ class OAuthCallbackView(APIView):
             f"params={dict(request.query_params)}, "
             f"path={request.path}"
         )
-        
+
         # Get frontend URL for redirects
         frontend_url = getattr(
             settings, "FRONTEND_URL", None
@@ -285,7 +285,7 @@ class OAuthCallbackView(APIView):
         cache_key = OAuthManager._get_state_cache_key(state)
         logger.info(f"Validating state for {provider}: cache_key={cache_key}")
         state_data = cache.get(cache_key)
-        
+
         logger.info(f"State data from cache: {state_data}")
 
         if not state_data:
