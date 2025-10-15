@@ -86,6 +86,8 @@ class ActionSerializer(serializers.ModelSerializer):
 
     def get_config_schema(self, obj):
         """Return the JSON schema for this action's configuration."""
+        if obj.config_schema:
+            return obj.config_schema
         return ACTION_SCHEMAS.get(obj.name, {})
 
 
@@ -117,6 +119,8 @@ class ReactionSerializer(serializers.ModelSerializer):
 
     def get_config_schema(self, obj):
         """Return the JSON schema for this reaction's configuration."""
+        if obj.config_schema:
+            return obj.config_schema
         return REACTION_SCHEMAS.get(obj.name, {})
 
 
@@ -372,7 +376,7 @@ class AboutActionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Action
-        fields = ["name", "description"]
+        fields = ["name", "description", "config_schema"]
 
 
 class AboutReactionSerializer(serializers.ModelSerializer):
@@ -380,7 +384,7 @@ class AboutReactionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reaction
-        fields = ["name", "description"]
+        fields = ["name", "description", "config_schema"]
 
 
 class AboutServiceSerializer(serializers.ModelSerializer):
