@@ -571,7 +571,7 @@ COMPATIBILITY_RULES = {
         "log_message",
         "webhook_post",
     ],
-    # Webhook actions peuvent déclencher n'importe quoi
+    # Webhook actions can trigger anything
     "webhook_trigger": ["*"],
 }
 
