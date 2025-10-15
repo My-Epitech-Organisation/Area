@@ -52,10 +52,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label
-              htmlFor="current-password"
-              className="form-label"
-            >
+            <label htmlFor="current-password" className="form-label">
               Current Password
             </label>
             <input
@@ -71,11 +68,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
           </div>
 
           <div className="flex gap-4 pt-4">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="btn-secondary w-1/2"
-            >
+            <button type="button" onClick={handleCancel} className="btn-secondary w-1/2">
               Cancel
             </button>
             <button

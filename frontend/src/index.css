@@ -36,8 +36,8 @@
   --color-error-light: #fca5a5; /* red-300 */
 
   /* Neutral Colors */
-  --color-white: #ffffff;
-  --color-black: #000000;
+  --color-white: #fff;
+  --color-black: #000;
 
   --color-gray-50: #f9fafb;
   --color-gray-100: #f3f4f6;
@@ -409,6 +409,7 @@
 /* Form Styles */
 .form-input {
   @apply w-full px-3 py-2 rounded-lg transition-colors;
+
   background-color: var(--form-bg);
   border: 1px solid var(--form-border);
   color: var(--form-text);
@@ -426,6 +427,7 @@
 
 .form-label {
   @apply block text-sm font-medium mb-1;
+
   color: var(--text-secondary);
 }
 
@@ -441,6 +443,7 @@
 /* Button Styles */
 .btn-primary {
   @apply px-4 py-2 rounded-lg font-medium transition-colors;
+
   background-color: var(--btn-primary-bg);
   color: var(--btn-primary-text);
 }
@@ -451,6 +454,7 @@
 
 .btn-secondary {
   @apply px-4 py-2 rounded-lg font-medium transition-colors;
+
   background-color: var(--btn-secondary-bg);
   color: var(--btn-secondary-text);
   border: 1px solid var(--border-primary);
@@ -462,6 +466,7 @@
 
 .btn-success {
   @apply px-4 py-2 rounded-lg font-medium transition-colors;
+
   background-color: var(--btn-success-bg);
   color: var(--btn-success-text);
 }
@@ -472,6 +477,7 @@
 
 .btn-error {
   @apply px-4 py-2 rounded-lg font-medium transition-colors;
+
   background-color: var(--btn-error-bg);
   color: var(--btn-error-text);
 }
@@ -483,12 +489,14 @@
 /* Card Styles */
 .card-surface {
   @apply rounded-lg border;
+
   background-color: var(--bg-surface);
   border-color: var(--border-primary);
 }
 
 .card-overlay {
   @apply rounded-2xl border;
+
   background-color: var(--bg-surface);
   border-color: var(--border-secondary);
   backdrop-filter: blur(8px);
@@ -497,6 +505,7 @@
 /* Navigation Styles */
 .nav-link {
   @apply text-sm lg:text-lg font-semibold transition;
+
   color: var(--text-primary);
 }
 
