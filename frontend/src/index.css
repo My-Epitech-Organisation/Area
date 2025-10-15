@@ -50,6 +50,11 @@
   --profile-mid: #000;
   --profile-end: #4f3fff; /* indigo-700 */
 
+  /* about - background */
+  --page-about-start: #353080; /* indigo-900 */
+  --page-about-mid: #000;
+  --page-about-end: #9e2921; /* red-700 */
+
   /* typography */
   --text-primary: #fff;
   --text-muted: #d1d5db; /* gray-300 */
@@ -143,6 +148,15 @@
     var(--profile-start) 0%,
     var(--profile-mid) 40%,
     var(--profile-end) 100%
+  );
+}
+
+.bg-page-about {
+  background: linear-gradient(
+    135deg,
+    var(--page-about-start) 0%,
+    var(--page-about-mid) 50%,
+    var(--page-about-end) 100%
   );
 }
 
