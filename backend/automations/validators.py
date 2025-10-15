@@ -592,7 +592,7 @@ def validate_action_config(action_name, config):
 
     schema = ACTION_SCHEMAS.get(action_name)
     if not schema:
-        # Pas de schéma défini, validation basique seulement
+        # No defined pattern, basic validation only
         if not isinstance(config, dict):
             raise serializers.ValidationError(
                 f"Configuration for action '{action_name}' must be a JSON object."
@@ -623,7 +623,7 @@ def validate_reaction_config(reaction_name, config):
 
     schema = REACTION_SCHEMAS.get(reaction_name)
     if not schema:
-        # Pas de schéma défini, validation basique seulement
+        # No defined pattern, basic validation only
         if not isinstance(config, dict):
             raise serializers.ValidationError(
                 f"Configuration for reaction '{reaction_name}' must be a JSON object."
@@ -633,7 +633,7 @@ def validate_reaction_config(reaction_name, config):
     try:
         jsonschema.validate(config, schema)
 
-        # Validation supplémentaire pour les emails
+        # Additional validation for emails
         if reaction_name == "send_email" and "recipient" in config:
             if not validate_email_format(config["recipient"]):
                 raise serializers.ValidationError(
@@ -659,11 +659,11 @@ def validate_action_reaction_compatibility(action_name, reaction_name):
     """
     compatible_reactions = COMPATIBILITY_RULES.get(action_name, [])
 
-    # Si '*' dans la liste, toutes les reactions sont autorisées
+    # If '*' in the list, all reactions are allowed
     if "*" in compatible_reactions:
         return
 
-    # Vérifier si la reaction spécifique est autorisée
+    # Check if the specific reaction is allowed
     if reaction_name not in compatible_reactions:
         raise serializers.ValidationError(
             f"Action '{action_name}' is not compatible with reaction '{reaction_name}'. "
