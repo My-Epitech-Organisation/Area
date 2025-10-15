@@ -27,11 +27,18 @@ class AppletService {
 
     final response = await _httpClient.get(ApiConfig.automationsUrl);
 
-    final applets = _httpClient.parseResponse<List<Applet>>(
-      response,
-      (data) =>
-          (data as List<dynamic>).map((json) => Applet.fromJson(json)).toList(),
-    );
+    final applets = _httpClient.parseResponse<List<Applet>>(response, (data) {
+      // API returns paginated response: {"results": [...]}
+      if (data is Map && data.containsKey('results')) {
+        final results = data['results'] as List<dynamic>;
+        return results.map((json) => Applet.fromJson(json)).toList();
+      }
+      // Fallback: if data is already a list, use it directly
+      if (data is List) {
+        return data.map((json) => Applet.fromJson(json)).toList();
+      }
+      throw Exception('Unexpected automations API response format: $data');
+    });
 
     _cache.set(cacheKey, applets);
     return applets;
@@ -133,11 +140,18 @@ class AppletService {
       ApiConfig.userAutomationsUrl(userId.toString()),
     );
 
-    return _httpClient.parseResponse<List<Applet>>(
-      response,
-      (data) =>
-          (data as List<dynamic>).map((json) => Applet.fromJson(json)).toList(),
-    );
+    return _httpClient.parseResponse<List<Applet>>(response, (data) {
+      // API returns paginated response: {"results": [...]}
+      if (data is Map && data.containsKey('results')) {
+        final results = data['results'] as List<dynamic>;
+        return results.map((json) => Applet.fromJson(json)).toList();
+      }
+      // Fallback: if data is already a list, use it directly
+      if (data is List) {
+        return data.map((json) => Applet.fromJson(json)).toList();
+      }
+      throw Exception('Unexpected user automations API response format: $data');
+    });
   }
 
   /// Get applet execution logs
