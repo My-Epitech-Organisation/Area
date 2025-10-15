@@ -6,15 +6,15 @@
  */
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Homepage from './pages/Homepage';
-import Services from './pages/services';
-import ServiceDetail from './pages/serviceDetail';
+import Homepage from './pages/HomePage';
+import Services from './pages/Services';
+import ServiceDetail from './pages/ServiceDetail';
 import Areaction from './pages/Areaction';
-import About from './pages/about';
-import Dashboard from './pages/dashboard';
-import Login from './pages/login';
-import Signup from './pages/signup';
-import Profile from './pages/profile';
+import About from './pages/About';
+import Dashboard from './pages/Dashboard';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Profile from './pages/Profile';
 import OAuthCallback from './pages/OAuthCallback';
 import Navbar from './components/Navbar';
 

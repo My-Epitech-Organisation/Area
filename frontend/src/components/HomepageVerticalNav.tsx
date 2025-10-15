@@ -9,7 +9,7 @@ const HomePageVerticalNav: React.FC<Props> = ({ quad, setQuad }) => {
   const items = ['Home', 'Discover', 'Automations', 'Get Started'];
 
   return (
-    <nav className="fixed left-6 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-3">
+    <nav className="hidden md:flex fixed left-6 top-1/2 -translate-y-1/2 z-40 flex-col gap-3">
       {items.map((label, i) => (
         <button
           key={i}

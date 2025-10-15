@@ -355,18 +355,20 @@ const Dashboard: React.FC = () => {
   }, [navigate]);
 
   return (
-    <div className="w-full h-screen bg-dashboard flex pt-16 overflow-hidden">
+    <div className="w-full min-h-screen bg-dashboard flex flex-col md:flex-row pt-16">
       <div className="flex flex-1">
-        <div className="flex-1 p-6 flex flex-col items-center overflow-y-auto">
+        <div className="flex-1 p-4 md:p-6 flex flex-col items-center overflow-y-auto">
           <header className="w-full flex flex-col items-center pt-4 mb-4">
-            <h1 className="text-5xl font-bold text-center text-white mb-2">Dashboard</h1>
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center text-theme-primary mb-2">
+              Dashboard
+            </h1>
             <div className="w-full flex items-center justify-center">
               {user ? (
-                <p className="text-3xl font-semibold text-indigo-300 mt-2 animate-fadeIn">
+                <p className="text-xl md:text-2xl lg:text-3xl font-semibold text-theme-accent mt-2 animate-fadeIn">
                   Welcome back, {user.username || user.name}!
                 </p>
               ) : (
-                <p className="text-2xl font-semibold text-amber-400 mt-2 animate-pulse">
+                <p className="text-lg md:text-xl lg:text-2xl font-semibold text-amber-400 mt-2 animate-pulse">
                   <span
                     onClick={() => navigate('/login')}
                     className="cursor-pointer hover:underline"
@@ -378,11 +380,11 @@ const Dashboard: React.FC = () => {
             </div>
           </header>
           <div className="w-full flex flex-col gap-4 mb-4">
-            <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-gray-200">
-              <h2 className="text-xl font-semibold text-indigo-300 mb-3">Service Activity</h2>
+            <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-theme-primary">
+              <h2 className="text-xl font-semibold text-theme-accent mb-3">Service Activity</h2>
               {activeServices.length > 0 ? (
                 <>
-                  <div className="h-[180px] relative">
+                  <div className="h-32 md:h-[180px] relative">
                     <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-white bg-opacity-20"></div>
                     <div className="absolute left-0 bottom-0 top-0 w-[1px] bg-white bg-opacity-20"></div>
                     <div className="flex h-full items-end justify-between px-2">
@@ -394,7 +396,7 @@ const Dashboard: React.FC = () => {
                         return (
                           <div key={day} className="flex flex-col items-center w-1/7">
                             <div
-                              className="w-8 bg-gradient-to-t from-indigo-600 to-indigo-400 rounded-t-sm"
+                              className="w-8 bg-gradient-chart-bar rounded-t-sm"
                               style={{
                                 height: `${(i >= 5 ? 80 : 40) + Math.random() * heightMultiplier}px`,
                                 opacity: i === 6 ? 1 : 0.7 + i * 0.05,
@@ -412,37 +414,34 @@ const Dashboard: React.FC = () => {
                   </div>
                 </>
               ) : loading ? (
-                <div className="h-[180px] flex items-center justify-center">
+                <div className="h-32 md:h-[180px] flex items-center justify-center">
                   <div className="animate-pulse text-indigo-300">Loading activity data...</div>
                 </div>
               ) : (
-                <div className="h-[180px] flex flex-col items-center justify-center">
+                <div className="h-32 md:h-[180px] flex flex-col items-center justify-center">
                   <p className="text-gray-400 mb-3">No active services yet</p>
                   <button
                     onClick={() => navigate('/services')}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white transition-colors"
+                    className="px-4 py-2 bg-gradient-button-primary hover:bg-gradient-button-primary rounded-lg text-white transition-colors"
                   >
                     Explore Services
                   </button>
                 </div>
               )}
             </div>
-            <div className="flex gap-4">
-              <div className="flex-1 bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-gray-200">
-                <h2 className="text-xl font-semibold text-indigo-300 mb-3">Services Usage</h2>
-                <div
-                  className="flex justify-center"
-                  style={{ position: 'relative', height: '180px' }}
-                >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-theme-primary">
+                <h2 className="text-xl font-semibold text-theme-accent mb-3">Services Usage</h2>
+                <div className="flex justify-center h-32 md:h-[180px]">
                   <ServiceUsageChart services={services} activeServices={activeServices} />
                 </div>
               </div>
-              <div className="flex-1 bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-gray-200">
-                <h2 className="text-xl font-semibold text-indigo-300 mb-3">Quick Actions</h2>
-                <div className="grid grid-cols-2 gap-2">
+              <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-theme-primary">
+                <h2 className="text-xl font-semibold text-theme-accent mb-3">Quick Actions</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button
                     onClick={() => navigate('/services')}
-                    className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
+                    className="bg-gradient-button-primary hover:bg-gradient-button-primary text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -462,7 +461,7 @@ const Dashboard: React.FC = () => {
                   </button>
                   <button
                     onClick={() => navigate('/profile')}
-                    className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
+                    className="bg-gradient-button-secondary hover:bg-gradient-button-secondary text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -483,61 +482,61 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             </div>
+            <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-gray-200">
+              <h2 className="text-xl font-semibold text-indigo-300 mb-3">Services</h2>
+              {loading ? (
+                <div className="flex justify-center items-center h-40">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+                </div>
+              ) : error ? (
+                <div className="text-center py-10">
+                  <p className="text-red-400 mb-2">Error loading services</p>
+                  <p className="text-sm text-gray-400">{error}</p>
+                </div>
+              ) : services.length === 0 ? (
+                <div className="text-center py-10">
+                  <p className="text-gray-400">No services available</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {services.map((service) => {
+                    const isActive = activeServices.includes(service.name);
+                    const logo = getServiceLogo(service.name);
+                    return (
+                      <div
+                        key={service.name}
+                        onClick={() => handleServiceClick(service.name)}
+                        className="bg-white bg-opacity-10 rounded-xl p-3 cursor-pointer transform transition-all duration-300 hover:bg-opacity-20 hover:scale-105 hover:shadow-lg flex flex-col items-center text-center aspect-square"
+                      >
+                        <div className="w-24 h-24 rounded-full bg-white bg-opacity-10 flex items-center justify-center overflow-hidden mb-3 mt-1">
+                          {logo ? (
+                            <img
+                              src={logo}
+                              alt={`${service.name} logo`}
+                              className="w-16 h-16 object-contain"
+                            />
+                          ) : (
+                            <div className="text-4xl font-bold text-white opacity-50">
+                              {service.name.charAt(0)}
+                            </div>
+                          )}
+                        </div>
+                        <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
+                          {service.name}
+                        </h3>
+                        <span
+                          className={`px-4 py-1 rounded-full text-base font-medium mt-auto mb-1 ${isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+                        >
+                          {isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-        <aside className="w-[450px] bg-black bg-opacity-20 border-l border-white border-opacity-10 overflow-y-auto p-5 pt-3">
-          <h2 className="text-2xl font-bold text-indigo-400 mb-4 text-center">Services</h2>
-          {loading ? (
-            <div className="flex justify-center items-center h-40">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-            </div>
-          ) : error ? (
-            <div className="text-center py-10">
-              <p className="text-red-400 mb-2">Error loading services</p>
-              <p className="text-sm text-gray-400">{error}</p>
-            </div>
-          ) : services.length === 0 ? (
-            <div className="text-center py-10">
-              <p className="text-gray-400">No services available</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-3">
-              {services.map((service) => {
-                const isActive = activeServices.includes(service.name);
-                const logo = getServiceLogo(service.name);
-                return (
-                  <div
-                    key={service.name}
-                    onClick={() => handleServiceClick(service.name)}
-                    className="bg-white bg-opacity-10 rounded-xl p-3 cursor-pointer transform transition-all duration-300 hover:bg-opacity-20 hover:scale-105 hover:shadow-lg flex flex-col items-center text-center aspect-square"
-                  >
-                    <div className="w-14 h-14 rounded-full bg-white bg-opacity-10 flex items-center justify-center overflow-hidden mb-3 mt-1">
-                      {logo ? (
-                        <img
-                          src={logo}
-                          alt={`${service.name} logo`}
-                          className="w-10 h-10 object-contain"
-                        />
-                      ) : (
-                        <div className="text-2xl font-bold text-white opacity-50">
-                          {service.name.charAt(0)}
-                        </div>
-                      )}
-                    </div>
-                    <h3 className="text-sm font-semibold text-white mb-2 line-clamp-2">
-                      {service.name}
-                    </h3>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium mt-auto mb-1 ${isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
-                    >
-                      {isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </aside>
       </div>
     </div>
   );
