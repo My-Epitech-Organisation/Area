@@ -51,7 +51,9 @@ const Signup: React.FC = () => {
         >
           <div className="flex flex-col gap-4">
             {generalError && (
-              <div className="text-theme-error text-sm p-3 bg-red-900/20 rounded">{generalError}</div>
+              <div className="text-theme-error text-sm p-3 bg-red-900/20 rounded">
+                {generalError}
+              </div>
             )}
 
             <label className="text-sm text-theme-secondary">Username</label>
@@ -113,7 +115,10 @@ const Signup: React.FC = () => {
               {loading ? 'Registering…' : 'Register'}
             </button>
 
-            <a href="/login" className="mt-2 text-sm text-theme-secondary underline text-center block">
+            <a
+              href="/login"
+              className="mt-2 text-sm text-theme-secondary underline text-center block"
+            >
               Already have an account? Log in
             </a>
           </div>
