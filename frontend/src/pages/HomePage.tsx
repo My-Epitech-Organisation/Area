@@ -75,10 +75,10 @@ const Homepage: React.FC = () => {
                 <div className="w-full h-full bg-tl" />
               </div>
               <div className="relative z-10 text-center max-w-4xl mx-auto">
-                <h2 className="mb-8 md:mb-16 text-2xl md:text-4xl lg:text-6xl xl:text-9xl text-primary font-semibold">
+                <h2 className="mb-8 md:mb-16 text-2xl md:text-4xl lg:text-6xl xl:text-9xl text-theme-primary font-semibold">
                   AREA
                 </h2>
-                <p className="text-lg md:text-xl lg:text-3xl xl:text-5xl text-muted mt-4 px-4">
+                <p className="text-lg md:text-xl lg:text-3xl xl:text-5xl text-theme-secondary mt-4 px-4">
                   &quot;Connect services, trigger actions: automate your routine and let your tools
                   work for you.&quot;
                 </p>
@@ -100,10 +100,10 @@ const Homepage: React.FC = () => {
                 <div className="w-full h-full bg-tr" />
               </div>
               <div className="relative z-10 text-center w-full max-w-6xl mx-auto px-2">
-                <h2 className="mb-2 md:mb-16 text-lg md:text-4xl lg:text-6xl xl:text-9xl text-white font-semibold leading-tight">
+                <h2 className="mb-2 md:mb-16 text-lg md:text-4xl lg:text-6xl xl:text-9xl text-theme-primary font-semibold leading-tight">
                   Discover AREA
                 </h2>
-                <p className="text-sm md:text-xl lg:text-3xl xl:text-5xl text-gray-300 mt-1 md:mt-4 px-1 md:px-2 leading-snug">
+                <p className="text-sm md:text-xl lg:text-3xl xl:text-5xl text-theme-secondary mt-1 md:mt-4 px-1 md:px-2 leading-snug">
                   AREA connects your favorite services and creates action→reaction rules to automate
                   daily tasks.
                   <span className="hidden sm:inline"> Start by exploring the sections below.</span>
@@ -198,10 +198,10 @@ const Homepage: React.FC = () => {
                 <div className="w-full h-full bg-bl" />
               </div>
               <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
-                <h2 className="text-2xl md:text-4xl lg:text-6xl xl:text-9xl text-primary font-semibold">
+                <h2 className="text-2xl md:text-4xl lg:text-6xl xl:text-9xl text-theme-primary font-semibold">
                   Get started with AREA
                 </h2>
-                <p className="text-base md:text-xl lg:text-3xl xl:text-5xl text-muted mt-2 md:mt-4 px-2">
+                <p className="text-base md:text-xl lg:text-3xl xl:text-5xl text-theme-secondary mt-2 md:mt-4 px-2">
                   Sign up or log in to start creating automations, manage your integrations and
                   access your personal dashboard.
                 </p>

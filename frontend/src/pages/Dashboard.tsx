@@ -359,12 +359,12 @@ const Dashboard: React.FC = () => {
       <div className="flex flex-1">
         <div className="flex-1 p-4 md:p-6 flex flex-col items-center overflow-y-auto">
           <header className="w-full flex flex-col items-center pt-4 mb-4">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center text-white mb-2">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center text-theme-primary mb-2">
               Dashboard
             </h1>
             <div className="w-full flex items-center justify-center">
               {user ? (
-                <p className="text-xl md:text-2xl lg:text-3xl font-semibold text-indigo-300 mt-2 animate-fadeIn">
+                <p className="text-xl md:text-2xl lg:text-3xl font-semibold text-theme-accent mt-2 animate-fadeIn">
                   Welcome back, {user.username || user.name}!
                 </p>
               ) : (
@@ -380,8 +380,8 @@ const Dashboard: React.FC = () => {
             </div>
           </header>
           <div className="w-full flex flex-col gap-4 mb-4">
-            <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-gray-200">
-              <h2 className="text-xl font-semibold text-indigo-300 mb-3">Service Activity</h2>
+            <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-theme-primary">
+              <h2 className="text-xl font-semibold text-theme-accent mb-3">Service Activity</h2>
               {activeServices.length > 0 ? (
                 <>
                   <div className="h-32 md:h-[180px] relative">
@@ -430,14 +430,14 @@ const Dashboard: React.FC = () => {
               )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-gray-200">
-                <h2 className="text-xl font-semibold text-indigo-300 mb-3">Services Usage</h2>
+              <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-theme-primary">
+                <h2 className="text-xl font-semibold text-theme-accent mb-3">Services Usage</h2>
                 <div className="flex justify-center h-32 md:h-[180px]">
                   <ServiceUsageChart services={services} activeServices={activeServices} />
                 </div>
               </div>
-              <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-gray-200">
-                <h2 className="text-xl font-semibold text-indigo-300 mb-3">Quick Actions</h2>
+              <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-theme-primary">
+                <h2 className="text-xl font-semibold text-theme-accent mb-3">Quick Actions</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button
                     onClick={() => navigate('/services')}

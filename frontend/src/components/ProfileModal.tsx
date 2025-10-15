@@ -47,14 +47,14 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
         className="bg-gradient-to-br from-gray-900 to-indigo-900 rounded-xl border border-indigo-500/30 shadow-2xl p-6 max-w-md w-full mx-4 animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-2xl font-bold text-white mb-2">{title}</h3>
-        <p className="text-indigo-200 mb-6">{message}</p>
+        <h3 className="text-2xl font-bold text-theme-primary mb-2">{title}</h3>
+        <p className="text-theme-muted mb-6">{message}</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
               htmlFor="current-password"
-              className="block text-sm font-medium text-indigo-200 mb-1"
+              className="form-label"
             >
               Current Password
             </label>
@@ -64,7 +64,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="form-input"
               placeholder="Enter your current password"
               required
             />
@@ -74,14 +74,14 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
             <button
               type="button"
               onClick={handleCancel}
-              className="w-1/2 py-3 px-4 rounded-lg bg-gray-600 hover:bg-gray-500 text-white font-medium transition-all duration-300"
+              className="btn-secondary w-1/2"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!password}
-              className={`w-1/2 py-3 px-4 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium transition-all duration-300 ${!password ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`btn-primary w-1/2 ${!password ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
               Confirm
             </button>
