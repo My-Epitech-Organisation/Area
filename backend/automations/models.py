@@ -31,6 +31,11 @@ class Action(models.Model):
     )
     name = models.CharField(max_length=100)
     description = models.TextField()
+    config_schema = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="JSON schema defining required configuration fields for this action",
+    )
 
     def __str__(self):
         return f"{self.service.name}: {self.name}"
@@ -46,6 +51,11 @@ class Reaction(models.Model):
     )
     name = models.CharField(max_length=100)
     description = models.TextField()
+    config_schema = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="JSON schema defining required configuration fields for this reaction",
+    )
 
     def __str__(self):
         return f"{self.service.name}: {self.name}"
