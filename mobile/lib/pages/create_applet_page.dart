@@ -4,6 +4,7 @@ import '../widgets/create_applet/create_applet_widgets.dart';
 import '../providers/service_catalog_provider.dart';
 import '../providers/connected_services_provider.dart';
 import '../providers/navigation_provider.dart';
+import '../providers/automation_stats_provider.dart';
 import '../services/applet_service.dart';
 
 class CreateAppletPage extends StatefulWidget {
@@ -283,6 +284,14 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
       debugPrint(
         '✅ Automation created successfully: ${applet.name} (ID: ${applet.id})',
       );
+
+      // Refresh statistics to reflect the new automation
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          final statsProvider = context.read<AutomationStatsProvider>();
+          await statsProvider.loadAllStats(forceRefresh: true);
+        });
+      }
 
       if (mounted) {
         debugPrint('📱 Showing success snackbar...');

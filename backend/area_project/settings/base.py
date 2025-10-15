@@ -231,6 +231,10 @@ OAUTH2_PROVIDERS = {
 # OAuth2 state expiry time (seconds)
 OAUTH2_STATE_EXPIRY = 1200  # 20 minutes (increased for slow authorization)
 
+# Google Sign-In Configuration (for mobile apps)
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+
 # Security Settings (base - extended per environment)
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
