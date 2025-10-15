@@ -146,8 +146,6 @@
   --profile-end: #4f3fff; /* indigo-700 */
 
   /* Legacy variables (keeping for backward compatibility) */
-  --text-primary: #fff;
-  --text-muted: #d1d5db; /* gray-300 */
   --accent: #c7d2fe; /* indigo-200 */
   --card-bg: rgb(255 255 255 / 4%);
   --card-border: rgb(255 255 255 / 8%);
@@ -271,7 +269,12 @@
 }
 
 .bg-gradient-navbar-mobile {
-  background: linear-gradient(to bottom right, var(--color-primary-dark), var(--color-black), var(--color-secondary));
+  background: linear-gradient(
+    to bottom right,
+    var(--color-primary-dark),
+    var(--color-black),
+    var(--color-secondary)
+  );
 }
 
 .bg-gradient-avatar {
@@ -298,15 +301,6 @@
   background: linear-gradient(to top, var(--color-primary), var(--color-primary-light));
 }
 
-.bg-profile {
-  background: linear-gradient(
-    135deg,
-    var(--profile-start) 0%,
-    var(--profile-mid) 40%,
-    var(--profile-end) 100%
-  );
-}
-
 .text-primary {
   color: var(--text-primary) !important;
 }
@@ -325,15 +319,6 @@
 
 .card-border {
   border: 1px solid var(--card-border) !important;
-}
-
-.btn-primary {
-  background: var(--btn-bg) !important;
-  color: var(--btn-text) !important;
-}
-
-.btn-primary:hover {
-  background: var(--btn-hover) !important;
 }
 
 .scrollbar-visible::-webkit-scrollbar {
@@ -383,28 +368,64 @@
    ========================================================================== */
 
 /* Text Colors */
-.text-theme-primary { color: var(--text-primary); }
-.text-theme-secondary { color: var(--text-secondary); }
-.text-theme-muted { color: var(--text-muted); }
-.text-theme-accent { color: var(--text-accent); }
-.text-theme-success { color: var(--text-success); }
-.text-theme-warning { color: var(--text-warning); }
-.text-theme-error { color: var(--text-error); }
+.text-theme-primary {
+  color: var(--text-primary);
+}
+.text-theme-secondary {
+  color: var(--text-secondary);
+}
+.text-theme-muted {
+  color: var(--text-muted);
+}
+.text-theme-accent {
+  color: var(--text-accent);
+}
+.text-theme-success {
+  color: var(--text-success);
+}
+.text-theme-warning {
+  color: var(--text-warning);
+}
+.text-theme-error {
+  color: var(--text-error);
+}
 
 /* Background Colors */
-.bg-theme-primary { background-color: var(--bg-primary); }
-.bg-theme-secondary { background-color: var(--bg-secondary); }
-.bg-theme-tertiary { background-color: var(--bg-tertiary); }
-.bg-theme-accent { background-color: var(--bg-accent); }
-.bg-theme-surface { background-color: var(--bg-surface); }
-.bg-theme-surface-hover { background-color: var(--bg-surface-hover); }
-.bg-theme-overlay { background-color: var(--bg-overlay); }
+.bg-theme-primary {
+  background-color: var(--bg-primary);
+}
+.bg-theme-secondary {
+  background-color: var(--bg-secondary);
+}
+.bg-theme-tertiary {
+  background-color: var(--bg-tertiary);
+}
+.bg-theme-accent {
+  background-color: var(--bg-accent);
+}
+.bg-theme-surface {
+  background-color: var(--bg-surface);
+}
+.bg-theme-surface-hover {
+  background-color: var(--bg-surface-hover);
+}
+.bg-theme-overlay {
+  background-color: var(--bg-overlay);
+}
 
 /* Border Colors */
-.border-theme-primary { border-color: var(--border-primary); }
-.border-theme-secondary { border-color: var(--border-secondary); }
-.border-theme-accent { border-color: var(--border-accent); }
-.border-theme-focus { border-color: var(--border-focus); }
+.border-theme-primary {
+  border-color: var(--border-primary);
+}
+.border-theme-secondary {
+  border-color: var(--border-secondary);
+}
+.border-theme-accent {
+  border-color: var(--border-accent);
+}
+.border-theme-focus {
+  border-color: var(--border-focus);
+}
 
 /* Form Styles */
 .form-input {
@@ -518,10 +539,18 @@
 }
 
 /* Status Colors */
-.text-required { color: var(--color-error); }
-.bg-success { background-color: var(--color-success); }
-.bg-warning { background-color: var(--color-warning); }
-.bg-error { background-color: var(--color-error); }
+.text-required {
+  color: var(--color-error);
+}
+.bg-success {
+  background-color: var(--color-success);
+}
+.bg-warning {
+  background-color: var(--color-warning);
+}
+.bg-error {
+  background-color: var(--color-error);
+}
 
 /* ==========================================================================
    ANIMATIONS
