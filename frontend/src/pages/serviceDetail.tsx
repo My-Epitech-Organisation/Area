@@ -191,25 +191,6 @@ const ServiceDetail: React.FC = () => {
       ))}
 
       <div className="max-w-6xl mx-auto pt-20">
-        {/* Debug panel - Remove after fixing */}
-        {service && (
-          <div className="mb-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-xs text-yellow-300 font-mono">
-            <div>
-              <strong>Debug Info:</strong>
-            </div>
-            <div>Service: {service.name} (requires OAuth: {requiresOAuth ? 'yes' : 'no'})</div>
-            <div>Is Connected: {isConnected ? 'YES ✅' : 'NO ❌'}</div>
-            <div>Connected Services ({connectedServices.length}):</div>
-            <ul className="ml-4">
-              {connectedServices.map((s, i) => (
-                <li key={i}>
-                  • {s.service_name} (expired: {s.is_expired ? 'yes' : 'no'})
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
         <Link
           to="/services"
           className="text-indigo-300 hover:text-indigo-100 flex items-center gap-2 mb-8 transition-colors"
