@@ -3,6 +3,101 @@
 @tailwind utilities;
 
 :root {
+  /* ==========================================================================
+     COLOR SYSTEM - Centralized theme variables
+     ========================================================================== */
+
+  /* Primary Colors */
+  --color-primary: #6366f1; /* indigo-500 */
+  --color-primary-dark: #4f46e5; /* indigo-600 */
+  --color-primary-light: #a5b4fc; /* indigo-300 */
+
+  /* Secondary Colors */
+  --color-secondary: #8b5cf6; /* violet-500 */
+  --color-secondary-dark: #7c3aed; /* violet-600 */
+  --color-secondary-light: #c4b5fd; /* violet-300 */
+
+  /* Accent Colors */
+  --color-accent: #06b6d4; /* cyan-500 */
+  --color-accent-dark: #0891b2; /* cyan-600 */
+  --color-accent-light: #67e8f9; /* cyan-300 */
+
+  /* Status Colors */
+  --color-success: #10b981; /* emerald-500 */
+  --color-success-dark: #059669; /* emerald-600 */
+  --color-success-light: #6ee7b7; /* emerald-300 */
+
+  --color-warning: #f59e0b; /* amber-500 */
+  --color-warning-dark: #d97706; /* amber-600 */
+  --color-warning-light: #fcd34d; /* amber-300 */
+
+  --color-error: #ef4444; /* red-500 */
+  --color-error-dark: #dc2626; /* red-600 */
+  --color-error-light: #fca5a5; /* red-300 */
+
+  /* Neutral Colors */
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  /* Text Colors */
+  --text-primary: var(--color-white);
+  --text-secondary: var(--color-gray-300);
+  --text-muted: var(--color-gray-400);
+  --text-accent: var(--color-primary-light);
+  --text-success: var(--color-success-light);
+  --text-warning: var(--color-warning-light);
+  --text-error: var(--color-error-light);
+
+  /* Background Colors */
+  --bg-primary: var(--color-gray-900);
+  --bg-secondary: var(--color-gray-800);
+  --bg-tertiary: var(--color-gray-700);
+  --bg-accent: var(--color-primary-dark);
+  --bg-surface: rgba(255, 255, 255, 0.05);
+  --bg-surface-hover: rgba(255, 255, 255, 0.1);
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+
+  /* Border Colors */
+  --border-primary: rgba(255, 255, 255, 0.1);
+  --border-secondary: rgba(255, 255, 255, 0.05);
+  --border-accent: var(--color-primary);
+  --border-focus: var(--color-primary-light);
+
+  /* Form Colors */
+  --form-bg: var(--color-gray-700);
+  --form-border: var(--color-gray-600);
+  --form-border-focus: var(--color-primary);
+  --form-text: var(--color-white);
+  --form-placeholder: var(--color-gray-400);
+
+  /* Button Colors */
+  --btn-primary-bg: var(--color-primary);
+  --btn-primary-text: var(--color-white);
+  --btn-primary-hover: var(--color-primary-dark);
+
+  --btn-secondary-bg: var(--bg-surface);
+  --btn-secondary-text: var(--color-white);
+  --btn-secondary-hover: var(--bg-surface-hover);
+
+  --btn-success-bg: var(--color-success);
+  --btn-success-text: var(--color-white);
+  --btn-success-hover: var(--color-success-dark);
+
+  --btn-error-bg: var(--color-error);
+  --btn-error-text: var(--color-white);
+  --btn-error-hover: var(--color-error-dark);
+
   /* quadrant gradients */
   --tl-start: #2b2496; /* indigo-800 */
   --tl-mid: #000; /* black */
@@ -50,16 +145,12 @@
   --profile-mid: #000;
   --profile-end: #4f3fff; /* indigo-700 */
 
-  /* typography */
+  /* Legacy variables (keeping for backward compatibility) */
   --text-primary: #fff;
   --text-muted: #d1d5db; /* gray-300 */
   --accent: #c7d2fe; /* indigo-200 */
-
-  /* cards / surfaces */
   --card-bg: rgb(255 255 255 / 4%);
   --card-border: rgb(255 255 255 / 8%);
-
-  /* buttons */
   --btn-bg: #eef2ff; /* indigo-100 */
   --btn-text: #000;
   --btn-hover: #c7d2fe; /* indigo-200 */
@@ -207,6 +298,155 @@
     transform: translateY(0) scale(1);
   }
 }
+
+.bg-page-profile {
+  background: linear-gradient(
+    135deg,
+    var(--profile-start) 0%,
+    var(--profile-mid) 50%,
+    var(--profile-end) 100%
+  );
+}
+
+/* ==========================================================================
+   UTILITY CLASSES - Semantic color classes for consistent theming
+   ========================================================================== */
+
+/* Text Colors */
+.text-theme-primary { color: var(--text-primary); }
+.text-theme-secondary { color: var(--text-secondary); }
+.text-theme-muted { color: var(--text-muted); }
+.text-theme-accent { color: var(--text-accent); }
+.text-theme-success { color: var(--text-success); }
+.text-theme-warning { color: var(--text-warning); }
+.text-theme-error { color: var(--text-error); }
+
+/* Background Colors */
+.bg-theme-primary { background-color: var(--bg-primary); }
+.bg-theme-secondary { background-color: var(--bg-secondary); }
+.bg-theme-tertiary { background-color: var(--bg-tertiary); }
+.bg-theme-accent { background-color: var(--bg-accent); }
+.bg-theme-surface { background-color: var(--bg-surface); }
+.bg-theme-surface-hover { background-color: var(--bg-surface-hover); }
+.bg-theme-overlay { background-color: var(--bg-overlay); }
+
+/* Border Colors */
+.border-theme-primary { border-color: var(--border-primary); }
+.border-theme-secondary { border-color: var(--border-secondary); }
+.border-theme-accent { border-color: var(--border-accent); }
+.border-theme-focus { border-color: var(--border-focus); }
+
+/* Form Styles */
+.form-input {
+  @apply w-full px-3 py-2 rounded-lg transition-colors;
+  background-color: var(--form-bg);
+  border: 1px solid var(--form-border);
+  color: var(--form-text);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--form-border-focus);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.form-input::placeholder {
+  color: var(--form-placeholder);
+}
+
+.form-label {
+  @apply block text-sm font-medium mb-1;
+  color: var(--text-secondary);
+}
+
+.form-select {
+  @apply form-input;
+}
+
+.form-select option {
+  background-color: var(--bg-primary);
+  color: var(--form-text);
+}
+
+/* Button Styles */
+.btn-primary {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors;
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+}
+
+.btn-primary:hover {
+  background-color: var(--btn-primary-hover);
+}
+
+.btn-secondary {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors;
+  background-color: var(--btn-secondary-bg);
+  color: var(--btn-secondary-text);
+  border: 1px solid var(--border-primary);
+}
+
+.btn-secondary:hover {
+  background-color: var(--btn-secondary-hover);
+}
+
+.btn-success {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors;
+  background-color: var(--btn-success-bg);
+  color: var(--btn-success-text);
+}
+
+.btn-success:hover {
+  background-color: var(--btn-success-hover);
+}
+
+.btn-error {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors;
+  background-color: var(--btn-error-bg);
+  color: var(--btn-error-text);
+}
+
+.btn-error:hover {
+  background-color: var(--btn-error-hover);
+}
+
+/* Card Styles */
+.card-surface {
+  @apply rounded-lg border;
+  background-color: var(--bg-surface);
+  border-color: var(--border-primary);
+}
+
+.card-overlay {
+  @apply rounded-2xl border;
+  background-color: var(--bg-surface);
+  border-color: var(--border-secondary);
+  backdrop-filter: blur(8px);
+}
+
+/* Navigation Styles */
+.nav-link {
+  @apply text-sm lg:text-lg font-semibold transition;
+  color: var(--text-primary);
+}
+
+.nav-link:hover {
+  color: var(--text-accent);
+}
+
+.nav-link-active {
+  color: var(--text-accent);
+}
+
+/* Status Colors */
+.text-required { color: var(--color-error); }
+.bg-success { background-color: var(--color-success); }
+.bg-warning { background-color: var(--color-warning); }
+.bg-error { background-color: var(--color-error); }
+
+/* ==========================================================================
+   ANIMATIONS
+   ========================================================================== */
 
 .animate-appear {
   animation: appear 360ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
