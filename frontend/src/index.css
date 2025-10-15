@@ -237,6 +237,76 @@
   );
 }
 
+.bg-page-about {
+  background: linear-gradient(
+    to bottom right,
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(31, 41, 55, 0.8) 50%,
+    #312e81 100%
+  );
+}
+
+/* ==========================================================================
+   COMPONENT GRADIENT CLASSES - Reusable gradient backgrounds for components
+   ========================================================================== */
+
+.bg-gradient-primary {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+}
+
+.bg-gradient-secondary {
+  background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-dark));
+}
+
+.bg-gradient-accent {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
+}
+
+.bg-gradient-surface {
+  background: linear-gradient(135deg, var(--bg-surface), var(--bg-surface-hover));
+}
+
+.bg-gradient-modal {
+  background: linear-gradient(to bottom right, var(--color-gray-900), var(--color-primary));
+}
+
+.bg-gradient-navbar-mobile {
+  background: linear-gradient(to bottom right, var(--color-primary-dark), var(--color-black), var(--color-secondary));
+}
+
+.bg-gradient-avatar {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+}
+
+.bg-gradient-button-primary {
+  background: linear-gradient(to right, var(--color-primary), var(--color-primary-dark));
+}
+
+.bg-gradient-button-primary:hover {
+  background: linear-gradient(to right, var(--color-primary-dark), var(--color-primary));
+}
+
+.bg-gradient-button-secondary {
+  background: linear-gradient(to right, var(--color-secondary), var(--color-secondary-dark));
+}
+
+.bg-gradient-button-secondary:hover {
+  background: linear-gradient(to right, var(--color-secondary-dark), var(--color-secondary));
+}
+
+.bg-gradient-chart-bar {
+  background: linear-gradient(to top, var(--color-primary), var(--color-primary-light));
+}
+
+.bg-profile {
+  background: linear-gradient(
+    135deg,
+    var(--profile-start) 0%,
+    var(--profile-mid) 40%,
+    var(--profile-end) 100%
+  );
+}
+
 .text-primary {
   color: var(--text-primary) !important;
 }

@@ -44,7 +44,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
       <div
-        className="bg-gradient-to-br from-gray-900 to-indigo-900 rounded-xl border border-indigo-500/30 shadow-2xl p-6 max-w-md w-full mx-4 animate-fade-in"
+        className="bg-gradient-modal rounded-xl border border-indigo-500/30 shadow-2xl p-6 max-w-md w-full mx-4 animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-2xl font-bold text-theme-primary mb-2">{title}</h3>

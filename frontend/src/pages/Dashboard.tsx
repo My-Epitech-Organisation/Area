@@ -396,7 +396,7 @@ const Dashboard: React.FC = () => {
                         return (
                           <div key={day} className="flex flex-col items-center w-1/7">
                             <div
-                              className="w-8 bg-gradient-to-t from-indigo-600 to-indigo-400 rounded-t-sm"
+                              className="w-8 bg-gradient-chart-bar rounded-t-sm"
                               style={{
                                 height: `${(i >= 5 ? 80 : 40) + Math.random() * heightMultiplier}px`,
                                 opacity: i === 6 ? 1 : 0.7 + i * 0.05,
@@ -422,7 +422,7 @@ const Dashboard: React.FC = () => {
                   <p className="text-gray-400 mb-3">No active services yet</p>
                   <button
                     onClick={() => navigate('/services')}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white transition-colors"
+                    className="px-4 py-2 bg-gradient-button-primary hover:bg-gradient-button-primary rounded-lg text-white transition-colors"
                   >
                     Explore Services
                   </button>
@@ -441,7 +441,7 @@ const Dashboard: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button
                     onClick={() => navigate('/services')}
-                    className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
+                    className="bg-gradient-button-primary hover:bg-gradient-button-primary text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -461,7 +461,7 @@ const Dashboard: React.FC = () => {
                   </button>
                   <button
                     onClick={() => navigate('/profile')}
-                    className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
+                    className="bg-gradient-button-secondary hover:bg-gradient-button-secondary text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
