@@ -104,7 +104,8 @@ const Homepage: React.FC = () => {
                   Discover AREA
                 </h2>
                 <p className="text-sm md:text-xl lg:text-3xl xl:text-5xl text-gray-300 mt-1 md:mt-4 px-1 md:px-2 leading-snug">
-                  AREA connects your favorite services and creates action→reaction rules to automate daily tasks.
+                  AREA connects your favorite services and creates action→reaction rules to automate
+                  daily tasks.
                   <span className="hidden sm:inline"> Start by exploring the sections below.</span>
                 </p>
                 <div className="mt-3 md:mt-10 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6 max-w-6xl mx-auto">
@@ -112,7 +113,9 @@ const Homepage: React.FC = () => {
                     <div className="icon-accent text-lg md:text-2xl lg:text-4xl">
                       <i className="fa-solid fa-bolt"></i>
                     </div>
-                    <h3 className="text-sm md:text-xl lg:text-2xl text-primary font-semibold leading-tight">Areaction</h3>
+                    <h3 className="text-sm md:text-xl lg:text-2xl text-primary font-semibold leading-tight">
+                      Areaction
+                    </h3>
                     <p className="text-xs md:text-sm lg:text-lg text-muted leading-tight">
                       Create your own automation by connecting actions and reactions.
                     </p>
@@ -127,7 +130,9 @@ const Homepage: React.FC = () => {
                     <div className="icon-accent text-lg md:text-2xl lg:text-4xl">
                       <i className="fa-solid fa-gear"></i>
                     </div>
-                    <h3 className="text-sm md:text-xl lg:text-2xl text-primary font-semibold leading-tight">Services</h3>
+                    <h3 className="text-sm md:text-xl lg:text-2xl text-primary font-semibold leading-tight">
+                      Services
+                    </h3>
                     <p className="text-xs md:text-sm lg:text-lg text-muted leading-tight">
                       Browse available actions and reactions to connect your apps.
                     </p>
@@ -143,7 +148,9 @@ const Homepage: React.FC = () => {
                     <div className="icon-accent text-lg md:text-2xl lg:text-4xl">
                       <i className="fa-solid fa-users"></i>
                     </div>
-                    <h3 className="text-sm md:text-xl lg:text-2xl text-primary font-semibold leading-tight">About</h3>
+                    <h3 className="text-sm md:text-xl lg:text-2xl text-primary font-semibold leading-tight">
+                      About
+                    </h3>
                     <p className="text-xs md:text-sm lg:text-lg text-muted leading-tight">
                       Meet the team and learn the vision behind AREA project and its goals.
                     </p>
@@ -159,7 +166,9 @@ const Homepage: React.FC = () => {
                     <div className="icon-accent text-lg md:text-2xl lg:text-4xl">
                       <i className="fa-solid fa-table-columns"></i>
                     </div>
-                    <h3 className="text-sm md:text-xl lg:text-2xl text-primary font-semibold leading-tight">Dashboard</h3>
+                    <h3 className="text-sm md:text-xl lg:text-2xl text-primary font-semibold leading-tight">
+                      Dashboard
+                    </h3>
                     <p className="text-xs md:text-sm lg:text-lg text-muted leading-tight">
                       Access your automations, history, stats and personal settings.
                     </p>
