@@ -141,7 +141,7 @@ const Navbar: React.FC = () => {
 
         {/* Mobile menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-gradient-to-br from-indigo-800 via-black to-purple-600 backdrop-blur-sm border-t border-white/5">
+          <div className="md:hidden bg-gradient-navbar-mobile backdrop-blur-sm border-t border-white/5">
             <div className="px-4 py-4 space-y-4">
               <Link
                 to="/homepage"

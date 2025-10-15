@@ -288,7 +288,7 @@ const Profile: React.FC = () => {
             )}
 
             <div className="flex items-center gap-6 mb-8">
-              <div className="w-24 h-24 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white text-4xl font-bold shadow-lg transition-transform duration-300 hover:scale-105">
+              <div className="w-24 h-24 bg-gradient-avatar rounded-full flex items-center justify-center text-white text-4xl font-bold shadow-lg transition-transform duration-300 hover:scale-105">
                 {user?.username?.[0]?.toUpperCase() || user?.name?.[0]?.toUpperCase() || 'U'}
               </div>
               <div>
@@ -378,7 +378,7 @@ const Profile: React.FC = () => {
                     <button
                       type="submit"
                       disabled={saving}
-                      className={`w-1/2 py-3 px-6 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-lg transition-all duration-300 ${saving ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      className={`w-1/2 py-3 px-6 rounded-lg bg-gradient-button-primary hover:bg-gradient-button-primary text-white font-medium text-lg transition-all duration-300 ${saving ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
                       {saving ? 'Saving...' : 'Save Changes'}
                     </button>
@@ -412,7 +412,7 @@ const Profile: React.FC = () => {
                   <div className="pt-4">
                     <button
                       onClick={() => setIsEditMode(true)}
-                      className="w-full py-3 px-6 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-lg transition-all duration-300"
+                      className="w-full py-3 px-6 rounded-lg bg-gradient-button-primary hover:bg-gradient-button-primary text-white font-medium text-lg transition-all duration-300"
                     >
                       Update Profile
                     </button>
