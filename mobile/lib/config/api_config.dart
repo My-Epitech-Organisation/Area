@@ -96,6 +96,7 @@ class ApiConfig {
   static String serviceDisconnectUrl(String provider) =>
       '$authBaseUrl/services/$provider/disconnect/';
   static String get connectedServicesUrl => '$authBaseUrl/services/';
+  static String get connectionHistoryUrl => '$authBaseUrl/oauth/history/';
 
   static String automationUrl(int id) => '$baseUrl/api/areas/$id/';
   static String automationToggleUrl(int id) => '$baseUrl/api/areas/$id/toggle/';
