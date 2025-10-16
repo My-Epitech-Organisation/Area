@@ -29,7 +29,11 @@ const ServiceDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // OAuth hooks
-  const { services: connectedServices, loading: loadingOAuth, refetch: refetchServices } = useConnectedServices();
+  const {
+    services: connectedServices,
+    loading: loadingOAuth,
+    refetch: refetchServices,
+  } = useConnectedServices();
   const { initiateOAuth, loading: connectingOAuth } = useInitiateOAuth();
   const { disconnectService, loading: disconnectingOAuth } = useDisconnectService();
 
@@ -130,7 +134,8 @@ const ServiceDetail: React.FC = () => {
   const requiresOAuth = service && oauthProviders.includes(service.name.toLowerCase());
 
   // For google_calendar, check if 'google' OAuth is connected
-  const oauthServiceName = service.name.toLowerCase() === 'google_calendar' ? 'google' : service.name.toLowerCase();
+  const oauthServiceName =
+    service.name.toLowerCase() === 'google_calendar' ? 'google' : service.name.toLowerCase();
 
   const isConnected =
     requiresOAuth &&

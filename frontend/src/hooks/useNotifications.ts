@@ -23,21 +23,33 @@ export const useNotifications = () => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   }, []);
 
-  const success = useCallback((message: string) => {
-    return addNotification('success', message);
-  }, [addNotification]);
+  const success = useCallback(
+    (message: string) => {
+      return addNotification('success', message);
+    },
+    [addNotification]
+  );
 
-  const error = useCallback((message: string) => {
-    return addNotification('error', message);
-  }, [addNotification]);
+  const error = useCallback(
+    (message: string) => {
+      return addNotification('error', message);
+    },
+    [addNotification]
+  );
 
-  const info = useCallback((message: string) => {
-    return addNotification('info', message);
-  }, [addNotification]);
+  const info = useCallback(
+    (message: string) => {
+      return addNotification('info', message);
+    },
+    [addNotification]
+  );
 
-  const warning = useCallback((message: string) => {
-    return addNotification('warning', message);
-  }, [addNotification]);
+  const warning = useCallback(
+    (message: string) => {
+      return addNotification('warning', message);
+    },
+    [addNotification]
+  );
 
   return {
     notifications,
