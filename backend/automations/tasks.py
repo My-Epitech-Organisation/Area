@@ -408,7 +408,9 @@ def check_github_actions(self):
                 action_state, created = ActionState.objects.get_or_create(area=area)
 
                 # Prepare API request
-                api_url = f"https://api.github.com/repos/{owner_repo}/{repo_name}/issues"
+                api_url = (
+                    f"https://api.github.com/repos/{owner_repo}/{repo_name}/issues"
+                )
                 headers = {
                     "Authorization": f"Bearer {access_token}",
                     "Accept": "application/vnd.github+json",
@@ -685,7 +687,9 @@ def check_gmail_actions(self):
                 state.save()
 
             except Exception as e:
-                logger.error(f"Error checking Gmail for area '{area.name}': {e}", exc_info=True)
+                logger.error(
+                    f"Error checking Gmail for area '{area.name}': {e}", exc_info=True
+                )
                 skipped_count += 1
                 continue
 
@@ -1155,9 +1159,7 @@ def _execute_reaction_logic(
                 "X-GitHub-Api-Version": "2022-11-28",
             }
 
-            logger.info(
-                f"[REACTION GITHUB] Creating issue in {repository}: {title}"
-            )
+            logger.info(f"[REACTION GITHUB] Creating issue in {repository}: {title}")
 
             response = requests.post(api_url, json=payload, headers=headers, timeout=10)
 
@@ -1179,7 +1181,9 @@ def _execute_reaction_logic(
                 }
 
             elif response.status_code == 401:
-                error_msg = "GitHub authentication failed. Token may be invalid or expired."
+                error_msg = (
+                    "GitHub authentication failed. Token may be invalid or expired."
+                )
                 logger.error(f"[REACTION GITHUB] ❌ {error_msg}")
                 raise ValueError(error_msg)
 
@@ -1194,7 +1198,9 @@ def _execute_reaction_logic(
                 raise ValueError(error_msg)
 
             else:
-                error_msg = f"GitHub API error: {response.status_code} - {response.text}"
+                error_msg = (
+                    f"GitHub API error: {response.status_code} - {response.text}"
+                )
                 logger.error(f"[REACTION GITHUB] ❌ {error_msg}")
                 raise ValueError(error_msg)
 
@@ -1219,9 +1225,7 @@ def _execute_reaction_logic(
         # Get valid Google token
         access_token = OAuthManager.get_valid_token(area.owner, "google")
         if not access_token:
-            raise ValueError(
-                f"No valid Google token for user {area.owner.username}"
-            )
+            raise ValueError(f"No valid Google token for user {area.owner.username}")
 
         try:
             result = send_email(access_token, to, subject, body)
@@ -1245,9 +1249,7 @@ def _execute_reaction_logic(
         from .gmail_helper import mark_message_read
 
         # Get message_id from config or trigger_data
-        message_id = reaction_config.get("message_id") or trigger_data.get(
-            "message_id"
-        )
+        message_id = reaction_config.get("message_id") or trigger_data.get("message_id")
 
         if not message_id:
             raise ValueError("Message ID required to mark as read")
@@ -1274,9 +1276,7 @@ def _execute_reaction_logic(
         from .gmail_helper import add_label_to_message
 
         # Get message_id from config or trigger_data
-        message_id = reaction_config.get("message_id") or trigger_data.get(
-            "message_id"
-        )
+        message_id = reaction_config.get("message_id") or trigger_data.get("message_id")
         label_name = reaction_config.get("label")
 
         if not message_id or not label_name:
@@ -1309,7 +1309,9 @@ def _execute_reaction_logic(
 
         from .calendar_helper import create_event
 
-        summary = reaction_config.get("summary") or reaction_config.get("title", "AREA Event")
+        summary = reaction_config.get("summary") or reaction_config.get(
+            "title", "AREA Event"
+        )
         start = reaction_config.get("start")
         end = reaction_config.get("end")
         description = reaction_config.get("description", "")
@@ -1317,7 +1319,9 @@ def _execute_reaction_logic(
         attendees = reaction_config.get("attendees", [])
 
         if not start or not end:
-            raise ValueError("start and end datetime are required for calendar_create_event")
+            raise ValueError(
+                "start and end datetime are required for calendar_create_event"
+            )
 
         # Get valid Google token
         access_token = OAuthManager.get_valid_token(area.owner, "google")
@@ -1329,7 +1333,9 @@ def _execute_reaction_logic(
                 access_token, summary, start, end, description, location, attendees
             )
 
-            logger.info(f"[REACTION CALENDAR] Created event: {summary} ({result.get('htmlLink')})")
+            logger.info(
+                f"[REACTION CALENDAR] Created event: {summary} ({result.get('htmlLink')})"
+            )
             return {
                 "success": True,
                 "event_id": result["id"],
@@ -1362,7 +1368,9 @@ def _execute_reaction_logic(
             raise ValueError("No valid Google token")
 
         try:
-            result = update_event(access_token, event_id, summary, start, end, description)
+            result = update_event(
+                access_token, event_id, summary, start, end, description
+            )
 
             logger.info(f"[REACTION CALENDAR] Updated event: {result['summary']}")
             return {
