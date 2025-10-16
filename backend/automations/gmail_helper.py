@@ -10,7 +10,7 @@
 import base64
 import logging
 from email.mime.text import MIMEText
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -97,7 +97,10 @@ def get_message_details(access_token: str, message_id: str) -> Dict:
     try:
         service = get_gmail_service(access_token)
         message = (
-            service.users().messages().get(userId="me", id=message_id, format="full").execute()
+            service.users()
+            .messages()
+            .get(userId="me", id=message_id, format="full")
+            .execute()
         )
 
         # Parse headers
@@ -155,10 +158,7 @@ def send_email(access_token: str, to: str, subject: str, body: str) -> Dict:
 
         # Send message
         result = (
-            service.users()
-            .messages()
-            .send(userId="me", body={"raw": raw})
-            .execute()
+            service.users().messages().send(userId="me", body={"raw": raw}).execute()
         )
 
         logger.info(f"Sent Gmail message: {result['id']} to {to}")
@@ -208,9 +208,7 @@ def mark_message_read(access_token: str, message_id: str) -> Dict:
         raise
 
 
-def add_label_to_message(
-    access_token: str, message_id: str, label_name: str
-) -> Dict:
+def add_label_to_message(access_token: str, message_id: str, label_name: str) -> Dict:
     """
     Add a label to a Gmail message (creates label if it doesn't exist).
 
