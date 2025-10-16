@@ -17,6 +17,54 @@ from django.db import transaction
 from automations.models import Action, Reaction, Service
 
 
+def convert_to_json_schema(config_schema):
+    """
+    Convert our custom config schema to JSON Schema format.
+
+    Our format:
+    {
+        "field_name": {
+            "type": "string",
+            "label": "...",
+            "required": true,
+            ...
+        }
+    }
+
+    JSON Schema format:
+    {
+        "properties": {
+            "field_name": {
+                "type": "string",
+                ...
+            }
+        },
+        "required": ["field_name"]
+    }
+    """
+    if not config_schema:
+        return {}
+
+    properties = {}
+    required = []
+
+    for field_name, field_config in config_schema.items():
+        # Extract required flag
+        is_required = field_config.get("required", False)
+        if is_required:
+            required.append(field_name)
+
+        # Build property config (remove custom fields)
+        prop = {k: v for k, v in field_config.items() if k != "required"}
+        properties[field_name] = prop
+
+    result = {"properties": properties}
+    if required:
+        result["required"] = required
+
+    return result
+
+
 class Command(BaseCommand):
     """Initialize database with default services, actions, and reactions."""
 
@@ -138,13 +186,235 @@ class Command(BaseCommand):
                 "actions": [
                     {
                         "name": "gmail_new_email",
+                        "description": "Triggered when any new unread email is received",
+                        "config_schema": {},
+                    },
+                    {
+                        "name": "gmail_new_from_sender",
                         "description": (
-                            "Triggered when a new email is received "
-                            "matching specific criteria"
+                            "Triggered when email from specific sender is received"
                         ),
+                        "config_schema": {
+                            "sender_email": {
+                                "type": "string",
+                                "label": "Sender Email",
+                                "description": "Email address to monitor (e.g., boss@company.com)",
+                                "required": True,
+                                "placeholder": "example@gmail.com",
+                            },
+                        },
+                    },
+                    {
+                        "name": "gmail_new_with_label",
+                        "description": (
+                            "Triggered when email with specific label is received"
+                        ),
+                        "config_schema": {
+                            "label_name": {
+                                "type": "string",
+                                "label": "Gmail Label",
+                                "description": "Name of the Gmail label to monitor",
+                                "required": True,
+                                "placeholder": "Important",
+                            },
+                        },
+                    },
+                    {
+                        "name": "gmail_new_with_subject",
+                        "description": (
+                            "Triggered when email with subject containing text is received"
+                        ),
+                        "config_schema": {
+                            "subject_text": {
+                                "type": "string",
+                                "label": "Subject Contains",
+                                "description": "Text that must appear in the email subject",
+                                "required": True,
+                                "placeholder": "URGENT",
+                            },
+                        },
                     },
                 ],
-                "reactions": [],
+                "reactions": [
+                    {
+                        "name": "gmail_send_email",
+                        "description": "Send an email via Gmail",
+                        "config_schema": {
+                            "to": {
+                                "type": "string",
+                                "label": "Recipient Email",
+                                "description": "Email address of the recipient",
+                                "required": True,
+                                "placeholder": "example@gmail.com",
+                            },
+                            "subject": {
+                                "type": "string",
+                                "label": "Subject",
+                                "description": "Email subject line",
+                                "required": True,
+                                "placeholder": "Important notification",
+                            },
+                            "body": {
+                                "type": "text",
+                                "label": "Email Body",
+                                "description": "Email message content (supports variables: {trigger_data})",
+                                "required": True,
+                                "placeholder": "This is an automated message...",
+                            },
+                        },
+                    },
+                    {
+                        "name": "gmail_mark_read",
+                        "description": "Mark an email as read",
+                        "config_schema": {
+                            "message_id": {
+                                "type": "string",
+                                "label": "Message ID",
+                                "description": "Gmail message ID (automatically provided by trigger)",
+                                "required": False,
+                                "default": "{message_id}",
+                            },
+                        },
+                    },
+                    {
+                        "name": "gmail_add_label",
+                        "description": "Add a label to an email",
+                        "config_schema": {
+                            "message_id": {
+                                "type": "string",
+                                "label": "Message ID",
+                                "description": "Gmail message ID (automatically provided by trigger)",
+                                "required": False,
+                                "default": "{message_id}",
+                            },
+                            "label_name": {
+                                "type": "string",
+                                "label": "Label Name",
+                                "description": "Name of the label to add",
+                                "required": True,
+                                "placeholder": "Important",
+                            },
+                        },
+                    },
+                ],
+            },
+            {
+                "name": "google_calendar",
+                "description": "Google Calendar integration for events and scheduling",
+                "status": Service.Status.ACTIVE,
+                "actions": [
+                    {
+                        "name": "calendar_event_starting_soon",
+                        "description": ("Triggered when event starts in X minutes"),
+                        "config_schema": {
+                            "minutes_before": {
+                                "type": "number",
+                                "label": "Minutes Before",
+                                "description": "Trigger this many minutes before event starts",
+                                "required": True,
+                                "default": 15,
+                                "min": 1,
+                                "max": 1440,
+                            },
+                        },
+                    },
+                    {
+                        "name": "calendar_new_event",
+                        "description": "Triggered when new event is created",
+                        "config_schema": {},
+                    },
+                ],
+                "reactions": [
+                    {
+                        "name": "calendar_create_event",
+                        "description": "Create a new calendar event",
+                        "config_schema": {
+                            "summary": {
+                                "type": "string",
+                                "label": "Event Title",
+                                "description": "Title of the calendar event",
+                                "required": True,
+                                "placeholder": "Team meeting",
+                            },
+                            "description": {
+                                "type": "text",
+                                "label": "Event Description",
+                                "description": "Detailed description of the event",
+                                "required": False,
+                                "placeholder": "Discuss project updates...",
+                            },
+                            "start_time": {
+                                "type": "datetime",
+                                "label": "Start Time",
+                                "description": "Event start date and time (ISO 8601 format or relative like '+1 hour')",
+                                "required": True,
+                                "placeholder": "2025-10-15T14:00:00",
+                            },
+                            "end_time": {
+                                "type": "datetime",
+                                "label": "End Time",
+                                "description": "Event end date and time (ISO 8601 format or relative like '+2 hours')",
+                                "required": True,
+                                "placeholder": "2025-10-15T15:00:00",
+                            },
+                            "attendees": {
+                                "type": "string",
+                                "label": "Attendees",
+                                "description": "Comma-separated email addresses of attendees",
+                                "required": False,
+                                "placeholder": "john@example.com, jane@example.com",
+                            },
+                            "location": {
+                                "type": "string",
+                                "label": "Location",
+                                "description": "Event location (physical or virtual)",
+                                "required": False,
+                                "placeholder": "Conference Room A",
+                            },
+                        },
+                    },
+                    {
+                        "name": "calendar_update_event",
+                        "description": "Update an existing calendar event",
+                        "config_schema": {
+                            "event_id": {
+                                "type": "string",
+                                "label": "Event ID",
+                                "description": "Calendar event ID (automatically provided by trigger)",
+                                "required": False,
+                                "default": "{event_id}",
+                            },
+                            "summary": {
+                                "type": "string",
+                                "label": "New Event Title",
+                                "description": "Updated title for the event",
+                                "required": False,
+                                "placeholder": "Team meeting (Rescheduled)",
+                            },
+                            "description": {
+                                "type": "text",
+                                "label": "New Description",
+                                "description": "Updated event description",
+                                "required": False,
+                                "placeholder": "Updated agenda...",
+                            },
+                            "start_time": {
+                                "type": "datetime",
+                                "label": "New Start Time",
+                                "description": "Updated start date and time",
+                                "required": False,
+                                "placeholder": "2025-10-15T15:00:00",
+                            },
+                            "end_time": {
+                                "type": "datetime",
+                                "label": "New End Time",
+                                "description": "Updated end date and time",
+                                "required": False,
+                                "placeholder": "2025-10-15T16:00:00",
+                            },
+                        },
+                    },
+                ],
             },
             {
                 "name": "email",
@@ -226,10 +496,17 @@ class Command(BaseCommand):
 
             # Create actions for this service
             for action_data in service_data["actions"]:
+                # Convert custom schema to JSON Schema format
+                raw_schema = action_data.get("config_schema", {})
+                json_schema = convert_to_json_schema(raw_schema)
+
                 action, created = Action.objects.get_or_create(
                     service=service,
                     name=action_data["name"],
-                    defaults={"description": action_data["description"]},
+                    defaults={
+                        "description": action_data["description"],
+                        "config_schema": json_schema,
+                    },
                 )
 
                 if created:
@@ -239,13 +516,25 @@ class Command(BaseCommand):
                             f"{action.description}"
                         )
                     )
+                else:
+                    # Update config_schema if it changed
+                    if raw_schema:
+                        action.config_schema = json_schema
+                        action.save()
 
             # Create reactions for this service
             for reaction_data in service_data["reactions"]:
+                # Convert custom schema to JSON Schema format
+                raw_schema = reaction_data.get("config_schema", {})
+                json_schema = convert_to_json_schema(raw_schema)
+
                 reaction, created = Reaction.objects.get_or_create(
                     service=service,
                     name=reaction_data["name"],
-                    defaults={"description": reaction_data["description"]},
+                    defaults={
+                        "description": reaction_data["description"],
+                        "config_schema": json_schema,
+                    },
                 )
 
                 if created:
@@ -255,6 +544,11 @@ class Command(BaseCommand):
                             f"{reaction.description}"
                         )
                     )
+                else:
+                    # Update config_schema if it changed
+                    if raw_schema:
+                        reaction.config_schema = json_schema
+                        reaction.save()
 
             self.stdout.write("")  # Empty line between services
 

@@ -36,15 +36,17 @@ class GoogleOAuthProvider(BaseOAuthProvider):
         Returns:
             str: Full authorization URL to redirect user to Google
         """
+        # Don't pass state to OAuth2Session constructor - it generates its own
+        # Instead, pass it to create_authorization_url
         oauth = OAuth2Session(
             client_id=self.client_id,
             redirect_uri=self.redirect_uri,
             scope=" ".join(self.scopes),
-            state=state,
         )
 
         authorization_url, _ = oauth.create_authorization_url(
             self.authorization_endpoint,
+            state=state,  # Pass state here, not in constructor
             # Request offline access to get refresh token
             access_type="offline",
             # Force consent screen to always get refresh token
@@ -52,6 +54,7 @@ class GoogleOAuthProvider(BaseOAuthProvider):
         )
 
         logger.info(f"Generated Google authorization URL with state={state}")
+        logger.info(f"Full authorization URL: {authorization_url}")
         return authorization_url
 
     def exchange_code_for_token(self, code: str) -> Dict:
