@@ -26,7 +26,6 @@ from .oauth_serializers import (
     OAuthInitiateResponseSerializer,
     ServiceConnectionListSerializer,
     ServiceDisconnectSerializer,
-    ServiceTokenSerializer,
 )
 
 logger = logging.getLogger(__name__)
