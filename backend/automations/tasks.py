@@ -19,7 +19,7 @@ from celery import shared_task
 from django.db import IntegrityError, OperationalError
 from django.utils import timezone
 
-from .models import Area, Execution
+from .models import ActionState, Area, Execution
 
 logger = logging.getLogger(__name__)
 
@@ -484,7 +484,9 @@ def check_github_actions(self):
                             "repository": repository,
                             "author": issue["user"]["login"],
                             "created_at": issue["created_at"],
-                            "labels": [l["name"] for l in issue.get("labels", [])],
+                            "labels": [
+                                label["name"] for label in issue.get("labels", [])
+                            ],
                         }
 
                         # Create execution (with idempotency)
@@ -1204,10 +1206,10 @@ def _execute_reaction_logic(
                 logger.error(f"[REACTION GITHUB] ❌ {error_msg}")
                 raise ValueError(error_msg)
 
-        except requests.exceptions.Timeout:
-            raise ValueError("GitHub API request timed out")
+        except requests.exceptions.Timeout as e:
+            raise ValueError("GitHub API request timed out") from e
         except requests.exceptions.RequestException as e:
-            raise ValueError(f"GitHub API request failed: {str(e)}")
+            raise ValueError(f"GitHub API request failed: {str(e)}") from e
 
     elif reaction_name == "gmail_send_email":
         # Real implementation: Send email via Gmail API
@@ -1240,7 +1242,7 @@ def _execute_reaction_logic(
 
         except Exception as e:
             logger.error(f"[REACTION GMAIL] Failed to send email: {e}")
-            raise ValueError(f"Gmail send failed: {str(e)}")
+            raise ValueError(f"Gmail send failed: {str(e)}") from e
 
     elif reaction_name == "gmail_mark_read":
         # Real implementation: Mark Gmail message as read
@@ -1267,7 +1269,7 @@ def _execute_reaction_logic(
 
         except Exception as e:
             logger.error(f"[REACTION GMAIL] Failed to mark as read: {e}")
-            raise ValueError(f"Gmail mark_read failed: {str(e)}")
+            raise ValueError(f"Gmail mark_read failed: {str(e)}") from e
 
     elif reaction_name == "gmail_add_label":
         # Real implementation: Add label to Gmail message
@@ -1301,7 +1303,7 @@ def _execute_reaction_logic(
 
         except Exception as e:
             logger.error(f"[REACTION GMAIL] Failed to add label: {e}")
-            raise ValueError(f"Gmail add_label failed: {str(e)}")
+            raise ValueError(f"Gmail add_label failed: {str(e)}") from e
 
     elif reaction_name == "calendar_create_event":
         # Real implementation: Create Google Calendar event
@@ -1345,7 +1347,7 @@ def _execute_reaction_logic(
 
         except Exception as e:
             logger.error(f"[REACTION CALENDAR] Failed to create event: {e}")
-            raise ValueError(f"Calendar create_event failed: {str(e)}")
+            raise ValueError(f"Calendar create_event failed: {str(e)}") from e
 
     elif reaction_name == "calendar_update_event":
         # Real implementation: Update Google Calendar event
@@ -1381,7 +1383,7 @@ def _execute_reaction_logic(
 
         except Exception as e:
             logger.error(f"[REACTION CALENDAR] Failed to update event: {e}")
-            raise ValueError(f"Calendar update_event failed: {str(e)}")
+            raise ValueError(f"Calendar update_event failed: {str(e)}") from e
 
     elif reaction_name == "webhook_post":
         # Execute webhook POST request
