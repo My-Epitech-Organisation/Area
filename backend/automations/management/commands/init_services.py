@@ -305,9 +305,7 @@ class Command(BaseCommand):
                 "actions": [
                     {
                         "name": "calendar_event_starting_soon",
-                        "description": (
-                            "Triggered when event starts in X minutes"
-                        ),
+                        "description": ("Triggered when event starts in X minutes"),
                         "config_schema": {
                             "minutes_before": {
                                 "type": "number",
