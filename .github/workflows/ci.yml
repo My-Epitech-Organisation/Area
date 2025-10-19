@@ -9,7 +9,7 @@ on:
 
   pull_request:
     branches: [ "main", "master" ]
-    paths: [ "backend/**", "frontend/**", "mobile/**", "docker-compose.yml" ]
+    paths: [ "backend/**", "frontend/**", "mobile/**", "docker-compose.yml", ".github/workflows/**" ]
   workflow_dispatch:
 
 env:
@@ -22,6 +22,7 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
       mobile: ${{ steps.filter.outputs.mobile }}
+      ci: ${{ steps.filter.outputs.ci }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v2
@@ -34,6 +35,8 @@ jobs:
               - 'frontend/**'
             mobile:
               - 'mobile/**'
+            ci:
+              - '.github/workflows/**'
 
   check_the_repository:
     runs-on: ubuntu-latest
@@ -287,7 +290,7 @@ jobs:
     name: Docker Compose Validation
     runs-on: ubuntu-latest
     needs: check-changes
-    if: github.event_name == 'workflow_dispatch' || needs.check-changes.outputs.backend == 'true' || needs.check-changes.outputs.frontend == 'true' || needs.check-changes.outputs.mobile == 'true'
+    if: github.event_name == 'workflow_dispatch' || needs.check-changes.outputs.backend == 'true' || needs.check-changes.outputs.frontend == 'true' || needs.check-changes.outputs.mobile == 'true' || needs.check-changes.outputs.ci == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

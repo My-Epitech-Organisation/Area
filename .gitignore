@@ -46,3 +46,7 @@ backend/staticfiles/
 Poc/
 
 notpush/*
+
+# Build outputs
+dist/
+build/
