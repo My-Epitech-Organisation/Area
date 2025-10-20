@@ -400,6 +400,13 @@ def check_github_actions(self):
                     skipped_count += 1
                     continue
 
+                # Validate repository format ("owner/repo")
+                if repository.count("/") != 1:
+                    logger.warning(
+                        f"Area {area.id}: Invalid repository format '{repository}'. Expected 'owner/repo'."
+                    )
+                    skipped_count += 1
+                    continue
                 owner_repo, repo_name = repository.split("/")
 
                 # Get or create ActionState for tracking
