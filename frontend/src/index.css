@@ -55,6 +55,8 @@
   --text-secondary: var(--color-gray-300);
   --text-muted: var(--color-gray-400);
   --text-accent: var(--color-primary-light);
+  --text-link: #818cf8;
+  --text-link-hover: var(--color-primary-light);
   --text-success: var(--color-success-light);
   --text-warning: var(--color-warning-light);
   --text-error: var(--color-error-light);
@@ -330,6 +332,12 @@
 }
 .text-theme-accent {
   color: var(--text-accent);
+}
+.text-theme-link {
+  color: var(--text-link);
+}
+.text-theme-link-hover:hover {
+  color: var(--text-link-hover);
 }
 .text-theme-success {
   color: var(--text-success);
