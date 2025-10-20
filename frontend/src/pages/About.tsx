@@ -80,7 +80,9 @@ const About: React.FC = () => {
           </div>
         </section>
         <section className="mb-12">
-          <h2 className="text-3xl font-semibold text-theme-primary mb-4">Understanding Areactions</h2>
+          <h2 className="text-3xl font-semibold text-theme-primary mb-4">
+            Understanding Areactions
+          </h2>
           <p className="text-lg text-theme-secondary leading-relaxed">
             &quot;Areactions&quot; are the heart of AREA – custom automated workflows that you
             create. Each areaction consists of three main components:
@@ -91,8 +93,8 @@ const About: React.FC = () => {
               automation (e.g., &quot;When I receive a new email&quot;)
             </li>
             <li>
-              <strong className="text-theme-primary">Condition:</strong> Optional filters to refine when the
-              action should occur (e.g., &quot;Only if the email is from my boss&quot;)
+              <strong className="text-theme-primary">Condition:</strong> Optional filters to refine
+              when the action should occur (e.g., &quot;Only if the email is from my boss&quot;)
             </li>
             <li>
               <strong className="text-theme-primary">Action:</strong> The automated response (e.g.,
