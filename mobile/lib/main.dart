@@ -145,6 +145,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(create: (_) => AppletProvider()),
         ChangeNotifierProvider(create: (_) => ServiceCatalogProvider()),
         ChangeNotifierProvider(create: (_) => ConnectedServicesProvider()),
+        ChangeNotifierProvider(create: (_) => AutomationStatsProvider()),
       ],
       child: MaterialApp(
         navigatorKey: navigatorKey,

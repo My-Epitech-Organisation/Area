@@ -19,11 +19,11 @@ const Services: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [currentX, setCurrentX] = useState(0);
   const [isAutoRotating, setIsAutoRotating] = useState(false);
-  const [flatMode, setFlatMode] = useState(false);
+  const [flatMode, setFlatMode] = useState(true);
   const flatListRef = useRef<HTMLDivElement | null>(null);
   const [mounted, setMounted] = useState(false);
   const rotationSpeed = 5;
-  const radius = 350;
+  const radius = window.innerWidth < 768 ? 200 : 350;
 
   const imageModules = import.meta.glob('../assets/*.{png,jpg,jpeg,svg,gif}', {
     eager: true,
@@ -203,7 +203,6 @@ const Services: React.FC = () => {
 
   const [hoverCarousel, setHoverCarousel] = useState(false);
   const [hoverHistory, setHoverHistory] = useState(false);
-  const [hoverFlat, setHoverFlat] = useState(false);
 
   useEffect(() => {
     if (!hoverCarousel && !hoverHistory) return;
@@ -259,54 +258,16 @@ const Services: React.FC = () => {
       }
     };
 
-    const onWheelFlat = (e: WheelEvent) => {
-      try {
-        const el = flatEl ?? (e.currentTarget as HTMLDivElement);
-        if (!el) return;
-        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-          e.preventDefault();
-          el.scrollLeft += e.deltaY;
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (_) {
-        console.error('Could not scroll flat list');
-      }
-    };
-
     if (wheelEl)
       wheelEl.addEventListener('wheel', onWheelCarousel as EventListener, { passive: false });
     if (historyEl)
       historyEl.addEventListener('wheel', onWheelHistory as EventListener, { passive: false });
-    if (flatEl) flatEl.addEventListener('wheel', onWheelFlat as EventListener, { passive: false });
 
     return () => {
       if (wheelEl) wheelEl.removeEventListener('wheel', onWheelCarousel as EventListener);
       if (historyEl) historyEl.removeEventListener('wheel', onWheelHistory as EventListener);
-      if (flatEl) flatEl.removeEventListener('wheel', onWheelFlat as EventListener);
     };
   }, [flatMode, isDragging]);
-
-  useEffect(() => {
-    if (!flatMode) return;
-    const el = flatListRef.current;
-    if (!el) return;
-
-    let rafId = 0;
-
-    const step = () => {
-      if (!el) return;
-      if (!hoverFlat) {
-        el.scrollLeft = el.scrollLeft + 0.6;
-        if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 1) {
-          el.scrollTo({ left: 0 });
-        }
-      }
-      rafId = requestAnimationFrame(step);
-    };
-
-    rafId = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(rafId);
-  }, [flatMode, hoverFlat]);
 
   const stopAutoRotation = () => {
     setIsAutoRotating(false);
@@ -435,21 +396,53 @@ const Services: React.FC = () => {
   return (
     <div className="w-screen min-h-screen bg-page-services flex flex-col items-center p-6">
       <header className="w-full pt-20 flex flex-col items-center">
-        <h1 className="text-5xl font-bold text-white">Services</h1>
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">Services</h1>
         <p className="text-gray-300 mt-3">Explore available action → reaction services</p>
       </header>
 
-      <main className="w-full max-w-7xl mt-10">
+      <main className="w-full max-w-6xl mt-12">
         <div className="flex items-center justify-end gap-4 mb-4">
-          <label className="flex items-center gap-2 text-sm text-gray-300">
-            <input
-              type="checkbox"
-              checked={flatMode}
-              onChange={(e) => setFlatMode(e.target.checked)}
-              className="h-4 w-4"
-            />
-            Display as flat list
-          </label>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-300">View mode:</span>
+            <div className="flex items-center bg-white/10 rounded-lg p-1 backdrop-blur-sm">
+              <button
+                onClick={() => setFlatMode(false)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                  !flatMode
+                    ? 'bg-indigo-600 text-white shadow-lg'
+                    : 'text-gray-300 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                  />
+                </svg>
+                Carousel
+              </button>
+              <button
+                onClick={() => setFlatMode(true)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                  flatMode
+                    ? 'bg-purple-600 text-white shadow-lg'
+                    : 'text-gray-300 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 10h16M4 14h16M4 18h16"
+                  />
+                </svg>
+                List
+              </button>
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-4 mb-6">
           <input
@@ -475,18 +468,22 @@ const Services: React.FC = () => {
         ) : (
           <>
             <div
-              className="w-full h-[600px] relative overflow-hidden my-10 group"
-              style={{ perspective: '1800px' }}
+              className={`w-full relative group ${flatMode ? 'h-auto' : 'h-[600px] overflow-hidden'}`}
+              style={flatMode ? {} : { perspective: '1800px' }}
             >
-              <div className="absolute top-1/2 left-4 transform -translate-y-1/2 text-white/30 text-4xl animate-pulse pointer-events-none z-50">
-                &lt;
-              </div>
-              <div className="absolute top-1/2 right-4 transform -translate-y-1/2 text-white/30 text-4xl animate-pulse pointer-events-none z-50">
-                &gt;
-              </div>
+              {!flatMode && (
+                <>
+                  <div className="absolute top-1/2 left-4 transform -translate-y-1/2 text-white/30 text-2xl md:text-4xl animate-pulse pointer-events-none z-50">
+                    &lt;
+                  </div>
+                  <div className="absolute top-1/2 right-4 transform -translate-y-1/2 text-white/30 text-2xl md:text-4xl animate-pulse pointer-events-none z-50">
+                    &gt;
+                  </div>
+                </>
+              )}
               <div
                 ref={carouselContainerRef}
-                className="absolute w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing"
+                className={`${flatMode ? 'flex items-center justify-center min-h-[600px] py-8' : 'absolute w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing'}`}
                 onMouseEnter={() => setHoverCarousel(true)}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
@@ -500,25 +497,19 @@ const Services: React.FC = () => {
                 onTouchEnd={handleTouchEnd}
               >
                 {flatMode ? (
-                  <div
-                    ref={flatListRef}
-                    onMouseEnter={() => setHoverFlat(true)}
-                    onMouseLeave={() => setHoverFlat(false)}
-                    className="w-full flex gap-6 items-center justify-start overflow-x-auto pb-4 px-1 scrollbar-thin scrollbar-thumb-indigo-500/50 scrollbar-track-transparent scrollbar-visible snap-x snap-mandatory"
-                    style={{ overscrollBehavior: 'none' }}
-                  >
+                  <div className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4 px-2 py-4">
                     {filtered.map((s, idx) => (
                       <Link
                         to={`/services/${s.id}`}
                         key={`flat-${s.id}`}
                         onClick={() => pushHistory(s)}
-                        className="snap-start min-w-[220px] h-[260px] flex-shrink-0 group rounded-lg bg-gradient-to-br from-white/30 to-white/12 p-4 transition-colors duration-200 hover:bg-indigo-700/20"
-                        style={{ animationDelay: `${mounted ? idx * 70 : 0}ms` }}
+                        className="group rounded-lg bg-gradient-to-br from-gray-100/50 to-gray-200/30 p-4 hover:from-white/70 hover:to-indigo-700/40 transition transform hover:scale-105 hover:-translate-y-1 duration-200"
+                        style={{ animationDelay: `${mounted ? idx * 50 : 0}ms` }}
                       >
                         <div
-                          className={`flex flex-col items-center gap-3 h-full ${mounted ? 'animate-appear' : 'opacity-0'}`}
+                          className={`flex flex-col items-center gap-3 h-full min-h-[280px] ${mounted ? 'animate-appear' : 'opacity-0'}`}
                         >
-                          <div className="w-28 h-28 rounded-xl bg-white/28 flex items-center justify-center overflow-hidden">
+                          <div className="w-24 h-24 rounded-lg bg-white/28 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-2xl">
                             {s.logo ? (
                               <img
                                 src={s.logo}
@@ -526,15 +517,23 @@ const Services: React.FC = () => {
                                 className="w-full h-full object-contain"
                               />
                             ) : (
-                              <div className="text-2xl font-semibold text-white/80">
+                              <div className="text-xl md:text-2xl font-bold text-white/80">
                                 {(s.Name || '?').charAt(0)}
                               </div>
                             )}
                           </div>
-                          <div className="text-center mt-2">
-                            <div className="text-sm font-medium text-white group-hover:text-indigo-200 transition-colors">
+                          <div className="text-center flex-1 flex flex-col justify-center w-full">
+                            <div className="text-base font-bold text-white group-hover:text-indigo-200 transition-colors mb-1">
                               {s.Name}
                             </div>
+                            {s.description && (
+                              <div className="text-xs text-gray-300 line-clamp-2 leading-relaxed px-1">
+                                {s.description}
+                              </div>
+                            )}
+                          </div>
+                          <div className="mt-auto px-3 py-1.5 rounded-full bg-blue-300/30 text-blue-100 text-xs font-semibold transform transition-all duration-300 hover:bg-blue-400/60 hover:text-white hover:scale-110 shadow-md">
+                            Explorer
                           </div>
                         </div>
                       </Link>
@@ -582,7 +581,7 @@ const Services: React.FC = () => {
                           title={s.description || s.Name}
                         >
                           <div
-                            className={`w-full h-full rounded-xl bg-gradient-to-br from-white/30 to-white/18 backdrop-blur-sm p-5 flex flex-col items-center justify-center shadow-2xl overflow-hidden group hover:from-blue-300/30 hover:to-white/10 transition-colors duration-300 ${mounted ? 'animate-appear' : 'opacity-0'}`}
+                            className={`w-full h-full rounded-xl bg-gradient-to-br from-gray-100/50 to-gray-200/30 p-5 flex flex-col items-center justify-center shadow-2xl overflow-hidden group hover:from-white/70 hover:to-indigo-700/40 transition-colors duration-300 ${mounted ? 'animate-appear' : 'opacity-0'}`}
                             style={{
                               transformStyle: 'preserve-3d',
                               transform: `rotateY(${-rotationY}deg)`,
@@ -593,7 +592,7 @@ const Services: React.FC = () => {
                                   : 'none',
                             }}
                           >
-                            <div className="w-24 h-24 rounded-xl bg-white/28 mb-3 flex items-center justify-center overflow-hidden">
+                            <div className="w-24 h-24 rounded-xl bg-white/28 mb-3 flex items-center justify-center overflow-hidden shadow-2xl">
                               {s.logo ? (
                                 <img
                                   src={s.logo}
@@ -603,7 +602,7 @@ const Services: React.FC = () => {
                                   decoding="async"
                                 />
                               ) : (
-                                <div className="text-3xl font-bold text-white/80">
+                                <div className="text-2xl md:text-3xl font-bold text-white/80">
                                   {(s.Name || '?').charAt(0)}
                                 </div>
                               )}
@@ -616,7 +615,7 @@ const Services: React.FC = () => {
                                 {s.description}
                               </p>
                             )}
-                            <div className="mt-3 px-4 py-1.5 rounded-full bg-blue-300/30 text-blue-100 text-xs font-medium transform transition-all duration-300 group-hover:bg-blue-400/60 group-hover:text-white group-hover:scale-110">
+                            <div className="mt-3 px-4 py-1.5 rounded-full bg-blue-300/30 text-blue-100 text-xs font-medium transform transition-all duration-300 hover:bg-blue-400/60 hover:text-white hover:scale-110">
                               Explorer
                             </div>
                           </div>
@@ -628,8 +627,8 @@ const Services: React.FC = () => {
               </div>
             </div>
 
-            <section className="mt-16">
-              <h2 className="text-2xl font-semibold text-white mb-4">History</h2>
+            <section className="mt-8">
+              <h2 className="text-lg md:text-xl font-semibold text-white mb-3">History</h2>
               {history.length === 0 ? (
                 <div className="py-8 px-6 rounded-lg bg-white/5 text-center text-gray-300">
                   No services visited recently.
@@ -647,13 +646,13 @@ const Services: React.FC = () => {
                       key={`hist-${h.id}`}
                       to={`/services/${h.id}`}
                       onClick={() => pushHistory(h)}
-                      className="snap-start min-w-[240px] h-[260px] flex-shrink-0 group rounded-lg bg-gradient-to-br from-white/18 to-indigo-700/6 p-4 hover:from-white/24 hover:to-indigo-700/8 transition transform hover:scale-105 hover:-translate-y-1 duration-200 backdrop-blur-sm"
+                      className="snap-start min-w-[240px] h-[260px] flex-shrink-0 group rounded-lg bg-gradient-to-br from-gray-100/50 to-gray-200/30 p-4 hover:from-white/70 hover:to-indigo-700/40 transition transform hover:scale-105 hover:-translate-y-1 duration-200"
                     >
                       <div
                         className={`${mounted ? 'animate-appear' : 'opacity-0'} flex flex-col items-center gap-3 h-full`}
                         style={{ animationDelay: `${mounted ? idx * 70 : 0}ms` }}
                       >
-                        <div className="w-28 h-28 rounded-xl bg-white/36 flex items-center justify-center overflow-hidden">
+                        <div className="w-28 h-28 rounded-xl bg-white/36 flex items-center justify-center overflow-hidden shadow-2xl">
                           {h.logo ? (
                             <img
                               src={h.logo}
@@ -663,7 +662,7 @@ const Services: React.FC = () => {
                               decoding="async"
                             />
                           ) : (
-                            <div className="text-2xl font-semibold text-white/80">
+                            <div className="text-xl md:text-2xl font-semibold text-white/80">
                               {(h.Name || '?').charAt(0)}
                             </div>
                           )}
