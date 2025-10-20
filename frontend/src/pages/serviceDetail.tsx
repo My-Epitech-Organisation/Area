@@ -141,11 +141,8 @@ const ServiceDetail: React.FC = () => {
     requiresOAuth &&
     connectedServices.some((s) => {
       const match = s.service_name.toLowerCase() === oauthServiceName && !s.is_expired;
-      console.log('  Checking:', s.service_name, 'vs', oauthServiceName, '→', match);
       return match;
     });
-
-  console.log('✅ Final isConnected:', isConnected);
 
   const handleConnect = async () => {
     if (service) {
