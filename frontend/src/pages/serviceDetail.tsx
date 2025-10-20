@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useConnectedServices, useInitiateOAuth, useDisconnectService } from '../hooks/useOAuth';
 import { useNotifications } from '../hooks/useNotifications';
@@ -141,7 +141,6 @@ const ServiceDetail: React.FC = () => {
     requiresOAuth &&
     connectedServices.some((s) => {
       const match = s.service_name.toLowerCase() === oauthServiceName && !s.is_expired;
-      console.log('  Checking:', s.service_name, 'vs', oauthServiceName, '→', match);
       return match;
     });
 
