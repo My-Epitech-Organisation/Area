@@ -145,8 +145,6 @@ const ServiceDetail: React.FC = () => {
       return match;
     });
 
-  console.log('✅ Final isConnected:', isConnected);
-
   const handleConnect = async () => {
     if (service) {
       await initiateOAuth(oauthServiceName);
