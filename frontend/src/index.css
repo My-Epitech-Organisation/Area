@@ -152,9 +152,6 @@
   --page-about-mid: #000;
   --page-about-end: #9e2921; /* red-700 */
 
-  /* typography */
-  --text-primary: #fff;
-  --text-muted: #d1d5db; /* gray-300 */
   /* Legacy variables (keeping for backward compatibility) */
   --accent: #c7d2fe; /* indigo-200 */
   --card-bg: rgb(255 255 255 / 4%);
