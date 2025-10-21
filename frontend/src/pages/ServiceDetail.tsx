@@ -162,7 +162,7 @@ const ServiceDetail: React.FC = () => {
           showError(`Failed to disconnect ${service.name}. Please try again.`);
         }
       } catch (err) {
-        showError(`An error occurred while disconnecting ${service.name}.`);
+        showError(`An error occurred while disconnecting ${service.name}, error: ${err}`);
       }
     }
   };
