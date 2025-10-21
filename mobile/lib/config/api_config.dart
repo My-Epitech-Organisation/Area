@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-
 class ApiConfig {
   // ============================================================================
   // CONSTANTS
@@ -26,7 +25,9 @@ class ApiConfig {
       if (portString != null && portString.isNotEmpty) {
         _configuredPort = int.tryParse(portString);
         if (_configuredPort != null) {
-          ApiConfig.debugPrint('Backend port configured from env: $_configuredPort');
+          ApiConfig.debugPrint(
+            'Backend port configured from env: $_configuredPort',
+          );
         }
       }
     } catch (e) {
@@ -95,10 +96,7 @@ class ApiConfig {
     }
 
     // iOS, Linux, macOS, Windows, and other platforms
-    return {
-      'host': _defaultHost,
-      'port': port,
-    };
+    return {'host': _defaultHost, 'port': port};
   }
 
   static String _buildBaseUrl(String host, int port) {
@@ -146,16 +144,25 @@ class ApiConfig {
 
   static String automationUrl(int id) => '$apiBaseUrl/areas/$id/';
   static String automationToggleUrl(int id) => '$apiBaseUrl/areas/$id/toggle/';
-  static String serviceActionsUrl(int serviceId) => '$apiBaseUrl/services/$serviceId/actions/';
-  static String serviceReactionsUrl(int serviceId) => '$apiBaseUrl/services/$serviceId/reactions/';
-  static String appletLogsUrl(int appletId, {int limit = 50}) => '$baseUrl/$_appletsPrefix/$appletId/logs?limit=$limit';
-  static String userAutomationsUrl(String userId) => '$apiBaseUrl/users/$userId/areas/';
+  static String serviceActionsUrl(int serviceId) =>
+      '$apiBaseUrl/services/$serviceId/actions/';
+  static String serviceReactionsUrl(int serviceId) =>
+      '$apiBaseUrl/services/$serviceId/reactions/';
+  static String appletLogsUrl(int appletId, {int limit = 50}) =>
+      '$baseUrl/$_appletsPrefix/$appletId/logs?limit=$limit';
+  static String userAutomationsUrl(String userId) =>
+      '$apiBaseUrl/users/$userId/areas/';
 
   // OAuth2 URLs
-  static String oauthInitiateUrl(String provider) => '$authBaseUrl/oauth/$provider/';
-  static String oauthCallbackUrl(String provider, {required String code, required String state}) =>
-      '$authBaseUrl/oauth/$provider/callback/?code=$code&state=$state';
-  static String serviceDisconnectUrl(String provider) => '$authBaseUrl/services/$provider/disconnect/';
+  static String oauthInitiateUrl(String provider) =>
+      '$authBaseUrl/oauth/$provider/';
+  static String oauthCallbackUrl(
+    String provider, {
+    required String code,
+    required String state,
+  }) => '$authBaseUrl/oauth/$provider/callback/?code=$code&state=$state';
+  static String serviceDisconnectUrl(String provider) =>
+      '$authBaseUrl/services/$provider/disconnect/';
   static String get connectedServicesUrl => '$authBaseUrl/services/';
   static String get connectionHistoryUrl => '$authBaseUrl/oauth/history/';
 

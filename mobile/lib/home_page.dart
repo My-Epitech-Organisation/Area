@@ -44,7 +44,8 @@ class _MyHomePageState extends State<MyHomePage> {
       futures.add(appletProvider.loadApplets());
     }
 
-    if (serviceProvider.services.isEmpty && !serviceProvider.isLoadingServices) {
+    if (serviceProvider.services.isEmpty &&
+        !serviceProvider.isLoadingServices) {
       futures.add(serviceProvider.loadServices());
     }
 
@@ -137,7 +138,8 @@ class _MyHomePageState extends State<MyHomePage> {
     Map<String, dynamic>? executionsStats,
   ) {
     final totalApplets = applets?.length ?? 0;
-    final activeApplets = applets?.where((applet) => applet.isActive).length ?? 0;
+    final activeApplets =
+        applets?.where((applet) => applet.isActive).length ?? 0;
 
     // Areas stats
     final totalAreas = areasStats?['total'] ?? 0;
