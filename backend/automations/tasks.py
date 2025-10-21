@@ -597,7 +597,7 @@ def check_gmail_actions(self):
     """
     from users.oauth.manager import OAuthManager
 
-    from .gmail_helper import get_message_details, list_messages
+    from .helpers.gmail_helper import get_message_details, list_messages
 
     logger.info("Checking Gmail actions...")
 
@@ -1222,7 +1222,7 @@ def _execute_reaction_logic(
         # Real implementation: Send email via Gmail API
         from users.oauth.manager import OAuthManager
 
-        from .gmail_helper import send_email
+        from .helpers.gmail_helper import send_email
 
         to = reaction_config.get("to")
         subject = reaction_config.get("subject", "AREA Notification")
@@ -1255,7 +1255,7 @@ def _execute_reaction_logic(
         # Real implementation: Mark Gmail message as read
         from users.oauth.manager import OAuthManager
 
-        from .gmail_helper import mark_message_read
+        from .helpers.gmail_helper import mark_message_read
 
         # Get message_id from config or trigger_data
         message_id = reaction_config.get("message_id") or trigger_data.get("message_id")
@@ -1282,7 +1282,7 @@ def _execute_reaction_logic(
         # Real implementation: Add label to Gmail message
         from users.oauth.manager import OAuthManager
 
-        from .gmail_helper import add_label_to_message
+        from .helpers.gmail_helper import add_label_to_message
 
         # Get message_id from config or trigger_data
         message_id = reaction_config.get("message_id") or trigger_data.get("message_id")
@@ -1316,7 +1316,7 @@ def _execute_reaction_logic(
         # Real implementation: Create Google Calendar event
         from users.oauth.manager import OAuthManager
 
-        from .calendar_helper import create_event
+        from .helpers.calendar_helper import create_event
 
         summary = reaction_config.get("summary") or reaction_config.get(
             "title", "AREA Event"
@@ -1360,7 +1360,7 @@ def _execute_reaction_logic(
         # Real implementation: Update Google Calendar event
         from users.oauth.manager import OAuthManager
 
-        from .calendar_helper import update_event
+        from .helpers.calendar_helper import update_event
 
         event_id = reaction_config.get("event_id")
         summary = reaction_config.get("summary")
