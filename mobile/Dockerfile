@@ -25,6 +25,12 @@ RUN flutter precache
 WORKDIR /app
 COPY . .
 RUN flutter pub get
-RUN flutter build apk --release -t lib/main.dart --android-skip-build-dependency-validation
+
+# Build APK with environment variables from .dart-env file
+RUN flutter build apk \
+    --release \
+    -t lib/main.dart \
+    --dart-define-from-file=.dart-env \
+    --android-skip-build-dependency-validation
 
 RUN mkdir -p /shared && cp build/app/outputs/flutter-apk/app-release.apk /shared/client.apk
