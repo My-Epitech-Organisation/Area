@@ -2074,7 +2074,7 @@ SELECT * FROM automations_area WHERE status = 'active';
 **Monitor Celery:**
 ```bash
 # Via Flower (web UI)
-open http://localhost:5555
+open http://localhost:5566
 
 # Via CLI
 docker-compose exec worker celery -A area_project inspect active
@@ -2136,7 +2136,7 @@ services:
 ### Internal Tools
 - Admin Panel: http://localhost:8080/admin/
 - API Root: http://localhost:8080/api/
-- Flower (Celery): http://localhost:5555/
+- Flower (Celery): http://localhost:5566/
 - About.json: http://localhost:8080/about.json
 
 ---
