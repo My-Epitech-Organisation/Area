@@ -1,4 +1,9 @@
 import React from 'react';
+import nolanPapa from '../assets/nolan_papa.jpg';
+import paulAntoineSalmon from '../assets/paul_antoine_salmon.jpg';
+import maelPerrigaud from '../assets/mael_perrigaud.png';
+import santiagoPidcova from '../assets/santiago_pidcova.png';
+import matheoCoquet from '../assets/matheo_coquet.png';
 
 const About: React.FC = () => {
   return (
@@ -140,7 +145,7 @@ const About: React.FC = () => {
             <div className="bg-theme-surface p-6 rounded-lg shadow-lg flex flex-col items-center">
               <div className="w-24 h-24 rounded-full overflow-hidden mb-4">
                 <img
-                  src="src/assets/nolan_papa.jpg"
+                  src={nolanPapa}
                   alt="Nolan PAPA"
                   className="w-full h-full object-cover"
                 />
@@ -151,7 +156,7 @@ const About: React.FC = () => {
             <div className="bg-theme-surface p-6 rounded-lg shadow-lg flex flex-col items-center">
               <div className="w-24 h-24 rounded-full overflow-hidden mb-4">
                 <img
-                  src="src/assets/paul_antoine_salmon.jpg"
+                  src={paulAntoineSalmon}
                   alt="Paul-Antoine SALMON"
                   className="w-full h-full object-cover"
                 />
@@ -162,7 +167,7 @@ const About: React.FC = () => {
             <div className="bg-theme-surface p-6 rounded-lg shadow-lg flex flex-col items-center">
               <div className="w-24 h-24 rounded-full overflow-hidden mb-4">
                 <img
-                  src="src/assets/mael_perrigaud.png"
+                  src={maelPerrigaud}
                   alt="Mael Perrigaud"
                   className="w-full h-full object-cover"
                 />
@@ -173,7 +178,7 @@ const About: React.FC = () => {
             <div className="bg-theme-surface p-6 rounded-lg shadow-lg flex flex-col items-center">
               <div className="w-24 h-24 rounded-full overflow-hidden mb-4">
                 <img
-                  src="src/assets/santiago_pidcova.png"
+                  src={santiagoPidcova}
                   alt="Santiago Pidcova"
                   className="w-full h-full object-cover"
                 />
@@ -184,7 +189,7 @@ const About: React.FC = () => {
             <div className="bg-theme-surface p-6 rounded-lg shadow-lg flex flex-col items-center">
               <div className="w-24 h-24 rounded-full overflow-hidden mb-4">
                 <img
-                  src="src/assets/matheo_coquet.png"
+                  src={matheoCoquet}
                   alt="Matheo Coquet"
                   className="w-full h-full object-cover"
                 />
