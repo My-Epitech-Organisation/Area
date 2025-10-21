@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../config/api_config.dart';
+import '../config/app_config.dart';
 import '../utils/debug_helper.dart';
 
 class DebugConfigWidget extends StatefulWidget {
@@ -42,10 +43,11 @@ class _DebugConfigWidgetState extends State<DebugConfigWidget> {
             const SizedBox(height: 16),
             TextField(
               controller: _urlController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Custom URL',
-                hintText: 'http://localhost:8080',
-                border: OutlineInputBorder(),
+                hintText:
+                    'http://${AppConfig.defaultHost}:${AppConfig.defaultPort}',
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
@@ -70,7 +72,9 @@ class _DebugConfigWidgetState extends State<DebugConfigWidget> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      ApiConfig.setBaseUrl('http://localhost:8080');
+                      final localhostUrl =
+                          'http://${AppConfig.defaultHost}:${AppConfig.defaultPort}';
+                      ApiConfig.setBaseUrl(localhostUrl);
                       _urlController.text = ApiConfig.baseUrl;
                       setState(() {});
                       Navigator.pop(context);
@@ -82,7 +86,9 @@ class _DebugConfigWidgetState extends State<DebugConfigWidget> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      ApiConfig.setBaseUrl('http://10.0.2.2:8080');
+                      final androidUrl =
+                          'http://${AppConfig.androidEmulatorHost}:${AppConfig.defaultPort}';
+                      ApiConfig.setBaseUrl(androidUrl);
                       _urlController.text = ApiConfig.baseUrl;
                       setState(() {});
                       Navigator.pop(context);
