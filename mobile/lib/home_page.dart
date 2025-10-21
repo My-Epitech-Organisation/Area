@@ -15,6 +15,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  bool _isLoadingStats = false;
+
   @override
   void initState() {
     super.initState();
@@ -24,32 +26,40 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _loadStats() async {
-    final statsProvider = context.read<AutomationStatsProvider>();
-    final userProvider = context.read<UserProvider>();
-    final appletProvider = context.read<AppletProvider>();
-    final serviceProvider = context.read<ServiceCatalogProvider>();
-
-    // Load all data in parallel for better performance
-    final futures = <Future>[];
-
-    // Always load stats (they might be dynamic)
-    futures.add(statsProvider.loadAllStats());
-
-    // Load user data only if not already loaded or loading
-    if (userProvider.profile == null && !userProvider.isLoadingProfile) {
-      futures.add(userProvider.loadProfile());
+    // Prevent concurrent calls using a loading flag
+    if (_isLoadingStats) {
+      return;
     }
 
-    if (appletProvider.applets.isEmpty && !appletProvider.isLoading) {
-      futures.add(appletProvider.loadApplets());
-    }
+    _isLoadingStats = true;
 
-    if (serviceProvider.services.isEmpty &&
-        !serviceProvider.isLoadingServices) {
-      futures.add(serviceProvider.loadServices());
-    }
+    try {
+      final statsProvider = context.read<AutomationStatsProvider>();
+      final userProvider = context.read<UserProvider>();
+      final appletProvider = context.read<AppletProvider>();
+      final serviceProvider = context.read<ServiceCatalogProvider>();
 
-    await Future.wait(futures);
+      final futures = <Future>[];
+
+      futures.add(statsProvider.loadAllStats());
+
+      if (userProvider.profile == null && !userProvider.isLoadingProfile) {
+        futures.add(userProvider.loadProfile());
+      }
+
+      if (appletProvider.applets.isEmpty && !appletProvider.isLoading) {
+        futures.add(appletProvider.loadApplets());
+      }
+
+      if (serviceProvider.services.isEmpty &&
+          !serviceProvider.isLoadingServices) {
+        futures.add(serviceProvider.loadServices());
+      }
+
+      await Future.wait(futures);
+    } finally {
+      _isLoadingStats = false;
+    }
   }
 
   @override
