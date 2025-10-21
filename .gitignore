@@ -27,7 +27,7 @@ backend/venv/
 backend/.env
 
 # Deployment
-./deployment/nginx.conf
+deployment/nginx.conf
 
 # Django
 *.log
