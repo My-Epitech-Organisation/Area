@@ -197,7 +197,7 @@ OAUTH2_PROVIDERS = {
         "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
         "client_secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
         "redirect_uri": os.getenv(
-            "GOOGLE_REDIRECT_URI", "http://localhost:8080/auth/google/callback"
+            "GOOGLE_REDIRECT_URI", "http://localhost:8080/auth/oauth/google/callback/"
         ),
         "authorization_endpoint": "https://accounts.google.com/o/oauth2/v2/auth",
         "token_endpoint": "https://oauth2.googleapis.com/token",
@@ -207,6 +207,10 @@ OAUTH2_PROVIDERS = {
             "email",
             "profile",
             "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/gmail.modify",
+            "https://www.googleapis.com/auth/calendar.readonly",
+            "https://www.googleapis.com/auth/calendar.events",
         ],
         "requires_refresh": True,
     },
@@ -312,6 +316,27 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"  # Set after TIME_ZONE definition
+
+# Celery Beat Schedule - Periodic Tasks
+# Define recurring tasks that run automatically
+CELERY_BEAT_SCHEDULE = {
+    # Check timer-based actions every minute
+    "check-timer-actions": {
+        "task": "automations.check_timer_actions",
+        "schedule": 60.0,  # Every 60 seconds (1 minute)
+        "options": {
+            "expires": 55,  # Task expires after 55s to avoid overlap
+        },
+    },
+    # Check GitHub actions every 5 minutes (polling mode)
+    "check-github-actions": {
+        "task": "automations.check_github_actions",
+        "schedule": 300.0,  # Every 300 seconds (5 minutes)
+        "options": {
+            "expires": 290,  # Task expires after 290s to avoid overlap
+        },
+    },
+}
 
 # =============================================================================
 # CHANNELS & WEBSOCKETS

@@ -26,7 +26,6 @@ from .oauth_serializers import (
     OAuthInitiateResponseSerializer,
     ServiceConnectionListSerializer,
     ServiceDisconnectSerializer,
-    ServiceTokenSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -165,6 +164,13 @@ class OAuthCallbackView(APIView):
         This method implements the Backend-First OAuth flow where all token
         handling is done server-side for security.
         """
+        # Log incoming callback request for debugging
+        logger.info(
+            f"OAuth callback received for {provider}: "
+            f"params={dict(request.query_params)}, "
+            f"path={request.path}"
+        )
+
         # Get frontend URL for redirects
         frontend_url = getattr(
             settings, "FRONTEND_URL", None
@@ -276,13 +282,18 @@ class OAuthCallbackView(APIView):
 
         # Retrieve state data from cache
         cache_key = OAuthManager._get_state_cache_key(state)
+        logger.info(f"Validating state for {provider}: cache_key={cache_key}")
         state_data = cache.get(cache_key)
 
+        logger.info(f"State data from cache: {state_data}")
+
         if not state_data:
+            logger.error(f"State token not found in cache for {provider}")
             raise OAuthStateError("OAuth state token is invalid or expired")
 
         user_id = state_data.get("user_id")
         if not user_id:
+            logger.error(f"State data missing user_id for {provider}: {state_data}")
             raise OAuthStateError("OAuth state missing user information")
 
         # Validate state (this also deletes it from cache for one-time use)
@@ -290,6 +301,7 @@ class OAuthCallbackView(APIView):
             state=state, user_id=str(user_id), provider=provider
         )
         if not is_valid:
+            logger.error(f"State validation failed for {provider}: {error_msg}")
             raise OAuthStateError(f"State validation failed: {error_msg}")
 
         # Retrieve user by UUID
@@ -371,15 +383,12 @@ class ServiceConnectionListView(APIView):
             # Get user's connected services
             service_tokens = ServiceToken.objects.filter(user=request.user)
 
-            # Serialize tokens
-            token_serializer = ServiceTokenSerializer(service_tokens, many=True)
-
             # Get available providers
             available_providers = OAuthManager.list_available_providers()
 
-            # Prepare response
+            # Prepare response - pass objects directly to serializer
             response_data = {
-                "connected_services": token_serializer.data,
+                "connected_services": service_tokens,
                 "available_providers": available_providers,
                 "total_connected": service_tokens.count(),
             }
