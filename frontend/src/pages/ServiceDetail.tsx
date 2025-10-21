@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useConnectedServices, useInitiateOAuth, useDisconnectService } from '../hooks/useOAuth';
+import { useNotifications } from '../hooks/useNotifications';
+import Notification from '../components/Notification';
 import { API_BASE } from '../utils/helper';
 
 type ServiceAction = {
@@ -27,9 +29,16 @@ const ServiceDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // OAuth hooks
-  const { services: connectedServices, loading: loadingOAuth } = useConnectedServices();
+  const {
+    services: connectedServices,
+    loading: loadingOAuth,
+    refetch: refetchServices,
+  } = useConnectedServices();
   const { initiateOAuth, loading: connectingOAuth } = useInitiateOAuth();
   const { disconnectService, loading: disconnectingOAuth } = useDisconnectService();
+
+  // Notifications
+  const { notifications, removeNotification, success, error: showError } = useNotifications();
 
   const imageModules = import.meta.glob('../assets/*.{png,jpg,jpeg,svg,gif}', {
     eager: true,
@@ -120,32 +129,56 @@ const ServiceDetail: React.FC = () => {
   const logo = resolveLogo(service.logo, service.name);
 
   // Check if this service requires OAuth and if it's connected
-  const oauthProviders = ['github', 'google', 'gmail'];
+  // Google Calendar uses the same OAuth as Google/Gmail
+  const oauthProviders = ['github', 'google', 'gmail', 'google_calendar'];
   const requiresOAuth = service && oauthProviders.includes(service.name.toLowerCase());
+
+  // For google_calendar, check if 'google' OAuth is connected
+  const oauthServiceName =
+    service.name.toLowerCase() === 'google_calendar' ? 'google' : service.name.toLowerCase();
+
   const isConnected =
     requiresOAuth &&
-    connectedServices.some(
-      (s) => s.service_name.toLowerCase() === service.name.toLowerCase() && !s.is_expired
-    );
+    connectedServices.some((s) => {
+      const match = s.service_name.toLowerCase() === oauthServiceName && !s.is_expired;
+      return match;
+    });
 
   const handleConnect = async () => {
     if (service) {
-      await initiateOAuth(service.name.toLowerCase());
+      await initiateOAuth(oauthServiceName);
     }
   };
 
   const handleDisconnect = async () => {
     if (service && window.confirm(`Are you sure you want to disconnect ${service.name}?`)) {
-      const success = await disconnectService(service.name.toLowerCase());
-      if (success) {
-        // Refresh the page or show a success message
-        window.location.reload();
+      try {
+        const result = await disconnectService(oauthServiceName);
+        if (result) {
+          success(`${service.name} has been disconnected successfully!`);
+          // Refresh the connected services list without reloading the page
+          await refetchServices();
+        } else {
+          showError(`Failed to disconnect ${service.name}. Please try again.`);
+        }
+      } catch (err) {
+        showError(`An error occurred while disconnecting ${service.name}, error: ${err}`);
       }
     }
   };
 
   return (
     <div className="w-screen min-h-screen bg-page-service-detail p-6">
+      {/* Notifications */}
+      {notifications.map((notification) => (
+        <Notification
+          key={notification.id}
+          type={notification.type}
+          message={notification.message}
+          onClose={() => removeNotification(notification.id)}
+        />
+      ))}
+
       <div className="max-w-6xl mx-auto pt-20">
         <Link
           to="/services"

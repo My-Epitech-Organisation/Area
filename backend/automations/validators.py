@@ -111,6 +111,66 @@ ACTION_SCHEMAS = {
         },
         "additionalProperties": False,
     },
+    "gmail_new_from_sender": {
+        "type": "object",
+        "properties": {
+            "from_email": {
+                "type": "string",
+                "format": "email",
+                "description": "Email sender to monitor",
+            },
+        },
+        "required": ["from_email"],
+        "additionalProperties": False,
+    },
+    "gmail_new_with_label": {
+        "type": "object",
+        "properties": {
+            "label": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Gmail label to monitor",
+            },
+        },
+        "required": ["label"],
+        "additionalProperties": False,
+    },
+    "gmail_new_with_subject": {
+        "type": "object",
+        "properties": {
+            "subject_contains": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Text that must appear in subject",
+            },
+        },
+        "required": ["subject_contains"],
+        "additionalProperties": False,
+    },
+    "calendar_event_starting_soon": {
+        "type": "object",
+        "properties": {
+            "minutes_before": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1440,
+                "default": 15,
+                "description": "Minutes before event to trigger (1-1440)",
+            },
+        },
+        "required": ["minutes_before"],
+        "additionalProperties": False,
+    },
+    "calendar_new_event": {
+        "type": "object",
+        "properties": {
+            "calendar_id": {
+                "type": "string",
+                "description": "Specific calendar ID to monitor (optional, defaults to primary)",
+            },
+        },
+        "additionalProperties": False,
+    },
     "webhook_trigger": {
         "type": "object",
         "properties": {
@@ -257,6 +317,119 @@ REACTION_SCHEMAS = {
         "required": ["folder_path", "filename"],
         "additionalProperties": False,
     },
+    # Gmail Reactions
+    "gmail_send_email": {
+        "type": "object",
+        "properties": {
+            "to": {
+                "type": "string",
+                "format": "email",
+                "description": "Recipient email address",
+            },
+            "subject": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Email subject",
+            },
+            "body": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Email body content",
+            },
+        },
+        "required": ["to", "subject", "body"],
+        "additionalProperties": False,
+    },
+    "gmail_mark_read": {
+        "type": "object",
+        "properties": {
+            "email_id": {
+                "type": "string",
+                "description": "Gmail message ID to mark as read",
+            },
+        },
+        "required": ["email_id"],
+        "additionalProperties": False,
+    },
+    "gmail_add_label": {
+        "type": "object",
+        "properties": {
+            "email_id": {
+                "type": "string",
+                "description": "Gmail message ID",
+            },
+            "label": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Label name to add",
+            },
+        },
+        "required": ["email_id", "label"],
+        "additionalProperties": False,
+    },
+    # Google Calendar Reactions
+    "calendar_create_event": {
+        "type": "object",
+        "properties": {
+            "summary": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Event title/summary",
+            },
+            "start_time": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Event start time (ISO 8601)",
+            },
+            "end_time": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Event end time (ISO 8601)",
+            },
+            "description": {
+                "type": "string",
+                "description": "Event description (optional)",
+            },
+            "location": {
+                "type": "string",
+                "description": "Event location (optional)",
+            },
+        },
+        "required": ["summary", "start_time", "end_time"],
+        "additionalProperties": False,
+    },
+    "calendar_update_event": {
+        "type": "object",
+        "properties": {
+            "event_id": {
+                "type": "string",
+                "description": "Calendar event ID to update",
+            },
+            "summary": {
+                "type": "string",
+                "maxLength": 200,
+                "description": "New event title (optional)",
+            },
+            "start_time": {
+                "type": "string",
+                "format": "date-time",
+                "description": "New start time (optional)",
+            },
+            "end_time": {
+                "type": "string",
+                "format": "date-time",
+                "description": "New end time (optional)",
+            },
+            "description": {
+                "type": "string",
+                "description": "New event description (optional)",
+            },
+        },
+        "required": ["event_id"],
+        "additionalProperties": False,
+    },
     "log_message": {
         "type": "object",
         "properties": {
@@ -318,30 +491,87 @@ COMPATIBILITY_RULES = {
     # GitHub actions
     "github_new_issue": [
         "send_email",
+        "gmail_send_email",
         "slack_message",
         "teams_message",
         "log_message",
-        # github_create_issue removed to prevent same-service loops
         "webhook_post",
+        "calendar_create_event",
     ],
     "github_new_pr": [
         "send_email",
+        "gmail_send_email",
         "slack_message",
         "teams_message",
         "log_message",
-        # github_create_issue removed to prevent same-service loops
         "webhook_post",
+        "calendar_create_event",
     ],
-    # Gmail actions
+    # Gmail actions - can trigger most reactions except email to avoid loops
     "gmail_new_email": [
         "save_to_dropbox",
         "slack_message",
         "teams_message",
         "github_create_issue",
         "log_message",
-        # Pas send_email pour éviter les boucles
+        "webhook_post",
+        "calendar_create_event",
+        "gmail_mark_read",
+        "gmail_add_label",
     ],
-    # Webhook actions peuvent déclencher n'importe quoi
+    "gmail_new_from_sender": [
+        "save_to_dropbox",
+        "slack_message",
+        "teams_message",
+        "github_create_issue",
+        "log_message",
+        "webhook_post",
+        "calendar_create_event",
+        "gmail_mark_read",
+        "gmail_add_label",
+    ],
+    "gmail_new_with_label": [
+        "save_to_dropbox",
+        "slack_message",
+        "teams_message",
+        "github_create_issue",
+        "log_message",
+        "webhook_post",
+        "calendar_create_event",
+        "gmail_mark_read",
+        "gmail_add_label",
+    ],
+    "gmail_new_with_subject": [
+        "save_to_dropbox",
+        "slack_message",
+        "teams_message",
+        "github_create_issue",
+        "log_message",
+        "webhook_post",
+        "calendar_create_event",
+        "gmail_mark_read",
+        "gmail_add_label",
+    ],
+    # Google Calendar actions
+    "calendar_event_starting_soon": [
+        "send_email",
+        "gmail_send_email",
+        "slack_message",
+        "teams_message",
+        "github_create_issue",
+        "log_message",
+        "webhook_post",
+    ],
+    "calendar_new_event": [
+        "send_email",
+        "gmail_send_email",
+        "slack_message",
+        "teams_message",
+        "github_create_issue",
+        "log_message",
+        "webhook_post",
+    ],
+    # Webhook actions can trigger anything
     "webhook_trigger": ["*"],
 }
 
@@ -362,7 +592,7 @@ def validate_action_config(action_name, config):
 
     schema = ACTION_SCHEMAS.get(action_name)
     if not schema:
-        # Pas de schéma défini, validation basique seulement
+        # No defined pattern, basic validation only
         if not isinstance(config, dict):
             raise serializers.ValidationError(
                 f"Configuration for action '{action_name}' must be a JSON object."
@@ -393,7 +623,7 @@ def validate_reaction_config(reaction_name, config):
 
     schema = REACTION_SCHEMAS.get(reaction_name)
     if not schema:
-        # Pas de schéma défini, validation basique seulement
+        # No defined pattern, basic validation only
         if not isinstance(config, dict):
             raise serializers.ValidationError(
                 f"Configuration for reaction '{reaction_name}' must be a JSON object."
@@ -403,7 +633,7 @@ def validate_reaction_config(reaction_name, config):
     try:
         jsonschema.validate(config, schema)
 
-        # Validation supplémentaire pour les emails
+        # Additional validation for emails
         if reaction_name == "send_email" and "recipient" in config:
             if not validate_email_format(config["recipient"]):
                 raise serializers.ValidationError(
@@ -429,11 +659,11 @@ def validate_action_reaction_compatibility(action_name, reaction_name):
     """
     compatible_reactions = COMPATIBILITY_RULES.get(action_name, [])
 
-    # Si '*' dans la liste, toutes les reactions sont autorisées
+    # If '*' in the list, all reactions are allowed
     if "*" in compatible_reactions:
         return
 
-    # Vérifier si la reaction spécifique est autorisée
+    # Check if the specific reaction is allowed
     if reaction_name not in compatible_reactions:
         raise serializers.ValidationError(
             f"Action '{action_name}' is not compatible with reaction '{reaction_name}'. "
