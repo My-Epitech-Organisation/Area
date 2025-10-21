@@ -79,7 +79,7 @@ const Login: React.FC = () => {
   return (
     <div className="w-screen min-h-screen bg-auth-login flex flex-col items-center">
       <header className="w-full pt-20 flex justify-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-white">Log in to AREA</h1>
+        <h1 className="text-4xl md:text-5xl font-bold text-theme-primary">Log in to AREA</h1>
       </header>
       <main className="w-full flex-1 flex items-center justify-center">
         <form
@@ -88,10 +88,12 @@ const Login: React.FC = () => {
         >
           <div className="flex flex-col gap-4">
             {generalError && (
-              <div className="text-red-400 text-sm p-3 bg-red-900/20 rounded">{generalError}</div>
+              <div className="text-theme-error text-sm p-3 bg-red-900/20 rounded">
+                {generalError}
+              </div>
             )}
 
-            <label className="text-sm text-gray-300">email</label>
+            <label className="text-sm text-theme-secondary">email</label>
             <input
               value={email}
               onChange={(e) => setemail(e.target.value)}
@@ -100,10 +102,10 @@ const Login: React.FC = () => {
               placeholder="email"
             />
             {fieldErrors.email && (
-              <div className="text-red-400 text-sm">{fieldErrors.email.join(' ')}</div>
+              <div className="text-theme-error text-sm">{fieldErrors.email.join(' ')}</div>
             )}
 
-            <label className="text-sm text-gray-300">Password</label>
+            <label className="text-sm text-theme-secondary">Password</label>
             <input
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -113,7 +115,7 @@ const Login: React.FC = () => {
               placeholder="password"
             />
             {fieldErrors.password && (
-              <div className="text-red-400 text-sm">{fieldErrors.password.join(' ')}</div>
+              <div className="text-theme-error text-sm">{fieldErrors.password.join(' ')}</div>
             )}
 
             <button
@@ -124,7 +126,10 @@ const Login: React.FC = () => {
               {loading ? 'Logging in…' : 'Log in'}
             </button>
 
-            <a href="/signup" className="mt-2 text-sm text-gray-300 underline block text-center">
+            <a
+              href="/signup"
+              className="mt-2 text-sm text-theme-secondary underline block text-center"
+            >
               Don&apos;t have an account? Sign up
             </a>
           </div>
