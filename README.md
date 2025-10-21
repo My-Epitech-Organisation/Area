@@ -49,7 +49,7 @@ docker-compose up -d
 **Services will be available at:**
 - Frontend (Vite dev): http://localhost:5173
 - Backend API: http://localhost:8080
-- Flower (Celery monitoring): http://localhost:5555
+- Flower (Celery monitoring): http://localhost:5566
 - PostgreSQL: localhost:5432
 - Redis: localhost:6379
 
@@ -150,7 +150,7 @@ The project uses Docker Compose with 8 services:
 3. **server** - Django backend API (port 8080)
 4. **worker** - Celery worker for async tasks
 5. **beat** - Celery Beat scheduler for periodic tasks
-6. **flower** - Celery monitoring UI (port 5555)
+6. **flower** - Celery monitoring UI (port 5566)
 7. **client_mobile** - Flutter mobile app builder
 8. **client_web** - React frontend (Vite dev server on port 5173)
 
