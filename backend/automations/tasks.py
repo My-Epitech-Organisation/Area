@@ -258,7 +258,7 @@ def handle_timer_action(area: Area, current_time: datetime) -> Optional[Executio
 
     if created and execution:
         # Queue the reaction execution
-        execute_reaction.delay(execution.pk)
+        execute_reaction_task.delay(execution.pk)
         logger.info(
             f"Timer triggered for area '{area.name}' (#{area.id}): "
             f"execution #{execution.pk} queued"
@@ -510,7 +510,7 @@ def check_github_actions(self):
                             )
 
                             # Execute reaction asynchronously
-                            execute_reaction.delay(execution.pk)
+                            execute_reaction_task.delay(execution.pk)
                             triggered_count += 1
                         else:
                             logger.debug(
