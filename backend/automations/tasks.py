@@ -19,7 +19,7 @@ from celery import shared_task
 from django.db import IntegrityError, OperationalError
 from django.utils import timezone
 
-from .models import Area, Execution
+from .models import ActionState, Area, Execution
 
 logger = logging.getLogger(__name__)
 
@@ -258,7 +258,7 @@ def handle_timer_action(area: Area, current_time: datetime) -> Optional[Executio
 
     if created and execution:
         # Queue the reaction execution
-        execute_reaction.delay(execution.pk)
+        execute_reaction_task.delay(execution.pk)
         logger.info(
             f"Timer triggered for area '{area.name}' (#{area.id}): "
             f"execution #{execution.pk} queued"
@@ -391,21 +391,160 @@ def check_github_actions(self):
                     no_token_count += 1
                     continue
 
-                # TODO: Implement actual GitHub API polling with the token
-                # Example:
-                # import requests
-                # headers = {"Authorization": f"Bearer {access_token}"}
-                # response = requests.get(
-                #     "https://api.github.com/user/repos",
-                #     headers=headers
-                # )
-                # Check for new issues/PRs based on area.action_config
+                # Get repository from action_config
+                repository = area.action_config.get("repository")
+                if not repository:
+                    logger.warning(
+                        f"Area {area.id}: No repository configured in action_config"
+                    )
+                    skipped_count += 1
+                    continue
+
+                # Validate repository format ("owner/repo")
+                if repository.count("/") != 1:
+                    logger.warning(
+                        f"Area {area.id}: Invalid repository format '{repository}'. Expected 'owner/repo'."
+                    )
+                    skipped_count += 1
+                    continue
+                owner_repo, repo_name = repository.split("/")
+
+                # Get or create ActionState for tracking
+                from .models import ActionState
+
+                action_state, created = ActionState.objects.get_or_create(area=area)
+
+                # Prepare API request
+                api_url = (
+                    f"https://api.github.com/repos/{owner_repo}/{repo_name}/issues"
+                )
+                headers = {
+                    "Authorization": f"Bearer {access_token}",
+                    "Accept": "application/vnd.github+json",
+                    "X-GitHub-Api-Version": "2022-11-28",
+                }
+
+                # Use 'since' parameter if we have a last_checked_at
+                params = {
+                    "state": "all",  # Get both open and closed
+                    "sort": "created",
+                    "direction": "desc",
+                    "per_page": 30,
+                }
+
+                if action_state.last_checked_at:
+                    # Only get issues created since last check
+                    params["since"] = action_state.last_checked_at.isoformat()
 
                 logger.debug(
-                    f"Would poll GitHub API for area {area.id} "
-                    f"(action: {area.action.name})"
+                    f"Polling GitHub API for area {area.id}: "
+                    f"{api_url} (since={action_state.last_checked_at})"
                 )
-                skipped_count += 1
+
+                # Call GitHub API
+                response = requests.get(
+                    api_url, headers=headers, params=params, timeout=10
+                )
+
+                if response.status_code == 200:
+                    issues = response.json()
+
+                    # Filter: only process new issues (not pull requests)
+                    new_issues = [
+                        issue
+                        for issue in issues
+                        if "pull_request" not in issue  # PRs are returned as issues
+                    ]
+
+                    # Apply label filter if specified
+                    label_filter = area.action_config.get("labels", [])
+                    if label_filter:
+                        new_issues = [
+                            issue
+                            for issue in new_issues
+                            if any(
+                                label["name"] in label_filter
+                                for label in issue.get("labels", [])
+                            )
+                        ]
+
+                    logger.info(
+                        f"Area {area.id}: Found {len(new_issues)} new issues in {repository}"
+                    )
+
+                    # Create executions for each new issue
+                    for issue in new_issues:
+                        issue_id = issue["id"]
+                        issue_number = issue["number"]
+                        issue_title = issue["title"]
+                        issue_url = issue["html_url"]
+
+                        # Create unique event ID
+                        event_id = f"github_issue_{repository}_{issue_id}"
+
+                        # Prepare trigger data
+                        trigger_data = {
+                            "issue_id": issue_id,
+                            "issue_number": issue_number,
+                            "issue_title": issue_title,
+                            "issue_url": issue_url,
+                            "repository": repository,
+                            "author": issue["user"]["login"],
+                            "created_at": issue["created_at"],
+                            "labels": [
+                                label["name"] for label in issue.get("labels", [])
+                            ],
+                        }
+
+                        # Create execution (with idempotency)
+                        execution, was_created = create_execution_safe(
+                            area=area,
+                            external_event_id=event_id,
+                            trigger_data=trigger_data,
+                        )
+
+                        if was_created and execution:
+                            logger.info(
+                                f"✅ Created execution for issue #{issue_number} "
+                                f"in {repository}"
+                            )
+
+                            # Execute reaction asynchronously
+                            execute_reaction_task.delay(execution.pk)
+                            triggered_count += 1
+                        else:
+                            logger.debug(
+                                f"Skipped duplicate issue #{issue_number} in {repository}"
+                            )
+
+                    # Update last_checked_at to now
+                    action_state.last_checked_at = timezone.now()
+                    action_state.save(update_fields=["last_checked_at"])
+
+                elif response.status_code == 304:
+                    # Not modified (when using ETag)
+                    logger.debug(f"Area {area.id}: No changes in {repository}")
+                    skipped_count += 1
+
+                elif response.status_code in [401, 403]:
+                    logger.error(
+                        f"Area {area.id}: GitHub auth error {response.status_code} "
+                        f"for {repository}"
+                    )
+                    no_token_count += 1
+
+                elif response.status_code == 404:
+                    logger.error(
+                        f"Area {area.id}: Repository {repository} not found or no access"
+                    )
+                    skipped_count += 1
+
+                else:
+                    logger.error(
+                        f"Area {area.id}: GitHub API error {response.status_code}: "
+                        f"{response.text}"
+                    )
+                    skipped_count += 1
 
             except Exception as e:
                 logger.error(
@@ -432,6 +571,197 @@ def check_github_actions(self):
     except Exception as exc:
         logger.error(f"Error in check_github_actions: {exc}", exc_info=True)
         raise self.retry(exc=exc, countdown=300) from None
+
+
+@shared_task(
+    name="automations.check_gmail_actions",
+    bind=True,
+    max_retries=3,
+    autoretry_for=RECOVERABLE_EXCEPTIONS,
+)
+def check_gmail_actions(self):
+    """
+    Poll Gmail for new messages matching user's action criteria.
+
+    Checks all active Areas with Gmail actions and triggers executions
+    when new matching emails are found.
+
+    Supported actions:
+    - gmail_new_email: Any new unread email
+    - gmail_new_from_sender: Email from specific sender
+    - gmail_new_with_label: Email with specific label
+    - gmail_new_with_subject: Email with subject containing text
+
+    Returns:
+        dict: Summary of polling results
+    """
+    from users.oauth.manager import OAuthManager
+
+    from .gmail_helper import get_message_details, list_messages
+
+    logger.info("Checking Gmail actions...")
+
+    try:
+        # Get all active Areas with Gmail actions
+        gmail_areas = get_active_areas(service_name="gmail")
+
+        if not gmail_areas:
+            logger.info("No active Gmail areas found")
+            return {"status": "no_areas", "checked": 0}
+
+        triggered_count = 0
+        skipped_count = 0
+        no_token_count = 0
+
+        for area in gmail_areas:
+            try:
+                # Get valid Gmail token (via Google OAuth)
+                access_token = OAuthManager.get_valid_token(area.owner, "google")
+
+                if not access_token:
+                    logger.warning(
+                        f"No valid Google token for user {area.owner.username}, "
+                        f"area '{area.name}'"
+                    )
+                    no_token_count += 1
+                    continue
+
+                # Build Gmail query based on action config
+                query = _build_gmail_query(area)
+
+                # Get last checked state
+                state, _ = ActionState.objects.get_or_create(area=area)
+
+                # List messages (newest first)
+                messages = list_messages(access_token, query=query, max_results=5)
+
+                if not messages:
+                    logger.debug(f"No messages found for area '{area.name}'")
+                    state.last_checked_at = timezone.now()
+                    state.save()
+                    continue
+
+                # Process messages (newest first)
+                new_messages_found = False
+
+                for msg in messages:
+                    msg_id = msg["id"]
+
+                    # Check if already processed
+                    if state.last_event_id == msg_id:
+                        logger.debug(
+                            f"Message {msg_id} already processed for area '{area.name}'"
+                        )
+                        break  # Since Gmail returns newest first, we can stop
+
+                    # Get message details
+                    details = get_message_details(access_token, msg_id)
+
+                    # Create execution
+                    event_id = f"gmail_{msg_id}"
+                    trigger_data = {
+                        "service": "gmail",
+                        "action": area.action.name,
+                        "message_id": msg_id,
+                        "subject": details["subject"],
+                        "from": details["from"],
+                        "to": details["to"],
+                        "date": details["date"],
+                        "snippet": details["snippet"],
+                        "labels": details["labels"],
+                    }
+
+                    execution, created = create_execution_safe(
+                        area=area, external_event_id=event_id, trigger_data=trigger_data
+                    )
+
+                    if created and execution:
+                        logger.info(
+                            f"Gmail action triggered for area '{area.name}': "
+                            f"Message from {details['from']}, subject: {details['subject']}"
+                        )
+                        execute_reaction_task.delay(execution.pk)
+                        triggered_count += 1
+                        new_messages_found = True
+
+                        # Update state with newest message (only once)
+                        if not state.last_event_id:
+                            state.last_event_id = msg_id
+
+                # Update state with newest message ID
+                if new_messages_found or not state.last_event_id:
+                    state.last_event_id = messages[0]["id"]
+
+                state.last_checked_at = timezone.now()
+                state.save()
+
+            except Exception as e:
+                logger.error(
+                    f"Error checking Gmail for area '{area.name}': {e}", exc_info=True
+                )
+                skipped_count += 1
+                continue
+
+        logger.info(
+            f"Gmail check complete: {triggered_count} triggered, "
+            f"{skipped_count} skipped, {no_token_count} no token"
+        )
+
+        return {
+            "status": "success",
+            "triggered": triggered_count,
+            "skipped": skipped_count,
+            "no_token": no_token_count,
+            "checked_areas": len(gmail_areas),
+        }
+
+    except Exception as exc:
+        logger.error(f"Error in check_gmail_actions: {exc}", exc_info=True)
+        raise self.retry(exc=exc, countdown=300) from None
+
+
+def _build_gmail_query(area: Area) -> str:
+    """
+    Build Gmail API query from action configuration.
+
+    Args:
+        area: Area instance with action config
+
+    Returns:
+        str: Gmail search query string
+    """
+    action_name = area.action.name
+    config = area.action_config
+
+    if action_name == "gmail_new_email":
+        # Any new unread email
+        return "is:unread"
+
+    elif action_name == "gmail_new_from_sender":
+        # Email from specific sender
+        sender = config.get("sender", "")
+        if sender:
+            return f"from:{sender} is:unread"
+        return "is:unread"
+
+    elif action_name == "gmail_new_with_label":
+        # Email with specific label
+        label = config.get("label", "")
+        if label:
+            return f"label:{label} is:unread"
+        return "is:unread"
+
+    elif action_name == "gmail_new_with_subject":
+        # Email with subject containing text
+        subject = config.get("subject_contains", "")
+        if subject:
+            return f"subject:{subject} is:unread"
+        return "is:unread"
+
+    else:
+        # Default: any unread email
+        logger.warning(f"Unknown Gmail action: {action_name}, using default query")
+        return "is:unread"
 
 
 @shared_task(
@@ -795,6 +1125,272 @@ def _execute_reaction_logic(
             "webhook_url": webhook_url,
             "note": "Teams integration not yet implemented",
         }
+
+    elif reaction_name == "github_create_issue":
+        # Real implementation: Create GitHub issue via API
+        repository = reaction_config.get("repository")
+        title = reaction_config.get("title", "Automated Issue")
+        body = reaction_config.get("body", "")
+        labels = reaction_config.get("labels", [])
+        assignees = reaction_config.get("assignees", [])
+
+        if not repository:
+            raise ValueError("Repository is required for github_create_issue")
+
+        # Get valid GitHub OAuth token for the user
+        from users.oauth.manager import OAuthManager
+
+        try:
+            access_token = OAuthManager.get_valid_token(area.owner, "github")
+            if not access_token:
+                raise ValueError(
+                    f"No valid GitHub token for user {area.owner.username}"
+                )
+
+            # Prepare API request
+            owner, repo = repository.split("/")
+            api_url = f"https://api.github.com/repos/{owner}/{repo}/issues"
+
+            payload = {
+                "title": title,
+                "body": body,
+            }
+
+            if labels:
+                payload["labels"] = labels
+            if assignees:
+                payload["assignees"] = assignees
+
+            # Call GitHub API
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
+            }
+
+            logger.info(f"[REACTION GITHUB] Creating issue in {repository}: {title}")
+
+            response = requests.post(api_url, json=payload, headers=headers, timeout=10)
+
+            # Handle responses
+            if response.status_code == 201:
+                issue_data = response.json()
+                issue_url = issue_data.get("html_url")
+                issue_number = issue_data.get("number")
+
+                logger.info(
+                    f"[REACTION GITHUB] ✅ Issue created: {issue_url} (#{issue_number})"
+                )
+
+                return {
+                    "success": True,
+                    "issue_url": issue_url,
+                    "issue_number": issue_number,
+                    "repository": repository,
+                }
+
+            elif response.status_code == 401:
+                error_msg = (
+                    "GitHub authentication failed. Token may be invalid or expired."
+                )
+                logger.error(f"[REACTION GITHUB] ❌ {error_msg}")
+                raise ValueError(error_msg)
+
+            elif response.status_code == 403:
+                error_msg = "GitHub API rate limit exceeded or access forbidden."
+                logger.error(f"[REACTION GITHUB] ❌ {error_msg}")
+                raise ValueError(error_msg)
+
+            elif response.status_code == 404:
+                error_msg = f"Repository {repository} not found or no access."
+                logger.error(f"[REACTION GITHUB] ❌ {error_msg}")
+                raise ValueError(error_msg)
+
+            else:
+                error_msg = (
+                    f"GitHub API error: {response.status_code} - {response.text}"
+                )
+                logger.error(f"[REACTION GITHUB] ❌ {error_msg}")
+                raise ValueError(error_msg)
+
+        except requests.exceptions.Timeout as e:
+            raise ValueError("GitHub API request timed out") from e
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"GitHub API request failed: {str(e)}") from e
+
+    elif reaction_name == "gmail_send_email":
+        # Real implementation: Send email via Gmail API
+        from users.oauth.manager import OAuthManager
+
+        from .gmail_helper import send_email
+
+        to = reaction_config.get("to")
+        subject = reaction_config.get("subject", "AREA Notification")
+        body = reaction_config.get("body", "")
+
+        if not to:
+            raise ValueError("Recipient email is required for gmail_send_email")
+
+        # Get valid Google token
+        access_token = OAuthManager.get_valid_token(area.owner, "google")
+        if not access_token:
+            raise ValueError(f"No valid Google token for user {area.owner.username}")
+
+        try:
+            result = send_email(access_token, to, subject, body)
+
+            logger.info(f"[REACTION GMAIL] Sent email to {to}: {subject}")
+            return {
+                "success": True,
+                "message_id": result["id"],
+                "to": to,
+                "subject": subject,
+            }
+
+        except Exception as e:
+            logger.error(f"[REACTION GMAIL] Failed to send email: {e}")
+            raise ValueError(f"Gmail send failed: {str(e)}") from e
+
+    elif reaction_name == "gmail_mark_read":
+        # Real implementation: Mark Gmail message as read
+        from users.oauth.manager import OAuthManager
+
+        from .gmail_helper import mark_message_read
+
+        # Get message_id from config or trigger_data
+        message_id = reaction_config.get("message_id") or trigger_data.get("message_id")
+
+        if not message_id:
+            raise ValueError("Message ID required to mark as read")
+
+        # Get valid Google token
+        access_token = OAuthManager.get_valid_token(area.owner, "google")
+        if not access_token:
+            raise ValueError("No valid Google token")
+
+        try:
+            mark_message_read(access_token, message_id)
+
+            logger.info(f"[REACTION GMAIL] Marked message {message_id} as read")
+            return {"success": True, "message_id": message_id}
+
+        except Exception as e:
+            logger.error(f"[REACTION GMAIL] Failed to mark as read: {e}")
+            raise ValueError(f"Gmail mark_read failed: {str(e)}") from e
+
+    elif reaction_name == "gmail_add_label":
+        # Real implementation: Add label to Gmail message
+        from users.oauth.manager import OAuthManager
+
+        from .gmail_helper import add_label_to_message
+
+        # Get message_id from config or trigger_data
+        message_id = reaction_config.get("message_id") or trigger_data.get("message_id")
+        label_name = reaction_config.get("label")
+
+        if not message_id or not label_name:
+            raise ValueError("Message ID and label required for gmail_add_label")
+
+        # Get valid Google token
+        access_token = OAuthManager.get_valid_token(area.owner, "google")
+        if not access_token:
+            raise ValueError("No valid Google token")
+
+        try:
+            add_label_to_message(access_token, message_id, label_name)
+
+            logger.info(
+                f"[REACTION GMAIL] Added label '{label_name}' to message {message_id}"
+            )
+            return {
+                "success": True,
+                "message_id": message_id,
+                "label": label_name,
+            }
+
+        except Exception as e:
+            logger.error(f"[REACTION GMAIL] Failed to add label: {e}")
+            raise ValueError(f"Gmail add_label failed: {str(e)}") from e
+
+    elif reaction_name == "calendar_create_event":
+        # Real implementation: Create Google Calendar event
+        from users.oauth.manager import OAuthManager
+
+        from .calendar_helper import create_event
+
+        summary = reaction_config.get("summary") or reaction_config.get(
+            "title", "AREA Event"
+        )
+        start = reaction_config.get("start")
+        end = reaction_config.get("end")
+        description = reaction_config.get("description", "")
+        location = reaction_config.get("location", "")
+        attendees = reaction_config.get("attendees", [])
+
+        if not start or not end:
+            raise ValueError(
+                "start and end datetime are required for calendar_create_event"
+            )
+
+        # Get valid Google token
+        access_token = OAuthManager.get_valid_token(area.owner, "google")
+        if not access_token:
+            raise ValueError(f"No valid Google token for user {area.owner.username}")
+
+        try:
+            result = create_event(
+                access_token, summary, start, end, description, location, attendees
+            )
+
+            logger.info(
+                f"[REACTION CALENDAR] Created event: {summary} ({result.get('htmlLink')})"
+            )
+            return {
+                "success": True,
+                "event_id": result["id"],
+                "summary": summary,
+                "link": result.get("htmlLink"),
+            }
+
+        except Exception as e:
+            logger.error(f"[REACTION CALENDAR] Failed to create event: {e}")
+            raise ValueError(f"Calendar create_event failed: {str(e)}") from e
+
+    elif reaction_name == "calendar_update_event":
+        # Real implementation: Update Google Calendar event
+        from users.oauth.manager import OAuthManager
+
+        from .calendar_helper import update_event
+
+        event_id = reaction_config.get("event_id")
+        summary = reaction_config.get("summary")
+        start = reaction_config.get("start")
+        end = reaction_config.get("end")
+        description = reaction_config.get("description")
+
+        if not event_id:
+            raise ValueError("event_id is required for calendar_update_event")
+
+        # Get valid Google token
+        access_token = OAuthManager.get_valid_token(area.owner, "google")
+        if not access_token:
+            raise ValueError("No valid Google token")
+
+        try:
+            result = update_event(
+                access_token, event_id, summary, start, end, description
+            )
+
+            logger.info(f"[REACTION CALENDAR] Updated event: {result['summary']}")
+            return {
+                "success": True,
+                "event_id": result["id"],
+                "summary": result["summary"],
+            }
+
+        except Exception as e:
+            logger.error(f"[REACTION CALENDAR] Failed to update event: {e}")
+            raise ValueError(f"Calendar update_event failed: {str(e)}") from e
 
     elif reaction_name == "webhook_post":
         # Execute webhook POST request
