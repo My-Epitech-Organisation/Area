@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'models/applet.dart';
 import 'providers/applet_provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/navigation_provider.dart';
 import 'providers/automation_stats_provider.dart';
+import 'providers/service_catalog_provider.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -23,7 +25,30 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _loadStats() async {
     final statsProvider = context.read<AutomationStatsProvider>();
-    await statsProvider.loadAllStats();
+    final userProvider = context.read<UserProvider>();
+    final appletProvider = context.read<AppletProvider>();
+    final serviceProvider = context.read<ServiceCatalogProvider>();
+
+    // Load all data in parallel for better performance
+    final futures = <Future>[];
+
+    // Always load stats (they might be dynamic)
+    futures.add(statsProvider.loadAllStats());
+
+    // Load user data only if not already loaded or loading
+    if (userProvider.profile == null && !userProvider.isLoadingProfile) {
+      futures.add(userProvider.loadProfile());
+    }
+
+    if (appletProvider.applets.isEmpty && !appletProvider.isLoading) {
+      futures.add(appletProvider.loadApplets());
+    }
+
+    if (serviceProvider.services.isEmpty && !serviceProvider.isLoadingServices) {
+      futures.add(serviceProvider.loadServices());
+    }
+
+    await Future.wait(futures);
   }
 
   @override
@@ -107,13 +132,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildMetricsCards(
-    List<dynamic>? applets,
+    List<Applet>? applets,
     Map<String, dynamic>? areasStats,
     Map<String, dynamic>? executionsStats,
   ) {
     final totalApplets = applets?.length ?? 0;
-    final activeApplets =
-        applets?.where((applet) => applet['enabled'] == true).length ?? 0;
+    final activeApplets = applets?.where((applet) => applet.isActive).length ?? 0;
 
     // Areas stats
     final totalAreas = areasStats?['total'] ?? 0;
@@ -469,8 +493,8 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildAppletCard(dynamic applet) {
-    final isEnabled = applet['enabled'] == true;
+  Widget _buildAppletCard(Applet applet) {
+    final isEnabled = applet.isActive;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -506,7 +530,7 @@ class _MyHomePageState extends State<MyHomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  applet['name'] ?? 'Unnamed Applet',
+                  applet.name,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -515,7 +539,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  applet['description'] ?? 'No description',
+                  applet.description,
                   style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
