@@ -155,10 +155,9 @@ class _MyAppState extends State<MyApp> {
               listen: false,
             );
             authProvider.logout();
-            // Navigate to login if not already there
-            if (ModalRoute.of(context)?.settings.name != '/login') {
-              Navigator.of(context).pushReplacementNamed('/login');
-            }
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              navigatorKey.currentState?.pushReplacementNamed('/login');
+            });
           };
 
           return MaterialApp(
