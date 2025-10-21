@@ -477,7 +477,9 @@ class WeatherServiceTest(TestCase):
         # Verify error logging was called
         mock_logger.error.assert_called_once()
         log_call = mock_logger.error.call_args[0][0]
-        self.assertIn("Unexpected error in get_forecast", log_call)
+        self.assertIn("Weather forecast API failed for", log_call)
+        self.assertIn(self.location, log_call)
+        self.assertIn("Forecast API Error", log_call)
 
     def test_get_weather_alerts_returns_empty_list(self):
         """Test that weather alerts returns empty list (not implemented)."""
@@ -741,4 +743,6 @@ class WeatherServiceTest(TestCase):
         # Verify error logging was called
         mock_logger.error.assert_called_once()
         log_call = mock_logger.error.call_args[0][0]
-        self.assertIn("Unexpected error in get_weather_data", log_call)
+        self.assertIn("Weather API failed for", log_call)
+        self.assertIn(self.location, log_call)
+        self.assertIn("API Error", log_call)
