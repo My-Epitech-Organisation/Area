@@ -146,7 +146,7 @@ class HandleTimerActionTest(TestCase):
         )
 
     @freeze_time("2024-01-15 14:30:00")
-    @patch("automations.tasks.execute_reaction")
+    @patch("automations.tasks.execute_reaction_task")
     def test_handle_daily_timer_triggers_at_correct_time(self, mock_execute):
         """Test daily timer triggers at configured time."""
         mock_execute.delay.return_value = MagicMock(id="task-123")
@@ -173,7 +173,7 @@ class HandleTimerActionTest(TestCase):
         mock_execute.delay.assert_called_once_with(execution.pk)
 
     @freeze_time("2024-01-15 14:31:00")
-    @patch("automations.tasks.execute_reaction")
+    @patch("automations.tasks.execute_reaction_task")
     def test_handle_daily_timer_does_not_trigger_at_wrong_time(self, mock_execute):
         """Test daily timer does not trigger at wrong time."""
         area = Area.objects.create(
@@ -192,7 +192,7 @@ class HandleTimerActionTest(TestCase):
         mock_execute.delay.assert_not_called()
 
     @freeze_time("2024-01-15 00:00:00")  # Monday at midnight
-    @patch("automations.tasks.execute_reaction")
+    @patch("automations.tasks.execute_reaction_task")
     def test_handle_weekly_timer_triggers_on_correct_day(self, mock_execute):
         """Test weekly timer triggers on correct day and time."""
         mock_execute.delay.return_value = MagicMock(id="task-123")
@@ -214,7 +214,7 @@ class HandleTimerActionTest(TestCase):
         mock_execute.delay.assert_called_once_with(execution.pk)
 
     @freeze_time("2024-01-16 00:00:00")  # Tuesday at midnight
-    @patch("automations.tasks.execute_reaction")
+    @patch("automations.tasks.execute_reaction_task")
     def test_handle_weekly_timer_does_not_trigger_on_wrong_day(self, mock_execute):
         """Test weekly timer does not trigger on wrong day."""
         area = Area.objects.create(
@@ -233,7 +233,7 @@ class HandleTimerActionTest(TestCase):
         mock_execute.delay.assert_not_called()
 
     @freeze_time("2024-01-15 14:30:00")
-    @patch("automations.tasks.execute_reaction")
+    @patch("automations.tasks.execute_reaction_task")
     def test_handle_timer_with_invalid_config_returns_none(self, mock_execute):
         """Test timer with invalid config returns None."""
         area = Area.objects.create(
@@ -252,7 +252,7 @@ class HandleTimerActionTest(TestCase):
         mock_execute.delay.assert_not_called()
 
     @freeze_time("2024-01-15 14:30:00")
-    @patch("automations.tasks.execute_reaction")
+    @patch("automations.tasks.execute_reaction_task")
     def test_handle_timer_idempotency(self, mock_execute):
         """Test that calling handle_timer_action twice doesn't create duplicates."""
         mock_execute.delay.return_value = MagicMock(id="task-123")
@@ -283,7 +283,7 @@ class HandleTimerActionTest(TestCase):
         self.assertEqual(mock_execute.delay.call_count, 1)
 
     @freeze_time("2024-01-15 23:59:00")
-    @patch("automations.tasks.execute_reaction")
+    @patch("automations.tasks.execute_reaction_task")
     def test_handle_timer_at_day_boundary(self, mock_execute):
         """Test timer at day boundary (23:59)."""
         mock_execute.delay.return_value = MagicMock(id="task-123")
@@ -305,7 +305,7 @@ class HandleTimerActionTest(TestCase):
         self.assertEqual(execution.trigger_data["triggered_at"]["minute"], 59)
 
     @freeze_time("2024-01-21 23:59:00")  # Sunday at 23:59
-    @patch("automations.tasks.execute_reaction")
+    @patch("automations.tasks.execute_reaction_task")
     def test_handle_weekly_timer_at_week_boundary(self, mock_execute):
         """Test weekly timer at week boundary (Sunday 23:59)."""
         mock_execute.delay.return_value = MagicMock(id="task-123")
@@ -356,7 +356,7 @@ class TimerActionIntegrationTest(TestCase):
         )
 
     @freeze_time("2024-01-15 09:00:00")
-    @patch("automations.tasks.execute_reaction")
+    @patch("automations.tasks.execute_reaction_task")
     def test_full_timer_execution_flow(self, mock_execute):
         """Test complete flow: timer trigger → execution created → reaction queued."""
         mock_execute.delay.return_value = MagicMock(id="task-123")
@@ -394,7 +394,7 @@ class TimerActionIntegrationTest(TestCase):
         mock_execute.delay.assert_called_once_with(execution.pk)
 
     @freeze_time("2024-01-15 14:30:00")
-    @patch("automations.tasks.execute_reaction")
+    @patch("automations.tasks.execute_reaction_task")
     def test_multiple_areas_same_time(self, mock_execute):
         """Test multiple areas triggering at the same time."""
         mock_execute.delay.return_value = MagicMock(id="task-123")
