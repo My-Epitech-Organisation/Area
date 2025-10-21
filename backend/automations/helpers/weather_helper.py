@@ -204,7 +204,7 @@ def get_forecast(
                 }
             )
 
-        logger.info(f"Retrieved {len(forecast)}-day forecast for {location}")
+        logger.info(f"Retrieved {days}-day forecast for {location}")
         return forecast
 
     except requests.RequestException as e:
