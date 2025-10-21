@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
 import 'package:app_links/app_links.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'providers/providers.dart';
 import 'pages/splash_page.dart';
 import 'pages/login_page.dart';
@@ -15,15 +14,19 @@ import 'utils/debug_helper.dart';
 import 'utils/oauth_deep_link_handler.dart';
 import 'services/http_client_service.dart';
 import 'config/api_config.dart';
+import 'config/app_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment configuration
   try {
-    await dotenv.load(fileName: ".env");
+    AppConfig.validateEnvironment();
+    AppConfig.debugPrint('Environment validation passed');
   } catch (e) {
-    debugPrint('[DOTENV] Could not load .env: $e');
+    AppConfig.debugPrint('Environment validation failed: $e');
+    if (AppConfig.isProduction) {
+      rethrow;
+    }
   }
 
   ApiConfig.initialize();
@@ -113,12 +116,11 @@ class _MyAppState extends State<MyApp> {
   void _handleDeepLink(Uri uri) {
     debugPrint('Handling deep link: $uri');
 
-    // Handle password reset deep link: area://reset-password?token=abc123
-    if (uri.scheme == 'area' && uri.host == 'reset-password') {
+    if (uri.scheme == AppConfig.urlScheme &&
+        uri.host == AppConfig.resetPasswordDeepLink) {
       final token = uri.queryParameters['token'];
 
       if (token != null && token.isNotEmpty) {
-        // Wait for navigator to be ready before pushing
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (navigatorKey.currentState?.mounted ?? false) {
             navigatorKey.currentState?.push(
@@ -162,7 +164,7 @@ class _MyAppState extends State<MyApp> {
 
           return MaterialApp(
             navigatorKey: navigatorKey,
-            title: 'AREA Mobile',
+            title: '${AppConfig.appName} Mobile',
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(
                 seedColor: Colors.blue,
