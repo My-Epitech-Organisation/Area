@@ -36,18 +36,6 @@ def get_weather_data_cached(api_key, location, units="metric"):
 def get_weather_data(api_key: str, location: str, units: str = "metric") -> Dict:
     """
     Get current weather data for a location.
-
-    Args:
-        api_key: Weather API key
-        location: Location string (city name, coordinates, etc.)
-        units: Units for temperature ('metric', 'imperial', or 'standard')
-
-    Returns:
-        Dict with weather information
-
-    Raises:
-        requests.RequestException: If weather API request fails
-        ValueError: If API key or location are missing
     """
     if not api_key or not location:
         raise ValueError("API key and location are required")
@@ -91,47 +79,11 @@ def get_weather_data(api_key: str, location: str, units: str = "metric") -> Dict
         raise
 
 
-def get_weather_alerts(api_key: str, location: str) -> List[Dict]:
-    """
-    Get weather alerts for a location.
-
-    Args:
-        api_key: Weather API key
-        location: Location string
-
-    Returns:
-        List of weather alert dicts
-
-    Raises:
-        requests.RequestException: If weather API request fails
-    """
-    if not api_key or not location:
-        raise ValueError("API key and location are required")
-
-    # TODO: Implement weather alerts API
-    # This would check for severe weather conditions
-
-    logger.warning("Weather alerts API not yet implemented")
-    return []
-
-
 def check_weather_condition(
     api_key: str, location: str, condition: str, threshold: float = None
 ) -> bool:
     """
     Check if a specific weather condition is met.
-
-    Args:
-        api_key: Weather API key
-        location: Location string
-        condition: Condition to check ('rain', 'snow', 'storm', etc.)
-        threshold: Optional threshold value for the condition
-
-    Returns:
-        bool: True if condition is met
-
-    Raises:
-        requests.RequestException: If weather API request fails
     """
     try:
         weather_data = get_weather_data(api_key, location)
@@ -161,17 +113,6 @@ def get_forecast(
 ) -> List[Dict]:
     """
     Get weather forecast for multiple days.
-
-    Args:
-        api_key: Weather API key
-        location: Location string
-        days: Number of days to forecast (max depends on API)
-
-    Returns:
-        List of forecast dicts for each day
-
-    Raises:
-        requests.RequestException: If weather API request fails
     """
     if not api_key or not location:
         raise ValueError("API key and location are required")
@@ -221,12 +162,6 @@ def get_forecast(
 def format_weather_message(weather_data: Dict) -> str:
     """
     Format weather data into a human-readable message.
-
-    Args:
-        weather_data: Weather data dict from get_weather_data()
-
-    Returns:
-        str: Formatted weather message
     """
     if weather_data.get("status") == "not_implemented":
         return "Weather integration not yet configured"
