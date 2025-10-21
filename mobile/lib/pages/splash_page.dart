@@ -26,7 +26,7 @@ class _SplashPageState extends State<SplashPage> {
 
       if (!mounted) return;
 
-      await Future.delayed(const Duration(milliseconds: 500));
+      await Future.delayed(const Duration(milliseconds: 200));
 
       if (mounted) {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
