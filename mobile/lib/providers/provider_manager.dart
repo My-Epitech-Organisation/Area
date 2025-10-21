@@ -7,9 +7,6 @@ class ProviderManager {
     final authProvider = context.read<AuthProvider>();
     await authProvider.checkAuthStatus();
 
-    if (authProvider.isAuthenticated && context.mounted) {
-      await _loadUserData(context);
-    }
   }
 
   static Future<void> _loadUserData(BuildContext context) async {
