@@ -55,6 +55,8 @@
   --text-secondary: var(--color-gray-300);
   --text-muted: var(--color-gray-400);
   --text-accent: var(--color-primary-light);
+  --text-link: #818cf8;
+  --text-link-hover: var(--color-primary-light);
   --text-success: var(--color-success-light);
   --text-warning: var(--color-warning-light);
   --text-error: var(--color-error-light);
@@ -144,6 +146,11 @@
   --profile-start: #623fa5; /* purple-900 */
   --profile-mid: #000;
   --profile-end: #4f3fff; /* indigo-700 */
+
+  /* about - background */
+  --page-about-start: #353080; /* indigo-900 */
+  --page-about-mid: #000;
+  --page-about-end: #9e2921; /* red-700 */
 
   /* Legacy variables (keeping for backward compatibility) */
   --accent: #c7d2fe; /* indigo-200 */
@@ -237,68 +244,11 @@
 
 .bg-page-about {
   background: linear-gradient(
-    to bottom right,
-    rgba(0, 0, 0, 0.9) 0%,
-    rgba(31, 41, 55, 0.8) 50%,
-    #312e81 100%
+    135deg,
+    var(--page-about-start) 0%,
+    var(--page-about-mid) 50%,
+    var(--page-about-end) 100%
   );
-}
-
-/* ==========================================================================
-   COMPONENT GRADIENT CLASSES - Reusable gradient backgrounds for components
-   ========================================================================== */
-
-.bg-gradient-primary {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-}
-
-.bg-gradient-secondary {
-  background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-dark));
-}
-
-.bg-gradient-accent {
-  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
-}
-
-.bg-gradient-surface {
-  background: linear-gradient(135deg, var(--bg-surface), var(--bg-surface-hover));
-}
-
-.bg-gradient-modal {
-  background: linear-gradient(to bottom right, var(--color-gray-900), var(--color-primary));
-}
-
-.bg-gradient-navbar-mobile {
-  background: linear-gradient(
-    to bottom right,
-    var(--color-primary-dark),
-    var(--color-black),
-    var(--color-secondary)
-  );
-}
-
-.bg-gradient-avatar {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-}
-
-.bg-gradient-button-primary {
-  background: linear-gradient(to right, var(--color-primary), var(--color-primary-dark));
-}
-
-.bg-gradient-button-primary:hover {
-  background: linear-gradient(to right, var(--color-primary-dark), var(--color-primary));
-}
-
-.bg-gradient-button-secondary {
-  background: linear-gradient(to right, var(--color-secondary), var(--color-secondary-dark));
-}
-
-.bg-gradient-button-secondary:hover {
-  background: linear-gradient(to right, var(--color-secondary-dark), var(--color-secondary));
-}
-
-.bg-gradient-chart-bar {
-  background: linear-gradient(to top, var(--color-primary), var(--color-primary-light));
 }
 
 .text-primary {
@@ -379,6 +329,12 @@
 }
 .text-theme-accent {
   color: var(--text-accent);
+}
+.text-theme-link {
+  color: var(--text-link);
+}
+.text-theme-link-hover:hover {
+  color: var(--text-link-hover);
 }
 .text-theme-success {
   color: var(--text-success);
