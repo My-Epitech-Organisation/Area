@@ -440,7 +440,7 @@ const Dashboard: React.FC = () => {
                 <h2 className="text-xl font-semibold text-theme-accent mb-3">Quick Actions</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button
-                    onClick={() => navigate('/services')}
+                    onClick={() => navigate('/Areaction')}
                     className="bg-gradient-button-primary hover:bg-gradient-button-primary text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
                   >
                     <svg
