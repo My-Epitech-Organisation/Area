@@ -20,6 +20,9 @@ BASE_URL = "https://api.openweathermap.org/data/2.5"
 
 
 @lru_cache(maxsize=32)
+# The 'key' parameter is intentionally unused in the function body.
+# It exists solely to create unique cache entries for lru_cache,
+# allowing cache invalidation based on location, units, and time.
 def cached_weather(api_key, location, units, key):
     return get_weather_data(api_key, location, units)
 
@@ -232,11 +235,21 @@ def format_weather_message(weather_data: Dict) -> str:
     temp = weather_data.get("temperature")
     description = weather_data.get("description") or "Unknown"
     humidity = weather_data.get("humidity")
-    units = "°C" if weather_data.get("units") == "metric" else "°F"
+    units_map = {"metric": "°C", "imperial": "°F", "standard": "K"}
+    units = units_map.get(weather_data.get("units"), "")
 
     # Handle None values
-    temp_str = f"{temp:.1f}" if temp is not None else "N/A"
-    humidity_str = f"{humidity}" if humidity is not None else "N/A"
+    try:
+        temp_str = f"{temp:.1f}" if temp is not None else "N/A"
+    except Exception as e:
+        logger.error(f"Error formatting temperature: {e}")
+        temp_str = "N/A"
+
+    try:
+        humidity_str = f"{humidity}" if humidity is not None else "N/A"
+    except Exception as e:
+        logger.error(f"Error formatting humidity: {e}")
+        humidity_str = "N/A"
 
     return (
         f"Weather in {location}: {temp_str}{units}, {description}. "
