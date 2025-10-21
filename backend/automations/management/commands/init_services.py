@@ -494,7 +494,12 @@ class Command(BaseCommand):
                                 "label": "Weather Condition",
                                 "description": "Condition to trigger on",
                                 "required": True,
-                                "enum": ["rain", "snow", "temperature_above", "temperature_below"],
+                                "enum": [
+                                    "rain",
+                                    "snow",
+                                    "temperature_above",
+                                    "temperature_below",
+                                ],
                                 "placeholder": "rain",
                             },
                             "threshold": {

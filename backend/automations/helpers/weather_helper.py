@@ -7,23 +7,24 @@
 
 """Weather API helper functions for actions and reactions."""
 
-from typing import Dict, List
+import logging
+import time
 from functools import lru_cache
+from typing import Dict, List
 
 import requests
-import time
-import logging
 
 logger = logging.getLogger(__name__)
 
 BASE_URL = "https://api.openweathermap.org/data/2.5"
+
 
 @lru_cache(maxsize=32)
 def cached_weather(api_key, location, units, key):
     return get_weather_data(api_key, location, units)
 
 
-def get_weather_data_cached(api_key, location, units = "metric"):
+def get_weather_data_cached(api_key, location, units="metric"):
     now = int(time.time() // 900)  # Cache for 15 minutes
     key = f"{location}:{units}:{now}"
     return cached_weather(api_key, location, units, key)
@@ -67,7 +68,7 @@ def get_weather_data(api_key: str, location: str, units: str = "metric") -> Dict
 
         logger.info(
             f"Retrieved weather for {location}: {data.get('weather', [{}])[0].get('description', 'unknown')}"
-            )
+        )
 
         return {
             "location": location,
@@ -152,7 +153,9 @@ def check_weather_condition(
         return False
 
 
-def get_forecast(api_key: str, location: str, days: int = 5, units: str = "metric") -> List[Dict]:
+def get_forecast(
+    api_key: str, location: str, days: int = 5, units: str = "metric"
+) -> List[Dict]:
     """
     Get weather forecast for multiple days.
 
@@ -192,12 +195,14 @@ def get_forecast(api_key: str, location: str, days: int = 5, units: str = "metri
         # Process forecast data
         forecast = []
         for item in data.get("list", [])[::8]:  # Every 8th item (daily)
-            forecast.append({
-                "date": item.get("dt_txt"),
-                "temperature": item.get("main", {}).get("temp"),
-                "description": item.get("weather", [{}])[0].get("description"),
-                "humidity": item.get("main", {}).get("humidity"),
-            })
+            forecast.append(
+                {
+                    "date": item.get("dt_txt"),
+                    "temperature": item.get("main", {}).get("temp"),
+                    "description": item.get("weather", [{}])[0].get("description"),
+                    "humidity": item.get("main", {}).get("humidity"),
+                }
+            )
 
         logger.info(f"Retrieved {len(forecast)}-day forecast for {location}")
         return forecast
