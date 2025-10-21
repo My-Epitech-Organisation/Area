@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../config/app_config.dart';
 import '../providers/auth_provider.dart';
 import '../providers/provider_manager.dart';
 import 'login_page.dart';
@@ -98,9 +99,9 @@ class _SplashPageState extends State<SplashPage> {
               // App name
               Semantics(
                 header: true,
-                child: const Text(
-                  'AREA',
-                  style: TextStyle(
+                child: Text(
+                  AppConfig.appName,
+                  style: const TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
