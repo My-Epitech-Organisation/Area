@@ -481,19 +481,6 @@ class WeatherServiceTest(TestCase):
         self.assertIn(self.location, log_call)
         self.assertIn("Forecast API Error", log_call)
 
-    def test_get_weather_alerts_returns_empty_list(self):
-        """Test that weather alerts returns empty list (not implemented)."""
-        result = (
-            get_weather_data.__wrapped__.__defaults__[0]
-            if hasattr(get_weather_data, "__wrapped__")
-            else []
-        )
-        # Actually call the function
-        from automations.helpers.weather_helper import get_weather_alerts
-
-        result = get_weather_alerts(self.valid_api_key, self.location)
-        self.assertEqual(result, [])
-
     @patch("automations.helpers.weather_helper.requests.get")
     def test_condition_check_with_malformed_api_response(self, mock_get):
         """Test condition checking with malformed API response."""
@@ -700,17 +687,6 @@ class WeatherServiceTest(TestCase):
         mock_cached_weather.assert_called_once()
         self.assertEqual(result["location"], self.location)
         self.assertEqual(result["temperature"], 20.5)
-
-    @patch("automations.helpers.weather_helper.requests.get")
-    def test_get_weather_alerts_not_implemented(self, mock_get):
-        """Test weather alerts (not yet implemented)."""
-        from automations.helpers.weather_helper import get_weather_alerts
-
-        result = get_weather_alerts(self.valid_api_key, self.location)
-        self.assertEqual(result, [])
-
-        # Verify no API calls were made
-        mock_get.assert_not_called()
 
     @patch("automations.helpers.weather_helper.logger")
     @patch("automations.helpers.weather_helper.requests.get")
