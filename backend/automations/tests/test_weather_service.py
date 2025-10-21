@@ -467,9 +467,11 @@ class WeatherServiceTest(TestCase):
     @patch("automations.helpers.weather_helper.requests.get")
     def test_forecast_logging_on_error(self, mock_get, mock_logger):
         """Test that forecast API errors are logged."""
-        mock_get.side_effect = Exception("Forecast API Error")
+        from requests.exceptions import RequestException
 
-        with self.assertRaises(Exception):
+        mock_get.side_effect = RequestException("Forecast API Error")
+
+        with self.assertRaises(RequestException):
             get_forecast(self.valid_api_key, self.location)
 
         # Verify error logging was called
@@ -729,9 +731,11 @@ class WeatherServiceTest(TestCase):
     @patch("automations.helpers.weather_helper.requests.get")
     def test_logging_on_error(self, mock_get, mock_logger):
         """Test that API errors are logged."""
-        mock_get.side_effect = Exception("API Error")
+        from requests.exceptions import RequestException
 
-        with self.assertRaises(Exception):
+        mock_get.side_effect = RequestException("API Error")
+
+        with self.assertRaises(RequestException):
             get_weather_data(self.valid_api_key, self.location)
 
         # Verify error logging was called
