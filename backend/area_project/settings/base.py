@@ -231,6 +231,9 @@ OAUTH2_STATE_EXPIRY = 600  # 10 minutes
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
+# External API Keys
+OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
+
 # Security Settings (base - extended per environment)
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
