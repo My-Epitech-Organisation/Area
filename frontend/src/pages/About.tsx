@@ -144,11 +144,7 @@ const About: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 w-full max-w-7xl mx-auto">
             <div className="bg-theme-surface p-6 rounded-lg shadow-lg flex flex-col items-center">
               <div className="w-24 h-24 rounded-full overflow-hidden mb-4">
-                <img
-                  src={nolanPapa}
-                  alt="Nolan PAPA"
-                  className="w-full h-full object-cover"
-                />
+                <img src={nolanPapa} alt="Nolan PAPA" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-xl font-bold text-theme-primary mb-2">Nolan PAPA</h3>
               <p className="text-theme-muted">Lead Developer frontend</p>
