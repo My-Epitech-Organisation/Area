@@ -6,7 +6,6 @@ class ProviderManager {
   static Future<void> initializeApp(BuildContext context) async {
     final authProvider = context.read<AuthProvider>();
     await authProvider.checkAuthStatus();
-
   }
 
   static Future<void> _loadUserData(BuildContext context) async {

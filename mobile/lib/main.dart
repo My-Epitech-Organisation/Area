@@ -150,7 +150,10 @@ class _MyAppState extends State<MyApp> {
           // Set up authentication failure callback
           final httpClient = HttpClientService();
           httpClient.onAuthenticationFailure = () {
-            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+            final authProvider = Provider.of<AuthProvider>(
+              context,
+              listen: false,
+            );
             authProvider.logout();
             // Navigate to login if not already there
             if (ModalRoute.of(context)?.settings.name != '/login') {
