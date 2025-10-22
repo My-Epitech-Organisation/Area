@@ -46,7 +46,7 @@ class OAuthDeepLinkHandler {
     debugPrint('Handling deep link: $uri');
 
     if (uri.scheme == AppConfig.urlScheme &&
-        uri.host == AppConfig.urlSchemeHost) {
+        uri.host == AppConfig.authPrefix) {
       final pathSegments = uri.pathSegments;
 
       if (pathSegments.length >= 3 &&
