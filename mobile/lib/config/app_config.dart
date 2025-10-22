@@ -40,17 +40,8 @@ class AppConfig {
     defaultValue: 'development',
   );
 
-  static String get urlSchemeHost {
-    return 'auth';
-  }
-
-  static String get oauthPath {
-    return 'oauth';
-  }
-
-  static String get callbackPath {
-    return 'callback';
-  }
+  static const String oauthPath = 'oauth';
+  static const String callbackPath = 'callback';
 
   static bool get isProduction {
     return _environmentDefine.toLowerCase() == 'production' || !kDebugMode;
