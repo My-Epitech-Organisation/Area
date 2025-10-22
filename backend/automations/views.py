@@ -47,6 +47,7 @@ from .serializers import (
     ReactionSerializer,
     ServiceSerializer,
 )
+from .validators import get_action_schema, get_reaction_schema
 
 
 class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
@@ -461,3 +462,95 @@ class ExecutionViewSet(viewsets.ReadOnlyModelViewSet):
 
         serializer = ExecutionListSerializer(queryset, many=True)
         return Response(serializer.data)
+
+
+class ActionSchemaView(viewsets.ViewSet):
+    """
+    ViewSet for retrieving action configuration schemas.
+
+    Provides endpoints to get JSON schemas for action configuration forms.
+    """
+
+    permission_classes = [permissions.AllowAny]  # Schemas are public
+
+    @extend_schema(
+        summary="Get action configuration schema",
+        description="Retrieve the JSON schema for configuring a specific action.",
+        parameters=[
+            OpenApiParameter(
+                name="action_name",
+                type=str,
+                location=OpenApiParameter.PATH,
+                description="Name of the action to get schema for",
+            )
+        ],
+        responses={
+            200: "Action schema retrieved successfully",
+            404: "Action schema not found",
+        },
+    )
+    def retrieve(self, request: Request, pk: str = None) -> Response:
+        """
+        Get schema for a specific action.
+
+        URL: /api/schemas/actions/{action_name}/
+        """
+        try:
+            schema = get_action_schema(pk)
+            if schema is None:
+                return Response(
+                    {"detail": f"Schema for action '{pk}' not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            return Response(schema)
+        except Exception as e:
+            return Response(
+                {"detail": f"Error retrieving action schema: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class ReactionSchemaView(viewsets.ViewSet):
+    """
+    ViewSet for retrieving reaction configuration schemas.
+
+    Provides endpoints to get JSON schemas for reaction configuration forms.
+    """
+
+    permission_classes = [permissions.AllowAny]  # Schemas are public
+
+    @extend_schema(
+        summary="Get reaction configuration schema",
+        description="Retrieve the JSON schema for configuring a specific reaction.",
+        parameters=[
+            OpenApiParameter(
+                name="reaction_name",
+                type=str,
+                location=OpenApiParameter.PATH,
+                description="Name of the reaction to get schema for",
+            )
+        ],
+        responses={
+            200: "Reaction schema retrieved successfully",
+            404: "Reaction schema not found",
+        },
+    )
+    def retrieve(self, request: Request, pk: str = None) -> Response:
+        """
+        Get schema for a specific reaction.
+
+        URL: /api/schemas/reactions/{reaction_name}/
+        """
+        try:
+            schema = get_reaction_schema(pk)
+            if schema is None:
+                return Response(
+                    {"detail": f"Schema for reaction '{pk}' not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            return Response(schema)
+        except Exception as e:
+            return Response(
+                {"detail": f"Error retrieving reaction schema: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
