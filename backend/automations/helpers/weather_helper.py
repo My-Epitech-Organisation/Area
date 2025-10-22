@@ -95,13 +95,14 @@ def get_weather_data(api_key: str, location: str, units: str = "metric") -> Dict
 
 
 def check_weather_condition(
-    api_key: str, location: str, condition: str, threshold: float = None
+    api_key: str, location: str, condition: str, threshold: float = None, weather_data: Dict = None
 ) -> bool:
     """
     Check if a specific weather condition is met.
     """
     try:
-        weather_data = get_weather_data(api_key, location)
+        if weather_data is None:
+            weather_data = get_weather_data(api_key, location)
         weather_desc = weather_data.get("description", "").lower()
         weather_temp = weather_data.get("temperature", 0)
 
