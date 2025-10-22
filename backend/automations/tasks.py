@@ -720,6 +720,162 @@ def check_gmail_actions(self):
         raise self.retry(exc=exc, countdown=300) from None
 
 
+@shared_task(
+    name="automations.check_weather_actions",
+    bind=True,
+    max_retries=3,
+    autoretry_for=RECOVERABLE_EXCEPTIONS,
+)
+def check_weather_actions(self):
+    """
+    Check weather-based actions and trigger executions when conditions are met.
+    """
+    logger.info("Starting weather actions check")
+
+    try:
+        weather_areas = get_active_areas(["weather_condition_met"])
+
+        if not weather_areas:
+            logger.info("No active weather areas found")
+            return {"status": "no_areas", "checked": 0}
+
+        from django.conf import settings
+        api_key = getattr(settings, "OPENWEATHER_API_KEY", None)
+        if not api_key:
+            logger.error("OPENWEATHER_API_KEY not configured")
+            return {"status": "error", "message": "API key not configured"}
+
+        from .helpers.weather_helper import get_weather_data, check_weather_condition
+
+        # --- Step 1: Group areas by location to minimize API calls
+        location_map = {}
+        for area in weather_areas:
+            location = area.action_config.get("location")
+            if not location:
+                logger.warning(f"Area '{area.name}' (#{area.id}) missing location")
+                continue
+            location_map.setdefault(location, []).append(area)
+
+        logger.info(f"Grouped {len(weather_areas)} areas into {len(location_map)} locations")
+
+        api_call_count = 0
+        triggered_count = 0
+        skipped_count = 0
+        error_count = 0
+
+        # --- Step 2: Fetch weather data per location
+        for location, grouped_areas in location_map.items():
+            try:
+                weather_data = get_weather_data(api_key, location)
+                api_call_count += 1
+            except Exception as e:
+                logger.error(f"Failed to fetch weather for {location}: {e}")
+                error_count += len(grouped_areas)
+                continue
+
+            # --- Step 3: Check each area with the same data
+            for area in grouped_areas:
+                try:
+                    action_config = area.action_config
+                    condition = action_config.get("condition")
+                    threshold = action_config.get("threshold")
+
+                    if not condition:
+                        skipped_count += 1
+                        logger.warning(f"Area '{area.name}' missing condition")
+                        continue
+
+                    condition_mapping = {
+                        "rain": "rain",
+                        "snow": "snow",
+                        "temperature_above": "temperature_above",
+                        "temperature_below": "temperature_below",
+                    }
+
+                    helper_condition = condition_mapping.get(condition)
+                    if not helper_condition:
+                        skipped_count += 1
+                        logger.warning(f"Unknown condition '{condition}' for area '{area.name}'")
+                        continue
+
+                    # --- Step 3: Check each area with the same data
+                    # Handle temperature conditions directly
+                    if condition in ["temperature_above", "temperature_below"]:
+                        temp = weather_data.get("temperature", 0)
+                        if condition == "temperature_above":
+                            condition_met = temp > (threshold or 0)
+                        else:
+                            condition_met = temp < (threshold or 0)
+                    else:
+                        # Use the helper function for other conditions
+                        condition_met = check_weather_condition(
+                            api_key=api_key,
+                            location=location,
+                            condition=helper_condition,
+                            threshold=threshold,
+                            weather_data=weather_data,
+                        )
+
+                    if condition_met:
+                        now = timezone.now()
+                        event_id = f"weather_{area.id}_{location}_{condition}_{now.strftime('%Y%m%d%H')}"
+                        trigger_data = {
+                            "timestamp": now.isoformat(),
+                            "action_type": "weather_condition_met",
+                            "location": location,
+                            "condition": condition,
+                            "threshold": threshold,
+                            "weather_data": weather_data,
+                        }
+
+                        execution, created = create_execution_safe(
+                            area=area,
+                            external_event_id=event_id,
+                            trigger_data=trigger_data,
+                        )
+
+                        if created and execution:
+                            logger.info(
+                                f"✅ Weather condition met for area '{area.name}' ({condition}) in {location}"
+                            )
+                            execute_reaction_task.delay(execution.pk)
+                            triggered_count += 1
+                        else:
+                            logger.debug(f"Duplicate trigger skipped for area {area.name}")
+
+                    else:
+                        logger.debug(
+                            f"Condition not met for area '{area.name}' ({condition}) in {location}"
+                        )
+
+                except Exception as e:
+                    error_count += 1
+                    logger.error(f"Error processing area '{area.name}': {e}", exc_info=True)
+
+        logger.info(
+            f"Weather check complete: {triggered_count} triggered, "
+            f"{skipped_count} skipped, {error_count} errors "
+            f"(total: {len(weather_areas)} areas)"
+        )
+
+        logger.info(f"🌦 Total weather API calls this cycle: {api_call_count}")
+
+        return {
+            "status": "success",
+            "triggered": triggered_count,
+            "skipped": skipped_count,
+            "errors": error_count,
+            "checked_areas": len(weather_areas),
+            "locations": len(location_map),
+            "api_calls": api_call_count,
+            "timestamp": timezone.now().isoformat(),
+        }
+
+    except Exception as exc:
+        logger.error(f"Fatal error in check_weather_actions: {exc}", exc_info=True)
+        raise self.retry(exc=exc, countdown=300) from None
+
+
 def _build_gmail_query(area: Area) -> str:
     """
     Build Gmail API query from action configuration.

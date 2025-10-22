@@ -236,7 +236,7 @@ GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
 # External API Keys
-OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
+OPENWEATHER_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY")
 
 # Security Settings (base - extended per environment)
 SECURE_BROWSER_XSS_FILTER = True
@@ -334,6 +334,14 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 300.0,  # Every 300 seconds (5 minutes)
         "options": {
             "expires": 290,  # Task expires after 290s to avoid overlap
+        },
+    },
+    # Check weather conditions every 15 minutes
+    "check-weather-actions": {
+        "task": "automations.check_weather_actions",
+        "schedule": 1800.0,  # Every 1800 seconds (30 minutes)
+        "options": {
+            "expires": 1780,  # Task expires after 1780s to avoid overlap
         },
     },
 }
