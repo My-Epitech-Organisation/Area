@@ -8,6 +8,14 @@
         "ignoreAtRules": ["tailwind", "apply", "variants", "responsive", "screen"]
       }
     ],
+    "declaration-block-no-shorthand-property-overrides": null,
+    "declaration-property-value-no-unknown": null,
+    "property-no-unknown": [
+      true,
+      {
+        "ignoreProperties": ["-webkit-mask-composite"]
+      }
+    ],
     "no-descending-specificity": null,
     "color-function-notation": null,
     "alpha-value-notation": null,

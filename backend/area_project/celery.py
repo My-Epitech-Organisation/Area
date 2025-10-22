@@ -39,6 +39,10 @@ app.conf.beat_schedule = {
         "task": "automations.check_gmail_actions",
         "schedule": 180.0,  # Every 3 minutes
     },
+    "check-twitch-actions": {
+        "task": "automations.check_twitch_actions",
+        "schedule": 60.0,  # Every minute
+    },
     "collect-execution-metrics": {
         "task": "automations.collect_execution_metrics",
         "schedule": crontab(minute=0),  # Every hour
