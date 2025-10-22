@@ -267,6 +267,4 @@ class TwitchOAuthProvider(BaseOAuthProvider):
 
         except requests.exceptions.RequestException as e:
             logger.error(f"Twitch token validation failed: {str(e)}")
-            raise ProviderAPIError(
-                f"Failed to validate Twitch token: {str(e)}"
-            ) from e
+            raise ProviderAPIError(f"Failed to validate Twitch token: {str(e)}") from e
