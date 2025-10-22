@@ -81,9 +81,7 @@ def validate_github_signature(
     return hmac.compare_digest(computed_signature, expected_signature)
 
 
-def validate_twitch_signature(
-    payload_body: bytes, headers: dict, secret: str
-) -> bool:
+def validate_twitch_signature(payload_body: bytes, headers: dict, secret: str) -> bool:
     """
     Validate Twitch EventSub webhook signature using HMAC-SHA256.
 
@@ -117,7 +115,9 @@ def validate_twitch_signature(
 
     # Construct message to verify
     # Format: <message_id><message_timestamp><request_body>
-    message = message_id.encode("utf-8") + message_timestamp.encode("utf-8") + payload_body
+    message = (
+        message_id.encode("utf-8") + message_timestamp.encode("utf-8") + payload_body
+    )
 
     # Compute HMAC-SHA256
     computed_signature = hmac.new(
@@ -161,7 +161,9 @@ def validate_webhook_signature(
         return True
 
 
-def extract_event_id(service_name: str, event_data: dict, headers: dict = None) -> Optional[str]:
+def extract_event_id(
+    service_name: str, event_data: dict, headers: dict = None
+) -> Optional[str]:
     """
     Extract unique event ID from webhook payload.
 
@@ -326,7 +328,6 @@ def process_webhook_event(
         # Extract actual event type from Twitch payload
         if "subscription" in event_data:
             event_type = event_data["subscription"]["type"]
-
 
     # Match to areas
     matched_areas = match_webhook_to_areas(service_name, event_type, event_data)
