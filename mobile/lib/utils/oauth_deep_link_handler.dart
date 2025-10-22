@@ -45,8 +45,7 @@ class OAuthDeepLinkHandler {
   Future<void> _handleDeepLink(Uri uri) async {
     debugPrint('Handling deep link: $uri');
 
-    if (uri.scheme == AppConfig.urlScheme &&
-        uri.host == AppConfig.authPrefix) {
+    if (uri.scheme == AppConfig.urlScheme && uri.host == AppConfig.authPrefix) {
       final pathSegments = uri.pathSegments;
 
       if (pathSegments.length >= 3 &&
