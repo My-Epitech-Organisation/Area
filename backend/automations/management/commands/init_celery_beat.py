@@ -5,9 +5,11 @@ This ensures all periodic tasks are created on every deployment.
 Usage:
     python manage.py init_celery_beat
 """
+
+from django_celery_beat.models import IntervalSchedule, PeriodicTask
+
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from django_celery_beat.models import PeriodicTask, IntervalSchedule
 
 
 class Command(BaseCommand):
@@ -20,26 +22,23 @@ class Command(BaseCommand):
         # 1. Create interval schedules
         # =====================================================================
 
-        # 15 seconds - For Twitch action checking (testing - use 300s in production)
-        interval_15s, created = IntervalSchedule.objects.get_or_create(
-            every=15,
-            period=IntervalSchedule.SECONDS
+        # 100 seconds - For Twitch action checking
+        interval_100s, created = IntervalSchedule.objects.get_or_create(
+            every=100, period=IntervalSchedule.SECONDS
         )
         if created:
-            self.stdout.write(self.style.SUCCESS("  ✓ Created 15-second interval"))
+            self.stdout.write(self.style.SUCCESS("  ✓ Created 100-second interval"))
 
         # 60 seconds - For timer actions
         interval_60s, created = IntervalSchedule.objects.get_or_create(
-            every=60,
-            period=IntervalSchedule.SECONDS
+            every=60, period=IntervalSchedule.SECONDS
         )
         if created:
             self.stdout.write(self.style.SUCCESS("  ✓ Created 60-second interval"))
 
         # 300 seconds (5 minutes) - For GitHub actions
         interval_300s, created = IntervalSchedule.objects.get_or_create(
-            every=300,
-            period=IntervalSchedule.SECONDS
+            every=300, period=IntervalSchedule.SECONDS
         )
         if created:
             self.stdout.write(self.style.SUCCESS("  ✓ Created 300-second interval"))
@@ -48,57 +47,73 @@ class Command(BaseCommand):
         # 2. Create periodic tasks
         # =====================================================================
 
-        # Twitch actions check (every 15 seconds for testing)
+        # Twitch actions check (every 100 seconds)
         task, created = PeriodicTask.objects.get_or_create(
-            name='check-twitch-actions',
+            name="check-twitch-actions",
             defaults={
-                'task': 'automations.check_twitch_actions',
-                'interval': interval_15s,
-                'enabled': True,
-                'start_time': timezone.now(),
-                'description': 'Check Twitch actions (stream status, followers, subscribers, etc.)'
-            }
+                "task": "automations.check_twitch_actions",
+                "interval": interval_100s,
+                "enabled": True,
+                "start_time": timezone.now(),
+                "description": "Check Twitch actions (stream status, followers, subscribers, etc.)",
+            },
         )
         if created:
-            self.stdout.write(self.style.SUCCESS("  ✓ Created check-twitch-actions task (15s interval)"))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "  ✓ Created check-twitch-actions task (100s interval)"
+                )
+            )
         else:
             # Update interval in case it changed
-            if task.interval != interval_15s:
-                task.interval = interval_15s
+            if task.interval != interval_100s:
+                task.interval = interval_100s
                 task.save()
-                self.stdout.write(self.style.WARNING("  ⚠ Updated check-twitch-actions interval to 15s"))
+                self.stdout.write(
+                    self.style.WARNING(
+                        "  ⚠ Updated check-twitch-actions interval to 100s"
+                    )
+                )
             else:
                 self.stdout.write("  • check-twitch-actions already exists")
 
         # Timer actions check (every 60 seconds)
         task, created = PeriodicTask.objects.get_or_create(
-            name='check-timer-actions',
+            name="check-timer-actions",
             defaults={
-                'task': 'automations.check_timer_actions',
-                'interval': interval_60s,
-                'enabled': True,
-                'start_time': timezone.now(),
-                'description': 'Check timer-based actions (scheduled automations)'
-            }
+                "task": "automations.check_timer_actions",
+                "interval": interval_60s,
+                "enabled": True,
+                "start_time": timezone.now(),
+                "description": "Check timer-based actions (scheduled automations)",
+            },
         )
         if created:
-            self.stdout.write(self.style.SUCCESS("  ✓ Created check-timer-actions task (60s interval)"))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "  ✓ Created check-timer-actions task (60s interval)"
+                )
+            )
         else:
             self.stdout.write("  • check-timer-actions already exists")
 
         # GitHub actions check (every 300 seconds)
         task, created = PeriodicTask.objects.get_or_create(
-            name='check-github-actions',
+            name="check-github-actions",
             defaults={
-                'task': 'automations.check_github_actions',
-                'interval': interval_300s,
-                'enabled': True,
-                'start_time': timezone.now(),
-                'description': 'Check GitHub actions (repository events, issues, pull requests)'
-            }
+                "task": "automations.check_github_actions",
+                "interval": interval_300s,
+                "enabled": True,
+                "start_time": timezone.now(),
+                "description": "Check GitHub actions (repository events, issues, pull requests)",
+            },
         )
         if created:
-            self.stdout.write(self.style.SUCCESS("  ✓ Created check-github-actions task (300s interval)"))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "  ✓ Created check-github-actions task (300s interval)"
+                )
+            )
         else:
             self.stdout.write("  • check-github-actions already exists")
 
@@ -106,6 +121,10 @@ class Command(BaseCommand):
         # Summary
         # =====================================================================
         total_tasks = PeriodicTask.objects.count()
-        self.stdout.write(self.style.SUCCESS(f"\n✅ Celery Beat initialization complete!"))
+        self.stdout.write(
+            self.style.SUCCESS("\n✅ Celery Beat initialization complete!")
+        )
         self.stdout.write(f"   Total periodic tasks: {total_tasks}")
-        self.stdout.write("\n💡 Note: For production, change Twitch interval to 300s (5 minutes)")
+        self.stdout.write(
+            "\n💡 Note: For production, change Twitch interval to 300s (5 minutes)"
+        )
