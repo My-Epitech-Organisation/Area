@@ -184,6 +184,37 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
         );
       }
 
+      case 'text': {
+        // Handle text type (for multiline text like email body)
+        const textValue =
+          typeof values[fieldName] === 'string'
+            ? (values[fieldName] as string)
+            : typeof property.default === 'string'
+              ? property.default
+              : '';
+
+        return (
+          <div key={fieldName} className="mb-4">
+            <label htmlFor={fieldName} className="form-label">
+              {formatFieldName(fieldName)}
+              {isRequired && <span className="text-required ml-1">*</span>}
+            </label>
+            {property.description && (
+              <p className="text-xs text-theme-muted mb-1">{property.description}</p>
+            )}
+            <textarea
+              id={fieldName}
+              value={textValue}
+              onChange={(e) => handleFieldChange(fieldName, e.target.value)}
+              required={isRequired}
+              rows={4}
+              className="form-input"
+              placeholder={property.placeholder || property.description}
+            />
+          </div>
+        );
+      }
+
       case 'array': {
         const arrayValue = Array.isArray(values[fieldName])
           ? (values[fieldName] as unknown[])
@@ -273,13 +304,31 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
       .join(' ');
   };
 
+  /**
+   * Sort fields in a smart order:
+   * 1. Required fields first (in the order they appear in schema.required)
+   * 2. Optional fields after
+   * This ensures consistent, predictable form layout
+   */
+  const getSortedFields = (): Array<[string, JSONSchemaProperty]> => {
+    const entries = Object.entries(schema.properties);
+    const required = schema.required || [];
+
+    // Separate required and optional fields
+    const requiredFields = required
+      .filter((fieldName) => schema.properties[fieldName])
+      .map((fieldName) => [fieldName, schema.properties[fieldName]] as [string, JSONSchemaProperty]);
+
+    const optionalFields = entries.filter(([fieldName]) => !required.includes(fieldName));
+
+    return [...requiredFields, ...optionalFields];
+  };
+
   return (
     <div className="bg-black/20 p-4 rounded-lg border border-gray-600">
       {title && <h3 className="text-sm font-semibold text-white mb-3">{title}</h3>}
       <div className="space-y-2">
-        {Object.entries(schema.properties).map(([fieldName, property]) =>
-          renderField(fieldName, property)
-        )}
+        {getSortedFields().map(([fieldName, property]) => renderField(fieldName, property))}
       </div>
     </div>
   );
