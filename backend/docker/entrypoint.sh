@@ -57,6 +57,11 @@ if [ "${SKIP_DJANGO_INIT:-false}" != "true" ]; then
     python manage.py init_services
     echo -e "${GREEN}✅ Services initialized!${NC}"
 
+    # Initialize Celery Beat periodic tasks
+    echo -e "${YELLOW}⏰ Initializing Celery Beat tasks...${NC}"
+    python manage.py init_celery_beat
+    echo -e "${GREEN}✅ Celery Beat tasks initialized!${NC}"
+
     # Create superuser if it doesn't exist
     echo -e "${YELLOW}👤 Creating superuser if needed...${NC}"
     ADMIN_EMAIL="${DJANGO_SUPERUSER_EMAIL:-admin@areaction.app}"
