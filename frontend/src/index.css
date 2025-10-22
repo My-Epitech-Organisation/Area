@@ -564,3 +564,148 @@
 .animate-fadeIn {
   animation: fadeIn 1s ease-in-out;
 }
+
+/* Carousel cards with neon hover effect */
+.card-carousel {
+  position: relative;
+}
+
+.card-carousel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 0.75rem;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(236, 72, 153, 0.6) 0%,
+    rgba(139, 92, 246, 0.6) 33%,
+    rgba(59, 130, 246, 0.6) 66%,
+    rgba(34, 211, 238, 0.6) 100%
+  );
+  /* stylelint-disable-next-line declaration-property-value-no-unknown */
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  /* stylelint-disable-next-line declaration-property-value-no-unknown */
+  mask-composite: xor;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.card-carousel:hover::before {
+  opacity: 1;
+}
+
+.card-carousel:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(236, 72, 153, 0.25) 0%,
+    rgba(139, 92, 246, 0.25) 33%,
+    rgba(59, 130, 246, 0.25) 66%,
+    rgba(34, 211, 238, 0.25) 100%
+  ) !important;
+  box-shadow:
+    0 0 30px rgba(236, 72, 153, 0.4),
+    0 0 60px rgba(139, 92, 246, 0.3),
+    0 0 90px rgba(59, 130, 246, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset !important;
+}
+
+/* List mode cards with neon hover effect */
+.card-list {
+  position: relative;
+}
+
+.card-list::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 0.5rem;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(236, 72, 153, 0.6) 0%,
+    rgba(139, 92, 246, 0.6) 33%,
+    rgba(59, 130, 246, 0.6) 66%,
+    rgba(34, 211, 238, 0.6) 100%
+  );
+  /* stylelint-disable-next-line declaration-property-value-no-unknown */
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  /* stylelint-disable-next-line declaration-property-value-no-unknown */
+  mask-composite: xor;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.card-list:hover::before {
+  opacity: 1;
+}
+
+.card-list:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(236, 72, 153, 0.25) 0%,
+    rgba(139, 92, 246, 0.25) 33%,
+    rgba(59, 130, 246, 0.25) 66%,
+    rgba(34, 211, 238, 0.25) 100%
+  ) !important;
+  box-shadow:
+    0 0 30px rgba(236, 72, 153, 0.4),
+    0 0 60px rgba(139, 92, 246, 0.3),
+    0 0 90px rgba(59, 130, 246, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset !important;
+}
+
+/* History cards with neon hover effect (no scale to prevent overflow) */
+.card-history {
+  position: relative;
+}
+
+.card-history::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 0.5rem;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(236, 72, 153, 0.6) 0%,
+    rgba(139, 92, 246, 0.6) 33%,
+    rgba(59, 130, 246, 0.6) 66%,
+    rgba(34, 211, 238, 0.6) 100%
+  );
+  /* stylelint-disable-next-line declaration-property-value-no-unknown */
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  /* stylelint-disable-next-line declaration-property-value-no-unknown */
+  mask-composite: xor;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.card-history:hover::before {
+  opacity: 1;
+}
+
+.card-history:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(236, 72, 153, 0.25) 0%,
+    rgba(139, 92, 246, 0.25) 33%,
+    rgba(59, 130, 246, 0.25) 66%,
+    rgba(34, 211, 238, 0.25) 100%
+  ) !important;
+  box-shadow:
+    0 0 30px rgba(236, 72, 153, 0.4),
+    0 0 60px rgba(139, 92, 246, 0.3),
+    0 0 90px rgba(59, 130, 246, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset !important;
+  filter: brightness(1.15);
+}

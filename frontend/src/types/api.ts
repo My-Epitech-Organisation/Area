@@ -4,21 +4,23 @@
 
 // JSON Schema types for dynamic form generation
 export interface JSONSchemaProperty {
-  type: 'string' | 'number' | 'integer' | 'boolean' | 'array' | 'object' | 'text';
+  type: 'string' | 'number' | 'integer' | 'boolean' | 'array' | 'object' | 'text' | 'datetime';
   description?: string;
+  label?: string;
+  placeholder?: string;
   format?: string;
   pattern?: string;
   minimum?: number;
   maximum?: number;
   minLength?: number;
   maxLength?: number;
+  min?: number;
+  max?: number;
   enum?: (string | number | boolean)[];
   default?: string | number | boolean | null;
   items?: JSONSchemaProperty;
   properties?: Record<string, JSONSchemaProperty>;
   additionalProperties?: boolean | JSONSchemaProperty;
-  placeholder?: string; // Custom property for placeholder text
-  label?: string; // Custom property for field label
 }
 
 export interface JSONSchema {
