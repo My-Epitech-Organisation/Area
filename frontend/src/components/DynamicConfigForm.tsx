@@ -216,37 +216,6 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
         );
       }
 
-      case 'text': {
-        // Handle text type (for multiline text like email body)
-        const textValue =
-          typeof values[fieldName] === 'string'
-            ? (values[fieldName] as string)
-            : typeof property.default === 'string'
-              ? property.default
-              : '';
-
-        return (
-          <div key={fieldName} className="mb-4">
-            <label htmlFor={fieldName} className="form-label">
-              {formatFieldName(fieldName)}
-              {isRequired && <span className="text-required ml-1">*</span>}
-            </label>
-            {property.description && (
-              <p className="text-xs text-theme-muted mb-1">{property.description}</p>
-            )}
-            <textarea
-              id={fieldName}
-              value={textValue}
-              onChange={(e) => handleFieldChange(fieldName, e.target.value)}
-              required={isRequired}
-              rows={4}
-              className="form-input"
-              placeholder={property.placeholder || property.description}
-            />
-          </div>
-        );
-      }
-
       case 'array': {
         const arrayValue = Array.isArray(values[fieldName])
           ? (values[fieldName] as unknown[])
