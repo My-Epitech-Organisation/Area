@@ -7,7 +7,9 @@
 
 """Weather API helper functions for actions and reactions."""
 
+import json
 import logging
+import os
 import time
 from functools import lru_cache
 from typing import Dict, List
@@ -15,6 +17,16 @@ from typing import Dict, List
 import requests
 
 logger = logging.getLogger(__name__)
+
+# Configure weather API logger
+weather_logger = logging.getLogger('weather_api')
+weather_logger.setLevel(logging.INFO)
+log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'logs')
+os.makedirs(log_dir, exist_ok=True)
+weather_log_file = os.path.join(log_dir, 'weather_api.log')
+file_handler = logging.FileHandler(weather_log_file)
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+weather_logger.addHandler(file_handler)
 
 BASE_URL = "https://api.openweathermap.org/data/2.5"
 
@@ -56,6 +68,9 @@ def get_weather_data(api_key: str, location: str, units: str = "metric") -> Dict
         response = requests.get(base_url, params=params, timeout=10)
         response.raise_for_status()
         data = response.json()
+
+        # Log the full API response for debugging
+        weather_logger.info(f"API Response for {location}: {json.dumps(data, indent=2)}")
 
         logger.info(
             f"Retrieved weather for {location}: {data.get('weather', [{}])[0].get('description', 'unknown')}"
