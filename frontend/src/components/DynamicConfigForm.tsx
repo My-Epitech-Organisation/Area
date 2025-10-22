@@ -306,10 +306,9 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
   };
 
   /**
-   * Sort fields in a smart order:
-   * 1. Required fields first (in the order they appear in schema.required)
-   * 2. Optional fields after
-   * This ensures consistent, predictable form layout
+   * Get sorted fields with required fields first.
+   *
+   * @returns {Array<[string, JSONSchemaProperty]>} - Sorted array of field entries.
    */
   const getSortedFields = (): Array<[string, JSONSchemaProperty]> => {
     const entries = Object.entries(schema.properties);
