@@ -70,7 +70,9 @@ def _make_twitch_request(
 # ==================== User Information ====================
 
 
-def get_user_info(access_token: str, client_id: str, user_login: Optional[str] = None) -> Dict:
+def get_user_info(
+    access_token: str, client_id: str, user_login: Optional[str] = None
+) -> Dict:
     """
     Get user information by login or authenticated user.
 
