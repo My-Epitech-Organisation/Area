@@ -15,6 +15,7 @@ from users.models import ServiceToken
 from .exceptions import InvalidProviderError, TokenRefreshError
 from .github import GitHubOAuthProvider
 from .google import GoogleOAuthProvider
+from .twitch import TwitchOAuthProvider
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -62,6 +63,7 @@ class OAuthManager:
     _provider_classes = {
         "google": GoogleOAuthProvider,
         "github": GitHubOAuthProvider,
+        "twitch": TwitchOAuthProvider,
     }
 
     @classmethod
