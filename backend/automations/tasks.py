@@ -803,7 +803,6 @@ def check_weather_actions(self):
                         )
                         continue
 
-                    # --- Step 3: Check each area with the same data
                     # Handle temperature conditions directly
                     if condition in ["temperature_above", "temperature_below"]:
                         temp = weather_data.get("temperature", 0)
