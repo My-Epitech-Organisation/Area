@@ -19,13 +19,17 @@ import requests
 logger = logging.getLogger(__name__)
 
 # Configure weather API logger
-weather_logger = logging.getLogger('weather_api')
+weather_logger = logging.getLogger("weather_api")
 weather_logger.setLevel(logging.INFO)
-log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'logs')
+log_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "logs"
+)
 os.makedirs(log_dir, exist_ok=True)
-weather_log_file = os.path.join(log_dir, 'weather_api.log')
+weather_log_file = os.path.join(log_dir, "weather_api.log")
 file_handler = logging.FileHandler(weather_log_file)
-file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+file_handler.setFormatter(
+    logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+)
 weather_logger.addHandler(file_handler)
 
 BASE_URL = "https://api.openweathermap.org/data/2.5"
@@ -70,7 +74,9 @@ def get_weather_data(api_key: str, location: str, units: str = "metric") -> Dict
         data = response.json()
 
         # Log the full API response for debugging
-        weather_logger.info(f"API Response for {location}: {json.dumps(data, indent=2)}")
+        weather_logger.info(
+            f"API Response for {location}: {json.dumps(data, indent=2)}"
+        )
 
         logger.info(
             f"Retrieved weather for {location}: {data.get('weather', [{}])[0].get('description', 'unknown')}"
@@ -95,7 +101,11 @@ def get_weather_data(api_key: str, location: str, units: str = "metric") -> Dict
 
 
 def check_weather_condition(
-    api_key: str, location: str, condition: str, threshold: float = None, weather_data: Dict = None
+    api_key: str,
+    location: str,
+    condition: str,
+    threshold: float = None,
+    weather_data: Dict = None,
 ) -> bool:
     """
     Check if a specific weather condition is met.

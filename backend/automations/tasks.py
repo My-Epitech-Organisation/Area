@@ -740,12 +740,13 @@ def check_weather_actions(self):
             return {"status": "no_areas", "checked": 0}
 
         from django.conf import settings
+
         api_key = getattr(settings, "OPENWEATHER_API_KEY", None)
         if not api_key:
             logger.error("OPENWEATHER_API_KEY not configured")
             return {"status": "error", "message": "API key not configured"}
 
-        from .helpers.weather_helper import get_weather_data, check_weather_condition
+        from .helpers.weather_helper import check_weather_condition, get_weather_data
 
         # --- Step 1: Group areas by location to minimize API calls
         location_map = {}
@@ -756,7 +757,9 @@ def check_weather_actions(self):
                 continue
             location_map.setdefault(location, []).append(area)
 
-        logger.info(f"Grouped {len(weather_areas)} areas into {len(location_map)} locations")
+        logger.info(
+            f"Grouped {len(weather_areas)} areas into {len(location_map)} locations"
+        )
 
         api_call_count = 0
         triggered_count = 0
@@ -795,7 +798,9 @@ def check_weather_actions(self):
                     helper_condition = condition_mapping.get(condition)
                     if not helper_condition:
                         skipped_count += 1
-                        logger.warning(f"Unknown condition '{condition}' for area '{area.name}'")
+                        logger.warning(
+                            f"Unknown condition '{condition}' for area '{area.name}'"
+                        )
                         continue
 
                     # --- Step 3: Check each area with the same data
@@ -841,7 +846,9 @@ def check_weather_actions(self):
                             execute_reaction_task.delay(execution.pk)
                             triggered_count += 1
                         else:
-                            logger.debug(f"Duplicate trigger skipped for area {area.name}")
+                            logger.debug(
+                                f"Duplicate trigger skipped for area {area.name}"
+                            )
 
                     else:
                         logger.debug(
@@ -850,7 +857,9 @@ def check_weather_actions(self):
 
                 except Exception as e:
                     error_count += 1
-                    logger.error(f"Error processing area '{area.name}': {e}", exc_info=True)
+                    logger.error(
+                        f"Error processing area '{area.name}': {e}", exc_info=True
+                    )
 
         logger.info(
             f"Weather check complete: {triggered_count} triggered, "
