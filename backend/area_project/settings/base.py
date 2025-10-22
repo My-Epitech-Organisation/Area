@@ -226,6 +226,28 @@ OAUTH2_PROVIDERS = {
         "scopes": ["user", "repo", "notifications"],
         "requires_refresh": False,  # GitHub tokens don't expire
     },
+    "twitch": {
+        "client_id": os.getenv("TWITCH_CLIENT_ID", ""),
+        "client_secret": os.getenv("TWITCH_CLIENT_SECRET", ""),
+        "redirect_uri": os.getenv(
+            "TWITCH_REDIRECT_URI", "http://localhost:8080/auth/oauth/twitch/callback/"
+        ),
+        "authorization_endpoint": "https://id.twitch.tv/oauth2/authorize",
+        "token_endpoint": "https://id.twitch.tv/oauth2/token",
+        "userinfo_endpoint": "https://api.twitch.tv/helix/users",
+        "scopes": [
+            "user:read:email",
+            "channel:read:subscriptions",
+            "channel:manage:broadcast",
+            "chat:read",
+            "user:write:chat",  # Send chat messages (replaces deprecated chat:edit)
+            "user:manage:whispers",  # Send whispers (private messages)
+            "clips:edit",
+            "moderator:read:followers",
+            "channel:read:stream_key",
+        ],
+        "requires_refresh": True,
+    },
 }
 
 # OAuth2 state expiry time (seconds)

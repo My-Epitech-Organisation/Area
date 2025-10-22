@@ -472,48 +472,183 @@ class Command(BaseCommand):
                 ],
             },
             {
-                "name": "weather",
-                "description": "Weather data and alerts integration",
-                "status": Service.Status.ACTIVE,
-                "actions": [
-                    {
-                        "name": "weather_condition_met",
-                        "description": (
-                            "Triggered when specific weather conditions are met"
-                        ),
-                        "config_schema": {
-                            "location": {
-                                "type": "string",
-                                "label": "Location",
-                                "description": "Location to monitor (city name or coordinates)",
-                                "required": True,
-                                "placeholder": "New York, NY",
-                            },
-                            "condition": {
-                                "type": "string",
-                                "label": "Weather Condition",
-                                "description": "Condition to trigger on",
-                                "required": True,
-                                "enum": [
-                                    "rain",
-                                    "snow",
-                                    "temperature_above",
-                                    "temperature_below",
-                                ],
-                                "placeholder": "rain",
-                            },
-                            "threshold": {
-                                "type": "number",
-                                "label": "Temperature Threshold",
-                                "description": "Temperature threshold (required for temperature conditions)",
-                                "required": False,
-                            },
+            "name": "weather",
+            "description": "Weather data and alerts integration",
+            "status": Service.Status.ACTIVE,
+            "actions": [
+                {
+                    "name": "weather_condition_met",
+                    "description": (
+                        "Triggered when specific weather conditions are met"
+                    ),
+                    "config_schema": {
+                        "location": {
+                            "type": "string",
+                            "label": "Location",
+                            "description": "Location to monitor (city name or coordinates)",
+                            "required": True,
+                            "placeholder": "New York, NY",
+                        },
+                        "condition": {
+                            "type": "string",
+                            "label": "Weather Condition",
+                            "description": "Condition to trigger on",
+                            "required": True,
+                            "enum": [
+                                "rain",
+                                "snow",
+                                "temperature_above",
+                                "temperature_below",
+                            ],
+                            "placeholder": "rain",
+                        },
+                        "threshold": {
+                            "type": "number",
+                            "label": "Temperature Threshold",
+                            "description": "Temperature threshold (required for temperature conditions)",
+                            "required": False,
+                            "placeholder": "32",
                         },
                     },
-                ],
-                "reactions": [],
+                },
+            ],
+            "reactions": [],
             },
-        ]
+            {
+            "name": "twitch",
+            "description": "Twitch streaming platform integration for channels and chat",
+            "status": Service.Status.ACTIVE,
+            "actions": [
+                {
+                    "name": "twitch_stream_online",
+                    "description": "Triggered when a channel goes live",
+                    "config_schema": {
+                        "broadcaster_login": {
+                            "type": "string",
+                            "label": "Broadcaster Username",
+                            "description": "Twitch username of the broadcaster to monitor",
+                            "required": True,
+                            "placeholder": "shroud",
+                        },
+                    },
+                },
+                {
+                    "name": "twitch_stream_offline",
+                    "description": "Triggered when a channel goes offline",
+                    "config_schema": {
+                        "broadcaster_login": {
+                            "type": "string",
+                            "label": "Broadcaster Username",
+                            "description": "Twitch username of the broadcaster to monitor",
+                            "required": True,
+                            "placeholder": "shroud",
+                        },
+                    },
+                },
+                {
+                    "name": "twitch_new_follower",
+                    "description": "Triggered when someone follows the channel",
+                    "config_schema": {},
+                },
+                {
+                    "name": "twitch_new_subscriber",
+                    "description": "Triggered when someone subscribes to the channel",
+                    "config_schema": {},
+                },
+                {
+                    "name": "twitch_channel_update",
+                    "description": "Triggered when channel info changes (title, category, etc.)",
+                    "config_schema": {},
+                },
+            ],
+            "reactions": [
+                {
+                    "name": "twitch_send_chat_message",
+                    "description": "Send a message in your Twitch chat",
+                    "config_schema": {
+                        "message": {
+                            "type": "text",
+                            "label": "Message",
+                            "description": "Message to send in your chat",
+                            "required": True,
+                            "placeholder": "Thanks for the follow!",
+                        },
+                    },
+                },
+                {
+                    "name": "twitch_send_whisper",
+                    "description": "Send a private message (whisper) to a Twitch user",
+                    "config_schema": {
+                        "to_user": {
+                            "type": "string",
+                            "label": "Recipient Username",
+                            "description": "Twitch username to send the whisper to",
+                            "required": True,
+                            "placeholder": "username",
+                        },
+                        "message": {
+                            "type": "text",
+                            "label": "Message",
+                            "description": "Private message to send",
+                            "required": True,
+                            "placeholder": "Thanks for the follow!",
+                        },
+                    },
+                },
+                {
+                    "name": "twitch_send_announcement",
+                    "description": "Send an announcement in your Twitch chat",
+                    "config_schema": {
+                        "message": {
+                            "type": "text",
+                            "label": "Announcement Message",
+                            "description": "Announcement message to display",
+                            "required": True,
+                            "placeholder": "Stream starting soon!",
+                        },
+                        "color": {
+                            "type": "string",
+                            "label": "Color",
+                            "description": "Announcement color (primary, blue, green, orange, purple)",
+                            "required": False,
+                            "default": "primary",
+                        },
+                    },
+                },
+                {
+                    "name": "twitch_create_clip",
+                    "description": "Create a clip from your live stream",
+                    "config_schema": {},
+                },
+                {
+                    "name": "twitch_update_title",
+                    "description": "Update your stream title",
+                    "config_schema": {
+                        "title": {
+                            "type": "string",
+                            "label": "Stream Title",
+                            "description": "New stream title (supports variables)",
+                            "required": True,
+                            "placeholder": "Playing {game_name}!",
+                        },
+                    },
+                },
+                {
+                    "name": "twitch_update_category",
+                    "description": "Update your stream category/game",
+                    "config_schema": {
+                        "game_name": {
+                            "type": "string",
+                            "label": "Game/Category Name",
+                            "description": "Name of the game or category",
+                            "required": True,
+                            "placeholder": "Just Chatting",
+                        },
+                    },
+                },
+            ],
+        },
+    ]
 
         # Create services
         for service_data in services_data:

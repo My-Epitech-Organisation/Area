@@ -930,6 +930,317 @@ def _build_gmail_query(area: Area) -> str:
 
 
 @shared_task(
+    name="automations.check_twitch_actions",
+    bind=True,
+    max_retries=3,
+    autoretry_for=RECOVERABLE_EXCEPTIONS,
+)
+def check_twitch_actions(self):
+    """
+    Poll Twitch for stream status changes and other events.
+
+    Checks all active Areas with Twitch actions and triggers executions
+    when conditions are met.
+
+    Supported actions:
+    - twitch_stream_online: Stream goes live
+    - twitch_stream_offline: Stream goes offline
+    - twitch_new_follower: New follower
+    - twitch_new_subscriber: New subscription
+    - twitch_channel_update: Channel info changes
+
+    Note: For production, EventSub webhooks are preferred for real-time events.
+
+    Returns:
+        dict: Summary of polling results
+    """
+    from django.conf import settings
+
+    from users.oauth.manager import OAuthManager
+
+    from .twitch_helper import (
+        get_channel_info,
+        get_follower_count,
+        get_stream_info,
+        get_user_info,
+    )
+
+    logger.info("Checking Twitch actions...")
+
+    try:
+        # Get all active Areas with Twitch actions
+        twitch_areas = get_active_areas(
+            [
+                "twitch_stream_online",
+                "twitch_stream_offline",
+                "twitch_new_follower",
+                "twitch_channel_update",
+            ]
+        )
+
+        if not twitch_areas:
+            logger.info("No active Twitch areas found")
+            return {"status": "no_areas", "checked": 0}
+
+        triggered_count = 0
+        skipped_count = 0
+        no_token_count = 0
+
+        client_id = settings.OAUTH2_PROVIDERS["twitch"]["client_id"]
+
+        for area in twitch_areas:
+            try:
+                # Get valid Twitch token
+                access_token = OAuthManager.get_valid_token(area.owner, "twitch")
+
+                if not access_token:
+                    logger.warning(
+                        f"No valid Twitch token for user {area.owner.username}, "
+                        f"area '{area.name}'"
+                    )
+                    no_token_count += 1
+                    continue
+
+                action_name = area.action.name
+
+                # Get or create ActionState for tracking
+                from .models import ActionState
+
+                state, _ = ActionState.objects.get_or_create(area=area)
+
+                # Handle stream online/offline actions
+                if action_name in ["twitch_stream_online", "twitch_stream_offline"]:
+                    # Get broadcaster from config or use authenticated user
+                    broadcaster_login = area.action_config.get("broadcaster_login")
+
+                    if broadcaster_login:
+                        user_info = get_user_info(
+                            access_token, client_id, user_login=broadcaster_login
+                        )
+                    else:
+                        user_info = get_user_info(access_token, client_id)
+
+                    broadcaster_id = user_info["id"]
+                    broadcaster_login = user_info["login"]
+
+                    # Check if stream is live
+                    stream_info = get_stream_info(
+                        access_token, client_id, broadcaster_id
+                    )
+                    is_live = stream_info is not None
+
+                    # Get previous state
+                    previous_state = state.metadata.get("is_live", False)
+
+                    # Detect state change
+                    if (
+                        action_name == "twitch_stream_online"
+                        and is_live
+                        and not previous_state
+                    ):
+                        # Stream just went online
+                        event_id = f"twitch_online_{broadcaster_id}_{stream_info['started_at']}"
+
+                        trigger_data = {
+                            "service": "twitch",
+                            "action": action_name,
+                            "broadcaster_id": broadcaster_id,
+                            "broadcaster_login": broadcaster_login,
+                            "stream_id": stream_info["id"],
+                            "title": stream_info["title"],
+                            "game_name": stream_info["game_name"],
+                            "viewer_count": stream_info["viewer_count"],
+                            "started_at": stream_info["started_at"],
+                        }
+
+                        execution, created = create_execution_safe(
+                            area=area,
+                            external_event_id=event_id,
+                            trigger_data=trigger_data,
+                        )
+
+                        if created and execution:
+                            logger.info(
+                                f"Twitch stream online triggered for '{area.name}': "
+                                f"{broadcaster_login} - {stream_info['title']}"
+                            )
+                            execute_reaction_task.delay(execution.pk)
+                            triggered_count += 1
+
+                        # Update state
+                        state.metadata["is_live"] = True
+                        state.last_checked_at = timezone.now()
+                        state.save()
+
+                    elif (
+                        action_name == "twitch_stream_offline"
+                        and not is_live
+                        and previous_state
+                    ):
+                        # Stream just went offline
+                        event_id = f"twitch_offline_{broadcaster_id}_{timezone.now().isoformat()}"
+
+                        trigger_data = {
+                            "service": "twitch",
+                            "action": action_name,
+                            "broadcaster_id": broadcaster_id,
+                            "broadcaster_login": broadcaster_login,
+                            "offline_at": timezone.now().isoformat(),
+                        }
+
+                        execution, created = create_execution_safe(
+                            area=area,
+                            external_event_id=event_id,
+                            trigger_data=trigger_data,
+                        )
+
+                        if created and execution:
+                            logger.info(
+                                f"Twitch stream offline triggered for '{area.name}': "
+                                f"{broadcaster_login}"
+                            )
+                            execute_reaction_task.delay(execution.pk)
+                            triggered_count += 1
+
+                        # Update state
+                        state.metadata["is_live"] = False
+                        state.last_checked_at = timezone.now()
+                        state.save()
+
+                    else:
+                        # No state change
+                        state.metadata["is_live"] = is_live
+                        state.last_checked_at = timezone.now()
+                        state.save()
+
+                # Handle follower count changes
+                elif action_name == "twitch_new_follower":
+                    user_info = get_user_info(access_token, client_id)
+                    broadcaster_id = user_info["id"]
+
+                    # Get current follower count
+                    current_count = get_follower_count(
+                        access_token, client_id, broadcaster_id
+                    )
+
+                    # Get previous count
+                    previous_count = state.metadata.get("follower_count", current_count)
+
+                    if current_count > previous_count:
+                        # New followers detected
+                        new_followers = current_count - previous_count
+
+                        event_id = f"twitch_follower_{broadcaster_id}_{timezone.now().isoformat()}"
+
+                        trigger_data = {
+                            "service": "twitch",
+                            "action": action_name,
+                            "broadcaster_id": broadcaster_id,
+                            "broadcaster_login": user_info["login"],
+                            "new_follower_count": new_followers,
+                            "total_followers": current_count,
+                            "detected_at": timezone.now().isoformat(),
+                        }
+
+                        execution, created = create_execution_safe(
+                            area=area,
+                            external_event_id=event_id,
+                            trigger_data=trigger_data,
+                        )
+
+                        if created and execution:
+                            logger.info(
+                                f"Twitch new follower triggered for '{area.name}': "
+                                f"+{new_followers} followers (total: {current_count})"
+                            )
+                            execute_reaction_task.delay(execution.pk)
+                            triggered_count += 1
+
+                    # Update state
+                    state.metadata["follower_count"] = current_count
+                    state.last_checked_at = timezone.now()
+                    state.save()
+
+                # Handle channel info changes
+                elif action_name == "twitch_channel_update":
+                    user_info = get_user_info(access_token, client_id)
+                    broadcaster_id = user_info["id"]
+
+                    # Get current channel info
+                    channel_info = get_channel_info(
+                        access_token, client_id, broadcaster_id
+                    )
+
+                    # Get previous info
+                    previous_title = state.metadata.get("channel_title", "")
+                    previous_game = state.metadata.get("channel_game", "")
+
+                    current_title = channel_info["title"]
+                    current_game = channel_info["game_name"]
+
+                    # Detect changes
+                    if current_title != previous_title or current_game != previous_game:
+                        event_id = f"twitch_update_{broadcaster_id}_{timezone.now().isoformat()}"
+
+                        trigger_data = {
+                            "service": "twitch",
+                            "action": action_name,
+                            "broadcaster_id": broadcaster_id,
+                            "broadcaster_login": user_info["login"],
+                            "new_title": current_title,
+                            "old_title": previous_title,
+                            "new_game": current_game,
+                            "old_game": previous_game,
+                            "changed_at": timezone.now().isoformat(),
+                        }
+
+                        execution, created = create_execution_safe(
+                            area=area,
+                            external_event_id=event_id,
+                            trigger_data=trigger_data,
+                        )
+
+                        if created and execution:
+                            logger.info(
+                                f"Twitch channel update triggered for '{area.name}': "
+                                f"{current_title} - {current_game}"
+                            )
+                            execute_reaction_task.delay(execution.pk)
+                            triggered_count += 1
+
+                    # Update state
+                    state.metadata["channel_title"] = current_title
+                    state.metadata["channel_game"] = current_game
+                    state.last_checked_at = timezone.now()
+                    state.save()
+
+            except Exception as e:
+                logger.error(
+                    f"Error checking Twitch for area '{area.name}': {e}", exc_info=True
+                )
+                skipped_count += 1
+                continue
+
+        logger.info(
+            f"Twitch check complete: {triggered_count} triggered, "
+            f"{skipped_count} skipped, {no_token_count} no token"
+        )
+
+        return {
+            "status": "success",
+            "triggered": triggered_count,
+            "skipped": skipped_count,
+            "no_token": no_token_count,
+            "checked_areas": len(twitch_areas),
+            "note": "For production, use EventSub webhooks for real-time events",
+        }
+
+    except Exception as exc:
+        logger.error(f"Error in check_twitch_actions: {exc}", exc_info=True)
+        raise self.retry(exc=exc, countdown=300) from None
+
+
+@shared_task(
     name="automations.execute_reaction_task",
     bind=True,
     max_retries=3,
@@ -1592,6 +1903,201 @@ def _execute_reaction_logic(
         except requests.exceptions.RequestException as e:
             logger.error(f"[REACTION WEBHOOK] Failed: {e}")
             raise Exception(f"Webhook POST failed: {e}") from e
+
+    # ==================== Twitch Reactions ====================
+    elif reaction_name == "twitch_send_chat_message":
+        from django.conf import settings
+
+        from users.oauth.manager import OAuthManager
+
+        from .twitch_helper import get_user_info, send_chat_message
+
+        access_token = OAuthManager.get_valid_token(area.owner, "twitch")
+        if not access_token:
+            raise Exception("No valid Twitch token available")
+
+        client_id = settings.OAUTH2_PROVIDERS["twitch"]["client_id"]
+
+        # Get user info (sender and broadcaster - same person)
+        user_info = get_user_info(access_token, client_id)
+        user_id = user_info["id"]
+        channel_name = user_info["login"]
+
+        # Get message from config
+        message = reaction_config.get("message", "")
+
+        # Send chat message to own channel
+        send_chat_message(
+            access_token,
+            client_id,
+            user_id,  # broadcaster_id (own channel)
+            user_id,  # sender_id (yourself)
+            message,
+        )
+
+        logger.info(f"[REACTION TWITCH] Sent chat message to {channel_name}: {message}")
+        return {"sent": True, "message": message, "channel": channel_name}
+
+    elif reaction_name == "twitch_send_whisper":
+        from django.conf import settings
+
+        from users.oauth.manager import OAuthManager
+
+        from .twitch_helper import get_user_info, send_whisper
+
+        access_token = OAuthManager.get_valid_token(area.owner, "twitch")
+        if not access_token:
+            raise Exception("No valid Twitch token available")
+
+        client_id = settings.OAUTH2_PROVIDERS["twitch"]["client_id"]
+
+        # Get sender info
+        sender_info = get_user_info(access_token, client_id)
+        sender_id = sender_info["id"]
+
+        # Get recipient username
+        to_user = reaction_config.get("to_user", "").strip()
+        if not to_user:
+            raise Exception("Recipient username is required for whisper")
+
+        # Get recipient user info
+        recipient_info = get_user_info(access_token, client_id, user_login=to_user)
+        recipient_id = recipient_info["id"]
+
+        # Get message
+        message = reaction_config.get("message", "")
+
+        # Send whisper
+        send_whisper(
+            access_token,
+            client_id,
+            sender_id,
+            recipient_id,
+            message,
+        )
+
+        logger.info(f"[REACTION TWITCH] Sent whisper to {to_user}: {message}")
+        return {"sent": True, "message": message, "recipient": to_user}
+
+    elif reaction_name == "twitch_send_announcement":
+        from django.conf import settings
+
+        from users.oauth.manager import OAuthManager
+
+        from .twitch_helper import get_user_info, send_chat_announcement
+
+        access_token = OAuthManager.get_valid_token(area.owner, "twitch")
+        if not access_token:
+            raise Exception("No valid Twitch token available")
+
+        client_id = settings.OAUTH2_PROVIDERS["twitch"]["client_id"]
+
+        # Get broadcaster info
+        user_info = get_user_info(access_token, client_id)
+        broadcaster_id = user_info["id"]
+
+        # Get message and color from config
+        message = reaction_config.get("message", "")
+        color = reaction_config.get("color", "primary")
+
+        # Send announcement
+        send_chat_announcement(
+            access_token, client_id, broadcaster_id, broadcaster_id, message, color
+        )
+
+        logger.info(f"[REACTION TWITCH] Sent announcement: {message}")
+        return {"sent": True, "message": message, "color": color}
+
+    elif reaction_name == "twitch_create_clip":
+        from django.conf import settings
+
+        from users.oauth.manager import OAuthManager
+
+        from .twitch_helper import create_clip, get_user_info
+
+        access_token = OAuthManager.get_valid_token(area.owner, "twitch")
+        if not access_token:
+            raise Exception("No valid Twitch token available")
+
+        client_id = settings.OAUTH2_PROVIDERS["twitch"]["client_id"]
+
+        # Get broadcaster info
+        user_info = get_user_info(access_token, client_id)
+        broadcaster_id = user_info["id"]
+
+        # Create clip
+        clip_data = create_clip(access_token, client_id, broadcaster_id)
+
+        logger.info(f"[REACTION TWITCH] Created clip: {clip_data['id']}")
+        return {
+            "created": True,
+            "clip_id": clip_data["id"],
+            "edit_url": clip_data["edit_url"],
+        }
+
+    elif reaction_name == "twitch_update_title":
+        from django.conf import settings
+
+        from users.oauth.manager import OAuthManager
+
+        from .twitch_helper import get_user_info, modify_channel_info
+
+        access_token = OAuthManager.get_valid_token(area.owner, "twitch")
+        if not access_token:
+            raise Exception("No valid Twitch token available")
+
+        client_id = settings.OAUTH2_PROVIDERS["twitch"]["client_id"]
+
+        # Get broadcaster info
+        user_info = get_user_info(access_token, client_id)
+        broadcaster_id = user_info["id"]
+
+        # Get new title from config
+        new_title = reaction_config.get("title", "")
+
+        # Update title
+        modify_channel_info(access_token, client_id, broadcaster_id, title=new_title)
+
+        logger.info(f"[REACTION TWITCH] Updated title to: {new_title}")
+        return {"updated": True, "new_title": new_title}
+
+    elif reaction_name == "twitch_update_category":
+        from django.conf import settings
+
+        from users.oauth.manager import OAuthManager
+
+        from .twitch_helper import (
+            get_user_info,
+            modify_channel_info,
+            search_categories,
+        )
+
+        access_token = OAuthManager.get_valid_token(area.owner, "twitch")
+        if not access_token:
+            raise Exception("No valid Twitch token available")
+
+        client_id = settings.OAUTH2_PROVIDERS["twitch"]["client_id"]
+
+        # Get broadcaster info
+        user_info = get_user_info(access_token, client_id)
+        broadcaster_id = user_info["id"]
+
+        # Get game name from config
+        game_name = reaction_config.get("game_name", "")
+
+        # Search for game/category
+        categories = search_categories(access_token, client_id, game_name, first=1)
+
+        if not categories:
+            raise Exception(f"Game/category not found: {game_name}")
+
+        game_id = categories[0]["id"]
+
+        # Update category
+        modify_channel_info(access_token, client_id, broadcaster_id, game_id=game_id)
+
+        logger.info(f"[REACTION TWITCH] Updated category to: {game_name}")
+        return {"updated": True, "game_name": game_name, "game_id": game_id}
 
     else:
         # Unknown reaction - log and continue
