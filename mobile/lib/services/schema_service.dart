@@ -12,11 +12,9 @@ class SchemaService {
   factory SchemaService() => _instance;
   SchemaService._internal();
 
-  /// Get action configuration schema
   Future<Map<String, dynamic>?> getActionSchema(String actionName) async {
     final cacheKey = 'action_schema_$actionName';
 
-    // Check cache first
     final cached = _cache.get<Map<String, dynamic>>(cacheKey);
     if (cached != null) return cached;
 
@@ -33,16 +31,13 @@ class SchemaService {
       _cache.set(cacheKey, schema);
       return schema;
     } catch (e) {
-      // If schema endpoint doesn't exist or fails, return null (will use basic form)
       return null;
     }
   }
 
-  /// Get reaction configuration schema
   Future<Map<String, dynamic>?> getReactionSchema(String reactionName) async {
     final cacheKey = 'reaction_schema_$reactionName';
 
-    // Check cache first
     final cached = _cache.get<Map<String, dynamic>>(cacheKey);
     if (cached != null) {
       return cached;
@@ -61,12 +56,10 @@ class SchemaService {
       _cache.set(cacheKey, schema);
       return schema;
     } catch (e) {
-      // If schema endpoint doesn't exist or fails, return null (will use basic form)
       return null;
     }
   }
 
-  /// Clear all schema cache
   void clearCache() {
     _cache.clearByPattern('action_schema_');
     _cache.clearByPattern('reaction_schema_');
