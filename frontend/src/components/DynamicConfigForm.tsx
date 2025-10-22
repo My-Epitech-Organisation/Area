@@ -317,7 +317,9 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
     // Separate required and optional fields
     const requiredFields = required
       .filter((fieldName) => schema.properties[fieldName])
-      .map((fieldName) => [fieldName, schema.properties[fieldName]] as [string, JSONSchemaProperty]);
+      .map(
+        (fieldName) => [fieldName, schema.properties[fieldName]] as [string, JSONSchemaProperty]
+      );
 
     const optionalFields = entries.filter(([fieldName]) => !required.includes(fieldName));
 
