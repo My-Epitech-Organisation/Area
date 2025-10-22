@@ -587,12 +587,8 @@
   mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
-  mask-composite: xor;
   /* stylelint-disable-next-line declaration-property-value-no-unknown */
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask-composite: exclude;
+  mask-composite: xor;
   opacity: 0;
   transition: opacity 0.5s ease;
   pointer-events: none;
@@ -639,12 +635,8 @@
   mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
-  mask-composite: xor;
   /* stylelint-disable-next-line declaration-property-value-no-unknown */
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask-composite: exclude;
+  mask-composite: xor;
   opacity: 0;
   transition: opacity 0.5s ease;
   pointer-events: none;
@@ -691,12 +683,8 @@
   mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
-  mask-composite: xor;
   /* stylelint-disable-next-line declaration-property-value-no-unknown */
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask-composite: exclude;
+  mask-composite: xor;
   opacity: 0;
   transition: opacity 0.5s ease;
   pointer-events: none;
