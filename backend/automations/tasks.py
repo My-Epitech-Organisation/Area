@@ -804,12 +804,14 @@ def check_twitch_actions(self):
 
     try:
         # Get all active Areas with Twitch actions
-        twitch_areas = get_active_areas([
-            "twitch_stream_online",
-            "twitch_stream_offline",
-            "twitch_new_follower",
-            "twitch_channel_update",
-        ])
+        twitch_areas = get_active_areas(
+            [
+                "twitch_stream_online",
+                "twitch_stream_offline",
+                "twitch_new_follower",
+                "twitch_channel_update",
+            ]
+        )
 
         if not twitch_areas:
             logger.info("No active Twitch areas found")
@@ -866,7 +868,11 @@ def check_twitch_actions(self):
                     previous_state = state.metadata.get("is_live", False)
 
                     # Detect state change
-                    if action_name == "twitch_stream_online" and is_live and not previous_state:
+                    if (
+                        action_name == "twitch_stream_online"
+                        and is_live
+                        and not previous_state
+                    ):
                         # Stream just went online
                         event_id = f"twitch_online_{broadcaster_id}_{stream_info['started_at']}"
 
@@ -901,7 +907,11 @@ def check_twitch_actions(self):
                         state.last_checked_at = timezone.now()
                         state.save()
 
-                    elif action_name == "twitch_stream_offline" and not is_live and previous_state:
+                    elif (
+                        action_name == "twitch_stream_offline"
+                        and not is_live
+                        and previous_state
+                    ):
                         # Stream just went offline
                         event_id = f"twitch_offline_{broadcaster_id}_{timezone.now().isoformat()}"
 
@@ -1760,9 +1770,7 @@ def _execute_reaction_logic(
             message,
         )
 
-        logger.info(
-            f"[REACTION TWITCH] Sent chat message to {channel_name}: {message}"
-        )
+        logger.info(f"[REACTION TWITCH] Sent chat message to {channel_name}: {message}")
         return {"sent": True, "message": message, "channel": channel_name}
 
     elif reaction_name == "twitch_send_whisper":
@@ -1803,9 +1811,7 @@ def _execute_reaction_logic(
             message,
         )
 
-        logger.info(
-            f"[REACTION TWITCH] Sent whisper to {to_user}: {message}"
-        )
+        logger.info(f"[REACTION TWITCH] Sent whisper to {to_user}: {message}")
         return {"sent": True, "message": message, "recipient": to_user}
 
     elif reaction_name == "twitch_send_announcement":
