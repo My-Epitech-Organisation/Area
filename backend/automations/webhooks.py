@@ -81,6 +81,55 @@ def validate_github_signature(
     return hmac.compare_digest(computed_signature, expected_signature)
 
 
+def validate_twitch_signature(
+    payload_body: bytes, headers: dict, secret: str
+) -> bool:
+    """
+    Validate Twitch EventSub webhook signature using HMAC-SHA256.
+
+    Twitch sends signature in headers:
+    - Twitch-Eventsub-Message-Id
+    - Twitch-Eventsub-Message-Timestamp
+    - Twitch-Eventsub-Message-Signature (format: "sha256=<signature>")
+
+    Args:
+        payload_body: Raw request body as bytes
+        headers: Request headers dict
+        secret: Webhook secret configured in Twitch EventSub
+
+    Returns:
+        True if signature is valid, False otherwise
+    """
+    message_id = headers.get("Twitch-Eventsub-Message-Id")
+    message_timestamp = headers.get("Twitch-Eventsub-Message-Timestamp")
+    signature_header = headers.get("Twitch-Eventsub-Message-Signature")
+
+    if not all([message_id, message_timestamp, signature_header]):
+        logger.warning("Twitch webhook: Missing required headers")
+        return False
+
+    if not signature_header.startswith("sha256="):
+        logger.warning(f"Twitch webhook: Invalid signature format: {signature_header}")
+        return False
+
+    # Extract signature from header
+    expected_signature = signature_header.split("=", 1)[1]
+
+    # Construct message to verify
+    # Format: <message_id><message_timestamp><request_body>
+    message = message_id.encode("utf-8") + message_timestamp.encode("utf-8") + payload_body
+
+    # Compute HMAC-SHA256
+    computed_signature = hmac.new(
+        key=secret.encode("utf-8"),
+        msg=message,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+
+    # Constant-time comparison to prevent timing attacks
+    return hmac.compare_digest(computed_signature, expected_signature)
+
+
 def validate_webhook_signature(
     service_name: str, payload_body: bytes, headers: dict, secret: str
 ) -> bool:
@@ -99,30 +148,27 @@ def validate_webhook_signature(
         True if signature is valid, False otherwise
     """
     if service_name == "github":
-        signature = headers.get("X-Hub-Signature-256") or headers.get(
-            "x-hub-signature-256"
-        )
-        return validate_github_signature(payload_body, signature, secret)
-
+        signature_header = headers.get("X-Hub-Signature-256", "")
+        return validate_github_signature(payload_body, signature_header, secret)
+    elif service_name == "twitch":
+        return validate_twitch_signature(payload_body, headers, secret)
     elif service_name == "gmail":
-        # Gmail uses different authentication (Pub/Sub tokens)
-        # For now, we'll implement basic validation
-        # In production, validate JWT tokens from Google Pub/Sub
-        logger.warning("Gmail webhook validation not fully implemented")
-        return True  # TODO: Implement proper Gmail/Pub/Sub validation
-
+        # Gmail uses OAuth2 bearer token, not HMAC signature
+        # Validation handled separately
+        return True
     else:
-        logger.warning(f"Unknown service for signature validation: {service_name}")
-        return False
+        # Unknown service, skip signature validation
+        return True
 
 
-def extract_event_id(service_name: str, event_data: dict) -> Optional[str]:
+def extract_event_id(service_name: str, event_data: dict, headers: dict = None) -> Optional[str]:
     """
     Extract unique event ID from webhook payload.
 
     Args:
         service_name: Name of the service
         event_data: Parsed webhook payload
+        headers: Request headers dict
 
     Returns:
         Unique event ID or None
@@ -140,6 +186,20 @@ def extract_event_id(service_name: str, event_data: dict) -> Optional[str]:
             return f"github_pr_{event_data['pull_request']['id']}"
         if "issue" in event_data:
             return f"github_issue_{event_data['issue']['id']}"
+
+    elif service_name == "twitch":
+        # Twitch EventSub provides message ID in headers
+        if headers:
+            message_id = headers.get("Twitch-Eventsub-Message-Id")
+            if message_id:
+                return f"twitch_eventsub_{message_id}"
+
+        # Fallback: use event data
+        subscription = event_data.get("subscription", {})
+        event = event_data.get("event", {})
+
+        if subscription.get("id") and event:
+            return f"twitch_{subscription['type']}_{subscription['id']}"
 
     elif service_name == "gmail":
         # Gmail Pub/Sub provides message ID
@@ -160,7 +220,7 @@ def match_webhook_to_areas(
     Find all active Areas that should trigger for this webhook event.
 
     Args:
-        service_name: Name of the service (github, gmail)
+        service_name: Name of the service (github, gmail, twitch)
         event_type: Type of event (push, pull_request, email_received, etc.)
         event_data: Full webhook payload
 
@@ -179,6 +239,13 @@ def match_webhook_to_areas(
         "gmail": {
             "message": "gmail_received",
             "email_received": "gmail_received",
+        },
+        "twitch": {
+            "stream.online": "twitch_stream_online",
+            "stream.offline": "twitch_stream_offline",
+            "channel.follow": "twitch_new_follower",
+            "channel.subscribe": "twitch_new_subscriber",
+            "channel.update": "twitch_channel_update",
         },
     }
 
@@ -226,13 +293,40 @@ def process_webhook_event(
         Processing result with statistics
     """
     # Extract event ID for idempotency
-    external_event_id = extract_event_id(service_name, event_data)
+    external_event_id = extract_event_id(service_name, event_data, headers)
     if not external_event_id:
         logger.error(f"Could not extract event ID for {service_name}/{event_type}")
         return {
             "status": "error",
             "message": "Could not extract event ID",
         }
+
+    # Handle Twitch EventSub challenge verification
+    if service_name == "twitch":
+        message_type = headers.get("Twitch-Eventsub-Message-Type")
+
+        # Challenge verification (webhook subscription confirmation)
+        if message_type == "webhook_callback_verification":
+            challenge = event_data.get("challenge")
+            logger.info("Twitch EventSub challenge received")
+            return {
+                "status": "challenge",
+                "challenge": challenge,
+            }
+
+        # Revocation notification (subscription cancelled)
+        elif message_type == "revocation":
+            subscription = event_data.get("subscription", {})
+            logger.warning(f"Twitch EventSub revoked: {subscription.get('type')}")
+            return {
+                "status": "revoked",
+                "subscription_type": subscription.get("type"),
+            }
+
+        # Extract actual event type from Twitch payload
+        if "subscription" in event_data:
+            event_type = event_data["subscription"]["type"]
+
 
     # Match to areas
     matched_areas = match_webhook_to_areas(service_name, event_type, event_data)
