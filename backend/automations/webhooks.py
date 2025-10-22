@@ -157,8 +157,8 @@ def validate_webhook_signature(
         # Validation handled separately
         return True
     else:
-        # Unknown service, skip signature validation
-        return True
+        # Unknown service, reject validation
+        return False
 
 
 def extract_event_id(
