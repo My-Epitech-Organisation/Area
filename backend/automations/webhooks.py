@@ -153,12 +153,9 @@ def validate_webhook_signature(
     elif service_name == "twitch":
         return validate_twitch_signature(payload_body, headers, secret)
     elif service_name == "gmail":
-        # Gmail uses OAuth2 bearer token, not HMAC signature
-        # Validation handled separately
         return True
-    else:
-        # Unknown service, reject validation
-        return False
+    # Unknown service, reject validation
+    return False
 
 
 def extract_event_id(
