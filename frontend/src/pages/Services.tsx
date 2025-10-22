@@ -198,7 +198,6 @@ const Services: React.FC = () => {
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAutoRotating, isDragging, flatMode]);
 
   const [hoverCarousel, setHoverCarousel] = useState(false);
@@ -523,7 +522,8 @@ const Services: React.FC = () => {
                             rgba(16, 185, 129, 0.15) 100%)`,
                           backdropFilter: 'blur(12px)',
                           WebkitBackdropFilter: 'blur(12px)',
-                          boxShadow: '0 8px 32px 0 rgba(139, 92, 246, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
+                          boxShadow:
+                            '0 8px 32px 0 rgba(139, 92, 246, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
                         }}
                       >
                         <div
@@ -605,7 +605,8 @@ const Services: React.FC = () => {
                             style={{
                               transformStyle: 'preserve-3d',
                               transform: `rotateY(${-rotationY}deg)`,
-                              transition: 'box-shadow 0.5s ease, background 0.5s ease, scale 0.3s ease',
+                              transition:
+                                'box-shadow 0.5s ease, background 0.5s ease, scale 0.3s ease',
                               background: `linear-gradient(135deg,
                                 rgba(139, 92, 246, 0.15) 0%,
                                 rgba(59, 130, 246, 0.15) 50%,
@@ -613,11 +614,12 @@ const Services: React.FC = () => {
                               backdropFilter: 'blur(12px)',
                               WebkitBackdropFilter: 'blur(12px)',
                               border: '1px solid rgba(255, 255, 255, 0.18)',
-                              boxShadow: z > 0
-                                ? `0 8px 32px 0 rgba(139, 92, 246, 0.25),
+                              boxShadow:
+                                z > 0
+                                  ? `0 8px 32px 0 rgba(139, 92, 246, 0.25),
                                    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
                                    0 20px 40px -10px rgba(59, 130, 246, 0.3)`
-                                : '0 4px 16px 0 rgba(0, 0, 0, 0.2)',
+                                  : '0 4px 16px 0 rgba(0, 0, 0, 0.2)',
                             }}
                           >
                             <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-white/40 to-white/20 mb-3 flex items-center justify-center overflow-hidden shadow-lg backdrop-blur-sm border border-white/30">
@@ -682,7 +684,8 @@ const Services: React.FC = () => {
                           rgba(16, 185, 129, 0.15) 100%)`,
                         backdropFilter: 'blur(12px)',
                         WebkitBackdropFilter: 'blur(12px)',
-                        boxShadow: '0 8px 32px 0 rgba(139, 92, 246, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
+                        boxShadow:
+                          '0 8px 32px 0 rgba(139, 92, 246, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
                       }}
                     >
                       <div
