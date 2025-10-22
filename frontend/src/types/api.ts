@@ -4,7 +4,7 @@
 
 // JSON Schema types for dynamic form generation
 export interface JSONSchemaProperty {
-  type: 'string' | 'number' | 'integer' | 'boolean' | 'array' | 'object';
+  type: 'string' | 'number' | 'integer' | 'boolean' | 'array' | 'object' | 'text';
   description?: string;
   format?: string;
   pattern?: string;
@@ -17,6 +17,8 @@ export interface JSONSchemaProperty {
   items?: JSONSchemaProperty;
   properties?: Record<string, JSONSchemaProperty>;
   additionalProperties?: boolean | JSONSchemaProperty;
+  placeholder?: string; // Custom property for placeholder text
+  label?: string; // Custom property for field label
 }
 
 export interface JSONSchema {

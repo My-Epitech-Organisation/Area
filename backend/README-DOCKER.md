@@ -48,7 +48,7 @@ curl http://localhost:8080/health/
 - **server**: Django ASGI application with WebSocket support (port 8080)
 - **worker**: Celery worker for background tasks
 - **beat**: Celery beat scheduler for periodic tasks
-- **flower**: Celery monitoring dashboard (port 5555)
+- **flower**: Celery monitoring dashboard (port 5566)
 - **db**: PostgreSQL database
 - **redis**: Redis for Celery broker, caching, and Django Channels
 
@@ -198,7 +198,7 @@ Once running, access:
 - Admin: <http://localhost:8080/admin/>
 - Health: <http://localhost:8080/health/>
 - API: <http://localhost:8080/auth/> (auth endpoints)
-- Flower: <http://localhost:5555> (Celery monitoring)
+- Flower: <http://localhost:5566> (Celery monitoring)
 
 ## 🧪 Testing
 
