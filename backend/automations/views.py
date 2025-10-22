@@ -471,7 +471,7 @@ class ActionSchemaView(viewsets.ViewSet):
     Provides endpoints to get JSON schemas for action configuration forms.
     """
 
-    permission_classes = [permissions.AllowAny]  # Schemas are public
+    permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
         summary="Get action configuration schema",
@@ -517,7 +517,7 @@ class ReactionSchemaView(viewsets.ViewSet):
     Provides endpoints to get JSON schemas for reaction configuration forms.
     """
 
-    permission_classes = [permissions.AllowAny]  # Schemas are public
+    permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
         summary="Get reaction configuration schema",
