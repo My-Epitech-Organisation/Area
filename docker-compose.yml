@@ -123,7 +123,7 @@ services:
       - PYTHONPATH=/app
       - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       - REDIS_URL=redis://redis:6379/0
-    command: ["celery", "-A", "area_project", "flower", "--port=5555"]
+    command: ["celery", "-A", "area_project", "flower", "--port=5566"]
     depends_on:
       - redis
       - db
