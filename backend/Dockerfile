@@ -41,7 +41,9 @@ RUN chmod +x /app/manage.py
 EXPOSE 8080
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+# start-period=60s: Allow time for migrations, init_services, and server startup
+# Especially important in CI where DB initialization can take longer
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8080/health/ || exit 1
 
 # Default command - ASGI with UvicornWorker for WebSocket support
