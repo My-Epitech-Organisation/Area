@@ -388,35 +388,6 @@ REACTION_SCHEMAS = {
         "required": ["channel", "title"],
         "additionalProperties": False,
     },
-    "teams_message": {
-        "type": "object",
-        "properties": {
-            "webhook_url": {
-                "type": "string",
-                "format": "uri",
-                "pattern": "https://[a-zA-Z0-9.-]+\\.webhook\\.office\\.com/",
-                "description": "Teams webhook URL",
-            },
-            "title": {
-                "type": "string",
-                "maxLength": 150,
-                "description": "Message title",
-            },
-            "text": {
-                "type": "string",
-                "minLength": 1,
-                "description": "Message content",
-            },
-            "color": {
-                "type": "string",
-                "pattern": "^#[0-9A-Fa-f]{6}$",
-                "default": "#0078D4",
-                "description": "Message color theme",
-            },
-        },
-        "required": ["webhook_url", "text"],
-        "additionalProperties": False,
-    },
     "github_create_issue": {
         "type": "object",
         "properties": {
@@ -629,7 +600,7 @@ REACTION_SCHEMAS = {
         "properties": {
             "alert_method": {
                 "type": "string",
-                "enum": ["email", "slack", "teams"],
+                "enum": ["email", "slack"],
                 "description": "Method to send alert",
             },
             "recipient": {
@@ -658,7 +629,7 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
+        
         "log_message",
         "webhook_post",
         "calendar_create_event",
@@ -667,7 +638,7 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
+        
         "log_message",
         "webhook_post",
         "calendar_create_event",
@@ -676,7 +647,7 @@ COMPATIBILITY_RULES = {
     "gmail_new_email": [
         "save_to_dropbox",
         "slack_message",
-        "teams_message",
+        
         "github_create_issue",
         "log_message",
         "webhook_post",
@@ -687,7 +658,7 @@ COMPATIBILITY_RULES = {
     "gmail_new_from_sender": [
         "save_to_dropbox",
         "slack_message",
-        "teams_message",
+        
         "github_create_issue",
         "log_message",
         "webhook_post",
@@ -698,7 +669,7 @@ COMPATIBILITY_RULES = {
     "gmail_new_with_label": [
         "save_to_dropbox",
         "slack_message",
-        "teams_message",
+        
         "github_create_issue",
         "log_message",
         "webhook_post",
@@ -709,7 +680,7 @@ COMPATIBILITY_RULES = {
     "gmail_new_with_subject": [
         "save_to_dropbox",
         "slack_message",
-        "teams_message",
+        
         "github_create_issue",
         "log_message",
         "webhook_post",
@@ -722,7 +693,7 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
+        
         "github_create_issue",
         "log_message",
         "webhook_post",
@@ -731,7 +702,7 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
+        
         "github_create_issue",
         "log_message",
         "webhook_post",
@@ -743,7 +714,7 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
+        
         "log_message",
         "webhook_post",
         "weather_send_alert",
@@ -759,7 +730,7 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
+        
         "webhook_post",
         "calendar_create_event",
     ],
@@ -772,7 +743,7 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
+        
         "webhook_post",
     ],
     "twitch_new_follower": [
@@ -782,7 +753,7 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
+        
         "webhook_post",
     ],
     "twitch_new_subscriber": [
@@ -792,7 +763,7 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
+        
         "webhook_post",
     ],
     "twitch_channel_update": [
@@ -802,7 +773,7 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
+        
         "webhook_post",
         "calendar_create_event",
     ],
@@ -813,7 +784,7 @@ COMPATIBILITY_RULES = {
         "slack_send_alert",
         "send_email",
         "gmail_send_email",
-        "teams_message",
+        
         "webhook_post",
         "calendar_create_event",
         "github_create_issue",
@@ -824,7 +795,7 @@ COMPATIBILITY_RULES = {
         "slack_send_alert",
         "send_email",
         "gmail_send_email",
-        "teams_message",
+        
         "webhook_post",
         "calendar_create_event",
         "github_create_issue",
@@ -835,7 +806,7 @@ COMPATIBILITY_RULES = {
         "slack_send_alert",
         "send_email",
         "gmail_send_email",
-        "teams_message",
+        
         "webhook_post",
         "calendar_create_event",
         "github_create_issue",
@@ -846,7 +817,7 @@ COMPATIBILITY_RULES = {
         "slack_send_alert",
         "send_email",
         "gmail_send_email",
-        "teams_message",
+        
         "webhook_post",
         "calendar_create_event",
         "github_create_issue",
