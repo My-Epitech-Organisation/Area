@@ -35,7 +35,6 @@ class InitServicesCommandTest(TestCase):
             "gmail",
             "email",
             "slack",
-            "teams",
             "webhook",
         ]
 
@@ -80,7 +79,6 @@ class InitServicesCommandTest(TestCase):
             ("github", "github_create_issue"),
             ("email", "send_email"),
             ("slack", "slack_send_message"),
-            ("teams", "teams_message"),
             ("webhook", "webhook_post"),
         ]
 
