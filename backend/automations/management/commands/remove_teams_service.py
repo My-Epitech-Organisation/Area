@@ -33,20 +33,21 @@ class Command(BaseCommand):
                     teams_service = Service.objects.get(name="teams")
                 except Service.DoesNotExist:
                     self.stdout.write(
-                        self.style.WARNING("  ⚠ Teams service not found (already removed)")
+                        self.style.WARNING(
+                            "  ⚠ Teams service not found (already removed)"
+                        )
                     )
                     return
 
                 # Count affected objects
                 actions_count = Action.objects.filter(service=teams_service).count()
                 reactions_count = Reaction.objects.filter(service=teams_service).count()
-                areas_count = Area.objects.filter(
-                    action__service=teams_service
-                ).count() + Area.objects.filter(reaction__service=teams_service).count()
-
-                self.stdout.write(
-                    self.style.WARNING(f"  Found Teams service with:")
+                areas_count = (
+                    Area.objects.filter(action__service=teams_service).count()
+                    + Area.objects.filter(reaction__service=teams_service).count()
                 )
+
+                self.stdout.write(self.style.WARNING("  Found Teams service with:"))
                 self.stdout.write(f"    - {actions_count} actions")
                 self.stdout.write(f"    - {reactions_count} reactions")
                 self.stdout.write(f"    - {areas_count} affected areas")
@@ -55,15 +56,15 @@ class Command(BaseCommand):
                 # Delete areas first (foreign key constraint)
                 if areas_count > 0:
                     self.stdout.write(
-                        self.style.WARNING(f"  → Deleting {areas_count} affected areas...")
+                        self.style.WARNING(
+                            f"  → Deleting {areas_count} affected areas..."
+                        )
                     )
                     Area.objects.filter(action__service=teams_service).delete()
                     Area.objects.filter(reaction__service=teams_service).delete()
 
                 # Delete the service (will cascade to actions and reactions)
-                self.stdout.write(
-                    self.style.WARNING(f"  → Deleting Teams service...")
-                )
+                self.stdout.write(self.style.WARNING("  → Deleting Teams service..."))
                 teams_service.delete()
 
                 self.stdout.write("")
@@ -74,7 +75,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS("=" * 70))
                 self.stdout.write("")
                 self.stdout.write(self.style.HTTP_INFO("📊 Summary:"))
-                self.stdout.write(f"   • Service removed: teams")
+                self.stdout.write("   • Service removed: teams")
                 self.stdout.write(f"   • Actions deleted: {actions_count}")
                 self.stdout.write(f"   • Reactions deleted: {reactions_count}")
                 self.stdout.write(f"   • Areas affected: {areas_count}")

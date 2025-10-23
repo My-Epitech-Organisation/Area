@@ -128,7 +128,9 @@ def get_channel_info(access_token: str, channel_id: str) -> Dict:
         )
 
         channel = result.get("channel", {})
-        logger.info(f"Retrieved info for Slack channel: {channel.get('name', channel_id)}")
+        logger.info(
+            f"Retrieved info for Slack channel: {channel.get('name', channel_id)}"
+        )
         return channel
 
     except requests.exceptions.RequestException as e:
@@ -211,7 +213,9 @@ def post_message(
         if thread_ts:
             payload["thread_ts"] = thread_ts
 
-        result = _make_slack_request("/chat.postMessage", access_token, method="POST", json_data=payload)
+        result = _make_slack_request(
+            "/chat.postMessage", access_token, method="POST", json_data=payload
+        )
 
         logger.info(f"Posted Slack message to {channel}: {text[:50]}...")
         return result
@@ -261,7 +265,9 @@ def get_channel_history(
         if oldest:
             params["oldest"] = oldest
 
-        result = _make_slack_request("/conversations.history", access_token, params=params)
+        result = _make_slack_request(
+            "/conversations.history", access_token, params=params
+        )
 
         messages = result.get("messages", [])
         logger.info(f"Retrieved {len(messages)} messages from Slack channel {channel}")
