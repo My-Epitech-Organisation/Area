@@ -736,14 +736,14 @@ def check_weather_actions(self):
         # Get all active weather areas with specific action names
         weather_action_names = [
             "weather_rain_detected",
-            "weather_snow_detected", 
+            "weather_snow_detected",
             "weather_temperature_above",
             "weather_temperature_below",
             "weather_extreme_heat",
             "weather_extreme_cold",
             "weather_windy",
         ]
-        
+
         weather_areas = get_active_areas(weather_action_names)
 
         if not weather_areas:
@@ -804,7 +804,7 @@ def check_weather_actions(self):
                             condition="rain",
                             weather_data=weather_data,
                         )
-                    
+
                     elif action_name == "weather_snow_detected":
                         condition_met = check_weather_condition(
                             api_key=api_key,
@@ -812,23 +812,27 @@ def check_weather_actions(self):
                             condition="snow",
                             weather_data=weather_data,
                         )
-                    
+
                     elif action_name == "weather_temperature_above":
                         if threshold is None:
-                            logger.warning(f"Area '{area.name}' missing threshold for {action_name}")
+                            logger.warning(
+                                f"Area '{area.name}' missing threshold for {action_name}"
+                            )
                             skipped_count += 1
                             continue
                         temp = weather_data.get("temperature", 0)
                         condition_met = temp > threshold
-                    
+
                     elif action_name == "weather_temperature_below":
                         if threshold is None:
-                            logger.warning(f"Area '{area.name}' missing threshold for {action_name}")
+                            logger.warning(
+                                f"Area '{area.name}' missing threshold for {action_name}"
+                            )
                             skipped_count += 1
                             continue
                         temp = weather_data.get("temperature", 0)
                         condition_met = temp < threshold
-                    
+
                     elif action_name == "weather_extreme_heat":
                         condition_met = check_weather_condition(
                             api_key=api_key,
@@ -837,7 +841,7 @@ def check_weather_actions(self):
                             threshold=35,  # Fixed threshold for extreme heat
                             weather_data=weather_data,
                         )
-                    
+
                     elif action_name == "weather_extreme_cold":
                         condition_met = check_weather_condition(
                             api_key=api_key,
@@ -846,12 +850,12 @@ def check_weather_actions(self):
                             threshold=-10,  # Fixed threshold for extreme cold
                             weather_data=weather_data,
                         )
-                    
+
                     elif action_name == "weather_windy":
                         # Get threshold from config (default 50 km/h) and convert to m/s
                         threshold_kmh = action_config.get("threshold", 50)
                         threshold_ms = threshold_kmh * 0.2778  # Convert km/h to m/s
-                        
+
                         condition_met = check_weather_condition(
                             api_key=api_key,
                             location=location,
@@ -859,9 +863,11 @@ def check_weather_actions(self):
                             threshold=threshold_ms,
                             weather_data=weather_data,
                         )
-                    
+
                     else:
-                        logger.warning(f"Unknown weather action: {action_name} for area '{area.name}'")
+                        logger.warning(
+                            f"Unknown weather action: {action_name} for area '{area.name}'"
+                        )
                         skipped_count += 1
                         continue
 
@@ -874,7 +880,7 @@ def check_weather_actions(self):
                             "location": location,
                             "weather_data": weather_data,
                         }
-                        
+
                         # Add threshold to trigger data if applicable
                         if threshold is not None:
                             trigger_data["threshold"] = threshold
@@ -1312,18 +1318,23 @@ def check_slack_actions(self):
     """
     from users.oauth.manager import OAuthManager
 
-    from .helpers.slack_helper import get_channel_history, list_channels, parse_message_event
+    from .helpers.slack_helper import (
+        get_channel_history,
+        parse_message_event,
+    )
 
     logger.info("Checking Slack actions...")
 
     try:
         # Get all active Areas with Slack actions
-        slack_areas = get_active_areas([
-            "slack_new_message",
-            "slack_message_with_keyword",
-            "slack_user_mention",
-            "slack_channel_join"
-        ])
+        slack_areas = get_active_areas(
+            [
+                "slack_new_message",
+                "slack_message_with_keyword",
+                "slack_user_mention",
+                "slack_channel_join",
+            ]
+        )
 
         if not slack_areas:
             logger.info("No active Slack areas found")
@@ -1438,10 +1449,11 @@ def check_slack_actions(self):
                             should_trigger = True
                             trigger_data["mentioned_user"] = user_id
 
-                    elif action_name == "slack_channel_join":
-                        # Check if this is a channel join event
-                        if event_data.get("subtype") == "channel_join":
-                            should_trigger = True
+                    elif (
+                        action_name == "slack_channel_join"
+                        and event_data.get("subtype") == "channel_join"
+                    ):
+                        should_trigger = True
 
                     if should_trigger:
                         # Create execution (with idempotency)
@@ -1461,12 +1473,10 @@ def check_slack_actions(self):
                             new_events_found = True
 
                 # Update state
-                if new_events_found or not state.last_event_id:
-                    # Update last_event_id to the most recent message processed
-                    if messages:
-                        latest_ts = messages[0].get("ts")
-                        if latest_ts:
-                            state.last_event_id = f"slack_{channel}_{latest_ts}"
+                if (new_events_found or not state.last_event_id) and messages:
+                    latest_ts = messages[0].get("ts")
+                    if latest_ts:
+                        state.last_event_id = f"slack_{channel}_{latest_ts}"
 
                 state.last_checked_at = timezone.now()
                 state.save()
@@ -1883,6 +1893,8 @@ def _execute_reaction_logic(
 
     elif reaction_name == "slack_send_alert":
         # Real implementation: Send alert message to Slack channel
+        from django.utils import timezone
+
         from users.oauth.manager import OAuthManager
 
         from .helpers.slack_helper import post_message
@@ -1899,7 +1911,7 @@ def _execute_reaction_logic(
             "color": color,
             "text": alert_text,
             "footer": "AREA Automation",
-            "ts": int(timezone.now().timestamp())
+            "ts": int(timezone.now().timestamp()),
         }
 
         # Get valid Slack token
