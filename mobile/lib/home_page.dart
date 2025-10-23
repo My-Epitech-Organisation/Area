@@ -31,9 +31,9 @@ class _MyHomePageState extends State<MyHomePage> {
       return;
     }
 
-    _isLoadingStats = true;
-
     try {
+      _isLoadingStats = true;
+
       final statsProvider = context.read<AutomationStatsProvider>();
       final userProvider = context.read<UserProvider>();
       final appletProvider = context.read<AppletProvider>();
