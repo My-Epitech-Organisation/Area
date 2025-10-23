@@ -201,16 +201,26 @@ backup_database() {
     BACKUP_FILE="$BACKUP_DIR/area_backup_$TIMESTAMP.sql"
 
     echo -e "${BLUE}Backing up database...${NC}"
-    docker-compose exec -T db pg_dump -U area_user area_db > $BACKUP_FILE
 
-    # Compress
-    gzip $BACKUP_FILE
+    # Check if db container is running
+    if ! docker-compose ps db | grep -q "Up"; then
+        echo -e "${YELLOW}Warning: Database container not running, skipping backup${NC}"
+        return 0
+    fi
 
-    echo -e "${GREEN}Backup saved: ${BACKUP_FILE}.gz${NC}"
+    # Try backup with error handling
+    if docker-compose exec -T db pg_dump -U area_user area_db > "$BACKUP_FILE" 2>/dev/null; then
+        # Compress
+        gzip "$BACKUP_FILE"
+        echo -e "${GREEN}Backup saved: ${BACKUP_FILE}.gz${NC}"
 
-    # Keep only last 10 backups
-    ls -t $BACKUP_DIR/*.gz | tail -n +11 | xargs -r rm
-    echo "Old backups cleaned (keeping last 10)"
+        # Keep only last 10 backups
+        ls -t "$BACKUP_DIR"/*.gz 2>/dev/null | tail -n +11 | xargs -r rm
+        echo "Old backups cleaned (keeping last 10)"
+    else
+        echo -e "${YELLOW}Warning: Backup failed, but continuing with update${NC}"
+        rm -f "$BACKUP_FILE" 2>/dev/null
+    fi
 }
 
 # Restore database
@@ -272,13 +282,25 @@ full_update() {
     echo -e "${YELLOW}Creating backup before update...${NC}"
     backup_database
 
-    # Pull code
-    echo -e "${YELLOW}Pulling latest code...${NC}"
-    git pull origin main
+    # Detect current branch
+    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    echo -e "${BLUE}Current branch: ${CURRENT_BRANCH}${NC}"
+
+    # Pull code from current branch
+    echo -e "${YELLOW}Pulling latest code from ${CURRENT_BRANCH}...${NC}"
+    git pull origin "$CURRENT_BRANCH"
+
+    # Show what changed
+    echo -e "${BLUE}Recent changes:${NC}"
+    git log -3 --oneline
 
     # Rebuild with no-cache for frontend and backend to ensure all code changes are applied
     echo -e "${YELLOW}Rebuilding containers (no-cache for frontend and backend)...${NC}"
-    docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache client_web server
+    echo -e "${BLUE}→ Building client_web (React/Vite with VITE_API_BASE=${VITE_API_BASE})...${NC}"
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache client_web
+    echo -e "${BLUE}→ Building server (Django)...${NC}"
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache server
+    echo -e "${BLUE}→ Building worker and beat...${NC}"
     docker-compose -f docker-compose.yml -f docker-compose.prod.yml build worker beat
 
     # Stop services
