@@ -161,16 +161,16 @@ services:
   # ---------------------------------------------------------------------------
   # Mobile Client - Flutter APK Builder
   # ---------------------------------------------------------------------------
-  client_mobile:
-    build:
-      context: ./mobile
-      dockerfile: Dockerfile
-    volumes:
-      - apk_shared:/shared
-    depends_on:
-      - server
-    networks:
-      - area-net
+  # client_mobile:
+  #   build:
+  #     context: ./mobile
+  #     dockerfile: Dockerfile
+  #   volumes:
+  #     - apk_shared:/shared
+  #   depends_on:
+  #     - server
+  #   networks:
+  #     - area-net
 
   # ---------------------------------------------------------------------------
   # Web Client - React Frontend
