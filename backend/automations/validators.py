@@ -189,6 +189,12 @@ ACTION_SCHEMAS = {
         "required": ["webhook_url"],
         "additionalProperties": False,
     },
+    # Debug Actions
+    "debug_manual_trigger": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
 }
 
 
@@ -480,6 +486,17 @@ REACTION_SCHEMAS = {
         "required": ["url"],
         "additionalProperties": False,
     },
+    # Debug Reactions
+    "debug_log_execution": {
+        "type": "object",
+        "properties": {
+            "message": {
+                "type": "string",
+                "description": "Custom message to log (optional)",
+            },
+        },
+        "additionalProperties": False,
+    },
 }
 
 
@@ -573,6 +590,8 @@ COMPATIBILITY_RULES = {
     ],
     # Webhook actions can trigger anything
     "webhook_trigger": ["*"],
+    # Debug actions - can trigger anything for testing
+    "debug_manual_trigger": ["*"],
     # Twitch actions - can trigger Twitch reactions and notification reactions
     "twitch_stream_online": [
         "twitch_send_chat_message",

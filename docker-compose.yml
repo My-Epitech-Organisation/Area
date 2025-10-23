@@ -75,6 +75,7 @@ services:
       - PYTHONPATH=/app
       - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       - REDIS_URL=redis://redis:6379/0
+      - SKIP_DJANGO_INIT=true
     command: ["celery", "-A", "area_project", "worker", "--loglevel=info"]
     depends_on:
       - redis
@@ -99,6 +100,7 @@ services:
       - PYTHONPATH=/app
       - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       - REDIS_URL=redis://redis:6379/0
+      - SKIP_DJANGO_INIT=true
     command: ["celery", "-A", "area_project", "beat", "--loglevel=info", "--scheduler=django_celery_beat.schedulers:DatabaseScheduler"]
     depends_on:
       - redis
@@ -123,6 +125,7 @@ services:
       - PYTHONPATH=/app
       - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       - REDIS_URL=redis://redis:6379/0
+      - SKIP_DJANGO_INIT=true
     command: ["celery", "-A", "area_project", "flower", "--port=5566"]
     depends_on:
       - redis
@@ -154,8 +157,6 @@ services:
       dockerfile: Dockerfile
     volumes:
       - apk_shared:/shared
-      - backend_static:/usr/share/nginx/html/static
-      - backend_media:/usr/share/nginx/html/media
     depends_on:
       - client_mobile
       - server

@@ -605,6 +605,33 @@ class Command(BaseCommand):
                     },
                 ],
             },
+            {
+                "name": "debug",
+                "description": "Internal debugging service for manual testing and development",
+                "status": Service.Status.ACTIVE,
+                "actions": [
+                    {
+                        "name": "debug_manual_trigger",
+                        "description": "Manually triggered action for testing (no automatic polling)",
+                        "config_schema": {},
+                    },
+                ],
+                "reactions": [
+                    {
+                        "name": "debug_log_execution",
+                        "description": "Log execution details with timestamp for debugging",
+                        "config_schema": {
+                            "message": {
+                                "type": "string",
+                                "label": "Custom Message",
+                                "description": "Optional custom message to log",
+                                "required": False,
+                                "placeholder": "Debug execution triggered",
+                            },
+                        },
+                    },
+                ],
+            },
         ]
 
         # Create services
