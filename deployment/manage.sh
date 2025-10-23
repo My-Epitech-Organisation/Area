@@ -272,13 +272,25 @@ full_update() {
     echo -e "${YELLOW}Creating backup before update...${NC}"
     backup_database
 
-    # Pull code
-    echo -e "${YELLOW}Pulling latest code...${NC}"
-    git pull origin main
+    # Detect current branch
+    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    echo -e "${BLUE}Current branch: ${CURRENT_BRANCH}${NC}"
+
+    # Pull code from current branch
+    echo -e "${YELLOW}Pulling latest code from ${CURRENT_BRANCH}...${NC}"
+    git pull origin "$CURRENT_BRANCH"
+
+    # Show what changed
+    echo -e "${BLUE}Recent changes:${NC}"
+    git log -3 --oneline
 
     # Rebuild with no-cache for frontend and backend to ensure all code changes are applied
     echo -e "${YELLOW}Rebuilding containers (no-cache for frontend and backend)...${NC}"
-    docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache client_web server
+    echo -e "${BLUE}→ Building client_web (React/Vite with VITE_API_BASE=${VITE_API_BASE})...${NC}"
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache client_web
+    echo -e "${BLUE}→ Building server (Django)...${NC}"
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache server
+    echo -e "${BLUE}→ Building worker and beat...${NC}"
     docker-compose -f docker-compose.yml -f docker-compose.prod.yml build worker beat
 
     # Stop services
