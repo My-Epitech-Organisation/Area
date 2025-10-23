@@ -30,7 +30,7 @@ services:
   redis:
     container_name: area_redis
     ports:
-      - "${REDIS_PORT}:6379"  # Expose for redis-cli or GUI tools
+      - "${REDIS_PORT:-6379}:6379"  # Expose for redis-cli or GUI tools
 
   # ---------------------------------------------------------------------------
   # Backend API - Development Overrides
@@ -45,11 +45,8 @@ services:
       - backend_static:/app/staticfiles  # Keep static files in volume
       - backend_media:/app/mediafiles    # Keep media files in volume
       - ./backend/logs:/app/logs:z       # Mount logs with SELinux label
-    entrypoint: >
-      sh -c "sleep 10 &&
-      python manage.py migrate &&
-      python manage.py collectstatic --noinput &&
-      python manage.py runserver 0.0.0.0:8080"
+    # Use command instead of entrypoint to preserve entrypoint.sh initialization
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8080"]
 
   # ---------------------------------------------------------------------------
   # Celery Worker - Development Overrides
@@ -60,8 +57,8 @@ services:
     volumes:
       - ./backend:/app:z  # HOT RELOAD: Mount source code (z for SELinux)
       - ./backend/logs:/app/logs:z  # Mount logs with SELinux label
-    entrypoint: >
-      sh -c "sleep 10 && celery -A area_project worker --loglevel=info --pool=solo"
+    # Use command instead of entrypoint to preserve entrypoint.sh initialization
+    command: ["celery", "-A", "area_project", "worker", "--loglevel=info", "--pool=solo"]
     healthcheck:
       disable: true
 
@@ -74,8 +71,8 @@ services:
     volumes:
       - ./backend:/app:z  # HOT RELOAD: Mount source code (z for SELinux)
       - ./backend/logs:/app/logs:z  # Mount logs with SELinux label
-    entrypoint: >
-      sh -c "sleep 10 && celery -A area_project beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler"
+    # Use command instead of entrypoint to preserve entrypoint.sh initialization
+    command: ["celery", "-A", "area_project", "beat", "--loglevel=info", "--scheduler=django_celery_beat.schedulers:DatabaseScheduler"]
     healthcheck:
       disable: true
 
@@ -89,8 +86,8 @@ services:
       - "${FLOWER_PORT:-5566}:5566"  # Expose Celery monitoring UI
     volumes:
       - ./backend:/app:z  # HOT RELOAD: Mount source code (z for SELinux)
-    entrypoint: >
-      sh -c "sleep 10 && celery -A area_project flower --port=5566"
+    # Use command instead of entrypoint to preserve entrypoint.sh initialization
+    command: ["celery", "-A", "area_project", "flower", "--port=5566"]
     healthcheck:
       disable: true
 
