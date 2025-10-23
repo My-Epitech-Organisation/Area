@@ -16,14 +16,30 @@ DART_ENV_FILE="${SCRIPT_DIR}/.dart-env"
 setup_dart_env() {
     if [ -f "${SCRIPT_DIR}/.env" ]; then
         echo "📄 Loading configuration from .env..."
-        # Copy .env content to .dart-env, filtering only Flutter variables
+        
+        # Helper function to safely extract env variable values
+        get_env_value() {
+            local key="$1"
+            local default="$2"
+            grep "^${key}=" "${SCRIPT_DIR}/.env" | sed "s/^${key}=//" | head -n1 || echo "$default"
+        }
+        
+        # Extract variables safely (handles values with =, quotes, spaces)
+        BACKEND_HOST=$(get_env_value "BACKEND_HOST" "localhost")
+        BACKEND_PORT=$(get_env_value "BACKEND_PORT" "8080")
+        GOOGLE_CLIENT_ID=$(get_env_value "GOOGLE_CLIENT_ID" "")
+        GOOGLE_API_KEY=$(get_env_value "GOOGLE_API_KEY" "")
+        GITHUB_CLIENT_ID=$(get_env_value "GITHUB_CLIENT_ID" "")
+        ENVIRONMENT=$(get_env_value "ENVIRONMENT" "development")
+        
+        # Write to .dart-env
         cat > "${DART_ENV_FILE}" << EOF
-BACKEND_HOST=$(grep '^BACKEND_HOST=' "${SCRIPT_DIR}/.env" | cut -d= -f2- || echo "localhost")
-BACKEND_PORT=$(grep '^BACKEND_PORT=' "${SCRIPT_DIR}/.env" | cut -d= -f2- || echo "8080")
-GOOGLE_CLIENT_ID=$(grep '^GOOGLE_CLIENT_ID=' "${SCRIPT_DIR}/.env" | cut -d= -f2- || echo "")
-GOOGLE_API_KEY=$(grep '^GOOGLE_API_KEY=' "${SCRIPT_DIR}/.env" | cut -d= -f2- || echo "")
-GITHUB_CLIENT_ID=$(grep '^GITHUB_CLIENT_ID=' "${SCRIPT_DIR}/.env" | cut -d= -f2- || echo "")
-ENVIRONMENT=$(grep '^ENVIRONMENT=' "${SCRIPT_DIR}/.env" | cut -d= -f2- || echo "development")
+BACKEND_HOST=$BACKEND_HOST
+BACKEND_PORT=$BACKEND_PORT
+GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+GOOGLE_API_KEY=$GOOGLE_API_KEY
+GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID
+ENVIRONMENT=$ENVIRONMENT
 EOF
     else
         echo "⚠️  .env not found, creating default .dart-env..."
