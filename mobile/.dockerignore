@@ -1,22 +1,69 @@
+# Version control
 .git
 .gitignore
 README.md
+
+# OS files
 .DS_Store
-.idea
-.vscode
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
 *.swp
 *.swo
 *~
-.dart_tool
-build
-.packages
-*.iml
-.gradle
-.classpath
-.project
+*.sublime-workspace
+*.sublime-project
 .c9/
 *.launch
 .settings/
-*.sublime-workspace
+.classpath
+.project
+
+# Dart/Flutter build artifacts
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+pubspec.lock
+
+# Android
+*.iml
+.gradle/
+local.properties
+android/.gradle/
+android/app/build/
+android/captures/
+android/key.properties
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/.last_build_id
+ios/Runner.xcworkspace/
+
+# Environment files
+.env
+.env.*
 .env.example
 .env.*.example
+.dart-env
+
+# Logs
+*.log
+logs/
+
+# Large files
+*.zip
+*.tar.gz
+*.apk
+*.aab
+*.ipa
+
+# Test files
+test/
+coverage/
