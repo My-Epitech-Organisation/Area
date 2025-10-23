@@ -1360,12 +1360,19 @@ def check_slack_actions(self):
                 # Get the authenticated user's Slack ID for mention detection
                 try:
                     from users.oauth.slack import SlackOAuthProvider
-                    provider = SlackOAuthProvider(None)  # Config not needed for get_user_info
+
+                    provider = SlackOAuthProvider(
+                        None
+                    )  # Config not needed for get_user_info
                     user_info = provider.get_user_info(access_token)
                     authenticated_user_id = user_info["id"]
-                    logger.debug(f"Authenticated Slack user ID for {area.owner.username}: {authenticated_user_id}")
+                    logger.debug(
+                        f"Authenticated Slack user ID for {area.owner.username}: {authenticated_user_id}"
+                    )
                 except Exception as e:
-                    logger.error(f"Failed to get Slack user info for {area.owner.username}: {e}")
+                    logger.error(
+                        f"Failed to get Slack user info for {area.owner.username}: {e}"
+                    )
                     skipped_count += 1
                     continue
 
@@ -1420,7 +1427,9 @@ def check_slack_actions(self):
 
                     # Skip bot messages and system messages (but allow channel_join events)
                     subtype = event_data.get("subtype")
-                    if event_data.get("bot_id") or (subtype and subtype != "channel_join"):
+                    if event_data.get("bot_id") or (
+                        subtype and subtype != "channel_join"
+                    ):
                         continue
 
                     # Create unique event ID
@@ -1917,11 +1926,7 @@ def _execute_reaction_logic(
         details = reaction_config.get("details", "")
 
         # Map alert_type to Slack color
-        color_map = {
-            "info": "good",
-            "warning": "warning",
-            "error": "danger"
-        }
+        color_map = {"info": "good", "warning": "warning", "error": "danger"}
         color = color_map.get(alert_type, "good")
 
         if not channel:
