@@ -16,14 +16,14 @@ DART_ENV_FILE="${SCRIPT_DIR}/.dart-env"
 setup_dart_env() {
     if [ -f "${SCRIPT_DIR}/.env" ]; then
         echo "📄 Loading configuration from .env..."
-        
+
         # Helper function to safely extract env variable values
         get_env_value() {
             local key="$1"
             local default="$2"
             grep "^${key}=" "${SCRIPT_DIR}/.env" | sed "s/^${key}=//" | head -n1 || echo "$default"
         }
-        
+
         # Extract variables safely (handles values with =, quotes, spaces)
         BACKEND_HOST=$(get_env_value "BACKEND_HOST" "localhost")
         BACKEND_PORT=$(get_env_value "BACKEND_PORT" "8080")
@@ -31,7 +31,7 @@ setup_dart_env() {
         GOOGLE_API_KEY=$(get_env_value "GOOGLE_API_KEY" "")
         GITHUB_CLIENT_ID=$(get_env_value "GITHUB_CLIENT_ID" "")
         ENVIRONMENT=$(get_env_value "ENVIRONMENT" "development")
-        
+
         # Write to .dart-env
         cat > "${DART_ENV_FILE}" << EOF
 BACKEND_HOST=$BACKEND_HOST
@@ -52,7 +52,7 @@ GITHUB_CLIENT_ID=
 ENVIRONMENT=development
 EOF
     fi
-    
+
     echo "✅ Configuration ready at: ${DART_ENV_FILE}"
     echo "📋 Contents:"
     cat "${DART_ENV_FILE}" | sed 's/^/   /'
@@ -75,7 +75,7 @@ build_apk() {
         --dart-define-from-file="${DART_ENV_FILE}" \
         --android-skip-build-dependency-validation \
         "$@"
-    
+
     if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
         echo "✅ APK built successfully!"
         ls -lh build/app/outputs/flutter-apk/app-release.apk
@@ -90,7 +90,7 @@ build_aab() {
     flutter build appbundle --release \
         --dart-define-from-file="${DART_ENV_FILE}" \
         "$@"
-    
+
     if [ -f "build/app/outputs/bundle/release/app-release.aab" ]; then
         echo "✅ AAB built successfully!"
         ls -lh build/app/outputs/bundle/release/app-release.aab
@@ -105,7 +105,7 @@ build_web() {
     flutter build web --release \
         --dart-define-from-file="${DART_ENV_FILE}" \
         "$@"
-    
+
     echo "✅ Web build completed!"
 }
 
