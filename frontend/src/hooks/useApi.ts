@@ -31,25 +31,32 @@ function usePaginatedApi<T>(endpoint: string): UseApiResult<T[]> {
 
       try {
         const token = localStorage.getItem('access');
+        const headers = {
+          Authorization: token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        };
 
-        const response = await fetch(`${API_BASE}${endpoint}`, {
-          headers: {
-            Authorization: token ? `Bearer ${token}` : '',
-            'Content-Type': 'application/json',
-          },
-        });
+        // Fetch all pages of paginated results
+        let allResults: T[] = [];
+        let nextUrl: string | null = `${API_BASE}${endpoint}`;
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            throw new Error('Session expired, please log in again');
+        while (nextUrl && isMounted) {
+          const response = await fetch(nextUrl, { headers });
+
+          if (!response.ok) {
+            if (response.status === 401) {
+              throw new Error('Session expired, please log in again');
+            }
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+          const json: PaginatedResponse<T> = await response.json();
+          allResults = [...allResults, ...json.results];
+          nextUrl = json.next;
         }
 
-        const json: PaginatedResponse<T> = await response.json();
-
         if (isMounted) {
-          setData(json.results);
+          setData(allResults);
         }
       } catch (err) {
         if (isMounted) {
