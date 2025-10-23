@@ -209,6 +209,55 @@ ACTION_SCHEMAS = {
         "required": ["location", "condition"],
         "additionalProperties": False,
     },
+    # Slack Actions
+    "slack_new_message": {
+        "type": "object",
+        "properties": {
+            "channel": {
+                "type": "string",
+                "description": "Slack channel ID or name to monitor",
+            },
+        },
+        "required": ["channel"],
+        "additionalProperties": False,
+    },
+    "slack_message_with_keyword": {
+        "type": "object",
+        "properties": {
+            "channel": {
+                "type": "string",
+                "description": "Slack channel ID or name to monitor (optional, monitors all if empty)",
+            },
+            "keywords": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Comma-separated keywords to trigger on",
+            },
+        },
+        "required": ["keywords"],
+        "additionalProperties": False,
+    },
+    "slack_user_mention": {
+        "type": "object",
+        "properties": {
+            "channel": {
+                "type": "string",
+                "description": "Slack channel ID or name to monitor (optional, monitors all if empty)",
+            },
+        },
+        "additionalProperties": False,
+    },
+    "slack_channel_join": {
+        "type": "object",
+        "properties": {
+            "channel": {
+                "type": "string",
+                "description": "Slack channel ID or name to monitor",
+            },
+        },
+        "required": ["channel"],
+        "additionalProperties": False,
+    },
 }
 
 
@@ -262,6 +311,81 @@ REACTION_SCHEMAS = {
             },
         },
         "required": ["channel", "message"],
+        "additionalProperties": False,
+    },
+    # Slack Reactions
+    "slack_send_message": {
+        "type": "object",
+        "properties": {
+            "channel": {
+                "type": "string",
+                "description": "Slack channel name (with or without #) or ID",
+            },
+            "message": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4000,
+                "description": "Message content (supports template variables)",
+            },
+            "username": {
+                "type": "string",
+                "description": "Bot display name (optional)",
+            },
+            "icon_emoji": {
+                "type": "string",
+                "pattern": "^:[a-zA-Z0-9._+-]+:$",
+                "description": "Bot emoji icon (optional)",
+            },
+        },
+        "required": ["channel", "message"],
+        "additionalProperties": False,
+    },
+    "slack_send_thread_reply": {
+        "type": "object",
+        "properties": {
+            "channel": {
+                "type": "string",
+                "description": "Slack channel containing the thread",
+            },
+            "thread_ts": {
+                "type": "string",
+                "description": "Thread timestamp to reply to",
+            },
+            "message": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4000,
+                "description": "Reply message content",
+            },
+        },
+        "required": ["channel", "thread_ts", "message"],
+        "additionalProperties": False,
+    },
+    "slack_send_alert": {
+        "type": "object",
+        "properties": {
+            "channel": {
+                "type": "string",
+                "description": "Slack channel to send alert to",
+            },
+            "alert_type": {
+                "type": "string",
+                "enum": ["info", "warning", "error"],
+                "default": "info",
+                "description": "Type of alert",
+            },
+            "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Alert title",
+            },
+            "details": {
+                "type": "string",
+                "description": "Alert details (optional)",
+            },
+        },
+        "required": ["channel", "title"],
         "additionalProperties": False,
     },
     "teams_message": {
@@ -681,6 +805,51 @@ COMPATIBILITY_RULES = {
         "teams_message",
         "webhook_post",
         "calendar_create_event",
+    ],
+    # Slack actions - can trigger Slack reactions and notification reactions
+    "slack_new_message": [
+        "slack_send_message",
+        "slack_send_thread_reply",
+        "slack_send_alert",
+        "send_email",
+        "gmail_send_email",
+        "teams_message",
+        "webhook_post",
+        "calendar_create_event",
+        "github_create_issue",
+    ],
+    "slack_message_with_keyword": [
+        "slack_send_message",
+        "slack_send_thread_reply",
+        "slack_send_alert",
+        "send_email",
+        "gmail_send_email",
+        "teams_message",
+        "webhook_post",
+        "calendar_create_event",
+        "github_create_issue",
+    ],
+    "slack_user_mention": [
+        "slack_send_message",
+        "slack_send_thread_reply",
+        "slack_send_alert",
+        "send_email",
+        "gmail_send_email",
+        "teams_message",
+        "webhook_post",
+        "calendar_create_event",
+        "github_create_issue",
+    ],
+    "slack_channel_join": [
+        "slack_send_message",
+        "slack_send_thread_reply",
+        "slack_send_alert",
+        "send_email",
+        "gmail_send_email",
+        "teams_message",
+        "webhook_post",
+        "calendar_create_event",
+        "github_create_issue",
     ],
 }
 
