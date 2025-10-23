@@ -272,35 +272,41 @@ full_update() {
     echo -e "${YELLOW}Creating backup before update...${NC}"
     backup_database
 
-    # Pull code
-    echo -e "${YELLOW}Pulling latest code...${NC}"
-    git pull origin main
+    # Get current branch
+    CURRENT_BRANCH=$(git branch --show-current)
+    echo -e "${BLUE}Current branch: ${CURRENT_BRANCH}${NC}"
 
-    # Rebuild with no-cache for frontend and backend to ensure all code changes are applied
-    echo -e "${YELLOW}Rebuilding containers (no-cache for frontend and backend)...${NC}"
-    docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache client_web server
-    docker-compose -f docker-compose.yml -f docker-compose.prod.yml build worker beat
+    # Pull code from current branch
+    echo -e "${YELLOW}Pulling latest code from ${CURRENT_BRANCH}...${NC}"
+    git pull origin $CURRENT_BRANCH
 
-    # Stop services
+    # Stop services first to avoid conflicts
     echo -e "${YELLOW}Stopping services...${NC}"
     docker-compose -f docker-compose.yml -f docker-compose.prod.yml down
+
+    # Rebuild ALL services with no-cache to ensure ALL code changes are applied
+    # This includes frontend build (npm run build inside Dockerfile.prod)
+    echo -e "${YELLOW}Rebuilding ALL containers with no-cache (this may take a few minutes)...${NC}"
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache
 
     # Start services
     echo -e "${YELLOW}Starting services...${NC}"
     docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
     # Wait for DB
-    sleep 10
+    echo -e "${YELLOW}Waiting for database to be ready...${NC}"
+    sleep 15
 
     # Run migrations
     echo -e "${YELLOW}Running migrations...${NC}"
     docker-compose exec server python manage.py migrate
 
-    # Collect static
-    echo -e "${YELLOW}Collecting static files...${NC}"
+    # Collect static (Django backend static files)
+    echo -e "${YELLOW}Collecting Django static files...${NC}"
     docker-compose exec server python manage.py collectstatic --noinput
 
     echo -e "${GREEN}Update complete!${NC}"
+    echo -e "${BLUE}Frontend was rebuilt with latest code (includes React build)${NC}"
     docker-compose ps
 }
 
