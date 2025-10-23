@@ -51,7 +51,10 @@ DATABASES = {
         "USER": os.getenv("DB_USER", "area_user"),
         "PASSWORD": os.getenv("DB_PASSWORD", "area_password_2024"),
         "HOST": os.getenv("DB_HOST", "db"),  # Docker service name
-        "PORT": 5432,  # Internal container port
+        # Port 5432: Internal container port (hardcoded for Docker internal communication)
+        # DB_PORT env var (5433) is the EXTERNAL host port mapping, not used here
+        # Django connects via Docker network directly to PostgreSQL container on port 5432
+        "PORT": 5432,
         "CONN_MAX_AGE": 60,  # Connection pooling (60 seconds)
         "OPTIONS": {
             "connect_timeout": 10,  # 10 seconds timeout
