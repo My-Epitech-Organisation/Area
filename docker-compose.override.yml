@@ -23,12 +23,7 @@ services:
     container_name: area_postgres
     ports:
       - "${DB_PORT}:5432"  # Expose for local tools (pgAdmin, DBeaver, etc.)
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+    # Healthcheck inherited from base docker-compose.yml
 
   # ---------------------------------------------------------------------------
   # Redis - Development Overrides
@@ -37,12 +32,7 @@ services:
     container_name: area_redis
     ports:
       - "${REDIS_PORT:-6379}:6379"  # Expose for redis-cli or GUI tools
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 5s
+    # Healthcheck inherited from base docker-compose.yml
 
   # ---------------------------------------------------------------------------
   # Backend API - Development Overrides
@@ -59,12 +49,7 @@ services:
       - ./backend/logs:/app/logs:z       # Mount logs with SELinux label
     # Use command instead of entrypoint to preserve entrypoint.sh initialization
     command: ["python", "manage.py", "runserver", "0.0.0.0:8080"]
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+    # Healthcheck inherited from Dockerfile (uses curl on /health/ endpoint)
 
   # ---------------------------------------------------------------------------
   # Celery Worker - Development Overrides
@@ -77,12 +62,7 @@ services:
       - ./backend/logs:/app/logs:z  # Mount logs with SELinux label
     # Use command instead of entrypoint to preserve entrypoint.sh initialization
     command: ["celery", "-A", "area_project", "worker", "--loglevel=info", "--pool=solo"]
-    healthcheck:
-      test: ["CMD-SHELL", "celery -A area_project inspect ping -d celery@$HOSTNAME || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+    # Healthcheck disabled in dev for faster startup
 
   # ---------------------------------------------------------------------------
   # Celery Beat - Development Overrides
@@ -95,12 +75,7 @@ services:
       - ./backend/logs:/app/logs:z  # Mount logs with SELinux label
     # Use command instead of entrypoint to preserve entrypoint.sh initialization
     command: ["celery", "-A", "area_project", "beat", "--loglevel=info", "--scheduler=django_celery_beat.schedulers:DatabaseScheduler"]
-    healthcheck:
-      test: ["CMD-SHELL", "pgrep -f 'celery.*beat' || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+    # Healthcheck disabled in dev for faster startup
 
   # ---------------------------------------------------------------------------
   # Flower - Development Overrides
@@ -114,12 +89,7 @@ services:
       - ./backend:/app:z  # HOT RELOAD: Mount source code (z for SELinux)
     # Use command instead of entrypoint to preserve entrypoint.sh initialization
     command: ["celery", "-A", "area_project", "flower", "--port=5566"]
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5566/healthcheck || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+    # Healthcheck disabled in dev for faster startup
 
   # ---------------------------------------------------------------------------
   # Mobile Client - Development Overrides
@@ -152,12 +122,7 @@ services:
     environment:
       - VITE_API_URL=http://localhost:${BACKEND_PORT:-8080}
       - CHOKIDAR_USEPOLLING=true  # Better file watching in Docker
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5173/ || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+    # Healthcheck disabled in dev for faster startup
 
 # =============================================================================
 # Volumes (inherited from base)
