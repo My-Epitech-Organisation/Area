@@ -66,6 +66,7 @@ show_help() {
     echo "  migrate        Run Django migrations"
     echo "  superuser      Create Django superuser"
     echo "  update         Update to latest version (pull + migrate + restart)"
+    echo "  update-no-mobile  Update without rebuilding mobile APK (faster)"
     echo ""
 }
 
@@ -310,6 +311,52 @@ full_update() {
     docker-compose ps
 }
 
+# Update without mobile (skip mobile APK build for faster deployments)
+update_without_mobile() {
+    echo -e "${BLUE}Running update without mobile build...${NC}"
+
+    # Backup database first
+    echo -e "${YELLOW}Creating backup before update...${NC}"
+    backup_database
+
+    # Get current branch
+    CURRENT_BRANCH=$(git branch --show-current)
+    echo -e "${BLUE}Current branch: ${CURRENT_BRANCH}${NC}"
+
+    # Pull code from current branch
+    echo -e "${YELLOW}Pulling latest code from ${CURRENT_BRANCH}...${NC}"
+    git pull origin $CURRENT_BRANCH
+
+    # Stop services first to avoid conflicts (except mobile)
+    echo -e "${YELLOW}Stopping services (keeping mobile)...${NC}"
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml stop server worker beat flower client_web db redis
+
+    # Rebuild services WITHOUT mobile (much faster)
+    echo -e "${YELLOW}Rebuilding containers (no-cache, skipping mobile build)...${NC}"
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache client_web server worker beat flower
+
+    # Start services
+    echo -e "${YELLOW}Starting services...${NC}"
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+    # Wait for DB
+    echo -e "${YELLOW}Waiting for database to be ready...${NC}"
+    sleep 15
+
+    # Run migrations
+    echo -e "${YELLOW}Running migrations...${NC}"
+    docker-compose exec server python manage.py migrate
+
+    # Collect static (Django backend static files)
+    echo -e "${YELLOW}Collecting Django static files...${NC}"
+    docker-compose exec server python manage.py collectstatic --noinput
+
+    echo -e "${GREEN}Update complete (mobile skipped)!${NC}"
+    echo -e "${BLUE}Frontend was rebuilt with latest code (includes React build)${NC}"
+    echo -e "${YELLOW}Note: Mobile APK was not rebuilt. Run 'update' for full rebuild.${NC}"
+    docker-compose ps
+}
+
 # Main script
 case "$1" in
     start)
@@ -365,6 +412,9 @@ case "$1" in
         ;;
     update)
         full_update
+        ;;
+    update-no-mobile)
+        update_without_mobile
         ;;
     help|--help|-h)
         show_help
