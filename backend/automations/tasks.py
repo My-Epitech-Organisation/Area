@@ -1529,6 +1529,283 @@ def check_slack_actions(self):
 
 
 @shared_task(
+    name="automations.check_spotify_actions",
+    bind=True,
+    max_retries=3,
+    autoretry_for=RECOVERABLE_EXCEPTIONS,
+)
+def check_spotify_actions(self):
+    """
+    Poll Spotify for playback events and library changes.
+
+    Checks all active Areas with Spotify actions and triggers executions
+    when new matching events are found.
+
+    Supported actions:
+    - spotify_track_started: New track starts playing
+    - spotify_track_finished: Track finishes playing
+    - spotify_playlist_updated: Playlist modified
+    - spotify_liked_track: Track added to liked songs
+    - spotify_saved_album: Album saved to library
+
+    Note: For production, Spotify Web Playback SDK or webhooks are preferred.
+
+    Returns:
+        dict: Summary of polling results
+    """
+    from users.oauth.manager import OAuthManager
+
+    from .helpers.spotify_helper import (
+        get_current_playback,
+        get_current_user,
+        get_user_playlists,
+        parse_playback_event,
+    )
+
+    logger.info("Checking Spotify actions...")
+
+    try:
+        # Get all active Areas with Spotify actions
+        spotify_action_names = [
+            "spotify_track_started",
+            "spotify_track_finished",
+            "spotify_playlist_updated",
+            "spotify_liked_track",
+            "spotify_saved_album",
+        ]
+
+        spotify_areas = get_active_areas(spotify_action_names)
+
+        if not spotify_areas:
+            logger.info("No active Spotify areas found")
+            return {"status": "no_areas", "checked": 0}
+
+        triggered_count = 0
+        skipped_count = 0
+        no_token_count = 0
+
+        for area in spotify_areas:
+            try:
+                # Get valid Spotify token
+                access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+
+                if not access_token:
+                    logger.warning(
+                        f"No valid Spotify token for user {area.owner.username}, "
+                        f"area '{area.name}'"
+                    )
+                    no_token_count += 1
+                    continue
+
+                action_name = area.action.name
+                action_config = area.action_config
+
+                # Get or create ActionState for tracking
+                from .models import ActionState
+
+                state, _ = ActionState.objects.get_or_create(area=area)
+
+                # Handle playback-related actions
+                if action_name in ["spotify_track_started", "spotify_track_finished"]:
+                    # Get current playback state
+                    current_playback = get_current_playback(access_token)
+
+                    # Get previous playback state from metadata
+                    previous_playback = state.metadata.get("last_playback")
+
+                    if current_playback:
+                        current_parsed = parse_playback_event(current_playback)
+                        previous_parsed = (
+                            parse_playback_event(previous_playback)
+                            if previous_playback
+                            else None
+                        )
+
+                        # Check for track started
+                        if action_name == "spotify_track_started":
+                            from .helpers.spotify_helper import has_track_changed
+
+                            if has_track_changed(previous_parsed, current_parsed):
+                                # Track changed - this is a "track started" event
+                                track_info = current_parsed.get("track", {})
+                                event_id = f"spotify_track_started_{area.id}_{track_info.get('id', 'unknown')}_{timezone.now().isoformat()}"
+
+                                trigger_data = {
+                                    "service": "spotify",
+                                    "action": action_name,
+                                    "track_id": track_info.get("id"),
+                                    "track_name": track_info.get("name"),
+                                    "artists": track_info.get("artists", []),
+                                    "album": track_info.get("album"),
+                                    "playback_state": current_parsed,
+                                    "started_at": timezone.now().isoformat(),
+                                }
+
+                                execution, created = create_execution_safe(
+                                    area=area,
+                                    external_event_id=event_id,
+                                    trigger_data=trigger_data,
+                                )
+
+                                if created and execution:
+                                    logger.info(
+                                        f"Spotify track started triggered for '{area.name}': "
+                                        f"{track_info.get('name', 'Unknown Track')}"
+                                    )
+                                    execute_reaction_task.delay(execution.pk)
+                                    triggered_count += 1
+
+                        # Check for track finished (when playback stops but we had a track playing)
+                        elif action_name == "spotify_track_finished":
+                            from .helpers.spotify_helper import has_playback_stopped
+
+                            if has_playback_stopped(previous_parsed, current_parsed):
+                                # Playback stopped - track finished
+                                track_info = previous_parsed.get("track", {}) if previous_parsed else {}
+                                event_id = f"spotify_track_finished_{area.id}_{track_info.get('id', 'unknown')}_{timezone.now().isoformat()}"
+
+                                trigger_data = {
+                                    "service": "spotify",
+                                    "action": action_name,
+                                    "track_id": track_info.get("id"),
+                                    "track_name": track_info.get("name"),
+                                    "artists": track_info.get("artists", []),
+                                    "album": track_info.get("album"),
+                                    "finished_at": timezone.now().isoformat(),
+                                }
+
+                                execution, created = create_execution_safe(
+                                    area=area,
+                                    external_event_id=event_id,
+                                    trigger_data=trigger_data,
+                                )
+
+                                if created and execution:
+                                    logger.info(
+                                        f"Spotify track finished triggered for '{area.name}': "
+                                        f"{track_info.get('name', 'Unknown Track')}"
+                                    )
+                                    execute_reaction_task.delay(execution.pk)
+                                    triggered_count += 1
+
+                    # Update state with current playback
+                    state.metadata["last_playback"] = current_playback
+                    state.last_checked_at = timezone.now()
+                    state.save()
+
+                # Handle playlist updates
+                elif action_name == "spotify_playlist_updated":
+                    # Get user's playlists
+                    playlists = get_user_playlists(access_token)
+
+                    # Get previous playlist snapshot
+                    previous_playlists = state.metadata.get("playlists", [])
+
+                    # Create snapshot of current playlists (id -> last_modified)
+                    current_snapshot = {
+                        p["id"]: p.get("snapshot_id", "") for p in playlists
+                    }
+                    previous_snapshot = {
+                        p["id"]: p.get("snapshot_id", "") for p in previous_playlists
+                    }
+
+                    # Check for changes
+                    changed_playlist_ids = []
+                    for playlist_id, current_snap in current_snapshot.items():
+                        previous_snap = previous_snapshot.get(playlist_id)
+                        if current_snap != previous_snap:
+                            changed_playlist_ids.append(playlist_id)
+
+                    # Also check for new playlists
+                    new_playlist_ids = set(current_snapshot.keys()) - set(previous_snapshot.keys())
+
+                    if changed_playlist_ids or new_playlist_ids:
+                        all_changed = list(changed_playlist_ids) + list(new_playlist_ids)
+
+                        # Filter by configured playlist if specified
+                        configured_playlist = action_config.get("playlist_id")
+                        if configured_playlist:
+                            all_changed = [pid for pid in all_changed if pid == configured_playlist]
+
+                        for playlist_id in all_changed:
+                            playlist_info = next(
+                                (p for p in playlists if p["id"] == playlist_id), {}
+                            )
+
+                            event_id = f"spotify_playlist_updated_{area.id}_{playlist_id}_{timezone.now().isoformat()}"
+
+                            trigger_data = {
+                                "service": "spotify",
+                                "action": action_name,
+                                "playlist_id": playlist_id,
+                                "playlist_name": playlist_info.get("name"),
+                                "owner": playlist_info.get("owner", {}).get("display_name"),
+                                "total_tracks": playlist_info.get("tracks", {}).get("total"),
+                                "snapshot_id": playlist_info.get("snapshot_id"),
+                                "updated_at": timezone.now().isoformat(),
+                            }
+
+                            execution, created = create_execution_safe(
+                                area=area,
+                                external_event_id=event_id,
+                                trigger_data=trigger_data,
+                            )
+
+                            if created and execution:
+                                logger.info(
+                                    f"Spotify playlist updated triggered for '{area.name}': "
+                                    f"{playlist_info.get('name', 'Unknown Playlist')}"
+                                )
+                                execute_reaction_task.delay(execution.pk)
+                                triggered_count += 1
+
+                    # Update state with current playlists
+                    state.metadata["playlists"] = playlists
+                    state.last_checked_at = timezone.now()
+                    state.save()
+
+                # Handle liked tracks (this would require storing liked tracks history)
+                elif action_name == "spotify_liked_track":
+                    # Note: Spotify doesn't provide a direct way to poll for recently liked tracks
+                    # This would require storing the user's liked tracks and comparing
+                    # For now, this is a placeholder - would need additional implementation
+                    logger.debug(f"Spotify liked track action not yet implemented for area '{area.name}'")
+                    state.last_checked_at = timezone.now()
+                    state.save()
+
+                # Handle saved albums
+                elif action_name == "spotify_saved_album":
+                    # Similar to liked tracks, would need to track saved albums
+                    logger.debug(f"Spotify saved album action not yet implemented for area '{area.name}'")
+                    state.last_checked_at = timezone.now()
+                    state.save()
+
+            except Exception as e:
+                logger.error(
+                    f"Error checking Spotify for area '{area.name}': {e}", exc_info=True
+                )
+                skipped_count += 1
+                continue
+
+        logger.info(
+            f"Spotify check complete: {triggered_count} triggered, "
+            f"{skipped_count} skipped, {no_token_count} no token"
+        )
+
+        return {
+            "status": "success",
+            "triggered": triggered_count,
+            "skipped": skipped_count,
+            "no_token": no_token_count,
+            "checked_areas": len(spotify_areas),
+            "note": "Spotify Web Playback SDK preferred for real-time events",
+        }
+
+    except Exception as exc:
+        logger.error(f"Error in check_spotify_actions: {exc}", exc_info=True)
+        raise self.retry(exc=exc, countdown=300) from None
+
+@shared_task(
     name="automations.execute_reaction_task",
     bind=True,
     max_retries=3,
@@ -2525,6 +2802,228 @@ def _execute_reaction_logic(
 
         logger.info(f"[REACTION TWITCH] Updated category to: {game_name}")
         return {"updated": True, "game_name": game_name, "game_id": game_id}
+
+    # ==================== Spotify Reactions ====================
+    elif reaction_name == "spotify_play_track":
+        # Play a specific track
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.spotify_helper import play_track
+
+        access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+        if not access_token:
+            raise ValueError(f"No valid Spotify token for user {area.owner.username}")
+
+        track_uri = reaction_config.get("track_uri")
+        position_ms = reaction_config.get("position_ms", 0)
+
+        if not track_uri:
+            raise ValueError("Track URI is required for spotify_play_track")
+
+        try:
+            result = play_track(access_token, track_uri, position_ms)
+
+            logger.info(f"[REACTION SPOTIFY] Started playing track: {track_uri}")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION SPOTIFY] Failed to play track: {e}")
+            raise ValueError(f"Spotify play_track failed: {str(e)}") from e
+
+    elif reaction_name == "spotify_pause_playback":
+        # Pause current playback
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.spotify_helper import pause_playback
+
+        access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+        if not access_token:
+            raise ValueError(f"No valid Spotify token for user {area.owner.username}")
+
+        try:
+            result = pause_playback(access_token)
+
+            logger.info("[REACTION SPOTIFY] Paused playback")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION SPOTIFY] Failed to pause playback: {e}")
+            raise ValueError(f"Spotify pause_playback failed: {str(e)}") from e
+
+    elif reaction_name == "spotify_resume_playback":
+        # Resume current playback
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.spotify_helper import resume_playback
+
+        access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+        if not access_token:
+            raise ValueError(f"No valid Spotify token for user {area.owner.username}")
+
+        try:
+            result = resume_playback(access_token)
+
+            logger.info("[REACTION SPOTIFY] Resumed playback")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION SPOTIFY] Failed to resume playback: {e}")
+            raise ValueError(f"Spotify resume_playback failed: {str(e)}") from e
+
+    elif reaction_name == "spotify_skip_next":
+        # Skip to next track
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.spotify_helper import skip_to_next
+
+        access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+        if not access_token:
+            raise ValueError(f"No valid Spotify token for user {area.owner.username}")
+
+        try:
+            result = skip_to_next(access_token)
+
+            logger.info("[REACTION SPOTIFY] Skipped to next track")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION SPOTIFY] Failed to skip next: {e}")
+            raise ValueError(f"Spotify skip_next failed: {str(e)}") from e
+
+    elif reaction_name == "spotify_skip_previous":
+        # Skip to previous track
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.spotify_helper import skip_to_previous
+
+        access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+        if not access_token:
+            raise ValueError(f"No valid Spotify token for user {area.owner.username}")
+
+        try:
+            result = skip_to_previous(access_token)
+
+            logger.info("[REACTION SPOTIFY] Skipped to previous track")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION SPOTIFY] Failed to skip previous: {e}")
+            raise ValueError(f"Spotify skip_previous failed: {str(e)}") from e
+
+    elif reaction_name == "spotify_set_volume":
+        # Set playback volume
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.spotify_helper import set_volume
+
+        access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+        if not access_token:
+            raise ValueError(f"No valid Spotify token for user {area.owner.username}")
+
+        volume_percent = reaction_config.get("volume_percent", 50)
+
+        try:
+            result = set_volume(access_token, volume_percent)
+
+            logger.info(f"[REACTION SPOTIFY] Set volume to {volume_percent}%")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION SPOTIFY] Failed to set volume: {e}")
+            raise ValueError(f"Spotify set_volume failed: {str(e)}") from e
+
+    elif reaction_name == "spotify_add_to_playlist":
+        # Add track to playlist
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.spotify_helper import add_to_playlist
+
+        access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+        if not access_token:
+            raise ValueError(f"No valid Spotify token for user {area.owner.username}")
+
+        playlist_id = reaction_config.get("playlist_id")
+        track_uri = reaction_config.get("track_uri")
+
+        if not playlist_id:
+            raise ValueError("Playlist ID is required for spotify_add_to_playlist")
+
+        try:
+            result = add_to_playlist(access_token, playlist_id, track_uri)
+
+            logger.info(f"[REACTION SPOTIFY] Added track to playlist {playlist_id}")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION SPOTIFY] Failed to add to playlist: {e}")
+            raise ValueError(f"Spotify add_to_playlist failed: {str(e)}") from e
+
+    elif reaction_name == "spotify_like_track":
+        # Like current track
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.spotify_helper import like_track
+
+        access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+        if not access_token:
+            raise ValueError(f"No valid Spotify token for user {area.owner.username}")
+
+        try:
+            result = like_track(access_token)
+
+            logger.info("[REACTION SPOTIFY] Liked current track")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION SPOTIFY] Failed to like track: {e}")
+            raise ValueError(f"Spotify like_track failed: {str(e)}") from e
+
+    elif reaction_name == "spotify_unlike_track":
+        # Unlike current track
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.spotify_helper import unlike_track
+
+        access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+        if not access_token:
+            raise ValueError(f"No valid Spotify token for user {area.owner.username}")
+
+        try:
+            result = unlike_track(access_token)
+
+            logger.info("[REACTION SPOTIFY] Unliked current track")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION SPOTIFY] Failed to unlike track: {e}")
+            raise ValueError(f"Spotify unlike_track failed: {str(e)}") from e
+
+    elif reaction_name == "spotify_create_playlist":
+        # Create a new playlist
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.spotify_helper import create_playlist
+
+        access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+        if not access_token:
+            raise ValueError(f"No valid Spotify token for user {area.owner.username}")
+
+        name = reaction_config.get("name")
+        description = reaction_config.get("description", "")
+        public = reaction_config.get("public", False)
+
+        if not name:
+            raise ValueError("Playlist name is required for spotify_create_playlist")
+
+        try:
+            result = create_playlist(access_token, name, description, public)
+
+            logger.info(f"[REACTION SPOTIFY] Created playlist: {name}")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION SPOTIFY] Failed to create playlist: {e}")
+            raise ValueError(f"Spotify create_playlist failed: {str(e)}") from e
 
     else:
         # Unknown reaction - log and continue

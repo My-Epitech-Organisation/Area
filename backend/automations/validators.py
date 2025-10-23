@@ -346,6 +346,38 @@ ACTION_SCHEMAS = {
         "properties": {},
         "additionalProperties": False,
     },
+    # Spotify Actions
+    "spotify_track_started": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
+    "spotify_track_finished": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
+    "spotify_playlist_updated": {
+        "type": "object",
+        "properties": {
+            "playlist_id": {
+                "type": "string",
+                "description": "Monitor specific playlist (leave empty for all playlists)",
+                "pattern": "^spotify:playlist:[a-zA-Z0-9]+$",
+            },
+        },
+        "additionalProperties": False,
+    },
+    "spotify_liked_track": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
+    "spotify_saved_album": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
 }
 
 
@@ -715,6 +747,109 @@ REACTION_SCHEMAS = {
         },
         "additionalProperties": False,
     },
+    # Spotify Reactions
+    "spotify_play_track": {
+        "type": "object",
+        "properties": {
+            "track_uri": {
+                "type": "string",
+                "description": "Spotify URI of the track to play (spotify:track:...)",
+                "pattern": "^spotify:track:[a-zA-Z0-9]+$",
+            },
+            "position_ms": {
+                "type": "number",
+                "description": "Position in milliseconds to start playing from",
+                "default": 0,
+                "minimum": 0,
+            },
+        },
+        "required": ["track_uri"],
+        "additionalProperties": False,
+    },
+    "spotify_pause_playback": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
+    "spotify_resume_playback": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
+    "spotify_skip_next": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
+    "spotify_skip_previous": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
+    "spotify_set_volume": {
+        "type": "object",
+        "properties": {
+            "volume_percent": {
+                "type": "number",
+                "description": "Volume level as percentage (0-100)",
+                "minimum": 0,
+                "maximum": 100,
+                "default": 50,
+            },
+        },
+        "required": ["volume_percent"],
+        "additionalProperties": False,
+    },
+    "spotify_add_to_playlist": {
+        "type": "object",
+        "properties": {
+            "playlist_id": {
+                "type": "string",
+                "description": "ID of the playlist to add the track to",
+                "pattern": "^[a-zA-Z0-9]+$",
+            },
+            "track_uri": {
+                "type": "string",
+                "description": "URI of track to add (leave empty to add current track)",
+                "pattern": "^spotify:track:[a-zA-Z0-9]+$",
+            },
+        },
+        "required": ["playlist_id"],
+        "additionalProperties": False,
+    },
+    "spotify_like_track": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
+    "spotify_unlike_track": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
+    "spotify_create_playlist": {
+        "type": "object",
+        "properties": {
+            "name": {
+                "type": "string",
+                "description": "Name for the new playlist",
+                "minLength": 1,
+                "maxLength": 100,
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional description for the playlist",
+                "maxLength": 300,
+            },
+            "public": {
+                "type": "boolean",
+                "description": "Make the playlist public",
+                "default": False,
+            },
+        },
+        "required": ["name"],
+        "additionalProperties": False,
+    },
 }
 
 
@@ -897,6 +1032,61 @@ COMPATIBILITY_RULES = {
         "webhook_post",
         "calendar_create_event",
         "github_create_issue",
+    ],
+    # Spotify actions
+    "spotify_track_started": [
+        "spotify_pause_playback",
+        "spotify_skip_next",
+        "spotify_skip_previous",
+        "spotify_set_volume",
+        "spotify_add_to_playlist",
+        "spotify_like_track",
+        "spotify_create_playlist",
+        "send_email",
+        "gmail_send_email",
+        "slack_send_message",
+        "webhook_post",
+        "calendar_create_event",
+    ],
+    "spotify_track_finished": [
+        "spotify_play_track",
+        "spotify_resume_playback",
+        "spotify_set_volume",
+        "spotify_create_playlist",
+        "send_email",
+        "gmail_send_email",
+        "slack_send_message",
+        "webhook_post",
+        "calendar_create_event",
+    ],
+    "spotify_playlist_updated": [
+        "spotify_play_track",
+        "spotify_add_to_playlist",
+        "spotify_create_playlist",
+        "send_email",
+        "gmail_send_email",
+        "slack_send_message",
+        "webhook_post",
+        "calendar_create_event",
+    ],
+    "spotify_liked_track": [
+        "spotify_play_track",
+        "spotify_add_to_playlist",
+        "spotify_create_playlist",
+        "send_email",
+        "gmail_send_email",
+        "slack_send_message",
+        "webhook_post",
+        "calendar_create_event",
+    ],
+    "spotify_saved_album": [
+        "spotify_play_track",
+        "spotify_create_playlist",
+        "send_email",
+        "gmail_send_email",
+        "slack_send_message",
+        "webhook_post",
+        "calendar_create_event",
     ],
 }
 

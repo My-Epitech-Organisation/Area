@@ -268,6 +268,27 @@ OAUTH2_PROVIDERS = {
         ],
         "requires_refresh": True,
     },
+    "spotify": {
+        "client_id": os.getenv("SPOTIFY_CLIENT_ID", ""),
+        "client_secret": os.getenv("SPOTIFY_CLIENT_SECRET", ""),
+        "redirect_uri": os.getenv(
+            "SPOTIFY_REDIRECT_URI", "https://areaction.app/auth/oauth/spotify/callback/"
+        ),
+        "authorization_endpoint": "https://accounts.spotify.com/authorize",
+        "token_endpoint": "https://accounts.spotify.com/api/token",
+        "userinfo_endpoint": "https://api.spotify.com/v1/me",
+        "scopes": [
+            "user-read-private",
+            "user-read-email",
+            "user-read-playback-state",
+            "user-modify-playback-state",
+            "user-read-currently-playing",
+            "playlist-read-private",
+            "playlist-modify-public",
+            "playlist-modify-private",
+        ],
+        "requires_refresh": True,
+    },
 }
 
 # OAuth2 state expiry time (seconds)
