@@ -30,7 +30,7 @@ services:
   redis:
     container_name: area_redis
     ports:
-      - "${REDIS_PORT}:${REDIS_PORT_INTERNAL:-6379}"  # Expose for redis-cli or GUI tools
+      - "${REDIS_PORT}:6379"  # Expose for redis-cli or GUI tools
 
   # ---------------------------------------------------------------------------
   # Backend API - Development Overrides
@@ -39,7 +39,7 @@ services:
     container_name: area_server
     user: "root"  # Run as root in dev to avoid permission issues with mounted volumes
     ports:
-      - "${BACKEND_PORT:-8082}:${BACKEND_PORT_INTERNAL:-8080}"  # Expose API for direct access
+      - "${BACKEND_PORT:-8080}:8080"  # Expose API for direct access
     volumes:
       - ./backend:/app:z  # HOT RELOAD: Mount source code (z for SELinux)
       - backend_static:/app/staticfiles  # Keep static files in volume
@@ -86,7 +86,7 @@ services:
     container_name: area_flower
     user: "root"  # Run as root in dev to avoid permission issues
     ports:
-      - "${FLOWER_PORT:-5566}:${FLOWER_PORT_INTERNAL:-5566}"  # Expose Celery monitoring UI
+      - "${FLOWER_PORT:-5566}:5566"  # Expose Celery monitoring UI
     volumes:
       - ./backend:/app:z  # HOT RELOAD: Mount source code (z for SELinux)
     entrypoint: >
@@ -115,7 +115,7 @@ services:
       dockerfile: Dockerfile.dev
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
     ports:
-      - "${FRONTEND_DEV_PORT:-5173}:${FRONTEND_DEV_PORT_INTERNAL:-5173}"  # Vite dev server port
+      - "${FRONTEND_DEV_PORT:-5173}:5173"  # Vite dev server port
     volumes:
       - ./frontend:/app:z         # HOT RELOAD: Mount source code (z for SELinux)
       - /app/node_modules         # Preserve node_modules from image

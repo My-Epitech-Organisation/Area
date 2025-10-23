@@ -48,8 +48,8 @@ services:
       - .env
     environment:
       - DJANGO_SETTINGS_MODULE=area_project.settings
-      - REDIS_URL=redis://${REDIS_HOST:-redis}:${REDIS_PORT_INTERNAL:-6379}/0
-      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:${DB_PORT_INTERNAL:-5432}/${DB_NAME}
+      - REDIS_URL=redis://${REDIS_HOST:-redis}:6379/0
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       - DB_HOST=db
     depends_on:
       - db
@@ -74,8 +74,8 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=area_project.settings
       - PYTHONPATH=/app
-      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:${DB_PORT_INTERNAL:-5432}/${DB_NAME}
-      - REDIS_URL=redis://${REDIS_HOST:-redis}:${REDIS_PORT_INTERNAL:-6379}/0
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      - REDIS_URL=redis://${REDIS_HOST:-redis}:6379/0
     depends_on:
       - redis
       - db
@@ -97,8 +97,8 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=area_project.settings
       - PYTHONPATH=/app
-      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:${DB_PORT_INTERNAL:-5432}/${DB_NAME}
-      - REDIS_URL=redis://${REDIS_HOST:-redis}:${REDIS_PORT_INTERNAL:-6379}/0
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      - REDIS_URL=redis://${REDIS_HOST:-redis}:6379/0
     command: ["celery", "-A", "area_project", "beat", "--loglevel=info", "--scheduler=django_celery_beat.schedulers:DatabaseScheduler"]
     depends_on:
       - redis
