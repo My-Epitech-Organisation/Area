@@ -20,7 +20,7 @@ export const triggerDebugAction = async (areaId: number): Promise<DebugTriggerRe
   const response = await fetch(`${API_BASE}/api/debug/trigger/${areaId}/`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   });
@@ -46,7 +46,7 @@ export const getDebugExecutions = async (areaId: number): Promise<DebugExecution
   const response = await fetch(`${API_BASE}/api/debug/executions/${areaId}/`, {
     method: 'GET',
     headers: {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   });

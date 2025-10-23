@@ -48,7 +48,7 @@ const Debug: React.FC = () => {
 
         const response = await fetch(`${API_BASE}/api/areas/`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
@@ -63,7 +63,7 @@ const Debug: React.FC = () => {
         // Fetch actions to filter debug areas
         const actionsResponse = await fetch(`${API_BASE}/api/actions/`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
@@ -72,10 +72,12 @@ const Debug: React.FC = () => {
           const actionsData = await actionsResponse.json();
           const actions = actionsData.results || actionsData;
 
-          const debugAction = actions.find((a: { name: string }) => a.name === 'debug_manual_trigger');
+          const debugAction = actions.find(
+            (a: { name: string }) => a.name === 'debug_manual_trigger'
+          );
 
           if (debugAction) {
-            const filtered = areas.filter(area => area.action === debugAction.id);
+            const filtered = areas.filter((area) => area.action === debugAction.id);
             setDebugAreas(filtered);
 
             if (filtered.length > 0 && !selectedAreaId) {
@@ -83,7 +85,6 @@ const Debug: React.FC = () => {
             }
           }
         }
-
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load debug areas');
       } finally {
@@ -174,7 +175,11 @@ const Debug: React.FC = () => {
           </svg>
           <h2 className="text-2xl font-bold text-white mb-4">No Debug Areas Found</h2>
           <p className="text-gray-300 mb-6">
-            Create an automation with the <span className="font-mono bg-indigo-500/20 px-2 py-1 rounded text-indigo-300">debug_manual_trigger</span> action to use this debug console.
+            Create an automation with the{' '}
+            <span className="font-mono bg-indigo-500/20 px-2 py-1 rounded text-indigo-300">
+              debug_manual_trigger
+            </span>{' '}
+            action to use this debug console.
           </p>
           <a
             href="/Areaction"
@@ -192,7 +197,9 @@ const Debug: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">Debug Console</h1>
-          <p className="text-gray-300">Manually trigger actions and monitor executions in real-time</p>
+          <p className="text-gray-300">
+            Manually trigger actions and monitor executions in real-time
+          </p>
         </div>
 
         {error && (
@@ -211,12 +218,7 @@ const Debug: React.FC = () => {
           {/* Left: Debug Areas */}
           <div className="bg-white/5 rounded-xl backdrop-blur-sm border border-white/10 p-6">
             <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -239,7 +241,9 @@ const Debug: React.FC = () => {
                 >
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="text-lg font-medium text-white">{area.name}</h3>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${area.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-medium ${area.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}
+                    >
                       {area.status}
                     </span>
                   </div>
@@ -262,12 +266,7 @@ const Debug: React.FC = () => {
           <div className="bg-white/5 rounded-xl backdrop-blur-sm border border-white/10 p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-semibold text-white flex items-center gap-2">
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -283,9 +282,18 @@ const Debug: React.FC = () => {
             {executionDetails && (
               <div className="mb-4 p-3 bg-white/5 rounded-lg border border-white/10">
                 <div className="text-sm text-gray-400">
-                  <div><span className="font-medium text-white">Area:</span> {executionDetails.area_name}</div>
-                  <div><span className="font-medium text-white">Action:</span> {executionDetails.action}</div>
-                  <div><span className="font-medium text-white">Reaction:</span> {executionDetails.reaction}</div>
+                  <div>
+                    <span className="font-medium text-white">Area:</span>{' '}
+                    {executionDetails.area_name}
+                  </div>
+                  <div>
+                    <span className="font-medium text-white">Action:</span>{' '}
+                    {executionDetails.action}
+                  </div>
+                  <div>
+                    <span className="font-medium text-white">Reaction:</span>{' '}
+                    {executionDetails.reaction}
+                  </div>
                 </div>
               </div>
             )}
@@ -316,7 +324,9 @@ const Debug: React.FC = () => {
                     className="p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition"
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(execution.status)}`}>
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(execution.status)}`}
+                      >
                         {execution.status.toUpperCase()}
                       </span>
                       <span className="text-xs text-gray-400">
