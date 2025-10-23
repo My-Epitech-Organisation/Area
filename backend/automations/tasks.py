@@ -1273,7 +1273,7 @@ def check_slack_actions(self):
         # Get all active Areas with Slack actions
         slack_areas = get_active_areas([
             "slack_new_message",
-            "slack_message_with_keyword", 
+            "slack_message_with_keyword",
             "slack_user_mention",
             "slack_channel_join"
         ])
@@ -1317,7 +1317,6 @@ def check_slack_actions(self):
                 # Get channel history (newest messages first)
                 # Use 'since' parameter if we have a last_checked_at
                 params = {"limit": 50}  # Get up to 50 recent messages
-                
                 if state.last_checked_at:
                     # Convert to Unix timestamp for Slack API
                     since_ts = state.last_checked_at.timestamp()
@@ -1348,7 +1347,7 @@ def check_slack_actions(self):
 
                     # Parse the message event
                     event_data = parse_message_event(message)
-                    
+
                     # Skip bot messages and system messages
                     if event_data.get("bot_id") or event_data.get("subtype"):
                         continue
