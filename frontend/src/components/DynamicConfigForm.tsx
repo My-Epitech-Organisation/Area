@@ -178,7 +178,39 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
               maxLength={property.maxLength}
               pattern={property.pattern}
               className="form-input"
-              placeholder={property.description}
+              placeholder={property.placeholder || property.description}
+            />
+          </div>
+        );
+      }
+
+      case 'text': {
+        const textValue =
+          typeof values[fieldName] === 'string'
+            ? (values[fieldName] as string)
+            : typeof property.default === 'string'
+              ? property.default
+              : '';
+
+        return (
+          <div key={fieldName} className="mb-4">
+            <label htmlFor={fieldName} className="form-label">
+              {formatFieldName(fieldName)}
+              {isRequired && <span className="text-required ml-1">*</span>}
+            </label>
+            {property.description && (
+              <p className="text-xs text-theme-muted mb-1">{property.description}</p>
+            )}
+            <textarea
+              id={fieldName}
+              value={textValue}
+              onChange={(e) => handleFieldChange(fieldName, e.target.value)}
+              required={isRequired}
+              minLength={property.minLength}
+              maxLength={property.maxLength}
+              rows={4}
+              className="form-input resize-y"
+              placeholder={property.placeholder || property.description}
             />
           </div>
         );

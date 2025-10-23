@@ -4,8 +4,10 @@
 
 // JSON Schema types for dynamic form generation
 export interface JSONSchemaProperty {
-  type: 'string' | 'number' | 'integer' | 'boolean' | 'array' | 'object';
+  type: 'string' | 'number' | 'integer' | 'boolean' | 'array' | 'object' | 'text' | 'datetime';
   description?: string;
+  label?: string;
+  placeholder?: string;
   format?: string;
   pattern?: string;
   minimum?: number;
@@ -17,6 +19,8 @@ export interface JSONSchemaProperty {
   items?: JSONSchemaProperty;
   properties?: Record<string, JSONSchemaProperty>;
   additionalProperties?: boolean | JSONSchemaProperty;
+  min?: number;
+  max?: number;
 }
 
 export interface JSONSchema {

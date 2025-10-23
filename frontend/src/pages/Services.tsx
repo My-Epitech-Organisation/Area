@@ -175,34 +175,44 @@ const Services: React.FC = () => {
   };
 
   useEffect(() => {
+    if (flatMode) {
+      return;
+    }
+
+    if (!isAutoRotating || isDragging) {
+      return;
+    }
+
     let animationFrameId: number;
-    let lastTime = 0;
 
-    const autoRotate = (currentTime: number) => {
-      if (!lastTime) lastTime = currentTime;
-
-      if (isAutoRotating && !isDragging) {
-        setWheelRotation((prev) => prev + 0.03);
-      }
-
-      lastTime = currentTime;
+    const autoRotate = () => {
+      setWheelRotation((prev) => {
+        const newRotation = prev + 0.04;
+        return newRotation;
+      });
       animationFrameId = requestAnimationFrame(autoRotate);
     };
 
-    const timeoutId = setTimeout(() => {
-      setIsAutoRotating(true);
-      animationFrameId = requestAnimationFrame(autoRotate);
-    }, 2000);
+    animationFrameId = requestAnimationFrame(autoRotate);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      clearTimeout(timeoutId);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDragging]);
+  }, [isAutoRotating, isDragging, flatMode]);
 
   const [hoverCarousel, setHoverCarousel] = useState(false);
   const [hoverHistory, setHoverHistory] = useState(false);
+
+  useEffect(() => {
+    if (!flatMode) {
+      const timeoutId = setTimeout(() => {
+        setIsAutoRotating(true);
+      }, 500);
+      return () => clearTimeout(timeoutId);
+    } else {
+      setIsAutoRotating(false);
+    }
+  }, [flatMode]);
 
   useEffect(() => {
     if (!hoverCarousel && !hoverHistory) return;
@@ -385,10 +395,10 @@ const Services: React.FC = () => {
     const z = Math.cos(angleInRadians) * radius;
     const rotationY = (angleInRadians * 180) / Math.PI;
     const normalizedZ = (z + radius) / (radius * 2);
-    const isVisible = z > -radius * 0.7;
-    const opacity = isVisible ? Math.pow(normalizedZ, 0.8) * 0.7 + 0.3 : 0;
-    const scale = isVisible ? normalizedZ * 0.4 + 0.6 : 0.6;
-    const elevationY = isVisible ? Math.sin(normalizedZ * Math.PI) * 20 : 0;
+    const isVisible = true;
+    const opacity = Math.pow(normalizedZ, 0.4) * 0.5 + 0.5;
+    const scale = normalizedZ * 0.35 + 0.65;
+    const elevationY = Math.sin(normalizedZ * Math.PI) * 15;
 
     return { x, z, rotationY, elevationY, isVisible, opacity, scale };
   };
@@ -469,7 +479,7 @@ const Services: React.FC = () => {
           <>
             <div
               className={`w-full relative group ${flatMode ? 'h-auto' : 'h-[600px] overflow-hidden'}`}
-              style={flatMode ? {} : { perspective: '1800px' }}
+              style={flatMode ? {} : { perspective: '2500px' }}
             >
               {!flatMode && (
                 <>
@@ -503,13 +513,23 @@ const Services: React.FC = () => {
                         to={`/services/${s.id}`}
                         key={`flat-${s.id}`}
                         onClick={() => pushHistory(s)}
-                        className="group rounded-lg bg-gradient-to-br from-gray-100/50 to-gray-200/30 p-4 hover:from-white/70 hover:to-indigo-700/40 transition transform hover:scale-105 hover:-translate-y-1 duration-200"
-                        style={{ animationDelay: `${mounted ? idx * 50 : 0}ms` }}
+                        className="card-list group rounded-lg p-4 transition transform hover:scale-105 hover:-translate-y-1 duration-200 backdrop-blur-md border border-white/20"
+                        style={{
+                          animationDelay: `${mounted ? idx * 50 : 0}ms`,
+                          background: `linear-gradient(135deg,
+                            rgba(139, 92, 246, 0.15) 0%,
+                            rgba(59, 130, 246, 0.15) 50%,
+                            rgba(16, 185, 129, 0.15) 100%)`,
+                          backdropFilter: 'blur(12px)',
+                          WebkitBackdropFilter: 'blur(12px)',
+                          boxShadow:
+                            '0 8px 32px 0 rgba(139, 92, 246, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
+                        }}
                       >
                         <div
                           className={`flex flex-col items-center gap-3 h-full min-h-[280px] ${mounted ? 'animate-appear' : 'opacity-0'}`}
                         >
-                          <div className="w-24 h-24 rounded-lg bg-white/28 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-2xl">
+                          <div className="w-24 h-24 rounded-lg bg-gradient-to-br from-white/40 to-white/20 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-lg backdrop-blur-sm border border-white/30">
                             {s.logo ? (
                               <img
                                 src={s.logo}
@@ -517,22 +537,22 @@ const Services: React.FC = () => {
                                 className="w-full h-full object-contain"
                               />
                             ) : (
-                              <div className="text-xl md:text-2xl font-bold text-white/80">
+                              <div className="text-xl md:text-2xl font-bold text-white drop-shadow-lg">
                                 {(s.Name || '?').charAt(0)}
                               </div>
                             )}
                           </div>
                           <div className="text-center flex-1 flex flex-col justify-center w-full">
-                            <div className="text-base font-bold text-white group-hover:text-indigo-200 transition-colors mb-1">
+                            <div className="text-base font-bold text-white drop-shadow-md group-hover:text-indigo-200 transition-colors mb-1">
                               {s.Name}
                             </div>
                             {s.description && (
-                              <div className="text-xs text-gray-300 line-clamp-2 leading-relaxed px-1">
+                              <div className="text-xs text-gray-100 line-clamp-2 leading-relaxed px-1 drop-shadow-sm">
                                 {s.description}
                               </div>
                             )}
                           </div>
-                          <div className="mt-auto px-3 py-1.5 rounded-full bg-blue-300/30 text-blue-100 text-xs font-semibold transform transition-all duration-300 hover:bg-blue-400/60 hover:text-white hover:scale-110 shadow-md">
+                          <div className="mt-auto px-3 py-1.5 rounded-full bg-gradient-to-r from-indigo-500/80 to-blue-500/80 text-white text-xs font-semibold transform transition-all duration-300 hover:from-indigo-600 hover:to-blue-600 hover:scale-110 shadow-lg backdrop-blur-sm border border-white/20">
                             Explorer
                           </div>
                         </div>
@@ -546,7 +566,7 @@ const Services: React.FC = () => {
                     style={{
                       transformStyle: 'preserve-3d',
                       willChange: 'transform',
-                      transform: `rotateX(10deg)`,
+                      transform: `rotateX(5deg)`,
                       transition: isDragging ? 'none' : 'transform 0.5s ease-out',
                     }}
                   >
@@ -559,7 +579,7 @@ const Services: React.FC = () => {
                       }}
                     />
                     {filtered.map((s, index) => {
-                      const { x, z, rotationY, isVisible, opacity, scale } = calculatePosition(
+                      const { x, z, rotationY, opacity, scale } = calculatePosition(
                         index,
                         filtered.length
                       );
@@ -568,7 +588,7 @@ const Services: React.FC = () => {
                           to={`/services/${s.id}`}
                           key={s.id}
                           onClick={() => pushHistory(s)}
-                          className={`absolute top-1/2 left-1/2 w-[200px] h-[220px] -ml-[100px] -mt-[110px] cursor-pointer select-none ${!isVisible ? 'pointer-events-none' : ''}`}
+                          className={`group absolute top-1/2 left-1/2 w-[200px] h-[220px] -ml-[100px] -mt-[110px] cursor-pointer select-none`}
                           style={{
                             transform: `translateX(${x}px) translateZ(${z}px) translateY(${-calculatePosition(index, filtered.length).elevationY}px) rotateY(${rotationY}deg) scale(${scale})`,
                             transformStyle: 'preserve-3d',
@@ -581,18 +601,28 @@ const Services: React.FC = () => {
                           title={s.description || s.Name}
                         >
                           <div
-                            className={`w-full h-full rounded-xl bg-gradient-to-br from-gray-100/50 to-gray-200/30 p-5 flex flex-col items-center justify-center shadow-2xl overflow-hidden group hover:from-white/70 hover:to-indigo-700/40 transition-colors duration-300 ${mounted ? 'animate-appear' : 'opacity-0'}`}
+                            className="card-carousel relative w-full h-full rounded-xl p-5 flex flex-col items-center justify-center overflow-hidden group-hover:scale-105"
                             style={{
                               transformStyle: 'preserve-3d',
                               transform: `rotateY(${-rotationY}deg)`,
-                              animationDelay: `${mounted ? index * 60 : 0}ms`,
+                              transition:
+                                'box-shadow 0.5s ease, background 0.5s ease, scale 0.3s ease',
+                              background: `linear-gradient(135deg,
+                                rgba(139, 92, 246, 0.15) 0%,
+                                rgba(59, 130, 246, 0.15) 50%,
+                                rgba(16, 185, 129, 0.15) 100%)`,
+                              backdropFilter: 'blur(12px)',
+                              WebkitBackdropFilter: 'blur(12px)',
+                              border: '1px solid rgba(255, 255, 255, 0.18)',
                               boxShadow:
                                 z > 0
-                                  ? '0 10px 30px -5px rgba(0, 0, 0, 0.3), 0 0 15px -3px rgba(255, 255, 255, 0.1), inset 0 0 10px rgba(255, 255, 255, 0.1)'
-                                  : 'none',
+                                  ? `0 8px 32px 0 rgba(139, 92, 246, 0.25),
+                                   0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+                                   0 20px 40px -10px rgba(59, 130, 246, 0.3)`
+                                  : '0 4px 16px 0 rgba(0, 0, 0, 0.2)',
                             }}
                           >
-                            <div className="w-24 h-24 rounded-xl bg-white/28 mb-3 flex items-center justify-center overflow-hidden shadow-2xl">
+                            <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-white/40 to-white/20 mb-3 flex items-center justify-center overflow-hidden shadow-lg backdrop-blur-sm border border-white/30">
                               {s.logo ? (
                                 <img
                                   src={s.logo}
@@ -602,20 +632,20 @@ const Services: React.FC = () => {
                                   decoding="async"
                                 />
                               ) : (
-                                <div className="text-2xl md:text-3xl font-bold text-white/80">
+                                <div className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg">
                                   {(s.Name || '?').charAt(0)}
                                 </div>
                               )}
                             </div>
-                            <h3 className="text-lg font-semibold text-white text-center line-clamp-1">
+                            <h3 className="text-lg font-semibold text-white text-center line-clamp-1 drop-shadow-md">
                               {s.Name}
                             </h3>
                             {s.description && (
-                              <p className="text-xs text-gray-300 mt-2 text-center line-clamp-2 overflow-hidden">
+                              <p className="text-xs text-gray-100 mt-2 text-center line-clamp-2 overflow-hidden drop-shadow-sm">
                                 {s.description}
                               </p>
                             )}
-                            <div className="mt-3 px-4 py-1.5 rounded-full bg-blue-300/30 text-blue-100 text-xs font-medium transform transition-all duration-300 hover:bg-blue-400/60 hover:text-white hover:scale-110">
+                            <div className="mt-3 px-4 py-1.5 rounded-full bg-gradient-to-r from-indigo-500/80 to-blue-500/80 text-white text-xs font-medium transform transition-all duration-300 hover:from-indigo-600 hover:to-blue-600 hover:scale-110 shadow-lg backdrop-blur-sm border border-white/20">
                               Explorer
                             </div>
                           </div>
@@ -646,7 +676,17 @@ const Services: React.FC = () => {
                       key={`hist-${h.id}`}
                       to={`/services/${h.id}`}
                       onClick={() => pushHistory(h)}
-                      className="snap-start min-w-[240px] h-[260px] flex-shrink-0 group rounded-lg bg-gradient-to-br from-gray-100/50 to-gray-200/30 p-4 hover:from-white/70 hover:to-indigo-700/40 transition transform hover:scale-105 hover:-translate-y-1 duration-200"
+                      className="card-history snap-start min-w-[240px] h-[260px] flex-shrink-0 group rounded-lg p-4 transition-all duration-300 backdrop-blur-md border border-white/20"
+                      style={{
+                        background: `linear-gradient(135deg,
+                          rgba(139, 92, 246, 0.15) 0%,
+                          rgba(59, 130, 246, 0.15) 50%,
+                          rgba(16, 185, 129, 0.15) 100%)`,
+                        backdropFilter: 'blur(12px)',
+                        WebkitBackdropFilter: 'blur(12px)',
+                        boxShadow:
+                          '0 8px 32px 0 rgba(139, 92, 246, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
+                      }}
                     >
                       <div
                         className={`${mounted ? 'animate-appear' : 'opacity-0'} flex flex-col items-center gap-3 h-full`}
