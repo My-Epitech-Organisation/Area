@@ -31,7 +31,8 @@ echo -e "${GREEN}✅ Database is ready!${NC}"
 
 # Wait for Redis to be ready
 echo -e "${YELLOW}⏳ Waiting for Redis...${NC}"
-while ! nc -z redis ${REDIS_PORT:-6379}; do
+REDIS_HOST=${REDIS_HOST:-redis}
+while ! nc -z $REDIS_HOST ${REDIS_PORT:-6379}; do
   echo "Redis is unavailable - sleeping"
   sleep 1
 done
