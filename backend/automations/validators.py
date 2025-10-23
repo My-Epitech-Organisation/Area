@@ -207,6 +207,7 @@ ACTION_SCHEMAS = {
             },
         },
         "required": ["location", "condition"],
+    },
     # Debug Actions
     "debug_manual_trigger": {
         "type": "object",
