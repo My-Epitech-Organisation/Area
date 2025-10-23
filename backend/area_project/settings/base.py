@@ -248,6 +248,26 @@ OAUTH2_PROVIDERS = {
         ],
         "requires_refresh": True,
     },
+    "slack": {
+        "client_id": os.getenv("SLACK_CLIENT_ID", ""),
+        "client_secret": os.getenv("SLACK_CLIENT_SECRET", ""),
+        "redirect_uri": os.getenv(
+            "SLACK_REDIRECT_URI", "https://areaction.app/auth/oauth/slack/callback/"
+        ),
+        "authorization_endpoint": "https://slack.com/oauth/v2/authorize",
+        "token_endpoint": "https://slack.com/api/oauth.v2.access",
+        "userinfo_endpoint": "https://slack.com/api/auth.test",
+        "scopes": [
+            "channels:read",
+            "chat:write",
+            "chat:write.public",
+            "groups:read",
+            "im:read",
+            "users:read",
+            "users:read.email",
+        ],
+        "requires_refresh": True,
+    },
 }
 
 # OAuth2 state expiry time (seconds)
