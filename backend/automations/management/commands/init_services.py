@@ -626,10 +626,21 @@ class Command(BaseCommand):
                 "status": Service.Status.ACTIVE,
                 "actions": [
                     {
-                        "name": "weather_condition_met",
-                        "description": (
-                            "Triggered when specific weather conditions are met"
-                        ),
+                        "name": "weather_rain_detected",
+                        "description": "Triggered when rain is detected in the specified location",
+                        "config_schema": {
+                            "location": {
+                                "type": "string",
+                                "label": "Location",
+                                "description": "Location to monitor (city name or coordinates)",
+                                "required": True,
+                                "placeholder": "Paris, France",
+                            },
+                        },
+                    },
+                    {
+                        "name": "weather_snow_detected",
+                        "description": "Triggered when snow is detected in the specified location",
                         "config_schema": {
                             "location": {
                                 "type": "string",
@@ -638,25 +649,97 @@ class Command(BaseCommand):
                                 "required": True,
                                 "placeholder": "New York, NY",
                             },
-                            "condition": {
+                        },
+                    },
+                    {
+                        "name": "weather_temperature_above",
+                        "description": "Triggered when temperature rises above the specified threshold",
+                        "config_schema": {
+                            "location": {
                                 "type": "string",
-                                "label": "Weather Condition",
-                                "description": "Condition to trigger on",
+                                "label": "Location",
+                                "description": "Location to monitor (city name or coordinates)",
                                 "required": True,
-                                "enum": [
-                                    "rain",
-                                    "snow",
-                                    "temperature_above",
-                                    "temperature_below",
-                                ],
-                                "placeholder": "rain",
+                                "placeholder": "London, UK",
                             },
                             "threshold": {
                                 "type": "number",
-                                "label": "Temperature Threshold",
-                                "description": "Temperature threshold (required for temperature conditions)",
-                                "required": False,
-                                "placeholder": "32",
+                                "label": "Temperature Threshold (°C)",
+                                "description": "Trigger when temperature exceeds this value",
+                                "required": True,
+                                "default": 25,
+                                "min": -50,
+                                "max": 60,
+                            },
+                        },
+                    },
+                    {
+                        "name": "weather_temperature_below",
+                        "description": "Triggered when temperature drops below the specified threshold",
+                        "config_schema": {
+                            "location": {
+                                "type": "string",
+                                "label": "Location",
+                                "description": "Location to monitor (city name or coordinates)",
+                                "required": True,
+                                "placeholder": "Moscow, Russia",
+                            },
+                            "threshold": {
+                                "type": "number",
+                                "label": "Temperature Threshold (°C)",
+                                "description": "Trigger when temperature falls below this value",
+                                "required": True,
+                                "default": 0,
+                                "min": -50,
+                                "max": 60,
+                            },
+                        },
+                    },
+                    {
+                        "name": "weather_extreme_heat",
+                        "description": "Triggered when extreme heat is detected (>35°C)",
+                        "config_schema": {
+                            "location": {
+                                "type": "string",
+                                "label": "Location",
+                                "description": "Location to monitor (city name or coordinates)",
+                                "required": True,
+                                "placeholder": "Phoenix, AZ",
+                            },
+                        },
+                    },
+                    {
+                        "name": "weather_extreme_cold",
+                        "description": "Triggered when extreme cold is detected (<-10°C)",
+                        "config_schema": {
+                            "location": {
+                                "type": "string",
+                                "label": "Location",
+                                "description": "Location to monitor (city name or coordinates)",
+                                "required": True,
+                                "placeholder": "Anchorage, AK",
+                            },
+                        },
+                    },
+                    {
+                        "name": "weather_windy",
+                        "description": "Triggered when strong winds are detected",
+                        "config_schema": {
+                            "location": {
+                                "type": "string",
+                                "label": "Location",
+                                "description": "Location to monitor (city name or coordinates)",
+                                "required": True,
+                                "placeholder": "Chicago, IL",
+                            },
+                            "threshold": {
+                                "type": "number",
+                                "label": "Wind Speed Threshold (km/h)",
+                                "description": "Trigger when wind speed exceeds this value (km/h)",
+                                "required": True,
+                                "default": 50,
+                                "min": 0,
+                                "max": 300,
                             },
                         },
                     },
