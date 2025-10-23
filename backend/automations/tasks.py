@@ -1357,6 +1357,18 @@ def check_slack_actions(self):
                     no_token_count += 1
                     continue
 
+                # Get the authenticated user's Slack ID for mention detection
+                try:
+                    from users.oauth.slack import SlackOAuthProvider
+                    provider = SlackOAuthProvider(None)  # Config not needed for get_user_info
+                    user_info = provider.get_user_info(access_token)
+                    authenticated_user_id = user_info["id"]
+                    logger.debug(f"Authenticated Slack user ID for {area.owner.username}: {authenticated_user_id}")
+                except Exception as e:
+                    logger.error(f"Failed to get Slack user info for {area.owner.username}: {e}")
+                    skipped_count += 1
+                    continue
+
                 action_name = area.action.name
                 action_config = area.action_config
 
@@ -1406,8 +1418,9 @@ def check_slack_actions(self):
                     # Parse the message event
                     event_data = parse_message_event(message)
 
-                    # Skip bot messages and system messages
-                    if event_data.get("bot_id") or event_data.get("subtype"):
+                    # Skip bot messages and system messages (but allow channel_join events)
+                    subtype = event_data.get("subtype")
+                    if event_data.get("bot_id") or (subtype and subtype != "channel_join"):
                         continue
 
                     # Create unique event ID
@@ -1436,18 +1449,17 @@ def check_slack_actions(self):
 
                     elif action_name == "slack_message_with_keyword":
                         # Check for keyword in message text
-                        keyword = action_config.get("keyword", "").lower()
+                        keyword = action_config.get("keywords", "").lower()
                         message_text = event_data.get("text", "").lower()
                         if keyword and keyword in message_text:
                             should_trigger = True
-                            trigger_data["keyword"] = keyword
+                            trigger_data["keywords"] = keyword
 
                     elif action_name == "slack_user_mention":
-                        # Check if user is mentioned
-                        user_id = action_config.get("user_id")
-                        if user_id and f"<@{user_id}>" in event_data.get("text", ""):
+                        # Check if the authenticated user is mentioned
+                        if f"<@{authenticated_user_id}>" in event_data.get("text", ""):
                             should_trigger = True
-                            trigger_data["mentioned_user"] = user_id
+                            trigger_data["mentioned_user"] = authenticated_user_id
 
                     elif (
                         action_name == "slack_channel_join"
@@ -1866,7 +1878,7 @@ def _execute_reaction_logic(
         from .helpers.slack_helper import post_message
 
         channel = reaction_config.get("channel")
-        text = reaction_config.get("text", "AREA triggered")
+        message = reaction_config.get("message", "AREA triggered")
 
         if not channel:
             raise ValueError("Channel is required for slack_send_message")
@@ -1877,14 +1889,14 @@ def _execute_reaction_logic(
             raise ValueError(f"No valid Slack token for user {area.owner.username}")
 
         try:
-            result = post_message(access_token, channel, text)
+            result = post_message(access_token, channel, message)
 
-            logger.info(f"[REACTION SLACK] Sent message to {channel}: {text}")
+            logger.info(f"[REACTION SLACK] Sent message to {channel}: {message}")
             return {
                 "success": True,
                 "channel": channel,
                 "message_ts": result.get("ts"),
-                "text": text,
+                "message": message,
             }
 
         except Exception as e:
@@ -1900,8 +1912,17 @@ def _execute_reaction_logic(
         from .helpers.slack_helper import post_message
 
         channel = reaction_config.get("channel")
-        alert_text = reaction_config.get("alert_text", "🚨 AREA Alert Triggered")
-        color = reaction_config.get("color", "danger")  # good, warning, danger
+        alert_type = reaction_config.get("alert_type", "info")
+        title = reaction_config.get("title", "🚨 AREA Alert Triggered")
+        details = reaction_config.get("details", "")
+
+        # Map alert_type to Slack color
+        color_map = {
+            "info": "good",
+            "warning": "warning",
+            "error": "danger"
+        }
+        color = color_map.get(alert_type, "good")
 
         if not channel:
             raise ValueError("Channel is required for slack_send_alert")
@@ -1909,10 +1930,14 @@ def _execute_reaction_logic(
         # Format as Slack attachment for better visibility
         attachment = {
             "color": color,
-            "text": alert_text,
+            "text": title,
             "footer": "AREA Automation",
             "ts": int(timezone.now().timestamp()),
         }
+
+        # Add details if provided
+        if details:
+            attachment["text"] += f"\n\n{details}"
 
         # Get valid Slack token
         access_token = OAuthManager.get_valid_token(area.owner, "slack")
@@ -1922,13 +1947,14 @@ def _execute_reaction_logic(
         try:
             result = post_message(access_token, channel, "", attachments=[attachment])
 
-            logger.info(f"[REACTION SLACK] Sent alert to {channel}: {alert_text}")
+            logger.info(f"[REACTION SLACK] Sent alert to {channel}: {title}")
             return {
                 "success": True,
                 "channel": channel,
                 "message_ts": result.get("ts"),
-                "alert_text": alert_text,
-                "color": color,
+                "alert_type": alert_type,
+                "title": title,
+                "details": details,
             }
 
         except Exception as e:
