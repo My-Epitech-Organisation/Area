@@ -472,6 +472,49 @@ class Command(BaseCommand):
                 ],
             },
             {
+                "name": "weather",
+                "description": "Weather data and alerts integration",
+                "status": Service.Status.ACTIVE,
+                "actions": [
+                    {
+                        "name": "weather_condition_met",
+                        "description": (
+                            "Triggered when specific weather conditions are met"
+                        ),
+                        "config_schema": {
+                            "location": {
+                                "type": "string",
+                                "label": "Location",
+                                "description": "Location to monitor (city name or coordinates)",
+                                "required": True,
+                                "placeholder": "New York, NY",
+                            },
+                            "condition": {
+                                "type": "string",
+                                "label": "Weather Condition",
+                                "description": "Condition to trigger on",
+                                "required": True,
+                                "enum": [
+                                    "rain",
+                                    "snow",
+                                    "temperature_above",
+                                    "temperature_below",
+                                ],
+                                "placeholder": "rain",
+                            },
+                            "threshold": {
+                                "type": "number",
+                                "label": "Temperature Threshold",
+                                "description": "Temperature threshold (required for temperature conditions)",
+                                "required": False,
+                                "placeholder": "32",
+                            },
+                        },
+                    },
+                ],
+                "reactions": [],
+            },
+            {
                 "name": "twitch",
                 "description": "Twitch streaming platform integration for channels and chat",
                 "status": Service.Status.ACTIVE,
