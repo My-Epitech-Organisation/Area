@@ -79,9 +79,12 @@ services:
       - SKIP_DJANGO_INIT=true
     command: ["celery", "-A", "area_project", "worker", "--loglevel=info"]
     depends_on:
-      - redis
-      - db
-      - server
+      server:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      db:
+        condition: service_started
     volumes:
       - backend_logs:/app/logs
     networks:
@@ -104,9 +107,12 @@ services:
       - SKIP_DJANGO_INIT=true
     command: ["celery", "-A", "area_project", "beat", "--loglevel=info", "--scheduler=django_celery_beat.schedulers:DatabaseScheduler"]
     depends_on:
-      - redis
-      - db
-      - server
+      server:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      db:
+        condition: service_started
     volumes:
       - backend_logs:/app/logs
     networks:
@@ -125,13 +131,16 @@ services:
       - DJANGO_SETTINGS_MODULE=area_project.settings
       - PYTHONPATH=/app
       - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://${REDIS_HOST:-redis}:6379/0
       - SKIP_DJANGO_INIT=true
     command: ["celery", "-A", "area_project", "flower", "--port=5566"]
     depends_on:
-      - redis
-      - db
-      - server
+      server:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      db:
+        condition: service_started
     networks:
       - area-net
 
