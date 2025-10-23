@@ -175,6 +175,8 @@ services:
   # ---------------------------------------------------------------------------
   # Web Client - React Frontend
   # ---------------------------------------------------------------------------
+  # Note: The APK file is served at /client.apk if available in the shared volume.
+  # This dependency is optional - the frontend works without it.
   client_web:
     build:
       context: ./frontend
@@ -182,7 +184,6 @@ services:
     volumes:
       - apk_shared:/shared
     depends_on:
-      - client_mobile
       - server
     networks:
       - area-net
