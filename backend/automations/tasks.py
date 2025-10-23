@@ -1802,17 +1802,6 @@ def _execute_reaction_logic(
             "note": "Slack integration not yet implemented",
         }
 
-    elif reaction_name == "teams_message":
-        # Placeholder for Teams message
-        webhook_url = reaction_config.get("webhook_url")
-        text = reaction_config.get("text", "AREA triggered")
-        logger.info(f"[REACTION TEAMS] Would send to {webhook_url}: {text}")
-        return {
-            "sent": True,
-            "webhook_url": webhook_url,
-            "note": "Teams integration not yet implemented",
-        }
-
     # ==================== Slack Reactions ====================
     elif reaction_name == "slack_send_message":
         # Real implementation: Send message to Slack channel
