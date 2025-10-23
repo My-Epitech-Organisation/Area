@@ -524,6 +524,7 @@ REACTION_SCHEMAS = {
             },
         },
         "required": ["alert_method", "recipient", "message"],
+    },
     # Debug Reactions
     "debug_log_execution": {
         "type": "object",
