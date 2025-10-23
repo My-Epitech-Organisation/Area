@@ -594,18 +594,6 @@ class Command(BaseCommand):
                 ],
             },
             {
-                "name": "teams",
-                "description": "Microsoft Teams messaging and collaboration",
-                "status": Service.Status.ACTIVE,
-                "actions": [],
-                "reactions": [
-                    {
-                        "name": "teams_message",
-                        "description": "Send a message to a Microsoft Teams channel",
-                    },
-                ],
-            },
-            {
                 "name": "webhook",
                 "description": "HTTP webhook integration for custom integrations",
                 "status": Service.Status.ACTIVE,
