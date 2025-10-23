@@ -87,9 +87,19 @@ stop_services() {
 
 # Restart services
 restart_services() {
-    echo -e "${YELLOW}Restarting AREA services...${NC}"
-    docker-compose -f docker-compose.yml -f docker-compose.prod.yml restart
-    echo -e "${GREEN}Services restarted${NC}"
+    echo -e "${YELLOW}Restarting AREA services (down + up to reload .env)...${NC}"
+
+    # Stop and remove containers
+    echo -e "${BLUE}→ Stopping containers...${NC}"
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml down
+
+    # Start containers (will reload .env)
+    echo -e "${BLUE}→ Starting containers with fresh .env...${NC}"
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+    echo -e "${GREEN}Services restarted (environment variables reloaded)${NC}"
+    echo ""
+    docker-compose ps
 }
 
 # Pull latest code
