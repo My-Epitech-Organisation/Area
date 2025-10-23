@@ -461,3 +461,124 @@ class ExecutionViewSet(viewsets.ReadOnlyModelViewSet):
 
         serializer = ExecutionListSerializer(queryset, many=True)
         return Response(serializer.data)
+
+
+# ============================================================================
+# Debug Views - Manual Trigger & Execution Monitoring
+# ============================================================================
+
+
+@extend_schema(
+    tags=["Debug"],
+    summary="Manually trigger a debug action",
+    description="Trigger a manual execution for an Area with debug_manual_trigger action",
+)
+class DebugTriggerView(viewsets.ViewSet):
+    """Manual trigger for debug actions."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, area_id=None):
+        """
+        Manually trigger an Area's reaction for testing.
+
+        POST /debug/trigger/{area_id}/
+        """
+        from .tasks import execute_reaction_task
+
+        try:
+            # Get the area and verify ownership + debug action
+            area = Area.objects.get(id=area_id, owner=request.user, status='active')
+
+            if area.action.name != "debug_manual_trigger":
+                return Response(
+                    {
+                        "error": "This endpoint only works with debug_manual_trigger actions"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Create a manual execution with unique external_event_id
+            import uuid
+
+            trigger_data = {
+                "manual_trigger": True,
+                "triggered_by": request.user.email,
+                "timestamp": time.time(),
+            }
+
+            execution = Execution.objects.create(
+                area=area,
+                external_event_id=f"debug_manual_{uuid.uuid4()}",
+                trigger_data=trigger_data,
+                status=Execution.Status.PENDING,
+            )
+
+            # Execute the reaction asynchronously
+            execute_reaction_task.delay(execution.pk)
+
+            return Response(
+                {
+                    "success": True,
+                    "execution_id": execution.id,
+                    "area_name": area.name,
+                    "message": "Debug execution triggered successfully",
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Area.DoesNotExist:
+            return Response(
+                {"error": "Area not found or access denied"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to trigger execution: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+@extend_schema(
+    tags=["Debug"],
+    summary="Get debug executions for an Area",
+    description="Retrieve recent executions for a debug Area",
+)
+class DebugExecutionsView(viewsets.ViewSet):
+    """Retrieve executions for debugging."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request, area_id=None):
+        """
+        Get recent executions for a debug Area.
+
+        GET /debug/executions/{area_id}/
+        """
+        try:
+            # Verify area ownership
+            area = Area.objects.get(id=area_id, owner=request.user)
+
+            # Get recent executions (last 20)
+            executions = Execution.objects.filter(area=area).order_by("-created_at")[
+                :20
+            ]
+
+            serializer = ExecutionListSerializer(executions, many=True)
+
+            return Response(
+                {
+                    "area_id": area.id,
+                    "area_name": area.name,
+                    "action": area.action.name,
+                    "reaction": area.reaction.name,
+                    "executions": serializer.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Area.DoesNotExist:
+            return Response(
+                {"error": "Area not found or access denied"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
