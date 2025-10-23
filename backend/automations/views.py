@@ -488,7 +488,7 @@ class DebugTriggerView(viewsets.ViewSet):
 
         try:
             # Get the area and verify ownership + debug action
-            area = Area.objects.get(id=area_id, owner=request.user, status='active')
+            area = Area.objects.get(id=area_id, owner=request.user, status="active")
 
             if area.action.name != "debug_manual_trigger":
                 return Response(
