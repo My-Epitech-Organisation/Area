@@ -35,42 +35,24 @@ class ApiConfig {
   }
 
   static String _detectBaseUrl() {
+    // Return cached result if available
     if (_autoDetectedBase != null) return _autoDetectedBase!;
 
-    if (kIsWeb) {
-      final port = _configuredPort ?? AppConfig.defaultPort;
-      return _autoDetectedBase = _buildBaseUrl(AppConfig.defaultHost, port);
-    }
-
-    try {
-      final platformConfig = _getPlatformConfig();
-      return _autoDetectedBase = _buildBaseUrl(
-        platformConfig['host'] as String,
-        platformConfig['port'] as int,
-      );
-    } catch (_) {
-      final port = _configuredPort ?? AppConfig.defaultPort;
-      return _autoDetectedBase = _buildBaseUrl(AppConfig.defaultHost, port);
-    }
-  }
-
-  static Map<String, dynamic> _getPlatformConfig() {
     final port = _configuredPort ?? AppConfig.defaultPort;
+    String host;
 
-    if (Platform.isAndroid) {
-      return {
-        'host': _forceAndroidLocalhost
-            ? AppConfig.defaultHost
-            : AppConfig.androidEmulatorHost,
-        'port': port,
-      };
+    if (kIsWeb) {
+      // Web always uses localhost
+      host = AppConfig.defaultHost;
+    } else if (Platform.isAndroid && !_forceAndroidLocalhost) {
+      // Android emulator needs special host IP
+      host = AppConfig.androidEmulatorHost;
+    } else {
+      // iOS, physical devices, or forced localhost
+      host = AppConfig.defaultHost;
     }
 
-    return {'host': AppConfig.defaultHost, 'port': port};
-  }
-
-  static String _buildBaseUrl(String host, int port) {
-    return 'http://$host:$port';
+    return _autoDetectedBase = 'http://$host:$port';
   }
 
   static String get baseUrl => _overrideBaseUrl ?? _detectBaseUrl();
