@@ -320,6 +320,16 @@ jobs:
           docker compose ps
           docker compose down
 
+      - name: Show logs on failure
+        if: failure()
+        run: |
+          echo "=== Server logs ==="
+          docker compose logs server || true
+          echo "=== Database logs ==="
+          docker compose logs db || true
+          echo "=== Redis logs ==="
+          docker compose logs redis || true
+
   push_to_mirror:
     needs: [docker-compose-validation, check_the_repository]
     runs-on: ubuntu-latest
