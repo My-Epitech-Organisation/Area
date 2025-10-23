@@ -17,7 +17,7 @@ const About: React.FC = () => {
           <p className="text-lg text-theme-secondary leading-relaxed">
             AREA is an innovative platform designed to revolutionize your workflow by creating
             automated actions, or &quot;areactions,&quot; through seamless integration with popular
-            services like Google, GitHub, Microsoft Teams, and more. Whether you&apos;re a
+            services like Google, GitHub, Slack, Twitch, and more. Whether you&apos;re a
             developer, student, or productivity enthusiast, AREA empowers you to connect your
             favorite tools and automate repetitive tasks effortlessly.
           </p>
@@ -59,12 +59,12 @@ const About: React.FC = () => {
               <p className="text-theme-muted text-sm">Repositories, Issues, PRs</p>
             </div>
             <div className="bg-theme-surface p-4 rounded-lg text-center">
-              <p className="text-theme-primary font-medium">Microsoft Teams</p>
-              <p className="text-theme-muted text-sm">Messages, Channels</p>
+              <p className="text-theme-primary font-medium">Slack</p>
+              <p className="text-theme-muted text-sm">Messages, Channels, Alerts</p>
             </div>
             <div className="bg-theme-surface p-4 rounded-lg text-center">
-              <p className="text-theme-primary font-medium">Discord</p>
-              <p className="text-theme-muted text-sm">Channels, Messages</p>
+              <p className="text-theme-primary font-medium">Twitch</p>
+              <p className="text-theme-muted text-sm">Streams, Chat, Clips</p>
             </div>
             <div className="bg-theme-surface p-4 rounded-lg text-center">
               <p className="text-theme-primary font-medium">Spotify</p>
