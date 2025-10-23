@@ -207,6 +207,10 @@ ACTION_SCHEMAS = {
             },
         },
         "required": ["location", "condition"],
+    # Debug Actions
+    "debug_manual_trigger": {
+        "type": "object",
+        "properties": {},
         "additionalProperties": False,
     },
 }
@@ -519,6 +523,15 @@ REACTION_SCHEMAS = {
             },
         },
         "required": ["alert_method", "recipient", "message"],
+    # Debug Reactions
+    "debug_log_execution": {
+        "type": "object",
+        "properties": {
+            "message": {
+                "type": "string",
+                "description": "Custom message to log (optional)",
+            },
+        },
         "additionalProperties": False,
     },
 }
@@ -624,6 +637,8 @@ COMPATIBILITY_RULES = {
         "webhook_post",
         "weather_send_alert",
     ],
+    # Debug actions - can trigger anything for testing
+    "debug_manual_trigger": ["*"],
     # Twitch actions - can trigger Twitch reactions and notification reactions
     "twitch_stream_online": [
         "twitch_send_chat_message",
