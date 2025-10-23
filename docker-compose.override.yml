@@ -94,11 +94,11 @@ services:
   # ---------------------------------------------------------------------------
   # Mobile Client - Development Overrides
   # ---------------------------------------------------------------------------
-  client_mobile:
-    container_name: area_client_mobile
-    volumes:
-      - apk_shared:/shared
-      - ./mobile:/app:z  # HOT RELOAD: Mount source code (z for SELinux)
+  # client_mobile:
+  #   container_name: area_client_mobile
+  #   volumes:
+  #     - apk_shared:/shared
+  #     - ./mobile:/app:z  # HOT RELOAD: Mount source code (z for SELinux)
 
   # ---------------------------------------------------------------------------
   # Web Client - Development with Vite Hot Reload
