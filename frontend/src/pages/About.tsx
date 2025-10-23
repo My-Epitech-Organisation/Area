@@ -17,9 +17,9 @@ const About: React.FC = () => {
           <p className="text-lg text-theme-secondary leading-relaxed">
             AREA is an innovative platform designed to revolutionize your workflow by creating
             automated actions, or &quot;areactions,&quot; through seamless integration with popular
-            services like Google, GitHub, Slack, Twitch, and more. Whether you&apos;re a
-            developer, student, or productivity enthusiast, AREA empowers you to connect your
-            favorite tools and automate repetitive tasks effortlessly.
+            services like Google, GitHub, Slack, Twitch, and more. Whether you&apos;re a developer,
+            student, or productivity enthusiast, AREA empowers you to connect your favorite tools
+            and automate repetitive tasks effortlessly.
           </p>
           <p className="text-lg text-theme-secondary leading-relaxed mt-4">
             Born from a student project, AREA is not just a tool—it&apos;s a vision for smarter,
