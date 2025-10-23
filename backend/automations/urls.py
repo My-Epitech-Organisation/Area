@@ -62,4 +62,15 @@ urlpatterns = [
     path("about.json", views.about_json_view, name="about"),
     # Webhook receiver endpoint
     path("webhooks/<str:service>/", webhook_receiver, name="webhook-receiver"),
+    # Debug endpoints
+    path(
+        "api/debug/trigger/<int:area_id>/",
+        views.DebugTriggerView.as_view({"post": "create"}),
+        name="debug-trigger",
+    ),
+    path(
+        "api/debug/executions/<int:area_id>/",
+        views.DebugExecutionsView.as_view({"get": "list"}),
+        name="debug-executions",
+    ),
 ]
