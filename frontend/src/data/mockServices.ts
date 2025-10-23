@@ -141,4 +141,21 @@ export const mockServices: Service[] = [
       { name: 'add_calendar_event', description: 'Add an event to your calendar' },
     ],
   },
+  {
+    name: 'Twitch',
+    actions: [
+      { name: 'twitch_stream_online', description: 'Your stream goes live' },
+      { name: 'twitch_stream_offline', description: 'Your stream goes offline' },
+      { name: 'twitch_new_follower', description: 'Someone follows your channel' },
+      { name: 'twitch_new_subscriber', description: 'Someone subscribes to your channel' },
+      { name: 'twitch_channel_update', description: 'Your channel info changes (title, category)' },
+    ],
+    reactions: [
+      { name: 'twitch_send_chat_message', description: 'Send a message to your Twitch chat' },
+      { name: 'twitch_send_announcement', description: 'Send an announcement in your chat' },
+      { name: 'twitch_create_clip', description: 'Create a clip from your live stream' },
+      { name: 'twitch_update_title', description: 'Update your stream title' },
+      { name: 'twitch_update_category', description: 'Update your stream category/game' },
+    ],
+  },
 ];

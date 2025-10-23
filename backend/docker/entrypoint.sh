@@ -23,8 +23,7 @@ chmod 777 /app/logs 2>/dev/null || true
 # Wait for database to be ready
 echo -e "${YELLOW}⏳ Waiting for database...${NC}"
 DB_HOST=${DB_HOST:-db}
-DB_PORT_INTERNAL=5432  # Always use internal port for container-to-container communication
-while ! nc -z $DB_HOST $DB_PORT_INTERNAL; do
+while ! nc -z $DB_HOST 5432; do
   echo "Database is unavailable - sleeping"
   sleep 1
 done
@@ -53,6 +52,11 @@ python manage.py collectstatic --noinput --clear
 echo -e "${YELLOW}🔧 Initializing services database...${NC}"
 python manage.py init_services
 echo -e "${GREEN}✅ Services initialized!${NC}"
+
+# Initialize Celery Beat periodic tasks
+echo -e "${YELLOW}⏰ Initializing Celery Beat tasks...${NC}"
+python manage.py init_celery_beat
+echo -e "${GREEN}✅ Celery Beat tasks initialized!${NC}"
 
 # Create superuser if it doesn't exist
 echo -e "${YELLOW}👤 Creating superuser if needed...${NC}"
