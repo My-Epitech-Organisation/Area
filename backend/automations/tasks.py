@@ -1739,6 +1739,29 @@ def _execute_reaction_logic(
             logger.error(f"[REACTION WEBHOOK] Failed: {e}")
             raise Exception(f"Webhook POST failed: {e}") from e
 
+    # ==================== Debug Reactions ====================
+    elif reaction_name == "debug_log_execution":
+        # Log execution details for debugging
+        from django.utils import timezone
+
+        custom_message = reaction_config.get("message", "Debug execution triggered")
+        timestamp = timezone.now()
+
+        log_data = {
+            "timestamp": timestamp.isoformat(),
+            "area_id": area.id,
+            "area_name": area.name,
+            "message": custom_message,
+            "trigger_data": trigger_data,
+            "owner": area.owner.email,
+        }
+
+        logger.info(f"[REACTION DEBUG] {custom_message} at {timestamp}")
+        logger.info(f"[REACTION DEBUG] Area: {area.name} (ID: {area.id})")
+        logger.info(f"[REACTION DEBUG] Trigger data: {trigger_data}")
+
+        return log_data
+
     # ==================== Twitch Reactions ====================
     elif reaction_name == "twitch_send_chat_message":
         from django.conf import settings
