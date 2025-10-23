@@ -288,7 +288,7 @@ ACTION_SCHEMAS = {
                 "maximum": 300,
             },
         },
-        "required": ["location"],
+        "required": ["location", "threshold"],
         "additionalProperties": False,
     },
     # Slack Actions
