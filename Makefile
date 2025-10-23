@@ -57,7 +57,7 @@ dev: ## Start development (hot reload, Vite on :5173)
 	@echo "🚀 Starting AREA in DEVELOPMENT mode..."
 	@echo "   Frontend: http://localhost:5173 (Vite hot reload)"
 	@echo "   Backend:  http://localhost:8080"
-	@echo "   Flower:   http://localhost:5555"
+	@echo "   Flower:   http://localhost:5566"
 	@echo "📦 Checking for dependency changes..."
 	@cd frontend && npm install
 	@docker-compose up -d --remove-orphans

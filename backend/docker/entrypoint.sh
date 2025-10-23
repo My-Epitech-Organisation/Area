@@ -37,33 +37,38 @@ while ! nc -z redis ${REDIS_PORT:-6379}; do
 done
 echo -e "${GREEN}✅ Redis is ready!${NC}"
 
-# Run database migrations
-echo -e "${YELLOW}🔄 Making migrations...${NC}"
-python manage.py makemigrations --noinput
+# Run initialization only on the main server container
+# Other containers (worker, beat, flower) should skip this
+if [ "${SKIP_DJANGO_INIT:-false}" != "true" ]; then
+    echo -e "${YELLOW}🔄 Running Django initialization...${NC}"
 
-echo -e "${YELLOW}🔄 Running database migrations...${NC}"
-python manage.py migrate --noinput
+    # Run database migrations
+    echo -e "${YELLOW}🔄 Making migrations...${NC}"
+    python manage.py makemigrations --noinput
 
-# Collect static files
-echo -e "${YELLOW}📦 Collecting static files...${NC}"
-python manage.py collectstatic --noinput --clear
+    echo -e "${YELLOW}🔄 Running database migrations...${NC}"
+    python manage.py migrate --noinput
 
-# Initialize services (Actions & Reactions)
-echo -e "${YELLOW}🔧 Initializing services database...${NC}"
-python manage.py init_services
-echo -e "${GREEN}✅ Services initialized!${NC}"
+    # Collect static files
+    echo -e "${YELLOW}📦 Collecting static files...${NC}"
+    python manage.py collectstatic --noinput --clear
 
-# Initialize Celery Beat periodic tasks
-echo -e "${YELLOW}⏰ Initializing Celery Beat tasks...${NC}"
-python manage.py init_celery_beat
-echo -e "${GREEN}✅ Celery Beat tasks initialized!${NC}"
+    # Initialize services (Actions & Reactions)
+    echo -e "${YELLOW}🔧 Initializing services database...${NC}"
+    python manage.py init_services
+    echo -e "${GREEN}✅ Services initialized!${NC}"
 
-# Create superuser if it doesn't exist
-echo -e "${YELLOW}👤 Creating superuser if needed...${NC}"
-ADMIN_EMAIL="${DJANGO_SUPERUSER_EMAIL:-admin@areaction.app}"
-ADMIN_PASSWORD="${DJANGO_SUPERUSER_PASSWORD:-admin123}"
+    # Initialize Celery Beat periodic tasks
+    echo -e "${YELLOW}⏰ Initializing Celery Beat tasks...${NC}"
+    python manage.py init_celery_beat
+    echo -e "${GREEN}✅ Celery Beat tasks initialized!${NC}"
 
-python manage.py shell << EOF
+    # Create superuser if it doesn't exist
+    echo -e "${YELLOW}👤 Creating superuser if needed...${NC}"
+    ADMIN_EMAIL="${DJANGO_SUPERUSER_EMAIL:-admin@areaction.app}"
+    ADMIN_PASSWORD="${DJANGO_SUPERUSER_PASSWORD:-admin123}"
+
+    python manage.py shell << EOF
 from django.contrib.auth import get_user_model
 User = get_user_model()
 if not User.objects.filter(email='$ADMIN_EMAIL').exists():
@@ -73,13 +78,16 @@ else:
     print('ℹ️  Superuser already exists: $ADMIN_EMAIL')
 EOF
 
-# Load initial data if needed
-if [ -f "fixtures/initial_data.json" ]; then
-    echo -e "${YELLOW}📊 Loading initial data...${NC}"
-    python manage.py loaddata fixtures/initial_data.json
-fi
+    # Load initial data if needed
+    if [ -f "fixtures/initial_data.json" ]; then
+        echo -e "${YELLOW}📊 Loading initial data...${NC}"
+        python manage.py loaddata fixtures/initial_data.json
+    fi
 
-echo -e "${GREEN}🎉 Backend initialization completed!${NC}"
+    echo -e "${GREEN}🎉 Backend initialization completed!${NC}"
+else
+    echo -e "${YELLOW}⏭️  Skipping Django initialization (SKIP_DJANGO_INIT=true)${NC}"
+fi
 echo -e "${GREEN}📍 Starting server on port 8080...${NC}"
 
 # Execute the main container command
