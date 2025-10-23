@@ -130,7 +130,7 @@ const ServiceDetail: React.FC = () => {
 
   // Check if this service requires OAuth and if it's connected
   // Google Calendar uses the same OAuth as Google/Gmail
-  const oauthProviders = ['github', 'google', 'gmail', 'google_calendar', 'twitch', 'slack'];
+  const oauthProviders = ['github', 'google', 'gmail', 'google_calendar', 'twitch', 'slack', 'spotify'];
   const requiresOAuth = service && oauthProviders.includes(service.name.toLowerCase());
 
   // For google_calendar, check if 'google' OAuth is connected
