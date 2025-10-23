@@ -19,8 +19,6 @@ export interface JSONSchemaProperty {
   items?: JSONSchemaProperty;
   properties?: Record<string, JSONSchemaProperty>;
   additionalProperties?: boolean | JSONSchemaProperty;
-  min?: number;
-  max?: number;
 }
 
 export interface JSONSchema {
@@ -117,4 +115,31 @@ export interface OAuthCallbackResponse {
   service: string;
   created: boolean;
   expires_at?: string;
+}
+
+// Execution types for debug monitoring
+export interface Execution {
+  id: number;
+  area: number;
+  status: 'pending' | 'running' | 'success' | 'failed';
+  created_at: string;
+  completed_at?: string;
+  reaction_result?: Record<string, unknown>;
+  error_message?: string;
+  trigger_data?: Record<string, unknown>;
+}
+
+export interface DebugExecutionsResponse {
+  area_id: number;
+  area_name: string;
+  action: string;
+  reaction: string;
+  executions: Execution[];
+}
+
+export interface DebugTriggerResponse {
+  success: boolean;
+  execution_id: number;
+  area_name: string;
+  message: string;
 }

@@ -16,6 +16,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
 import OAuthCallback from './pages/OAuthCallback';
+import Debug from './pages/Debug';
 import Navbar from './components/Navbar';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
         <Route path="/Areaction" element={<Areaction />} />
         <Route path="/about" element={<About />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/debug" element={<Debug />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/profile" element={<Profile />} />

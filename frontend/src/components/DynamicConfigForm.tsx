@@ -305,13 +305,32 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
       .join(' ');
   };
 
+  /**
+   * Get sorted fields with required fields first.
+   *
+   * @returns {Array<[string, JSONSchemaProperty]>} - Sorted array of field entries.
+   */
+  const getSortedFields = (): Array<[string, JSONSchemaProperty]> => {
+    const entries = Object.entries(schema.properties);
+    const required = schema.required || [];
+
+    // Separate required and optional fields
+    const requiredFields = required
+      .filter((fieldName) => schema.properties[fieldName])
+      .map(
+        (fieldName) => [fieldName, schema.properties[fieldName]] as [string, JSONSchemaProperty]
+      );
+
+    const optionalFields = entries.filter(([fieldName]) => !required.includes(fieldName));
+
+    return [...requiredFields, ...optionalFields];
+  };
+
   return (
     <div className="bg-black/20 p-4 rounded-lg border border-gray-600">
       {title && <h3 className="text-sm font-semibold text-white mb-3">{title}</h3>}
       <div className="space-y-2">
-        {Object.entries(schema.properties).map(([fieldName, property]) =>
-          renderField(fieldName, property)
-        )}
+        {getSortedFields().map(([fieldName, property]) => renderField(fieldName, property))}
       </div>
     </div>
   );
