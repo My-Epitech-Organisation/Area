@@ -733,7 +733,18 @@ def check_weather_actions(self):
     logger.info("Starting weather actions check")
 
     try:
-        weather_areas = get_active_areas(["weather_condition_met"])
+        # Get all active weather areas with specific action names
+        weather_action_names = [
+            "weather_rain_detected",
+            "weather_snow_detected",
+            "weather_temperature_above",
+            "weather_temperature_below",
+            "weather_extreme_heat",
+            "weather_extreme_cold",
+            "weather_windy",
+        ]
+
+        weather_areas = get_active_areas(weather_action_names)
 
         if not weather_areas:
             logger.info("No active weather areas found")
@@ -780,57 +791,99 @@ def check_weather_actions(self):
             for area in grouped_areas:
                 try:
                     action_config = area.action_config
-                    condition = action_config.get("condition")
+                    action_name = area.action.name
+
+                    # Determine if condition is met based on action type
+                    condition_met = False
                     threshold = action_config.get("threshold")
 
-                    if not condition:
-                        skipped_count += 1
-                        logger.warning(f"Area '{area.name}' missing condition")
-                        continue
-
-                    condition_mapping = {
-                        "rain": "rain",
-                        "snow": "snow",
-                        "temperature_above": "temperature_above",
-                        "temperature_below": "temperature_below",
-                    }
-
-                    helper_condition = condition_mapping.get(condition)
-                    if not helper_condition:
-                        skipped_count += 1
-                        logger.warning(
-                            f"Unknown condition '{condition}' for area '{area.name}'"
-                        )
-                        continue
-
-                    # Handle temperature conditions directly
-                    if condition in ["temperature_above", "temperature_below"]:
-                        temp = weather_data.get("temperature", 0)
-                        if condition == "temperature_above":
-                            condition_met = temp > (threshold or 0)
-                        else:
-                            condition_met = temp < (threshold or 0)
-                    else:
-                        # Use the helper function for other conditions
+                    if action_name == "weather_rain_detected":
                         condition_met = check_weather_condition(
                             api_key=api_key,
                             location=location,
-                            condition=helper_condition,
-                            threshold=threshold,
+                            condition="rain",
                             weather_data=weather_data,
                         )
 
+                    elif action_name == "weather_snow_detected":
+                        condition_met = check_weather_condition(
+                            api_key=api_key,
+                            location=location,
+                            condition="snow",
+                            weather_data=weather_data,
+                        )
+
+                    elif action_name == "weather_temperature_above":
+                        if threshold is None:
+                            logger.warning(
+                                f"Area '{area.name}' missing threshold for {action_name}"
+                            )
+                            skipped_count += 1
+                            continue
+                        temp = weather_data.get("temperature", 0)
+                        condition_met = temp > threshold
+
+                    elif action_name == "weather_temperature_below":
+                        if threshold is None:
+                            logger.warning(
+                                f"Area '{area.name}' missing threshold for {action_name}"
+                            )
+                            skipped_count += 1
+                            continue
+                        temp = weather_data.get("temperature", 0)
+                        condition_met = temp < threshold
+
+                    elif action_name == "weather_extreme_heat":
+                        condition_met = check_weather_condition(
+                            api_key=api_key,
+                            location=location,
+                            condition="extreme heat",
+                            threshold=35,  # Fixed threshold for extreme heat
+                            weather_data=weather_data,
+                        )
+
+                    elif action_name == "weather_extreme_cold":
+                        condition_met = check_weather_condition(
+                            api_key=api_key,
+                            location=location,
+                            condition="extreme cold",
+                            threshold=-10,  # Fixed threshold for extreme cold
+                            weather_data=weather_data,
+                        )
+
+                    elif action_name == "weather_windy":
+                        # Get threshold from config (default 50 km/h) and convert to m/s
+                        threshold_kmh = action_config.get("threshold", 50)
+                        threshold_ms = threshold_kmh * 0.2778  # Convert km/h to m/s
+
+                        condition_met = check_weather_condition(
+                            api_key=api_key,
+                            location=location,
+                            condition="windy",
+                            threshold=threshold_ms,
+                            weather_data=weather_data,
+                        )
+
+                    else:
+                        logger.warning(
+                            f"Unknown weather action: {action_name} for area '{area.name}'"
+                        )
+                        skipped_count += 1
+                        continue
+
                     if condition_met:
                         now = timezone.now()
-                        event_id = f"weather_{area.id}_{location}_{condition}_{now.strftime('%Y%m%d%H')}"
+                        event_id = f"weather_{area.id}_{location}_{action_name}_{now.strftime('%Y%m%d%H')}"
                         trigger_data = {
                             "timestamp": now.isoformat(),
-                            "action_type": "weather_condition_met",
+                            "action_type": action_name,
                             "location": location,
-                            "condition": condition,
-                            "threshold": threshold,
                             "weather_data": weather_data,
                         }
+
+                        # Add threshold to trigger data if applicable
+                        if threshold is not None:
+                            trigger_data["threshold"] = threshold
 
                         execution, created = create_execution_safe(
                             area=area,
@@ -840,7 +893,7 @@ def check_weather_actions(self):
 
                         if created and execution:
                             logger.info(
-                                f"✅ Weather condition met for area '{area.name}' ({condition}) in {location}"
+                                f"✅ Weather condition met for area '{area.name}' ({action_name}) in {location}"
                             )
                             execute_reaction_task.delay(execution.pk)
                             triggered_count += 1
@@ -851,7 +904,7 @@ def check_weather_actions(self):
 
                     else:
                         logger.debug(
-                            f"Condition not met for area '{area.name}' ({condition}) in {location}"
+                            f"Condition not met for area '{area.name}' ({action_name}) in {location}"
                         )
 
                 except Exception as e:
@@ -957,7 +1010,7 @@ def check_twitch_actions(self):
 
     from users.oauth.manager import OAuthManager
 
-    from .twitch_helper import (
+    from .helpers.twitch_helper import (
         get_channel_info,
         get_follower_count,
         get_stream_info,
@@ -1236,6 +1289,242 @@ def check_twitch_actions(self):
 
     except Exception as exc:
         logger.error(f"Error in check_twitch_actions: {exc}", exc_info=True)
+        raise self.retry(exc=exc, countdown=300) from None
+
+
+@shared_task(
+    name="automations.check_slack_actions",
+    bind=True,
+    max_retries=3,
+    autoretry_for=RECOVERABLE_EXCEPTIONS,
+)
+def check_slack_actions(self):
+    """
+    Poll Slack for new messages and events.
+
+    Checks all active Areas with Slack actions and triggers executions
+    when new matching events are found.
+
+    Supported actions:
+    - slack_new_message: Any new message in a channel
+    - slack_message_with_keyword: Message containing specific keyword
+    - slack_user_mention: User mentioned in a message
+    - slack_channel_join: User joins a channel
+
+    Note: For production, Slack Events API webhooks are preferred over polling.
+
+    Returns:
+        dict: Summary of polling results
+    """
+    from users.oauth.manager import OAuthManager
+
+    from .helpers.slack_helper import (
+        get_channel_history,
+        parse_message_event,
+    )
+
+    logger.info("Checking Slack actions...")
+
+    try:
+        # Get all active Areas with Slack actions
+        slack_areas = get_active_areas(
+            [
+                "slack_new_message",
+                "slack_message_with_keyword",
+                "slack_user_mention",
+                "slack_channel_join",
+            ]
+        )
+
+        if not slack_areas:
+            logger.info("No active Slack areas found")
+            return {"status": "no_areas", "checked": 0}
+
+        triggered_count = 0
+        skipped_count = 0
+        no_token_count = 0
+
+        for area in slack_areas:
+            try:
+                # Get valid Slack token
+                access_token = OAuthManager.get_valid_token(area.owner, "slack")
+
+                if not access_token:
+                    logger.warning(
+                        f"No valid Slack token for user {area.owner.username}, "
+                        f"area '{area.name}'"
+                    )
+                    no_token_count += 1
+                    continue
+
+                # Get the authenticated user's Slack ID for mention detection
+                try:
+                    from users.oauth.slack import SlackOAuthProvider
+
+                    provider = SlackOAuthProvider(
+                        None
+                    )  # Config not needed for get_user_info
+                    user_info = provider.get_user_info(access_token)
+                    authenticated_user_id = user_info["id"]
+                    logger.debug(
+                        f"Authenticated Slack user ID for {area.owner.username}: {authenticated_user_id}"
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Failed to get Slack user info for {area.owner.username}: {e}"
+                    )
+                    skipped_count += 1
+                    continue
+
+                action_name = area.action.name
+                action_config = area.action_config
+
+                # Get or create ActionState for tracking
+                from .models import ActionState
+
+                state, _ = ActionState.objects.get_or_create(area=area)
+
+                # Get channel from config
+                channel = action_config.get("channel")
+                if not channel:
+                    logger.warning(f"Area '{area.name}' missing channel configuration")
+                    skipped_count += 1
+                    continue
+
+                # Get channel history (newest messages first)
+                # Use 'since' parameter if we have a last_checked_at
+                params = {"limit": 50}  # Get up to 50 recent messages
+                if state.last_checked_at:
+                    # Convert to Unix timestamp for Slack API
+                    since_ts = state.last_checked_at.timestamp()
+                    params["oldest"] = str(since_ts)
+
+                logger.debug(f"Polling Slack channel {channel} for area '{area.name}'")
+
+                try:
+                    messages = get_channel_history(access_token, channel, **params)
+                except Exception as e:
+                    logger.error(f"Failed to get channel history for {channel}: {e}")
+                    skipped_count += 1
+                    continue
+
+                if not messages:
+                    logger.debug(f"No messages found in channel {channel}")
+                    state.last_checked_at = timezone.now()
+                    state.save()
+                    continue
+
+                # Process messages (they come newest first)
+                new_events_found = False
+
+                for message in messages:
+                    message_ts = message.get("ts")
+                    if not message_ts:
+                        continue
+
+                    # Parse the message event
+                    event_data = parse_message_event(message)
+
+                    # Skip bot messages and system messages (but allow channel_join events)
+                    subtype = event_data.get("subtype")
+                    if event_data.get("bot_id") or (
+                        subtype and subtype != "channel_join"
+                    ):
+                        continue
+
+                    # Create unique event ID
+                    event_id = f"slack_{channel}_{message_ts}"
+
+                    # Check if already processed
+                    if state.last_event_id == event_id:
+                        logger.debug(f"Message {event_id} already processed")
+                        break  # Since messages are newest first, we can stop
+
+                    # Check action-specific conditions
+                    should_trigger = False
+                    trigger_data = {
+                        "service": "slack",
+                        "action": action_name,
+                        "channel": channel,
+                        "message_ts": message_ts,
+                        "user": event_data.get("user", "unknown"),
+                        "text": event_data.get("text", ""),
+                        "timestamp": event_data.get("timestamp"),
+                    }
+
+                    if action_name == "slack_new_message":
+                        # Any new message
+                        should_trigger = True
+
+                    elif action_name == "slack_message_with_keyword":
+                        # Check for keyword in message text
+                        keyword = action_config.get("keywords", "").lower()
+                        message_text = event_data.get("text", "").lower()
+                        if keyword and keyword in message_text:
+                            should_trigger = True
+                            trigger_data["keywords"] = keyword
+
+                    elif action_name == "slack_user_mention":
+                        # Check if the authenticated user is mentioned
+                        if f"<@{authenticated_user_id}>" in event_data.get("text", ""):
+                            should_trigger = True
+                            trigger_data["mentioned_user"] = authenticated_user_id
+
+                    elif (
+                        action_name == "slack_channel_join"
+                        and event_data.get("subtype") == "channel_join"
+                    ):
+                        should_trigger = True
+
+                    if should_trigger:
+                        # Create execution (with idempotency)
+                        execution, created = create_execution_safe(
+                            area=area,
+                            external_event_id=event_id,
+                            trigger_data=trigger_data,
+                        )
+
+                        if created and execution:
+                            logger.info(
+                                f"Slack action triggered for '{area.name}': "
+                                f"{action_name} in {channel}"
+                            )
+                            execute_reaction_task.delay(execution.pk)
+                            triggered_count += 1
+                            new_events_found = True
+
+                # Update state
+                if (new_events_found or not state.last_event_id) and messages:
+                    latest_ts = messages[0].get("ts")
+                    if latest_ts:
+                        state.last_event_id = f"slack_{channel}_{latest_ts}"
+
+                state.last_checked_at = timezone.now()
+                state.save()
+
+            except Exception as e:
+                logger.error(
+                    f"Error checking Slack for area '{area.name}': {e}", exc_info=True
+                )
+                skipped_count += 1
+                continue
+
+        logger.info(
+            f"Slack check complete: {triggered_count} triggered, "
+            f"{skipped_count} skipped, {no_token_count} no token"
+        )
+
+        return {
+            "status": "success",
+            "triggered": triggered_count,
+            "skipped": skipped_count,
+            "no_token": no_token_count,
+            "checked_areas": len(slack_areas),
+            "note": "Slack Events API webhooks preferred over polling",
+        }
+
+    except Exception as exc:
+        logger.error(f"Error in check_slack_actions: {exc}", exc_info=True)
         raise self.retry(exc=exc, countdown=300) from None
 
 
@@ -1590,16 +1879,132 @@ def _execute_reaction_logic(
             "note": "Slack integration not yet implemented",
         }
 
-    elif reaction_name == "teams_message":
-        # Placeholder for Teams message
-        webhook_url = reaction_config.get("webhook_url")
-        text = reaction_config.get("text", "AREA triggered")
-        logger.info(f"[REACTION TEAMS] Would send to {webhook_url}: {text}")
-        return {
-            "sent": True,
-            "webhook_url": webhook_url,
-            "note": "Teams integration not yet implemented",
+    # ==================== Slack Reactions ====================
+    elif reaction_name == "slack_send_message":
+        # Real implementation: Send message to Slack channel
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.slack_helper import post_message
+
+        channel = reaction_config.get("channel")
+        message = reaction_config.get("message", "AREA triggered")
+
+        if not channel:
+            raise ValueError("Channel is required for slack_send_message")
+
+        # Get valid Slack token
+        access_token = OAuthManager.get_valid_token(area.owner, "slack")
+        if not access_token:
+            raise ValueError(f"No valid Slack token for user {area.owner.username}")
+
+        try:
+            result = post_message(access_token, channel, message)
+
+            logger.info(f"[REACTION SLACK] Sent message to {channel}: {message}")
+            return {
+                "success": True,
+                "channel": channel,
+                "message_ts": result.get("ts"),
+                "message": message,
+            }
+
+        except Exception as e:
+            logger.error(f"[REACTION SLACK] Failed to send message: {e}")
+            raise ValueError(f"Slack send_message failed: {str(e)}") from e
+
+    elif reaction_name == "slack_send_alert":
+        # Real implementation: Send alert message to Slack channel
+        from django.utils import timezone
+
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.slack_helper import post_message
+
+        channel = reaction_config.get("channel")
+        alert_type = reaction_config.get("alert_type", "info")
+        title = reaction_config.get("title", "🚨 AREA Alert Triggered")
+        details = reaction_config.get("details", "")
+
+        # Map alert_type to Slack color
+        color_map = {"info": "good", "warning": "warning", "error": "danger"}
+        color = color_map.get(alert_type, "good")
+
+        if not channel:
+            raise ValueError("Channel is required for slack_send_alert")
+
+        # Format as Slack attachment for better visibility
+        attachment = {
+            "color": color,
+            "text": title,
+            "footer": "AREA Automation",
+            "ts": int(timezone.now().timestamp()),
         }
+
+        # Add details if provided
+        if details:
+            attachment["text"] += f"\n\n{details}"
+
+        # Get valid Slack token
+        access_token = OAuthManager.get_valid_token(area.owner, "slack")
+        if not access_token:
+            raise ValueError(f"No valid Slack token for user {area.owner.username}")
+
+        try:
+            result = post_message(access_token, channel, "", attachments=[attachment])
+
+            logger.info(f"[REACTION SLACK] Sent alert to {channel}: {title}")
+            return {
+                "success": True,
+                "channel": channel,
+                "message_ts": result.get("ts"),
+                "alert_type": alert_type,
+                "title": title,
+                "details": details,
+            }
+
+        except Exception as e:
+            logger.error(f"[REACTION SLACK] Failed to send alert: {e}")
+            raise ValueError(f"Slack send_alert failed: {str(e)}") from e
+
+    elif reaction_name == "slack_post_update":
+        # Real implementation: Post an update/status message
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.slack_helper import post_message
+
+        channel = reaction_config.get("channel")
+        title = reaction_config.get("title", "AREA Update")
+        status = reaction_config.get("status", "Update")
+        details = reaction_config.get("details", "")
+
+        if not channel:
+            raise ValueError("Channel is required for slack_post_update")
+
+        # Format as a nicely structured message
+        message_text = f"📢 *{title}*\n\n*{status}*"
+        if details:
+            message_text += f"\n\n{details}"
+
+        # Get valid Slack token
+        access_token = OAuthManager.get_valid_token(area.owner, "slack")
+        if not access_token:
+            raise ValueError(f"No valid Slack token for user {area.owner.username}")
+
+        try:
+            result = post_message(access_token, channel, message_text)
+
+            logger.info(f"[REACTION SLACK] Posted update to {channel}: {title}")
+            return {
+                "success": True,
+                "channel": channel,
+                "message_ts": result.get("ts"),
+                "title": title,
+                "status": status,
+            }
+
+        except Exception as e:
+            logger.error(f"[REACTION SLACK] Failed to post update: {e}")
+            raise ValueError(f"Slack post_update failed: {str(e)}") from e
 
     elif reaction_name == "github_create_issue":
         # Real implementation: Create GitHub issue via API
@@ -1932,7 +2337,7 @@ def _execute_reaction_logic(
 
         from users.oauth.manager import OAuthManager
 
-        from .twitch_helper import get_user_info, send_chat_message
+        from .helpers.twitch_helper import get_user_info, send_chat_message
 
         access_token = OAuthManager.get_valid_token(area.owner, "twitch")
         if not access_token:
@@ -1965,7 +2370,7 @@ def _execute_reaction_logic(
 
         from users.oauth.manager import OAuthManager
 
-        from .twitch_helper import get_user_info, send_whisper
+        from .helpers.twitch_helper import get_user_info, send_whisper
 
         access_token = OAuthManager.get_valid_token(area.owner, "twitch")
         if not access_token:
@@ -2006,7 +2411,7 @@ def _execute_reaction_logic(
 
         from users.oauth.manager import OAuthManager
 
-        from .twitch_helper import get_user_info, send_chat_announcement
+        from .helpers.twitch_helper import get_user_info, send_chat_announcement
 
         access_token = OAuthManager.get_valid_token(area.owner, "twitch")
         if not access_token:
@@ -2035,7 +2440,7 @@ def _execute_reaction_logic(
 
         from users.oauth.manager import OAuthManager
 
-        from .twitch_helper import create_clip, get_user_info
+        from .helpers.twitch_helper import create_clip, get_user_info
 
         access_token = OAuthManager.get_valid_token(area.owner, "twitch")
         if not access_token:
@@ -2062,7 +2467,7 @@ def _execute_reaction_logic(
 
         from users.oauth.manager import OAuthManager
 
-        from .twitch_helper import get_user_info, modify_channel_info
+        from .helpers.twitch_helper import get_user_info, modify_channel_info
 
         access_token = OAuthManager.get_valid_token(area.owner, "twitch")
         if not access_token:
@@ -2088,7 +2493,7 @@ def _execute_reaction_logic(
 
         from users.oauth.manager import OAuthManager
 
-        from .twitch_helper import (
+        from .helpers.twitch_helper import (
             get_user_info,
             modify_channel_info,
             search_categories,
