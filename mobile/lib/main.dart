@@ -152,14 +152,19 @@ class _MyAppState extends State<MyApp> {
           // Set up authentication failure callback
           final httpClient = HttpClientService();
           httpClient.onAuthenticationFailure = () {
-            final authProvider = Provider.of<AuthProvider>(
-              context,
-              listen: false,
-            );
-            authProvider.logout();
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              navigatorKey.currentState?.pushReplacementNamed('/login');
-            });
+            // Use navigatorKey.currentContext instead of captured context
+            // to avoid using stale context when callback is invoked
+            final currentContext = navigatorKey.currentContext;
+            if (currentContext != null) {
+              final authProvider = Provider.of<AuthProvider>(
+                currentContext,
+                listen: false,
+              );
+              authProvider.logout();
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                navigatorKey.currentState?.pushReplacementNamed('/login');
+              });
+            }
           };
 
           return MaterialApp(
