@@ -14,8 +14,6 @@ export interface JSONSchemaProperty {
   maximum?: number;
   minLength?: number;
   maxLength?: number;
-  min?: number;
-  max?: number;
   enum?: (string | number | boolean)[];
   default?: string | number | boolean | null;
   items?: JSONSchemaProperty;
