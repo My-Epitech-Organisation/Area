@@ -15,6 +15,7 @@ This module provides Django REST Framework ViewSets for:
 """
 
 import time
+import uuid
 from typing import Any, Type
 
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -499,8 +500,6 @@ class DebugTriggerView(viewsets.ViewSet):
                 )
 
             # Create a manual execution with unique external_event_id
-            import uuid
-
             trigger_data = {
                 "manual_trigger": True,
                 "triggered_by": request.user.email,
