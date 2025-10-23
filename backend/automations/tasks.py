@@ -733,7 +733,18 @@ def check_weather_actions(self):
     logger.info("Starting weather actions check")
 
     try:
-        weather_areas = get_active_areas(["weather_condition_met"])
+        # Get all active weather areas with specific action names
+        weather_action_names = [
+            "weather_rain_detected",
+            "weather_snow_detected", 
+            "weather_temperature_above",
+            "weather_temperature_below",
+            "weather_extreme_heat",
+            "weather_extreme_cold",
+            "weather_windy",
+        ]
+        
+        weather_areas = get_active_areas(weather_action_names)
 
         if not weather_areas:
             logger.info("No active weather areas found")
@@ -780,57 +791,93 @@ def check_weather_actions(self):
             for area in grouped_areas:
                 try:
                     action_config = area.action_config
-                    condition = action_config.get("condition")
+                    action_name = area.action.name
+
+                    # Determine if condition is met based on action type
+                    condition_met = False
                     threshold = action_config.get("threshold")
 
-                    if not condition:
-                        skipped_count += 1
-                        logger.warning(f"Area '{area.name}' missing condition")
-                        continue
-
-                    condition_mapping = {
-                        "rain": "rain",
-                        "snow": "snow",
-                        "temperature_above": "temperature_above",
-                        "temperature_below": "temperature_below",
-                    }
-
-                    helper_condition = condition_mapping.get(condition)
-                    if not helper_condition:
-                        skipped_count += 1
-                        logger.warning(
-                            f"Unknown condition '{condition}' for area '{area.name}'"
-                        )
-                        continue
-
-                    # Handle temperature conditions directly
-                    if condition in ["temperature_above", "temperature_below"]:
-                        temp = weather_data.get("temperature", 0)
-                        if condition == "temperature_above":
-                            condition_met = temp > (threshold or 0)
-                        else:
-                            condition_met = temp < (threshold or 0)
-                    else:
-                        # Use the helper function for other conditions
+                    if action_name == "weather_rain_detected":
                         condition_met = check_weather_condition(
                             api_key=api_key,
                             location=location,
-                            condition=helper_condition,
-                            threshold=threshold,
+                            condition="rain",
                             weather_data=weather_data,
                         )
+                    
+                    elif action_name == "weather_snow_detected":
+                        condition_met = check_weather_condition(
+                            api_key=api_key,
+                            location=location,
+                            condition="snow",
+                            weather_data=weather_data,
+                        )
+                    
+                    elif action_name == "weather_temperature_above":
+                        if threshold is None:
+                            logger.warning(f"Area '{area.name}' missing threshold for {action_name}")
+                            skipped_count += 1
+                            continue
+                        temp = weather_data.get("temperature", 0)
+                        condition_met = temp > threshold
+                    
+                    elif action_name == "weather_temperature_below":
+                        if threshold is None:
+                            logger.warning(f"Area '{area.name}' missing threshold for {action_name}")
+                            skipped_count += 1
+                            continue
+                        temp = weather_data.get("temperature", 0)
+                        condition_met = temp < threshold
+                    
+                    elif action_name == "weather_extreme_heat":
+                        condition_met = check_weather_condition(
+                            api_key=api_key,
+                            location=location,
+                            condition="extreme heat",
+                            threshold=35,  # Fixed threshold for extreme heat
+                            weather_data=weather_data,
+                        )
+                    
+                    elif action_name == "weather_extreme_cold":
+                        condition_met = check_weather_condition(
+                            api_key=api_key,
+                            location=location,
+                            condition="extreme cold",
+                            threshold=-10,  # Fixed threshold for extreme cold
+                            weather_data=weather_data,
+                        )
+                    
+                    elif action_name == "weather_windy":
+                        # Get threshold from config (default 50 km/h) and convert to m/s
+                        threshold_kmh = action_config.get("threshold", 50)
+                        threshold_ms = threshold_kmh * 0.2778  # Convert km/h to m/s
+                        
+                        condition_met = check_weather_condition(
+                            api_key=api_key,
+                            location=location,
+                            condition="windy",
+                            threshold=threshold_ms,
+                            weather_data=weather_data,
+                        )
+                    
+                    else:
+                        logger.warning(f"Unknown weather action: {action_name} for area '{area.name}'")
+                        skipped_count += 1
+                        continue
 
                     if condition_met:
                         now = timezone.now()
-                        event_id = f"weather_{area.id}_{location}_{condition}_{now.strftime('%Y%m%d%H')}"
+                        event_id = f"weather_{area.id}_{location}_{action_name}_{now.strftime('%Y%m%d%H')}"
                         trigger_data = {
                             "timestamp": now.isoformat(),
-                            "action_type": "weather_condition_met",
+                            "action_type": action_name,
                             "location": location,
-                            "condition": condition,
-                            "threshold": threshold,
                             "weather_data": weather_data,
                         }
+                        
+                        # Add threshold to trigger data if applicable
+                        if threshold is not None:
+                            trigger_data["threshold"] = threshold
 
                         execution, created = create_execution_safe(
                             area=area,
@@ -840,7 +887,7 @@ def check_weather_actions(self):
 
                         if created and execution:
                             logger.info(
-                                f"✅ Weather condition met for area '{area.name}' ({condition}) in {location}"
+                                f"✅ Weather condition met for area '{area.name}' ({action_name}) in {location}"
                             )
                             execute_reaction_task.delay(execution.pk)
                             triggered_count += 1
@@ -851,7 +898,7 @@ def check_weather_actions(self):
 
                     else:
                         logger.debug(
-                            f"Condition not met for area '{area.name}' ({condition}) in {location}"
+                            f"Condition not met for area '{area.name}' ({action_name}) in {location}"
                         )
 
                 except Exception as e:

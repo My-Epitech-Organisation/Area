@@ -189,24 +189,106 @@ ACTION_SCHEMAS = {
         "required": ["webhook_url"],
         "additionalProperties": False,
     },
-    "weather_condition_met": {
+    "weather_rain_detected": {
         "type": "object",
         "properties": {
             "location": {
                 "type": "string",
                 "description": "Location to monitor (city name or coordinates)",
+                "minLength": 1,
             },
-            "condition": {
+        },
+        "required": ["location"],
+        "additionalProperties": False,
+    },
+    "weather_snow_detected": {
+        "type": "object",
+        "properties": {
+            "location": {
                 "type": "string",
-                "enum": ["rain", "snow", "temperature_above", "temperature_below"],
-                "description": "Weather condition to trigger on",
+                "description": "Location to monitor (city name or coordinates)",
+                "minLength": 1,
+            },
+        },
+        "required": ["location"],
+        "additionalProperties": False,
+    },
+    "weather_temperature_above": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "Location to monitor (city name or coordinates)",
+                "minLength": 1,
             },
             "threshold": {
                 "type": "number",
-                "description": "Temperature threshold (required for temperature conditions)",
+                "description": "Temperature threshold in Celsius - trigger when exceeded",
+                "minimum": -50,
+                "maximum": 60,
             },
         },
-        "required": ["location", "condition"],
+        "required": ["location", "threshold"],
+        "additionalProperties": False,
+    },
+    "weather_temperature_below": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "Location to monitor (city name or coordinates)",
+                "minLength": 1,
+            },
+            "threshold": {
+                "type": "number",
+                "description": "Temperature threshold in Celsius - trigger when below",
+                "minimum": -50,
+                "maximum": 60,
+            },
+        },
+        "required": ["location", "threshold"],
+        "additionalProperties": False,
+    },
+    "weather_extreme_heat": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "Location to monitor (city name or coordinates)",
+                "minLength": 1,
+            },
+        },
+        "required": ["location"],
+        "additionalProperties": False,
+    },
+    "weather_extreme_cold": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "Location to monitor (city name or coordinates)",
+                "minLength": 1,
+            },
+        },
+        "required": ["location"],
+        "additionalProperties": False,
+    },
+    "weather_windy": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "Location to monitor (city name or coordinates)",
+                "minLength": 1,
+            },
+            "threshold": {
+                "type": "number",
+                "description": "Speed threshold in km/h - trigger when above",
+                "minimum": 0,
+                "maximum": 300,
+            },
+        },
+        "required": ["location"],
         "additionalProperties": False,
     },
     # Slack Actions
@@ -719,14 +801,7 @@ COMPATIBILITY_RULES = {
     # Webhook actions can trigger anything
     "webhook_trigger": ["*"],
     # Weather actions
-    "weather_condition_met": [
-        "send_email",
-        "gmail_send_email",
-        "slack_message",
-        "log_message",
-        "webhook_post",
-        "weather_send_alert",
-    ],
+    "weather_trigger": ["*"],
     # Debug actions - can trigger anything for testing
     "debug_manual_trigger": ["*"],
     # Twitch actions - can trigger Twitch reactions and notification reactions
