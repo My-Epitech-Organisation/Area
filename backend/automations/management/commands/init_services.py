@@ -430,13 +430,166 @@ class Command(BaseCommand):
             },
             {
                 "name": "slack",
-                "description": "Slack messaging and notifications",
+                "description": "Slack messaging and team collaboration platform",
                 "status": Service.Status.ACTIVE,
-                "actions": [],
+                "actions": [
+                    {
+                        "name": "slack_new_message",
+                        "description": "Triggered when a new message is posted in a channel",
+                        "config_schema": {
+                            "channel": {
+                                "type": "string",
+                                "label": "Channel",
+                                "description": "Slack channel to monitor (e.g., #general or C1234567890)",
+                                "required": True,
+                                "placeholder": "#general",
+                            },
+                        },
+                    },
+                    {
+                        "name": "slack_message_with_keyword",
+                        "description": "Triggered when a message contains specific keywords",
+                        "config_schema": {
+                            "channel": {
+                                "type": "string",
+                                "label": "Channel",
+                                "description": "Slack channel to monitor (leave empty for all channels)",
+                                "required": False,
+                                "placeholder": "#general",
+                            },
+                            "keywords": {
+                                "type": "string",
+                                "label": "Keywords",
+                                "description": "Comma-separated keywords to trigger on",
+                                "required": True,
+                                "placeholder": "urgent,important,help",
+                            },
+                        },
+                    },
+                    {
+                        "name": "slack_user_mention",
+                        "description": "Triggered when you are mentioned in a message",
+                        "config_schema": {
+                            "channel": {
+                                "type": "string",
+                                "label": "Channel",
+                                "description": "Slack channel to monitor (leave empty for all channels)",
+                                "required": False,
+                                "placeholder": "#general",
+                            },
+                        },
+                    },
+                    {
+                        "name": "slack_channel_join",
+                        "description": "Triggered when a user joins a channel",
+                        "config_schema": {
+                            "channel": {
+                                "type": "string",
+                                "label": "Channel",
+                                "description": "Slack channel to monitor",
+                                "required": True,
+                                "placeholder": "#general",
+                            },
+                        },
+                    },
+                ],
                 "reactions": [
                     {
-                        "name": "slack_message",
-                        "description": "Send a message to a Slack channel or user",
+                        "name": "slack_send_message",
+                        "description": "Send a message to a Slack channel",
+                        "config_schema": {
+                            "channel": {
+                                "type": "string",
+                                "label": "Channel",
+                                "description": "Slack channel to send to (with or without #)",
+                                "required": True,
+                                "placeholder": "#general",
+                            },
+                            "message": {
+                                "type": "text",
+                                "label": "Message",
+                                "description": "Message to send (supports variables: {trigger_data})",
+                                "required": True,
+                                "placeholder": "Hello from AREA!",
+                            },
+                            "username": {
+                                "type": "string",
+                                "label": "Bot Username",
+                                "description": "Display name for the bot (optional)",
+                                "required": False,
+                                "placeholder": "AREA Bot",
+                            },
+                            "icon_emoji": {
+                                "type": "string",
+                                "label": "Bot Icon",
+                                "description": "Emoji icon for the bot (optional, e.g., :robot_face:)",
+                                "required": False,
+                                "placeholder": ":robot_face:",
+                            },
+                        },
+                    },
+                    {
+                        "name": "slack_send_thread_reply",
+                        "description": "Reply to a message in a thread",
+                        "config_schema": {
+                            "channel": {
+                                "type": "string",
+                                "label": "Channel",
+                                "description": "Slack channel containing the thread",
+                                "required": True,
+                                "placeholder": "#general",
+                            },
+                            "thread_ts": {
+                                "type": "string",
+                                "label": "Thread Timestamp",
+                                "description": "Thread timestamp to reply to (from trigger data)",
+                                "required": False,
+                                "default": "{thread_ts}",
+                                "placeholder": "{thread_ts}",
+                            },
+                            "message": {
+                                "type": "text",
+                                "label": "Reply Message",
+                                "description": "Reply message content",
+                                "required": True,
+                                "placeholder": "Thanks for the update!",
+                            },
+                        },
+                    },
+                    {
+                        "name": "slack_send_alert",
+                        "description": "Send an alert message to a channel",
+                        "config_schema": {
+                            "channel": {
+                                "type": "string",
+                                "label": "Channel",
+                                "description": "Slack channel to send alert to",
+                                "required": True,
+                                "placeholder": "#alerts",
+                            },
+                            "alert_type": {
+                                "type": "string",
+                                "label": "Alert Type",
+                                "description": "Type of alert (info, warning, error)",
+                                "required": False,
+                                "default": "info",
+                                "enum": ["info", "warning", "error"],
+                            },
+                            "title": {
+                                "type": "string",
+                                "label": "Alert Title",
+                                "description": "Alert title/message",
+                                "required": True,
+                                "placeholder": "System Alert",
+                            },
+                            "details": {
+                                "type": "text",
+                                "label": "Alert Details",
+                                "description": "Additional alert details (optional)",
+                                "required": False,
+                                "placeholder": "Additional context...",
+                            },
+                        },
                     },
                 ],
             },
