@@ -44,8 +44,6 @@ DEBUG = os.getenv("DEBUG", "True") == "True"
 
 # PostgreSQL - Docker service (persistent storage)
 # Connection pooling enabled for better performance
-# NOTE: Use DB_PORT_INTERNAL (container port 5432) for Django to connect
-# The external DB_PORT is only for tools outside Docker (pgAdmin, etc.)
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -53,7 +51,7 @@ DATABASES = {
         "USER": os.getenv("DB_USER", "area_user"),
         "PASSWORD": os.getenv("DB_PASSWORD", "area_password_2024"),
         "HOST": os.getenv("DB_HOST", "db"),  # Docker service name
-        "PORT": os.getenv("DB_PORT_INTERNAL", "5432"),  # Internal container port
+        "PORT": 5432,  # Internal container port
         "CONN_MAX_AGE": 60,  # Connection pooling (60 seconds)
         "OPTIONS": {
             "connect_timeout": 10,  # 10 seconds timeout
