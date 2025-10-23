@@ -48,14 +48,22 @@ def convert_to_json_schema(config_schema):
     properties = {}
     required = []
 
+    # Valid JSON Schema keywords to keep
+    valid_json_schema_keys = {
+        "type", "enum", "format", "pattern", "minimum", "maximum",
+        "minLength", "maxLength", "default", "description",
+        "items", "properties", "additionalProperties", "minItems", "maxItems"
+    }
+
     for field_name, field_config in config_schema.items():
         # Extract required flag
         is_required = field_config.get("required", False)
         if is_required:
             required.append(field_name)
 
-        # Build property config (remove custom fields)
-        prop = {k: v for k, v in field_config.items() if k != "required"}
+        # Build property config (keep only valid JSON Schema fields)
+        prop = {k: v for k, v in field_config.items()
+                if k in valid_json_schema_keys}
         properties[field_name] = prop
 
     result = {"properties": properties}
