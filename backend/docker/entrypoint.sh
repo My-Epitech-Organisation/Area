@@ -23,8 +23,7 @@ chmod 777 /app/logs 2>/dev/null || true
 # Wait for database to be ready
 echo -e "${YELLOW}⏳ Waiting for database...${NC}"
 DB_HOST=${DB_HOST:-db}
-DB_PORT_INTERNAL=5432  # Always use internal port for container-to-container communication
-while ! nc -z $DB_HOST $DB_PORT_INTERNAL; do
+while ! nc -z $DB_HOST 5432; do
   echo "Database is unavailable - sleeping"
   sleep 1
 done
