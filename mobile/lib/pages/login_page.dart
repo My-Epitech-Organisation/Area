@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../config/app_config.dart';
 import '../providers/auth_provider.dart';
 import '../providers/provider_manager.dart';
 import '../widgets/debug_config_widget.dart';
@@ -162,9 +163,9 @@ class _LoginPageState extends State<LoginPage> {
       children: [
         Semantics(
           header: true,
-          child: const Text(
-            'AREA',
-            style: TextStyle(
+          child: Text(
+            AppConfig.appName,
+            style: const TextStyle(
               fontSize: 48,
               fontWeight: FontWeight.bold,
               color: Colors.blue,

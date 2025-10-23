@@ -22,7 +22,8 @@ chmod 777 /app/logs 2>/dev/null || true
 
 # Wait for database to be ready
 echo -e "${YELLOW}⏳ Waiting for database...${NC}"
-while ! nc -z ${DB_HOST:-db} ${DB_PORT:-5432}; do
+DB_HOST=${DB_HOST:-db}
+while ! nc -z $DB_HOST 5432; do
   echo "Database is unavailable - sleeping"
   sleep 1
 done

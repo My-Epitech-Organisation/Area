@@ -19,6 +19,8 @@ class HttpException implements Exception {
 class HttpClientService {
   final TokenService _tokenService = TokenService();
 
+  VoidCallback? onAuthenticationFailure;
+
   // Singleton pattern
   static final HttpClientService _instance = HttpClientService._internal();
   factory HttpClientService() => _instance;
@@ -95,6 +97,7 @@ class HttpClientService {
     String url, {
     Map<String, String>? additionalHeaders,
   }) async {
+    debugPrint('[HTTP-CLIENT] GET: $url');
     return await _retryRequest(() async {
       final headers = await _getHeaders();
       if (additionalHeaders != null) {
@@ -110,6 +113,7 @@ class HttpClientService {
     Map<String, dynamic>? body,
     Map<String, String>? additionalHeaders,
   }) async {
+    debugPrint('[HTTP-CLIENT] POST: $url - Body: ${json.encode(body)}');
     return await _retryRequest(() async {
       final headers = await _getHeaders();
       if (additionalHeaders != null) {
@@ -164,10 +168,13 @@ class HttpClientService {
     }
 
     if (response.statusCode == 401) {
+      _tokenService.clearTokens();
+      onAuthenticationFailure?.call();
       throw HttpException('Authentication required', statusCode: 401);
     }
 
     debugPrint('HTTP Error ${response.statusCode}: ${response.body}');
+    debugPrint('[HTTP-CLIENT] Response headers: ${response.headers}');
 
     throw HttpException(
       'Request failed: ${response.statusCode}',

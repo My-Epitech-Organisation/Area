@@ -25,7 +25,7 @@ class AutomationStatsService {
     }
 
     final response = await _httpClient.get(
-      '${ApiConfig.baseUrl}/api/areas/stats/',
+      '${ApiConfig.apiBaseUrl}/areas/stats/',
     );
 
     final stats = _httpClient.parseResponse<Map<String, dynamic>>(
@@ -49,7 +49,7 @@ class AutomationStatsService {
     }
 
     final response = await _httpClient.get(
-      '${ApiConfig.baseUrl}/api/executions/stats/',
+      '${ApiConfig.apiBaseUrl}/executions/stats/',
     );
 
     final stats = _httpClient.parseResponse<Map<String, dynamic>>(

@@ -6,13 +6,9 @@ class ProviderManager {
   static Future<void> initializeApp(BuildContext context) async {
     final authProvider = context.read<AuthProvider>();
     await authProvider.checkAuthStatus();
-
-    if (authProvider.isAuthenticated && context.mounted) {
-      await _loadUserData(context);
-    }
   }
 
-  static Future<void> _loadUserData(BuildContext context) async {
+  static Future<void> onLogin(BuildContext context) async {
     if (!context.mounted) return;
 
     await Future.wait([
@@ -20,11 +16,6 @@ class ProviderManager {
       context.read<AppletProvider>().loadApplets(),
       context.read<ServiceCatalogProvider>().loadServices(),
     ]);
-  }
-
-  static Future<void> onLogin(BuildContext context) async {
-    if (!context.mounted) return;
-    await _loadUserData(context);
   }
 
   static Future<void> onLogout(BuildContext context) async {
