@@ -74,9 +74,9 @@ services:
   # ---------------------------------------------------------------------------
   # Mobile Client - Test Overrides (disabled)
   # ---------------------------------------------------------------------------
-  # client_mobile:
-  #   profiles:
-  #     - disabled  # Don't build APK in tests
+  client_mobile:
+    profiles:
+      - disabled  # Don't build APK in tests
 
   # ---------------------------------------------------------------------------
   # Web Client - Test Overrides (disabled)
