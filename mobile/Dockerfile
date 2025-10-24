@@ -37,6 +37,14 @@ RUN if [ -f .dart-env ]; then \
     echo "ENVIRONMENT=development" >> .dart-env && \
     echo "GITHUB_CLIENT_ID=" >> .dart-env; \
     cat .dart-env; \
+    fi && \
+    # Fail the build if required OAuth credentials are missing or empty
+    GOOGLE_CLIENT_ID=$(grep -E '^GOOGLE_CLIENT_ID=' .dart-env | sed 's/^GOOGLE_CLIENT_ID=//') && \
+    GOOGLE_API_KEY=$(grep -E '^GOOGLE_API_KEY=' .dart-env | sed 's/^GOOGLE_API_KEY=//') && \
+    if [ -z "$GOOGLE_CLIENT_ID" ] || [ -z "$GOOGLE_API_KEY" ]; then \
+        echo "❌ ERROR: GOOGLE_CLIENT_ID and GOOGLE_API_KEY must be set in .dart-env and not empty."; \
+        echo "If you're building for development locally, set ENVIRONMENT=development and provide valid keys or adjust the Dockerfile."; \
+        exit 1; \
     fi
 
 RUN flutter pub get
