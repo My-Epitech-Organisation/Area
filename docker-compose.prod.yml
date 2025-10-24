@@ -134,10 +134,10 @@ services:
   # ---------------------------------------------------------------------------
   # Mobile Client - Production Overrides
   # ---------------------------------------------------------------------------
-  # client_mobile:
-  #   container_name: area_client_mobile_prod
-  #   volumes:
-  #     - apk_shared_prod:/shared
+  client_mobile:
+    container_name: area_client_mobile_prod
+    volumes:
+      - apk_shared_prod:/shared
 
   # ---------------------------------------------------------------------------
   # Web Client - Production Overrides
