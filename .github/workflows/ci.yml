@@ -351,8 +351,8 @@ jobs:
 
       - name: Test Docker Compose build
         run: |
-          docker compose build --no-cache db redis server worker beat flower client_web
-          docker compose up -d db redis server worker beat flower client_web
+          docker compose build --no-cache
+          docker compose up -d
           sleep 30
           docker compose ps
           docker compose down
