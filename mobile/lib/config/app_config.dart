@@ -78,18 +78,32 @@ class AppConfig {
   /// Safe getters that return values after validation
   /// Call validateEnvironment() during app initialization before using these
   static String get googleClientId {
+    // Keep an assert for debug builds, but also throw in release builds
+    // so the check is enforced regardless of build mode.
     assert(
       _validated,
       'Call AppConfig.validateEnvironment() before accessing googleClientId',
     );
+    if (!_validated) {
+      throw StateError(
+        'Call AppConfig.validateEnvironment() before accessing googleClientId',
+      );
+    }
     return _googleClientIdDefine;
   }
 
   static String get googleApiKey {
+    // Keep an assert for debug builds, but also throw in release builds
+    // so the check is enforced regardless of build mode.
     assert(
       _validated,
       'Call AppConfig.validateEnvironment() before accessing googleApiKey',
     );
+    if (!_validated) {
+      throw StateError(
+        'Call AppConfig.validateEnvironment() before accessing googleApiKey',
+      );
+    }
     return _googleApiKeyDefine;
   }
 
