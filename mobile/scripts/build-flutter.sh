@@ -12,17 +12,39 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DART_ENV_FILE="${SCRIPT_DIR}/.dart-env"
 
+# Function to find .env file (check current dir, then parent, then SCRIPT_DIR)
+find_env_file() {
+    if [ -f ".env" ]; then
+        echo "$(pwd)/.env"
+    elif [ -f "../.env" ]; then
+        echo "$(cd .. && pwd)/.env"
+    elif [ -f "${SCRIPT_DIR}/.env" ]; then
+        echo "${SCRIPT_DIR}/.env"
+    else
+        echo ""
+    fi
+}
+
 # Function to load or create .dart-env
 setup_dart_env() {
-    if [ -f "${SCRIPT_DIR}/.env" ]; then
-        echo "📄 Loading configuration from .env..."
+    # Check if .dart-env already exists and is not empty
+    if [ -f "${DART_ENV_FILE}" ] && [ -s "${DART_ENV_FILE}" ]; then
+        echo "✅ Using existing .dart-env file"
+        echo "   To regenerate from .env, delete .dart-env first"
+        return 0
+    fi
+
+    ENV_FILE=$(find_env_file)
+
+    if [ -n "$ENV_FILE" ]; then
+        echo "📄 Loading configuration from $ENV_FILE..."
 
         # Helper function to safely extract env variable values
         get_env_value() {
             local key="$1"
             local default="$2"
             # Extract value and remove surrounding quotes (single or double)
-            grep "^${key}=" "${SCRIPT_DIR}/.env" | sed "s/^${key}=//" | sed 's/^["'\'']//;s/["'\'']$//' | head -n1 || echo "$default"
+            grep "^${key}=" "$ENV_FILE" | sed "s/^${key}=//" | sed 's/^["'\'']//;s/["'\'']$//' | head -n1 || echo "$default"
         }
 
         # Extract variables safely (handles values with =, quotes, spaces)
@@ -42,8 +64,10 @@ GOOGLE_API_KEY=$GOOGLE_API_KEY
 GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID
 ENVIRONMENT=$ENVIRONMENT
 EOF
+        echo "✅ Created .dart-env from $ENV_FILE"
     else
-        echo "⚠️  .env not found, creating default .dart-env..."
+        echo "⚠️  No .env file found (checked current dir, parent, and ${SCRIPT_DIR})"
+        echo "⚠️  Creating default .dart-env..."
         cat > "${DART_ENV_FILE}" << EOF
 BACKEND_HOST=localhost
 BACKEND_PORT=8080
