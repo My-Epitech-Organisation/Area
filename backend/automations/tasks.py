@@ -1764,21 +1764,141 @@ def check_spotify_actions(self):
                     state.last_checked_at = timezone.now()
                     state.save()
 
-                # Handle liked tracks (this would require storing liked tracks history)
+                # Handle liked tracks (compare current liked tracks with previous)
                 elif action_name == "spotify_liked_track":
-                    # Note: Spotify doesn't provide a direct way to poll for recently liked tracks
-                    # This would require storing the user's liked tracks and comparing
-                    # For now, this is a placeholder - would need additional implementation
-                    logger.debug(f"Spotify liked track action not yet implemented for area '{area.name}'")
-                    state.last_checked_at = timezone.now()
-                    state.save()
+                    # Get current user's liked tracks
+                    try:
+                        from .helpers.spotify_helper import _make_spotify_request
+
+                        # Get user's liked tracks (Spotify API returns up to 50 at a time)
+                        liked_response = _make_spotify_request(
+                            "/me/tracks",
+                            access_token,
+                            params={"limit": 50}  # Get most recent 50 liked tracks
+                        )
+
+                        current_liked_tracks = liked_response.get("items", [])
+                        current_track_ids = {item["track"]["id"] for item in current_liked_tracks}
+
+                        # Get previous liked tracks from state
+                        previous_track_ids = set(state.metadata.get("liked_track_ids", []))
+
+                        # Find newly liked tracks
+                        new_liked_tracks = current_track_ids - previous_track_ids
+
+                        if new_liked_tracks:
+                            # Get the most recently liked track (first in the list)
+                            most_recent_item = current_liked_tracks[0]
+                            track = most_recent_item["track"]
+
+                            event_id = f"spotify_liked_{area.id}_{track['id']}_{timezone.now().isoformat()}"
+
+                            trigger_data = {
+                                "service": "spotify",
+                                "action": action_name,
+                                "track_id": track["id"],
+                                "track_name": track["name"],
+                                "artists": [{"name": artist["name"], "id": artist["id"]}
+                                           for artist in track.get("artists", [])],
+                                "album": {
+                                    "name": track.get("album", {}).get("name"),
+                                    "id": track.get("album", {}).get("id"),
+                                } if track.get("album") else None,
+                                "liked_at": timezone.now().isoformat(),
+                            }
+
+                            execution, created = create_execution_safe(
+                                area=area,
+                                external_event_id=event_id,
+                                trigger_data=trigger_data,
+                            )
+
+                            if created and execution:
+                                logger.info(
+                                    f"Spotify liked track triggered for '{area.name}': "
+                                    f"{track['name']} by {', '.join([a['name'] for a in track.get('artists', [])])}"
+                                )
+                                execute_reaction_task.delay(execution.pk)
+                                triggered_count += 1
+
+                        # Update state with current liked tracks
+                        state.metadata["liked_track_ids"] = list(current_track_ids)
+                        state.last_checked_at = timezone.now()
+                        state.save()
+
+                    except Exception as e:
+                        logger.error(
+                            f"Error checking liked tracks for area '{area.name}': {e}"
+                        )
+                        state.last_checked_at = timezone.now()
+                        state.save()
 
                 # Handle saved albums
                 elif action_name == "spotify_saved_album":
-                    # Similar to liked tracks, would need to track saved albums
-                    logger.debug(f"Spotify saved album action not yet implemented for area '{area.name}'")
-                    state.last_checked_at = timezone.now()
-                    state.save()
+                    # Get current user's saved albums
+                    try:
+                        from .helpers.spotify_helper import _make_spotify_request
+
+                        # Get user's saved albums (Spotify API returns up to 50 at a time)
+                        saved_response = _make_spotify_request(
+                            "/me/albums",
+                            access_token,
+                            params={"limit": 50}  # Get most recent 50 saved albums
+                        )
+
+                        current_saved_albums = saved_response.get("items", [])
+                        current_album_ids = {item["album"]["id"] for item in current_saved_albums}
+
+                        # Get previous saved albums from state
+                        previous_album_ids = set(state.metadata.get("saved_album_ids", []))
+
+                        # Find newly saved albums
+                        new_saved_albums = current_album_ids - previous_album_ids
+
+                        if new_saved_albums:
+                            # Get the most recently saved album (first in the list)
+                            most_recent_item = current_saved_albums[0]
+                            album = most_recent_item["album"]
+
+                            event_id = f"spotify_saved_album_{area.id}_{album['id']}_{timezone.now().isoformat()}"
+
+                            trigger_data = {
+                                "service": "spotify",
+                                "action": action_name,
+                                "album_id": album["id"],
+                                "album_name": album["name"],
+                                "artists": [{"name": artist["name"], "id": artist["id"]}
+                                           for artist in album.get("artists", [])],
+                                "total_tracks": album.get("total_tracks"),
+                                "release_date": album.get("release_date"),
+                                "saved_at": timezone.now().isoformat(),
+                            }
+
+                            execution, created = create_execution_safe(
+                                area=area,
+                                external_event_id=event_id,
+                                trigger_data=trigger_data,
+                            )
+
+                            if created and execution:
+                                logger.info(
+                                    f"Spotify saved album triggered for '{area.name}': "
+                                    f"{album['name']} by {', '.join([a['name'] for a in album.get('artists', [])])}"
+                                )
+                                execute_reaction_task.delay(execution.pk)
+                                triggered_count += 1
+
+                        # Update state with current saved albums
+                        state.metadata["saved_album_ids"] = list(current_album_ids)
+                        state.last_checked_at = timezone.now()
+                        state.save()
+
+                    except Exception as e:
+                        logger.error(
+                            f"Error checking saved albums for area '{area.name}': {e}"
+                        )
+                        state.last_checked_at = timezone.now()
+                        state.save()
 
             except Exception as e:
                 logger.error(
