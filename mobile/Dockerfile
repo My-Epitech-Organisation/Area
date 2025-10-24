@@ -30,12 +30,12 @@ RUN if [ -f .dart-env ]; then \
     cat .dart-env; \
     else \
     echo "⚠️  .dart-env not found in context, creating with defaults..."; \
-    echo "GOOGLE_CLIENT_ID=" > .dart-env && \
-    echo "GOOGLE_API_KEY=" >> .dart-env && \
+    echo "GOOGLE_CLIENT_ID=replace_google_client_id" > .dart-env && \
+    echo "GOOGLE_API_KEY=replace_google_api_key" >> .dart-env && \
     echo "BACKEND_HOST=localhost" >> .dart-env && \
     echo "BACKEND_PORT=8080" >> .dart-env && \
     echo "ENVIRONMENT=development" >> .dart-env && \
-    echo "GITHUB_CLIENT_ID=" >> .dart-env; \
+    echo "GITHUB_CLIENT_ID=replace_github_client_id" >> .dart-env; \
     cat .dart-env; \
     fi && \
     # Fail the build if required OAuth credentials are missing or empty
