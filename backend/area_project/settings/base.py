@@ -399,12 +399,44 @@ CELERY_BEAT_SCHEDULE = {
             "expires": 290,  # Task expires after 290s to avoid overlap
         },
     },
-    # Check weather conditions every 15 minutes
+    # Check Gmail actions every 5 minutes
+    "check-gmail-actions": {
+        "task": "automations.check_gmail_actions",
+        "schedule": 300.0,  # Every 300 seconds (5 minutes)
+        "options": {
+            "expires": 290,  # Task expires after 290s to avoid overlap
+        },
+    },
+    # Check weather conditions every 30 minutes
     "check-weather-actions": {
         "task": "automations.check_weather_actions",
         "schedule": 1800.0,  # Every 1800 seconds (30 minutes)
         "options": {
             "expires": 1780,  # Task expires after 1780s to avoid overlap
+        },
+    },
+    # Check Twitch actions every 2 minutes
+    "check-twitch-actions": {
+        "task": "automations.check_twitch_actions",
+        "schedule": 120.0,  # Every 120 seconds (2 minutes)
+        "options": {
+            "expires": 115,  # Task expires after 115s to avoid overlap
+        },
+    },
+    # Check Slack actions every 2 minutes
+    "check-slack-actions": {
+        "task": "automations.check_slack_actions",
+        "schedule": 120.0,  # Every 120 seconds (2 minutes)
+        "options": {
+            "expires": 115,  # Task expires after 115s to avoid overlap
+        },
+    },
+    # Check Spotify actions every 2 minutes
+    "check-spotify-actions": {
+        "task": "automations.check_spotify_actions",
+        "schedule": 120.0,  # Every 120 seconds (2 minutes)
+        "options": {
+            "expires": 115,  # Task expires after 115s to avoid overlap
         },
     },
 }
