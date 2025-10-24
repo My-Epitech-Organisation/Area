@@ -96,9 +96,9 @@ services:
       server:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       db:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - backend_logs:/app/logs
     networks:
@@ -124,9 +124,9 @@ services:
       server:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       db:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - backend_logs:/app/logs
     networks:
@@ -152,9 +152,9 @@ services:
       server:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       db:
-        condition: service_started
+        condition: service_healthy
     networks:
       - area-net
 
