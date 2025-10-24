@@ -1047,6 +1047,7 @@ COMPATIBILITY_RULES = {
         "slack_send_message",
         "webhook_post",
         "calendar_create_event",
+        "debug_log_execution",
     ],
     "spotify_track_finished": [
         "spotify_play_track",
@@ -1058,6 +1059,7 @@ COMPATIBILITY_RULES = {
         "slack_send_message",
         "webhook_post",
         "calendar_create_event",
+        "debug_log_execution",
     ],
     "spotify_playlist_updated": [
         "spotify_play_track",
@@ -1068,6 +1070,7 @@ COMPATIBILITY_RULES = {
         "slack_send_message",
         "webhook_post",
         "calendar_create_event",
+        "debug_log_execution",
     ],
     "spotify_liked_track": [
         "spotify_play_track",
@@ -1078,6 +1081,7 @@ COMPATIBILITY_RULES = {
         "slack_send_message",
         "webhook_post",
         "calendar_create_event",
+        "debug_log_execution",
     ],
     "spotify_saved_album": [
         "spotify_play_track",
@@ -1087,6 +1091,7 @@ COMPATIBILITY_RULES = {
         "slack_send_message",
         "webhook_post",
         "calendar_create_event",
+        "debug_log_execution",
     ],
 }
 
