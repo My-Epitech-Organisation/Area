@@ -21,7 +21,8 @@ setup_dart_env() {
         get_env_value() {
             local key="$1"
             local default="$2"
-            grep "^${key}=" "${SCRIPT_DIR}/.env" | sed "s/^${key}=//" | head -n1 || echo "$default"
+            # Extract value and remove surrounding quotes (single or double)
+            grep "^${key}=" "${SCRIPT_DIR}/.env" | sed "s/^${key}=//" | sed 's/^["'\'']//;s/["'\'']$//' | head -n1 || echo "$default"
         }
 
         # Extract variables safely (handles values with =, quotes, spaces)
