@@ -363,7 +363,6 @@ ACTION_SCHEMAS = {
             "playlist_id": {
                 "type": "string",
                 "description": "Monitor specific playlist (leave empty for all playlists)",
-                "pattern": "^spotify:playlist:[a-zA-Z0-9]+$",
             },
         },
         "additionalProperties": False,
