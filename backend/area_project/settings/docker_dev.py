@@ -51,8 +51,8 @@ DATABASES = {
         "USER": os.getenv("DB_USER", "area_user"),
         "PASSWORD": os.getenv("DB_PASSWORD", "area_password_2024"),
         "HOST": os.getenv("DB_HOST", "db"),  # Docker service name
-    # Port "5432": internal container port used for Docker-internal networking.
-    "PORT": os.getenv("DB_PORT", "5432"),
+        # Port "5432": internal container port used for Docker-internal networking.
+        "PORT": os.getenv("DB_PORT", "5432"),
         "CONN_MAX_AGE": 60,  # Connection pooling (60 seconds)
         "OPTIONS": {
             "connect_timeout": 10,  # 10 seconds timeout
