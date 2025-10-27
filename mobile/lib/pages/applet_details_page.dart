@@ -757,11 +757,11 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
                     context,
                   ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                 ),
-                if (execution.durationSeconds != null)
+                if (execution.durationSeconds case final duration?)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      'Duration: ${execution.durationSeconds!.toStringAsFixed(2)}s',
+                      'Duration: ${duration.toStringAsFixed(2)}s',
                       style: Theme.of(
                         context,
                       ).textTheme.bodySmall?.copyWith(color: Colors.grey),
