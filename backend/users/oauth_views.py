@@ -21,6 +21,7 @@ from django.conf import settings
 from .models import ServiceToken
 from .oauth import OAuthManager
 from .oauth.exceptions import InvalidProviderError, OAuthError, OAuthStateError
+from .permissions import IsAuthenticatedAndVerified
 from .oauth_serializers import (
     OAuthCallbackSerializer,
     OAuthInitiateResponseSerializer,
@@ -51,7 +52,7 @@ class OAuthInitiateView(APIView):
         - expires_in: State validity duration in seconds
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
     serializer_class = OAuthInitiateResponseSerializer
 
     def get(self, request, provider: str):
@@ -374,7 +375,7 @@ class ServiceConnectionListView(APIView):
         - total_connected: Number of connected services
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
     serializer_class = ServiceConnectionListSerializer
 
     def get(self, request):
@@ -423,7 +424,7 @@ class ServiceDisconnectView(APIView):
         - revoked_at_provider: Whether token was revoked at provider
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
     serializer_class = ServiceDisconnectSerializer
 
     @extend_schema(request=None, responses={200: ServiceDisconnectSerializer})
@@ -494,7 +495,7 @@ class ConnectionHistoryView(APIView):
         - total_entries: Total number of entries available
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
     serializer_class = None  # We'll return raw data
 
     def get(self, request):
