@@ -36,13 +36,13 @@ const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = ({
     setResendMessage(null);
 
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem('access');
       if (!token) {
         setResendMessage({ type: 'error', text: 'Please log in again' });
         return;
       }
 
-      const response = await fetch(`${API_BASE}/auth/resend-verification/`, {
+      const response = await fetch(`${API_BASE}/auth/send-verification-email/`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
