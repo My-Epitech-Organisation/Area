@@ -6,6 +6,7 @@ import '../providers/service_catalog_provider.dart';
 import '../models/applet.dart';
 import '../models/service.dart';
 import '../widgets/state_widgets.dart';
+import 'applet_details_page.dart';
 
 class MyAppletsPage extends StatefulWidget {
   const MyAppletsPage({super.key});
@@ -33,10 +34,17 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
   }
 
   void _onAppletTap(Applet applet) {
-    // TODO: Navigate to applet details/edit page
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Tapped on: ${applet.name}')));
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (context) => AppletDetailsPage(applet: applet),
+          ),
+        )
+        .then((deleted) {
+          if (deleted == true) {
+            _refreshApplets();
+          }
+        });
   }
 
   void _onDeleteApplet(Applet applet) {
