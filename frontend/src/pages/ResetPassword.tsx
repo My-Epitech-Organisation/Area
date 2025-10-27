@@ -101,9 +101,7 @@ const ResetPassword: React.FC = () => {
             <p className="text-indigo-200 mb-4 text-lg">
               Your password has been successfully reset.
             </p>
-            <p className="text-indigo-300">
-              Redirecting to login page in a moment...
-            </p>
+            <p className="text-indigo-300">Redirecting to login page in a moment...</p>
             <div className="mt-6">
               <a
                 href="/login"
@@ -125,9 +123,7 @@ const ResetPassword: React.FC = () => {
       </header>
       <main className="w-full flex-1 flex items-center justify-center px-4">
         <div className="w-full max-w-md bg-white/5 p-8 rounded-xl backdrop-blur-sm border border-white/10 shadow-xl animate-appear">
-          <p className="text-center text-indigo-200 mb-6">
-            Enter your new password below
-          </p>
+          <p className="text-center text-indigo-200 mb-6">Enter your new password below</p>
 
           {error && (
             <div className="mb-6 p-4 bg-red-900/20 rounded-lg border border-red-500/30 flex items-start gap-3 animate-slide-up">
@@ -150,7 +146,10 @@ const ResetPassword: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-theme-secondary mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-theme-secondary mb-2"
+              >
                 New Password
               </label>
               <input
@@ -163,9 +162,7 @@ const ResetPassword: React.FC = () => {
                 placeholder="Enter new password"
                 minLength={8}
               />
-              <p className="text-xs text-indigo-300 mt-2">
-                Must be at least 8 characters long
-              </p>
+              <p className="text-xs text-indigo-300 mt-2">Must be at least 8 characters long</p>
             </div>
 
             <div>
