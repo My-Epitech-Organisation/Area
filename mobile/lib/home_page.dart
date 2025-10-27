@@ -77,7 +77,6 @@ class _MyHomePageState extends State<MyHomePage> {
       builder: (context, userProvider, appletProvider, statsProvider, child) {
         final userProfile = userProvider.profile;
         final applets = appletProvider.applets;
-        final areasStats = statsProvider.areasStats;
         final executionsStats = statsProvider.executionsStats;
 
         return Scaffold(
@@ -91,7 +90,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                   const SizedBox(height: 32),
 
-                  _buildMetricsCards(applets, areasStats, executionsStats),
+                  _buildMetricsCards(applets, executionsStats),
 
                   const SizedBox(height: 32),
 
@@ -153,16 +152,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildMetricsCards(
     List<Applet>? applets,
-    Map<String, dynamic>? areasStats,
     Map<String, dynamic>? executionsStats,
   ) {
     final totalApplets = applets?.length ?? 0;
     final activeApplets =
         applets?.where((applet) => applet.isActive).length ?? 0;
-
-    // Areas stats
-    final totalAreas = areasStats?['total'] ?? 0;
-    final activeAreas = areasStats?['active'] ?? 0;
 
     // Executions stats
     final totalExecutions = executionsStats?['total'] ?? 0;
@@ -189,31 +183,17 @@ class _MyHomePageState extends State<MyHomePage> {
           crossAxisSpacing: 16,
           children: [
             _buildMetricCard(
-              title: 'Total Applets',
+              title: 'Total',
               value: totalApplets.toString(),
               icon: Icons.apps,
               color: Colors.blue,
-              subtitle: 'Created',
-            ),
-            _buildMetricCard(
-              title: 'Active Applets',
-              value: activeApplets.toString(),
-              icon: Icons.check_circle,
-              color: Colors.green,
-              subtitle: 'Running',
-            ),
-            _buildMetricCard(
-              title: 'Total Areas',
-              value: totalAreas.toString(),
-              icon: Icons.link,
-              color: Colors.purple,
               subtitle: 'Automations',
             ),
             _buildMetricCard(
-              title: 'Active Areas',
-              value: activeAreas.toString(),
-              icon: Icons.play_circle,
-              color: Colors.orange,
+              title: 'Active',
+              value: activeApplets.toString(),
+              icon: Icons.check_circle,
+              color: Colors.green,
               subtitle: 'Running',
             ),
             _buildMetricCard(
@@ -560,7 +540,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  applet.description,
+                  '${applet.action.service.name} to ${applet.reaction.service.name}',
                   style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

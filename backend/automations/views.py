@@ -254,6 +254,36 @@ class AreaViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(area)
         return Response(serializer.data)
 
+    @action(detail=True, methods=["post"])
+    def duplicate(self, request, pk=None):
+        """
+        Custom action to duplicate an Area.
+
+        Creates a new Area with the same action, reaction, and configuration
+        as the original, but with a new name.
+        """
+        original_area = self.get_object()
+
+        new_name = request.data.get("name", f"{original_area.name} (Copy)")
+
+        # Create a new Area with the same configuration
+        duplicated_area = Area.objects.create(
+            owner=original_area.owner,
+            name=new_name,
+            action=original_area.action,
+            reaction=original_area.reaction,
+            action_config=original_area.action_config.copy()
+            if original_area.action_config
+            else {},
+            reaction_config=original_area.reaction_config.copy()
+            if original_area.reaction_config
+            else {},
+            status=Area.Status.ACTIVE,
+        )
+
+        serializer = self.get_serializer(duplicated_area)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
     @action(detail=False)
     def stats(self, request):
         """

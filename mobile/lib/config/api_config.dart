@@ -78,17 +78,19 @@ class ApiConfig {
   static String get statisticsUrl => '$authBaseUrl/statistics';
   static String get userStatisticsUrl => '$apiBaseUrl/users/statistics/';
 
-  static String get appletsUrl => '$baseUrl/${AppConfig.appletsPrefix}/';
   static String get googleLoginUrl => '$authBaseUrl/google-login/';
 
   static String automationUrl(int id) => '$apiBaseUrl/areas/$id/';
-  static String automationToggleUrl(int id) => '$apiBaseUrl/areas/$id/toggle/';
+  static String automationDuplicateUrl(int id) =>
+      '$apiBaseUrl/areas/$id/duplicate/';
+  static String automationPauseUrl(int id) => '$apiBaseUrl/areas/$id/pause/';
+  static String automationResumeUrl(int id) => '$apiBaseUrl/areas/$id/resume/';
   static String serviceActionsUrl(int serviceId) =>
       '$apiBaseUrl/services/$serviceId/actions/';
   static String serviceReactionsUrl(int serviceId) =>
       '$apiBaseUrl/services/$serviceId/reactions/';
-  static String appletLogsUrl(int appletId, {int limit = 50}) =>
-      '$baseUrl/${AppConfig.appletsPrefix}/$appletId/logs?limit=$limit';
+  static String appletExecutionsUrl(int areaId, {int limit = 50}) =>
+      '$apiBaseUrl/executions/?area=$areaId&limit=$limit&ordering=-created_at';
   static String userAutomationsUrl(String userId) =>
       '$apiBaseUrl/users/$userId/areas/';
 
