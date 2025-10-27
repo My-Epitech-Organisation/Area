@@ -41,6 +41,7 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
   void initState() {
     super.initState();
     _focusNode = FocusNode();
+    _focusNode.addListener(_handleFocusChange);
     _parseInitialValue();
     _controller = TextEditingController(
       text: selectedDateTime != null
@@ -184,12 +185,19 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
     final parsed = _parseInput(value);
     if (parsed != null) {
       setState(() => selectedDateTime = parsed);
-      // Convert to ISO 8601 for consistency
-      final isoValue = parsed.toIso8601String();
-      if (value != isoValue) {
-        _controller.text = isoValue;
+    }
+  }
+
+  void _handleFocusChange() {
+    if (!_focusNode.hasFocus && _controller.text.isNotEmpty) {
+      final parsed = _parseInput(_controller.text);
+      if (parsed != null) {
+        final isoValue = parsed.toIso8601String();
+        if (_controller.text != isoValue) {
+          _controller.text = isoValue;
+        }
+        widget.onChanged(isoValue);
       }
-      widget.onChanged(isoValue);
     }
   }
 
