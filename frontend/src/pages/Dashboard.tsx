@@ -356,22 +356,33 @@ const Dashboard: React.FC = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-theme-background p-6">
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-4xl font-bold text-theme-accent mb-2">Dashboard</h1>
-          <p className="text-theme-primary opacity-80">Welcome back, {user?.name || 'Guest'}!</p>
-          <div className="mt-4 flex gap-4">
-            {services.length > 0 && (
-              <p className="text-theme-primary bg-white bg-opacity-5 px-4 py-2 rounded-xl border border-white border-opacity-10">
-                <span className="font-semibold text-theme-accent">{services.length}</span> Services Available
-              </p>
-            )}
-          </div>
-        </header>
+    <div className="w-full min-h-screen bg-dashboard flex flex-col md:flex-row pt-16">
+      <div className="flex flex-1">
+        <div className="flex-1 p-4 md:p-6 flex flex-col items-center overflow-y-auto">
+          <header className="w-full flex flex-col items-center pt-4 mb-4">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center text-theme-primary mb-2">
+              Dashboard
+            </h1>
+            <div className="w-full flex items-center justify-center">
+              {user ? (
+                <p className="text-xl md:text-2xl lg:text-3xl font-semibold text-theme-accent mt-2 animate-fadeIn">
+                  Welcome back, {user.username || user.name}!
+                </p>
+              ) : (
+                <p className="text-lg md:text-xl lg:text-2xl font-semibold text-amber-400 mt-2 animate-pulse">
+                  <span
+                    onClick={() => navigate('/login')}
+                    className="cursor-pointer hover:underline"
+                  >
+                    Sign in to unlock all features
+                  </span>
+                </p>
+              )}
+            </div>
+          </header>
 
-        {/* Email Verification Banner */}
-        <EmailVerificationBanner user={user} />
+          {/* Email Verification Banner */}
+          <EmailVerificationBanner user={user} />
 
         <div className="w-full flex flex-col gap-4 mb-4">
             <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-theme-primary">
@@ -532,6 +543,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+    </div>
   );
 };
 
