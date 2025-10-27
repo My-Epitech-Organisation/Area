@@ -143,7 +143,13 @@ class AppletProvider extends ChangeNotifier {
   Future<bool> toggleApplet(int id) async {
     try {
       // Check current status and toggle appropriately
-      final applet = _applets.firstWhere((a) => a.id == id);
+      final applet = _applets.firstWhereOrNull((a) => a.id == id);
+
+      if (applet == null) {
+        _error = 'Applet not found';
+        notifyListeners();
+        return false;
+      }
 
       if (applet.isActive) {
         // Pause if active
