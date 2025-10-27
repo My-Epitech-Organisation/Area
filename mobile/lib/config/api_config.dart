@@ -93,6 +93,8 @@ class ApiConfig {
       '$apiBaseUrl/services/$serviceId/reactions/';
   static String appletLogsUrl(int appletId, {int limit = 50}) =>
       '$baseUrl/${AppConfig.appletsPrefix}/$appletId/logs?limit=$limit';
+  static String appletExecutionsUrl(int areaId, {int limit = 50}) =>
+      '$apiBaseUrl/executions/?area=$areaId&limit=$limit&ordering=-created_at';
   static String userAutomationsUrl(String userId) =>
       '$apiBaseUrl/users/$userId/areas/';
 

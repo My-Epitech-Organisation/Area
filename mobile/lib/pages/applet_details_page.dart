@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/applet.dart';
+import '../models/execution.dart';
 import '../providers/applet_provider.dart';
 import 'edit_applet_page.dart';
 
@@ -15,11 +16,33 @@ class AppletDetailsPage extends StatefulWidget {
 
 class _AppletDetailsPageState extends State<AppletDetailsPage> {
   late Applet _applet;
+  List<Execution> _executions = [];
+  bool _isLoadingExecutions = false;
 
   @override
   void initState() {
     super.initState();
     _applet = widget.applet;
+    _loadExecutions();
+  }
+
+  Future<void> _loadExecutions() async {
+    setState(() => _isLoadingExecutions = true);
+    try {
+      final provider = context.read<AppletProvider>();
+      final executions = await provider.getAppletExecutions(_applet.id, limit: 20);
+      if (mounted) {
+        setState(() {
+          _executions = executions;
+          _isLoadingExecutions = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingExecutions = false);
+        debugPrint('Error loading executions: $e');
+      }
+    }
   }
 
   void _editApplet() {
@@ -335,6 +358,10 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
 
               // Metadata Card
               _buildMetadataCard(context),
+              const SizedBox(height: 24),
+
+              // Execution History Card
+              _buildExecutionHistoryCard(context),
             ],
           ),
         ),
@@ -664,5 +691,134 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
 
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  Widget _buildExecutionHistoryCard(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Execution History',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                if (_isLoadingExecutions)
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: _loadExecutions,
+                    tooltip: 'Refresh',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_executions.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Text(
+                    'No executions yet',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: Colors.grey),
+                  ),
+                ),
+              )
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _executions.length,
+                separatorBuilder: (context, index) =>
+                    const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final execution = _executions[index];
+                  return _buildExecutionItem(context, execution);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExecutionItem(BuildContext context, Execution execution) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Icon(
+            execution.getStatusIcon(),
+            color: execution.getStatusColor(),
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  execution.status.toUpperCase(),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: execution.getStatusColor(),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _formatDateTime(execution.createdAt),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: Colors.grey),
+                ),
+                if (execution.durationSeconds != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Duration: ${execution.durationSeconds!.toStringAsFixed(2)}s',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: Colors.grey),
+                    ),
+                  ),
+                if (execution.errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Error: ${execution.errorMessage}',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: Colors.red),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

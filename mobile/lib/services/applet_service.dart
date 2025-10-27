@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../models/applet.dart';
+import '../models/execution.dart';
 import '../config/api_config.dart';
 import 'http_client_service.dart';
 import 'cache_service.dart';
@@ -183,6 +184,29 @@ class AppletService {
       (data) => (data as List<dynamic>)
           .map((item) => item as Map<String, dynamic>)
           .toList(),
+    );
+  }
+
+  Future<List<Execution>> getAppletExecutions(
+    int areaId, {
+    int limit = 50,
+  }) async {
+    final response = await _httpClient.get(
+      ApiConfig.appletExecutionsUrl(areaId, limit: limit),
+    );
+
+    return _httpClient.parseResponse<List<Execution>>(
+      response,
+      (data) {
+        if (data is Map && data.containsKey('results')) {
+          final results = data['results'] as List<dynamic>;
+          return results.map((json) => Execution.fromJson(json)).toList();
+        }
+        if (data is List) {
+          return data.map((json) => Execution.fromJson(json)).toList();
+        }
+        throw Exception('Unexpected executions API response format: $data');
+      },
     );
   }
 

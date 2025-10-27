@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/applet.dart';
+import '../models/execution.dart';
 import '../services/services.dart';
 
 class AppletProvider extends ChangeNotifier {
@@ -215,6 +216,16 @@ class AppletProvider extends ChangeNotifier {
       _error = e.toString();
       notifyListeners();
       return false;
+    }
+  }
+
+  Future<List<Execution>> getAppletExecutions(int areaId, {int limit = 50}) async {
+    try {
+      return await _appletService.getAppletExecutions(areaId, limit: limit);
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return [];
     }
   }
 
