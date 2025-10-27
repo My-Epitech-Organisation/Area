@@ -63,19 +63,36 @@ class AppConfig {
     return 'http://$host:$port';
   }
 
+  // Validation flag to ensure validateEnvironment() is called once at startup
+  static bool _validated = false;
+
+  /// Safe getters that return values after validation
+  /// Call validateEnvironment() during app initialization before using these
   static String get googleClientId {
-    if (_googleClientIdDefine.isEmpty) {
-      throw Exception(
-        'GOOGLE_CLIENT_ID missing - ensure it is defined via --dart-define or --dart-define-from-file',
+    // Keep an assert for debug builds, but also throw in release builds
+    // so the check is enforced regardless of build mode.
+    assert(
+      _validated,
+      'Call AppConfig.validateEnvironment() before accessing googleClientId',
+    );
+    if (!_validated) {
+      throw StateError(
+        'Call AppConfig.validateEnvironment() before accessing googleClientId',
       );
     }
     return _googleClientIdDefine;
   }
 
   static String get googleApiKey {
-    if (_googleApiKeyDefine.isEmpty) {
-      throw Exception(
-        'GOOGLE_API_KEY missing - ensure it is defined via --dart-define or --dart-define-from-file',
+    // Keep an assert for debug builds, but also throw in release builds
+    // so the check is enforced regardless of build mode.
+    assert(
+      _validated,
+      'Call AppConfig.validateEnvironment() before accessing googleApiKey',
+    );
+    if (!_validated) {
+      throw StateError(
+        'Call AppConfig.validateEnvironment() before accessing googleApiKey',
       );
     }
     return _googleApiKeyDefine;
@@ -85,19 +102,33 @@ class AppConfig {
     return _githubClientIdDefine;
   }
 
+  /// Validate required environment variables once at app startup
+  /// Should be called in main() before runApp()
+  /// Throws exception if any required variable is missing
   static void validateEnvironment() {
+    if (_validated) return; // Already validated
+
     final requiredVars = {
       'GOOGLE_CLIENT_ID': _googleClientIdDefine,
       'GOOGLE_API_KEY': _googleApiKeyDefine,
     };
 
+    final missingVars = <String>[];
     for (final entry in requiredVars.entries) {
       if (entry.value.isEmpty) {
-        throw Exception(
-          'Required variable missing: ${entry.key} - ensure it is defined via --dart-define or --dart-define-from-file',
-        );
+        missingVars.add(entry.key);
       }
     }
+
+    if (missingVars.isNotEmpty) {
+      throw Exception(
+        'Required environment variables missing: ${missingVars.join(", ")}\n'
+        'Ensure they are defined via --dart-define or --dart-define-from-file',
+      );
+    }
+
+    _validated = true;
+    debugPrint('✅ Environment validation passed');
   }
 
   static void debugPrint(String message) {

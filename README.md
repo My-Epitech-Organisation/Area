@@ -49,7 +49,7 @@ docker-compose up -d
 **Services will be available at:**
 - Frontend (Vite dev): http://localhost:5173
 - Backend API: http://localhost:8080
-- Flower (Celery monitoring): http://localhost:5555
+- Flower (Celery monitoring): http://localhost:5566
 - PostgreSQL: localhost:5432
 - Redis: localhost:6379
 
@@ -150,7 +150,7 @@ The project uses Docker Compose with 8 services:
 3. **server** - Django backend API (port 8080)
 4. **worker** - Celery worker for async tasks
 5. **beat** - Celery Beat scheduler for periodic tasks
-6. **flower** - Celery monitoring UI (port 5555)
+6. **flower** - Celery monitoring UI (port 5566)
 7. **client_mobile** - Flutter mobile app builder
 8. **client_web** - React frontend (Vite dev server on port 5173)
 
@@ -160,6 +160,52 @@ The project uses Docker Compose with 8 services:
 - `docker-compose.override.yml` - Development overrides (auto-loaded)
 - `docker-compose.prod.yml` - Production-specific settings
 - `docker-compose.test.yml` - Testing configuration
+
+### Port Mapping (External → Internal)
+
+Docker Compose maps **external host ports** to **internal container ports**. This allows multiple services to use standard ports internally while exposing unique ports on your host machine.
+
+**Format:** `${EXTERNAL_PORT}:internal_port`
+
+| Service | External (Host) | Internal (Container) | Environment Variable | Description |
+|---------|-----------------|----------------------|---------------------|-------------|
+| **PostgreSQL** | 5433 | 5432 | `DB_PORT=5433` | Database server (standard PostgreSQL port 5432 inside container) |
+| **Redis** | 6379 | 6379 | `REDIS_PORT=6379` | Cache & Celery broker (same port, configurable for conflicts) |
+| **Django Backend** | 8080 | 8080 | `BACKEND_PORT=8080` | REST API server |
+| **Flower** | 5566 | 5555 | `FLOWER_PORT=5566` | Celery monitoring UI (internal Flower default is 5555) |
+| **Frontend (Vite)** | 5173 | 5173 | `FRONTEND_PORT=5173` | React development server |
+
+**Why different ports?**
+
+- **Avoid conflicts:** If you already have PostgreSQL running on port 5432 locally, Docker maps to 5433 instead
+- **Flexibility:** Change external ports in `.env` without modifying Dockerfiles or container configurations
+- **Security:** In production, internal ports are isolated; only exposed ports are accessible from outside
+
+**Example Connection Strings:**
+
+```bash
+# From your host machine (e.g., DBeaver, psql)
+postgresql://area_user:area_password@localhost:5433/area_db
+
+# From inside Docker containers (e.g., Django backend)
+postgresql://area_user:area_password@db:5432/area_db
+# Note: Uses service name 'db' and internal port 5432
+```
+
+**Configuration in `.env`:**
+
+```bash
+# External ports (accessible from host)
+DB_PORT=5433              # PostgreSQL external port
+REDIS_PORT=6379           # Redis external port
+BACKEND_PORT=8080         # Django API external port
+FLOWER_PORT=5566          # Flower UI external port
+FRONTEND_PORT=5173        # Vite dev server external port
+
+# Internal connection strings (used by containers)
+DB_HOST=db                # Docker service name, not 'localhost'
+REDIS_HOST=redis          # Docker service name
+```
 
 ---
 

@@ -35,7 +35,6 @@ class InitServicesCommandTest(TestCase):
             "gmail",
             "email",
             "slack",
-            "teams",
             "webhook",
         ]
 
@@ -79,8 +78,7 @@ class InitServicesCommandTest(TestCase):
         expected_reactions = [
             ("github", "github_create_issue"),
             ("email", "send_email"),
-            ("slack", "slack_message"),
-            ("teams", "teams_message"),
+            ("slack", "slack_send_message"),
             ("webhook", "webhook_post"),
         ]
 

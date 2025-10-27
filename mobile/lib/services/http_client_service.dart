@@ -168,8 +168,10 @@ class HttpClientService {
     }
 
     if (response.statusCode == 401) {
-      _tokenService.clearTokens();
+      // Call authentication failure callback BEFORE clearing tokens
+      // This allows the callback to perform cleanup operations that may need the token
       onAuthenticationFailure?.call();
+      _tokenService.clearTokens();
       throw HttpException('Authentication required', statusCode: 401);
     }
 

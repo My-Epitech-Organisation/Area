@@ -189,6 +189,163 @@ ACTION_SCHEMAS = {
         "required": ["webhook_url"],
         "additionalProperties": False,
     },
+    "weather_rain_detected": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "Location to monitor (city name or coordinates)",
+                "minLength": 1,
+            },
+        },
+        "required": ["location"],
+        "additionalProperties": False,
+    },
+    "weather_snow_detected": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "Location to monitor (city name or coordinates)",
+                "minLength": 1,
+            },
+        },
+        "required": ["location"],
+        "additionalProperties": False,
+    },
+    "weather_temperature_above": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "Location to monitor (city name or coordinates)",
+                "minLength": 1,
+            },
+            "threshold": {
+                "type": "number",
+                "description": "Temperature threshold in Celsius - trigger when exceeded",
+                "minimum": -50,
+                "maximum": 60,
+            },
+        },
+        "required": ["location", "threshold"],
+        "additionalProperties": False,
+    },
+    "weather_temperature_below": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "Location to monitor (city name or coordinates)",
+                "minLength": 1,
+            },
+            "threshold": {
+                "type": "number",
+                "description": "Temperature threshold in Celsius - trigger when below",
+                "minimum": -50,
+                "maximum": 60,
+            },
+        },
+        "required": ["location", "threshold"],
+        "additionalProperties": False,
+    },
+    "weather_extreme_heat": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "Location to monitor (city name or coordinates)",
+                "minLength": 1,
+            },
+        },
+        "required": ["location"],
+        "additionalProperties": False,
+    },
+    "weather_extreme_cold": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "Location to monitor (city name or coordinates)",
+                "minLength": 1,
+            },
+        },
+        "required": ["location"],
+        "additionalProperties": False,
+    },
+    "weather_windy": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "Location to monitor (city name or coordinates)",
+                "minLength": 1,
+            },
+            "threshold": {
+                "type": "number",
+                "description": "Speed threshold in km/h - trigger when above",
+                "minimum": 0,
+                "maximum": 300,
+            },
+        },
+        "required": ["location", "threshold"],
+        "additionalProperties": False,
+    },
+    # Slack Actions
+    "slack_new_message": {
+        "type": "object",
+        "properties": {
+            "channel": {
+                "type": "string",
+                "description": "Slack channel ID or name to monitor",
+            },
+        },
+        "required": ["channel"],
+        "additionalProperties": False,
+    },
+    "slack_message_with_keyword": {
+        "type": "object",
+        "properties": {
+            "channel": {
+                "type": "string",
+                "description": "Slack channel ID or name to monitor (optional, monitors all if empty)",
+            },
+            "keywords": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Comma-separated keywords to trigger on",
+            },
+        },
+        "required": ["keywords"],
+        "additionalProperties": False,
+    },
+    "slack_user_mention": {
+        "type": "object",
+        "properties": {
+            "channel": {
+                "type": "string",
+                "description": "Slack channel ID or name to monitor (optional, monitors all if empty)",
+            },
+        },
+        "additionalProperties": False,
+    },
+    "slack_channel_join": {
+        "type": "object",
+        "properties": {
+            "channel": {
+                "type": "string",
+                "description": "Slack channel ID or name to monitor",
+            },
+        },
+        "required": ["channel"],
+        "additionalProperties": False,
+    },
+    # Debug Actions
+    "debug_manual_trigger": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
 }
 
 
@@ -244,33 +401,79 @@ REACTION_SCHEMAS = {
         "required": ["channel", "message"],
         "additionalProperties": False,
     },
-    "teams_message": {
+    # Slack Reactions
+    "slack_send_message": {
         "type": "object",
         "properties": {
-            "webhook_url": {
+            "channel": {
                 "type": "string",
-                "format": "uri",
-                "pattern": "https://[a-zA-Z0-9.-]+\\.webhook\\.office\\.com/",
-                "description": "Teams webhook URL",
+                "description": "Slack channel name (with or without #) or ID",
+            },
+            "message": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4000,
+                "description": "Message content (supports template variables)",
+            },
+            "username": {
+                "type": "string",
+                "description": "Bot display name (optional)",
+            },
+            "icon_emoji": {
+                "type": "string",
+                "pattern": "^:[a-zA-Z0-9._+-]+:$",
+                "description": "Bot emoji icon (optional)",
+            },
+        },
+        "required": ["channel", "message"],
+        "additionalProperties": False,
+    },
+    "slack_send_thread_reply": {
+        "type": "object",
+        "properties": {
+            "channel": {
+                "type": "string",
+                "description": "Slack channel containing the thread",
+            },
+            "thread_ts": {
+                "type": "string",
+                "description": "Thread timestamp to reply to",
+            },
+            "message": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4000,
+                "description": "Reply message content",
+            },
+        },
+        "required": ["channel", "thread_ts", "message"],
+        "additionalProperties": False,
+    },
+    "slack_send_alert": {
+        "type": "object",
+        "properties": {
+            "channel": {
+                "type": "string",
+                "description": "Slack channel to send alert to",
+            },
+            "alert_type": {
+                "type": "string",
+                "enum": ["info", "warning", "error"],
+                "default": "info",
+                "description": "Type of alert",
             },
             "title": {
                 "type": "string",
-                "maxLength": 150,
-                "description": "Message title",
-            },
-            "text": {
-                "type": "string",
                 "minLength": 1,
-                "description": "Message content",
+                "maxLength": 200,
+                "description": "Alert title",
             },
-            "color": {
+            "details": {
                 "type": "string",
-                "pattern": "^#[0-9A-Fa-f]{6}$",
-                "default": "#0078D4",
-                "description": "Message color theme",
+                "description": "Alert details (optional)",
             },
         },
-        "required": ["webhook_url", "text"],
+        "required": ["channel", "title"],
         "additionalProperties": False,
     },
     "github_create_issue": {
@@ -480,6 +683,38 @@ REACTION_SCHEMAS = {
         "required": ["url"],
         "additionalProperties": False,
     },
+    "weather_send_alert": {
+        "type": "object",
+        "properties": {
+            "alert_method": {
+                "type": "string",
+                "enum": ["email", "slack"],
+                "description": "Method to send alert",
+            },
+            "recipient": {
+                "type": "string",
+                "description": "Recipient (email address or channel/webhook URL)",
+            },
+            "message": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Alert message content",
+            },
+        },
+        "required": ["alert_method", "recipient", "message"],
+        "additionalProperties": False,
+    },
+    # Debug Reactions
+    "debug_log_execution": {
+        "type": "object",
+        "properties": {
+            "message": {
+                "type": "string",
+                "description": "Custom message to log (optional)",
+            },
+        },
+        "additionalProperties": False,
+    },
 }
 
 
@@ -493,7 +728,6 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
         "log_message",
         "webhook_post",
         "calendar_create_event",
@@ -502,7 +736,6 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
         "log_message",
         "webhook_post",
         "calendar_create_event",
@@ -511,7 +744,6 @@ COMPATIBILITY_RULES = {
     "gmail_new_email": [
         "save_to_dropbox",
         "slack_message",
-        "teams_message",
         "github_create_issue",
         "log_message",
         "webhook_post",
@@ -522,7 +754,6 @@ COMPATIBILITY_RULES = {
     "gmail_new_from_sender": [
         "save_to_dropbox",
         "slack_message",
-        "teams_message",
         "github_create_issue",
         "log_message",
         "webhook_post",
@@ -533,7 +764,6 @@ COMPATIBILITY_RULES = {
     "gmail_new_with_label": [
         "save_to_dropbox",
         "slack_message",
-        "teams_message",
         "github_create_issue",
         "log_message",
         "webhook_post",
@@ -544,7 +774,6 @@ COMPATIBILITY_RULES = {
     "gmail_new_with_subject": [
         "save_to_dropbox",
         "slack_message",
-        "teams_message",
         "github_create_issue",
         "log_message",
         "webhook_post",
@@ -557,7 +786,6 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
         "github_create_issue",
         "log_message",
         "webhook_post",
@@ -566,13 +794,16 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
         "github_create_issue",
         "log_message",
         "webhook_post",
     ],
     # Webhook actions can trigger anything
     "webhook_trigger": ["*"],
+    # Weather actions
+    "weather_trigger": ["*"],
+    # Debug actions - can trigger anything for testing
+    "debug_manual_trigger": ["*"],
     # Twitch actions - can trigger Twitch reactions and notification reactions
     "twitch_stream_online": [
         "twitch_send_chat_message",
@@ -584,7 +815,6 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
         "webhook_post",
         "calendar_create_event",
     ],
@@ -597,7 +827,6 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
         "webhook_post",
     ],
     "twitch_new_follower": [
@@ -607,7 +836,6 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
         "webhook_post",
     ],
     "twitch_new_subscriber": [
@@ -617,7 +845,6 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
         "webhook_post",
     ],
     "twitch_channel_update": [
@@ -627,9 +854,49 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "slack_message",
-        "teams_message",
         "webhook_post",
         "calendar_create_event",
+    ],
+    # Slack actions - can trigger Slack reactions and notification reactions
+    "slack_new_message": [
+        "slack_send_message",
+        "slack_send_thread_reply",
+        "slack_send_alert",
+        "send_email",
+        "gmail_send_email",
+        "webhook_post",
+        "calendar_create_event",
+        "github_create_issue",
+    ],
+    "slack_message_with_keyword": [
+        "slack_send_message",
+        "slack_send_thread_reply",
+        "slack_send_alert",
+        "send_email",
+        "gmail_send_email",
+        "webhook_post",
+        "calendar_create_event",
+        "github_create_issue",
+    ],
+    "slack_user_mention": [
+        "slack_send_message",
+        "slack_send_thread_reply",
+        "slack_send_alert",
+        "send_email",
+        "gmail_send_email",
+        "webhook_post",
+        "calendar_create_event",
+        "github_create_issue",
+    ],
+    "slack_channel_join": [
+        "slack_send_message",
+        "slack_send_thread_reply",
+        "slack_send_alert",
+        "send_email",
+        "gmail_send_email",
+        "webhook_post",
+        "calendar_create_event",
+        "github_create_issue",
     ],
 }
 

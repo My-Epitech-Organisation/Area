@@ -15,6 +15,7 @@ This module provides Django REST Framework ViewSets for:
 """
 
 import time
+import uuid
 from typing import Any, Type
 
 from drf_spectacular.utils import OpenApiParameter, extend_schema

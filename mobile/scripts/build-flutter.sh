@@ -12,21 +12,62 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DART_ENV_FILE="${SCRIPT_DIR}/.dart-env"
 
+# Function to find .env file (check current dir, then parent, then SCRIPT_DIR)
+find_env_file() {
+    if [ -f ".env" ]; then
+        echo "$(pwd)/.env"
+    elif [ -f "../.env" ]; then
+        echo "$(cd .. && pwd)/.env"
+    elif [ -f "${SCRIPT_DIR}/.env" ]; then
+        echo "${SCRIPT_DIR}/.env"
+    else
+        echo ""
+    fi
+}
+
 # Function to load or create .dart-env
 setup_dart_env() {
-    if [ -f "${SCRIPT_DIR}/.env" ]; then
-        echo "📄 Loading configuration from .env..."
-        # Copy .env content to .dart-env, filtering only Flutter variables
+    # Check if .dart-env already exists and is not empty
+    if [ -f "${DART_ENV_FILE}" ] && [ -s "${DART_ENV_FILE}" ]; then
+        echo "✅ Using existing .dart-env file"
+        echo "   To regenerate from .env, delete .dart-env first"
+        return 0
+    fi
+
+    ENV_FILE=$(find_env_file)
+
+    if [ -n "$ENV_FILE" ]; then
+        echo "📄 Loading configuration from $ENV_FILE..."
+
+        # Helper function to safely extract env variable values
+        get_env_value() {
+            local key="$1"
+            local default="$2"
+            # Extract value and remove surrounding quotes (single or double)
+            grep "^${key}=" "$ENV_FILE" | sed "s/^${key}=//" | sed 's/^["'\'']//;s/["'\'']$//' | head -n1 || echo "$default"
+        }
+
+        # Extract variables safely (handles values with =, quotes, spaces)
+        BACKEND_HOST=$(get_env_value "BACKEND_HOST" "localhost")
+        BACKEND_PORT=$(get_env_value "BACKEND_PORT" "8080")
+        GOOGLE_CLIENT_ID=$(get_env_value "GOOGLE_CLIENT_ID" "")
+        GOOGLE_API_KEY=$(get_env_value "GOOGLE_API_KEY" "")
+        GITHUB_CLIENT_ID=$(get_env_value "GITHUB_CLIENT_ID" "")
+        ENVIRONMENT=$(get_env_value "ENVIRONMENT" "development")
+
+        # Write to .dart-env
         cat > "${DART_ENV_FILE}" << EOF
-BACKEND_HOST=$(grep '^BACKEND_HOST=' "${SCRIPT_DIR}/.env" | cut -d= -f2- || echo "localhost")
-BACKEND_PORT=$(grep '^BACKEND_PORT=' "${SCRIPT_DIR}/.env" | cut -d= -f2- || echo "8080")
-GOOGLE_CLIENT_ID=$(grep '^GOOGLE_CLIENT_ID=' "${SCRIPT_DIR}/.env" | cut -d= -f2- || echo "")
-GOOGLE_API_KEY=$(grep '^GOOGLE_API_KEY=' "${SCRIPT_DIR}/.env" | cut -d= -f2- || echo "")
-GITHUB_CLIENT_ID=$(grep '^GITHUB_CLIENT_ID=' "${SCRIPT_DIR}/.env" | cut -d= -f2- || echo "")
-ENVIRONMENT=$(grep '^ENVIRONMENT=' "${SCRIPT_DIR}/.env" | cut -d= -f2- || echo "development")
+BACKEND_HOST=$BACKEND_HOST
+BACKEND_PORT=$BACKEND_PORT
+GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+GOOGLE_API_KEY=$GOOGLE_API_KEY
+GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID
+ENVIRONMENT=$ENVIRONMENT
 EOF
+        echo "✅ Created .dart-env from $ENV_FILE"
     else
-        echo "⚠️  .env not found, creating default .dart-env..."
+        echo "⚠️  No .env file found (checked current dir, parent, and ${SCRIPT_DIR})"
+        echo "⚠️  Creating default .dart-env..."
         cat > "${DART_ENV_FILE}" << EOF
 BACKEND_HOST=localhost
 BACKEND_PORT=8080
@@ -36,7 +77,7 @@ GITHUB_CLIENT_ID=
 ENVIRONMENT=development
 EOF
     fi
-    
+
     echo "✅ Configuration ready at: ${DART_ENV_FILE}"
     echo "📋 Contents:"
     cat "${DART_ENV_FILE}" | sed 's/^/   /'
@@ -59,7 +100,7 @@ build_apk() {
         --dart-define-from-file="${DART_ENV_FILE}" \
         --android-skip-build-dependency-validation \
         "$@"
-    
+
     if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
         echo "✅ APK built successfully!"
         ls -lh build/app/outputs/flutter-apk/app-release.apk
@@ -74,7 +115,7 @@ build_aab() {
     flutter build appbundle --release \
         --dart-define-from-file="${DART_ENV_FILE}" \
         "$@"
-    
+
     if [ -f "build/app/outputs/bundle/release/app-release.aab" ]; then
         echo "✅ AAB built successfully!"
         ls -lh build/app/outputs/bundle/release/app-release.aab
@@ -89,7 +130,7 @@ build_web() {
     flutter build web --release \
         --dart-define-from-file="${DART_ENV_FILE}" \
         "$@"
-    
+
     echo "✅ Web build completed!"
 }
 

@@ -48,14 +48,33 @@ def convert_to_json_schema(config_schema):
     properties = {}
     required = []
 
+    # Valid JSON Schema keywords to keep
+    valid_json_schema_keys = {
+        "type",
+        "enum",
+        "format",
+        "pattern",
+        "minimum",
+        "maximum",
+        "minLength",
+        "maxLength",
+        "default",
+        "description",
+        "items",
+        "properties",
+        "additionalProperties",
+        "minItems",
+        "maxItems",
+    }
+
     for field_name, field_config in config_schema.items():
         # Extract required flag
         is_required = field_config.get("required", False)
         if is_required:
             required.append(field_name)
 
-        # Build property config (remove custom fields)
-        prop = {k: v for k, v in field_config.items() if k != "required"}
+        # Build property config (keep only valid JSON Schema fields)
+        prop = {k: v for k, v in field_config.items() if k in valid_json_schema_keys}
         properties[field_name] = prop
 
     result = {"properties": properties}
@@ -313,8 +332,8 @@ class Command(BaseCommand):
                                 "description": "Trigger this many minutes before event starts",
                                 "required": True,
                                 "default": 15,
-                                "min": 1,
-                                "max": 1440,
+                                "minimum": 1,
+                                "maximum": 1440,
                             },
                         },
                     },
@@ -430,25 +449,166 @@ class Command(BaseCommand):
             },
             {
                 "name": "slack",
-                "description": "Slack messaging and notifications",
+                "description": "Slack messaging and team collaboration platform",
                 "status": Service.Status.ACTIVE,
-                "actions": [],
-                "reactions": [
+                "actions": [
                     {
-                        "name": "slack_message",
-                        "description": "Send a message to a Slack channel or user",
+                        "name": "slack_new_message",
+                        "description": "Triggered when a new message is posted in a channel",
+                        "config_schema": {
+                            "channel": {
+                                "type": "string",
+                                "label": "Channel",
+                                "description": "Slack channel to monitor (e.g., #general or C1234567890)",
+                                "required": True,
+                                "placeholder": "#general",
+                            },
+                        },
+                    },
+                    {
+                        "name": "slack_message_with_keyword",
+                        "description": "Triggered when a message contains specific keywords",
+                        "config_schema": {
+                            "channel": {
+                                "type": "string",
+                                "label": "Channel",
+                                "description": "Slack channel to monitor (leave empty for all channels)",
+                                "required": False,
+                                "placeholder": "#general",
+                            },
+                            "keywords": {
+                                "type": "string",
+                                "label": "Keywords",
+                                "description": "Comma-separated keywords to trigger on",
+                                "required": True,
+                                "placeholder": "urgent,important,help",
+                            },
+                        },
+                    },
+                    {
+                        "name": "slack_user_mention",
+                        "description": "Triggered when you are mentioned in a message",
+                        "config_schema": {
+                            "channel": {
+                                "type": "string",
+                                "label": "Channel",
+                                "description": "Slack channel to monitor (leave empty for all channels)",
+                                "required": False,
+                                "placeholder": "#general",
+                            },
+                        },
+                    },
+                    {
+                        "name": "slack_channel_join",
+                        "description": "Triggered when a user joins a channel",
+                        "config_schema": {
+                            "channel": {
+                                "type": "string",
+                                "label": "Channel",
+                                "description": "Slack channel to monitor",
+                                "required": True,
+                                "placeholder": "#general",
+                            },
+                        },
                     },
                 ],
-            },
-            {
-                "name": "teams",
-                "description": "Microsoft Teams messaging and collaboration",
-                "status": Service.Status.ACTIVE,
-                "actions": [],
                 "reactions": [
                     {
-                        "name": "teams_message",
-                        "description": "Send a message to a Microsoft Teams channel",
+                        "name": "slack_send_message",
+                        "description": "Send a message to a Slack channel",
+                        "config_schema": {
+                            "channel": {
+                                "type": "string",
+                                "label": "Channel",
+                                "description": "Slack channel to send to (with or without #)",
+                                "required": True,
+                                "placeholder": "#general",
+                            },
+                            "message": {
+                                "type": "text",
+                                "label": "Message",
+                                "description": "Message to send (supports variables: {trigger_data})",
+                                "required": True,
+                                "placeholder": "Hello from AREA!",
+                            },
+                            "username": {
+                                "type": "string",
+                                "label": "Bot Username",
+                                "description": "Display name for the bot (optional)",
+                                "required": False,
+                                "placeholder": "AREA Bot",
+                            },
+                            "icon_emoji": {
+                                "type": "string",
+                                "label": "Bot Icon",
+                                "description": "Emoji icon for the bot (optional, e.g., :robot_face:)",
+                                "required": False,
+                                "placeholder": ":robot_face:",
+                            },
+                        },
+                    },
+                    {
+                        "name": "slack_send_thread_reply",
+                        "description": "Reply to a message in a thread",
+                        "config_schema": {
+                            "channel": {
+                                "type": "string",
+                                "label": "Channel",
+                                "description": "Slack channel containing the thread",
+                                "required": True,
+                                "placeholder": "#general",
+                            },
+                            "thread_ts": {
+                                "type": "string",
+                                "label": "Thread Timestamp",
+                                "description": "Thread timestamp to reply to (from trigger data)",
+                                "required": False,
+                                "default": "{thread_ts}",
+                                "placeholder": "{thread_ts}",
+                            },
+                            "message": {
+                                "type": "text",
+                                "label": "Reply Message",
+                                "description": "Reply message content",
+                                "required": True,
+                                "placeholder": "Thanks for the update!",
+                            },
+                        },
+                    },
+                    {
+                        "name": "slack_send_alert",
+                        "description": "Send an alert message to a channel",
+                        "config_schema": {
+                            "channel": {
+                                "type": "string",
+                                "label": "Channel",
+                                "description": "Slack channel to send alert to",
+                                "required": True,
+                                "placeholder": "#alerts",
+                            },
+                            "alert_type": {
+                                "type": "string",
+                                "label": "Alert Type",
+                                "description": "Type of alert (info, warning, error)",
+                                "required": False,
+                                "default": "info",
+                                "enum": ["info", "warning", "error"],
+                            },
+                            "title": {
+                                "type": "string",
+                                "label": "Alert Title",
+                                "description": "Alert title/message",
+                                "required": True,
+                                "placeholder": "System Alert",
+                            },
+                            "details": {
+                                "type": "text",
+                                "label": "Alert Details",
+                                "description": "Additional alert details (optional)",
+                                "required": False,
+                                "placeholder": "Additional context...",
+                            },
+                        },
                     },
                 ],
             },
@@ -470,6 +630,132 @@ class Command(BaseCommand):
                         "description": "Send an HTTP POST request to a specified URL",
                     },
                 ],
+            },
+            {
+                "name": "weather",
+                "description": "Weather data and alerts integration",
+                "status": Service.Status.ACTIVE,
+                "actions": [
+                    {
+                        "name": "weather_rain_detected",
+                        "description": "Triggered when rain is detected in the specified location",
+                        "config_schema": {
+                            "location": {
+                                "type": "string",
+                                "label": "Location",
+                                "description": "Location to monitor (city name or coordinates)",
+                                "required": True,
+                                "placeholder": "Paris, France",
+                            },
+                        },
+                    },
+                    {
+                        "name": "weather_snow_detected",
+                        "description": "Triggered when snow is detected in the specified location",
+                        "config_schema": {
+                            "location": {
+                                "type": "string",
+                                "label": "Location",
+                                "description": "Location to monitor (city name or coordinates)",
+                                "required": True,
+                                "placeholder": "New York, NY",
+                            },
+                        },
+                    },
+                    {
+                        "name": "weather_temperature_above",
+                        "description": "Triggered when temperature rises above the specified threshold",
+                        "config_schema": {
+                            "location": {
+                                "type": "string",
+                                "label": "Location",
+                                "description": "Location to monitor (city name or coordinates)",
+                                "required": True,
+                                "placeholder": "London, UK",
+                            },
+                            "threshold": {
+                                "type": "number",
+                                "label": "Temperature Threshold (°C)",
+                                "description": "Trigger when temperature exceeds this value",
+                                "required": True,
+                                "default": 25,
+                                "minimum": -50,
+                                "maximum": 60,
+                            },
+                        },
+                    },
+                    {
+                        "name": "weather_temperature_below",
+                        "description": "Triggered when temperature drops below the specified threshold",
+                        "config_schema": {
+                            "location": {
+                                "type": "string",
+                                "label": "Location",
+                                "description": "Location to monitor (city name or coordinates)",
+                                "required": True,
+                                "placeholder": "Moscow, Russia",
+                            },
+                            "threshold": {
+                                "type": "number",
+                                "label": "Temperature Threshold (°C)",
+                                "description": "Trigger when temperature falls below this value",
+                                "required": True,
+                                "default": 0,
+                                "minimum": -50,
+                                "maximum": 60,
+                            },
+                        },
+                    },
+                    {
+                        "name": "weather_extreme_heat",
+                        "description": "Triggered when extreme heat is detected (>35°C)",
+                        "config_schema": {
+                            "location": {
+                                "type": "string",
+                                "label": "Location",
+                                "description": "Location to monitor (city name or coordinates)",
+                                "required": True,
+                                "placeholder": "Phoenix, AZ",
+                            },
+                        },
+                    },
+                    {
+                        "name": "weather_extreme_cold",
+                        "description": "Triggered when extreme cold is detected (<-10°C)",
+                        "config_schema": {
+                            "location": {
+                                "type": "string",
+                                "label": "Location",
+                                "description": "Location to monitor (city name or coordinates)",
+                                "required": True,
+                                "placeholder": "Anchorage, AK",
+                            },
+                        },
+                    },
+                    {
+                        "name": "weather_windy",
+                        "description": "Triggered when strong winds are detected",
+                        "config_schema": {
+                            "location": {
+                                "type": "string",
+                                "label": "Location",
+                                "description": "Location to monitor (city name or coordinates)",
+                                "required": True,
+                                "placeholder": "Chicago, IL",
+                            },
+                            "threshold": {
+                                "type": "number",
+                                "label": "Wind Speed Threshold (km/h)",
+                                "description": "Trigger when wind speed exceeds this value (km/h)",
+                                "required": True,
+                                "default": 50,
+                                "minimum": 0,
+                                "maximum": 300,
+                            },
+                        },
+                    },
+                ],
+                "reactions": [],
             },
             {
                 "name": "twitch",
@@ -600,6 +886,33 @@ class Command(BaseCommand):
                                 "description": "Name of the game or category",
                                 "required": True,
                                 "placeholder": "Just Chatting",
+                            },
+                        },
+                    },
+                ],
+            },
+            {
+                "name": "debug",
+                "description": "Internal debugging service for manual testing and development",
+                "status": Service.Status.ACTIVE,
+                "actions": [
+                    {
+                        "name": "debug_manual_trigger",
+                        "description": "Manually triggered action for testing (no automatic polling)",
+                        "config_schema": {},
+                    },
+                ],
+                "reactions": [
+                    {
+                        "name": "debug_log_execution",
+                        "description": "Log execution details with timestamp for debugging",
+                        "config_schema": {
+                            "message": {
+                                "type": "string",
+                                "label": "Custom Message",
+                                "description": "Optional custom message to log",
+                                "required": False,
+                                "placeholder": "Debug execution triggered",
                             },
                         },
                     },
