@@ -174,6 +174,7 @@ class TimezoneField extends StatelessWidget {
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           initialValue: selectedTz,
+          isExpanded: true,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
             suffixIcon: const Icon(Icons.public),
