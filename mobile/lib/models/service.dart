@@ -84,7 +84,9 @@ class ServiceAction {
       id: json['id'] as int? ?? 0,
       name: (json['name'] as String?)?.trim() ?? '',
       description: (json['description'] as String?)?.trim() ?? '',
-      configSchema: json['config_schema'] as Map<String, dynamic>?,
+      configSchema: json['config_schema'] is Map<String, dynamic>
+          ? json['config_schema'] as Map<String, dynamic>
+          : null,
     );
   }
 
