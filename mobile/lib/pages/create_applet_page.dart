@@ -138,6 +138,14 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
                   ConfigStepCard(
                     selectedActionName: _selectedTriggerAction!,
                     selectedReactionName: _selectedActionReaction!,
+                    actionConfigSchema: context
+                        .read<ServiceCatalogProvider>()
+                        .getAction(_selectedTriggerAction!)
+                        ?.configSchema,
+                    reactionConfigSchema: context
+                        .read<ServiceCatalogProvider>()
+                        .getReaction(_selectedActionReaction!)
+                        ?.configSchema,
                     actionConfig: _actionConfig,
                     reactionConfig: _reactionConfig,
                     onActionConfigChanged: (config) {
