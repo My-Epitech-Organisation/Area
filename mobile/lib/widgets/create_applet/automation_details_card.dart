@@ -46,10 +46,11 @@ class AutomationDetailsCard extends StatelessWidget {
                         ),
                         TextSpan(
                           text: ' (required)',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Colors.grey[600],
-                            fontStyle: FontStyle.italic,
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: Colors.grey[600],
+                                fontStyle: FontStyle.italic,
+                              ),
                         ),
                       ],
                     ),

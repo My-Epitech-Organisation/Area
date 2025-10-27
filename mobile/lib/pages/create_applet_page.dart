@@ -49,7 +49,10 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
     super.dispose();
   }
 
-  void _showErrorSnackBar(String message, {Duration duration = const Duration(seconds: 3)}) {
+  void _showErrorSnackBar(
+    String message, {
+    Duration duration = const Duration(seconds: 3),
+  }) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -65,10 +68,7 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            message,
-            style: const TextStyle(color: Colors.white),
-          ),
+          content: Text(message, style: const TextStyle(color: Colors.white)),
           backgroundColor: Colors.green,
           duration: const Duration(seconds: 3),
         ),
@@ -287,9 +287,9 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
     }
 
     // Validate reaction configuration
-    final reaction = context
-        .read<ServiceCatalogProvider>()
-        .getReaction(_selectedActionReaction!);
+    final reaction = context.read<ServiceCatalogProvider>().getReaction(
+      _selectedActionReaction!,
+    );
 
     if (!_validateConfigSchema(
       schema: reaction?.configSchema,
@@ -299,9 +299,9 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
     }
 
     // Validate action configuration
-    final action = context
-        .read<ServiceCatalogProvider>()
-        .getAction(_selectedTriggerAction!);
+    final action = context.read<ServiceCatalogProvider>().getAction(
+      _selectedTriggerAction!,
+    );
 
     if (!_validateConfigSchema(
       schema: action?.configSchema,
