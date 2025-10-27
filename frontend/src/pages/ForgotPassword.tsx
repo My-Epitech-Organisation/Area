@@ -94,7 +94,10 @@ const ForgotPassword: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-theme-secondary mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-theme-secondary mb-2"
+              >
                 Email Address
               </label>
               <input
