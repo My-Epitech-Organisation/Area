@@ -66,8 +66,21 @@ class User(AbstractUser):
         help_text="Optional display name (not unique, not used for login)",
     )
 
-    email_verified = models.BooleanField(default=False)
-    email_verification_token = models.CharField(max_length=64, blank=True, default="")
+    email_verified = models.BooleanField(
+        default=False,
+        help_text="Whether the user has verified their email address",
+    )
+    email_verification_token = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        help_text="Token for email verification (cleared after verification)",
+    )
+    email_verification_token_expires = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Expiration time for email verification token (24 hours from creation)",
+    )
 
     # Use email as the unique identifier for authentication
     USERNAME_FIELD = "email"
@@ -80,6 +93,14 @@ class User(AbstractUser):
     def __str__(self):
         """Return string representation of the user."""
         return self.email
+
+    def is_email_verification_token_valid(self) -> bool:
+        """Check if the email verification token is still valid (not expired)."""
+        if not self.email_verification_token:
+            return False
+        if not self.email_verification_token_expires:
+            return False
+        return timezone.now() < self.email_verification_token_expires
 
 
 class ServiceToken(models.Model):
