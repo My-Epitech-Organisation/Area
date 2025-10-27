@@ -179,7 +179,14 @@ The AREA Team
 
 
 class UserDetailView(APIView):
-    permission_classes = (IsAuthenticatedAndVerified,)
+    """
+    Get or update current user's profile information.
+    
+    This endpoint uses IsAuthenticated (not IsAuthenticatedAndVerified)
+    because users need to be able to view their profile to see their
+    email verification status and access profile settings.
+    """
+    permission_classes = (IsAuthenticated,)
 
     def get(self, request):
         serializer = UserSerializer(request.user)
