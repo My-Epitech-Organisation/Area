@@ -47,7 +47,7 @@ class AppletService {
 
   /// Create a new applet
   Future<Applet> createApplet({
-    required String description,
+    required String name,
     required int actionId,
     required int reactionId,
     required Map<String, dynamic> actionConfig,
@@ -56,7 +56,7 @@ class AppletService {
     final response = await _httpClient.post(
       ApiConfig.automationsUrl,
       body: {
-        'name': description,
+        'name': name,
         'action': actionId,
         'reaction': reactionId,
         'action_config': actionConfig,
@@ -84,7 +84,6 @@ class AppletService {
   Future<Applet> updateApplet(
     int id, {
     String? name,
-    String? description,
     String? status,
     Map<String, dynamic>? actionConfig,
     Map<String, dynamic>? reactionConfig,
@@ -92,7 +91,6 @@ class AppletService {
     final updateData = <String, dynamic>{};
 
     if (name != null) updateData['name'] = name;
-    if (description != null) updateData['description'] = description;
     if (status != null) updateData['status'] = status;
     if (actionConfig != null) updateData['action_config'] = actionConfig;
     if (reactionConfig != null) updateData['reaction_config'] = reactionConfig;
@@ -122,9 +120,20 @@ class AppletService {
     }
   }
 
-  /// Toggle applet active/inactive state
-  Future<Applet> toggleApplet(int id) async {
-    final response = await _httpClient.post(ApiConfig.automationToggleUrl(id));
+  Future<Applet> pauseApplet(int id) async {
+    final response = await _httpClient.post(ApiConfig.automationPauseUrl(id));
+
+    final applet = _httpClient.parseResponse<Applet>(
+      response,
+      (data) => Applet.fromJson(data),
+    );
+
+    _cache.remove(_cacheKeyPrefix);
+    return applet;
+  }
+
+  Future<Applet> resumeApplet(int id) async {
+    final response = await _httpClient.post(ApiConfig.automationResumeUrl(id));
 
     final applet = _httpClient.parseResponse<Applet>(
       response,
@@ -188,30 +197,6 @@ class AppletService {
       }
       throw Exception('Unexpected executions API response format: $data');
     });
-  }
-
-  Future<Applet> pauseApplet(int id) async {
-    final response = await _httpClient.post(ApiConfig.automationPauseUrl(id));
-
-    final applet = _httpClient.parseResponse<Applet>(
-      response,
-      (data) => Applet.fromJson(data),
-    );
-
-    _cache.remove(_cacheKeyPrefix);
-    return applet;
-  }
-
-  Future<Applet> resumeApplet(int id) async {
-    final response = await _httpClient.post(ApiConfig.automationResumeUrl(id));
-
-    final applet = _httpClient.parseResponse<Applet>(
-      response,
-      (data) => Applet.fromJson(data),
-    );
-
-    _cache.remove(_cacheKeyPrefix);
-    return applet;
   }
 
   /// Clear all applet-related cache

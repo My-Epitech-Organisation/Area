@@ -450,11 +450,6 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                applet.description,
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
-              ),
               const SizedBox(height: 12),
               Row(
                 children: [

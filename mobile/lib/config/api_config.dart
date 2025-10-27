@@ -81,7 +81,6 @@ class ApiConfig {
   static String get googleLoginUrl => '$authBaseUrl/google-login/';
 
   static String automationUrl(int id) => '$apiBaseUrl/areas/$id/';
-  static String automationToggleUrl(int id) => '$apiBaseUrl/areas/$id/toggle/';
   static String automationDuplicateUrl(int id) =>
       '$apiBaseUrl/areas/$id/duplicate/';
   static String automationPauseUrl(int id) => '$apiBaseUrl/areas/$id/pause/';
