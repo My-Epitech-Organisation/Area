@@ -79,7 +79,7 @@ const Homepage: React.FC = () => {
                   AREA
                 </h2>
                 <p className="text-lg md:text-xl lg:text-3xl xl:text-5xl text-theme-secondary mt-4 px-4">
-                  &quot;Connect services, trigger actions: automate your routine and let your tools
+                  &quot;zfeeeeeeeeeeeeeeeeeeeeeeeee
                   work for you.&quot;
                 </p>
                 <div className="mt-6 md:mt-8">
