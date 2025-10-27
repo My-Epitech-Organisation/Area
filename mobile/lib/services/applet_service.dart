@@ -186,6 +186,30 @@ class AppletService {
     );
   }
 
+  Future<Applet> pauseApplet(int id) async {
+    final response = await _httpClient.post(ApiConfig.automationPauseUrl(id));
+
+    final applet = _httpClient.parseResponse<Applet>(
+      response,
+      (data) => Applet.fromJson(data),
+    );
+
+    _cache.remove(_cacheKeyPrefix);
+    return applet;
+  }
+
+  Future<Applet> resumeApplet(int id) async {
+    final response = await _httpClient.post(ApiConfig.automationResumeUrl(id));
+
+    final applet = _httpClient.parseResponse<Applet>(
+      response,
+      (data) => Applet.fromJson(data),
+    );
+
+    _cache.remove(_cacheKeyPrefix);
+    return applet;
+  }
+
   /// Clear all applet-related cache
   void clearCache() {
     _cache.remove(_cacheKeyPrefix);

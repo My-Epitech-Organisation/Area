@@ -72,39 +72,6 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
     );
   }
 
-  Future<void> _onToggleApplet(Applet applet) async {
-    try {
-      final provider = context.read<AppletProvider>();
-      final success = await provider.toggleApplet(applet.id);
-
-      if (success && mounted) {
-        final newStatus = applet.status == 'active' ? 'disabled' : 'active';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Automation "${applet.name}" is now $newStatus'),
-            backgroundColor: Colors.blue,
-          ),
-        );
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to toggle automation: ${provider.error}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error toggling automation: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
   Future<void> _onDuplicateApplet(Applet applet) async {
     final TextEditingController nameController = TextEditingController(
       text: '${applet.name} (Copy)',
@@ -218,6 +185,70 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error deleting automation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _onPauseApplet(Applet applet) async {
+    try {
+      final provider = context.read<AppletProvider>();
+      final success = await provider.pauseApplet(applet.id);
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Automation "${applet.name}" is now paused'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pause automation: ${provider.error}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error pausing automation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _onResumeApplet(Applet applet) async {
+    try {
+      final provider = context.read<AppletProvider>();
+      final success = await provider.resumeApplet(applet.id);
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Automation "${applet.name}" is now active'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to resume automation: ${provider.error}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error resuming automation: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -349,8 +380,11 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
                   PopupMenuButton<String>(
                     onSelected: (value) {
                       switch (value) {
-                        case 'toggle':
-                          _onToggleApplet(applet);
+                        case 'pause':
+                          _onPauseApplet(applet);
+                          break;
+                        case 'resume':
+                          _onResumeApplet(applet);
                           break;
                         case 'duplicate':
                           _onDuplicateApplet(applet);
@@ -361,33 +395,43 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
                       }
                     },
                     itemBuilder: (BuildContext context) => [
-                      PopupMenuItem<String>(
-                        value: 'toggle',
-                        child: Row(
-                          children: [
-                            Icon(
-                              applet.status == 'active'
-                                  ? Icons.pause
-                                  : Icons.play_arrow,
-                              color: Colors.blue,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              applet.status == 'active' ? 'Disable' : 'Enable',
-                              style: const TextStyle(color: Colors.blue),
-                            ),
-                          ],
+                      if (applet.status != 'paused')
+                        const PopupMenuItem<String>(
+                          value: 'pause',
+                          child: Row(
+                            children: [
+                              Icon(Icons.pause, color: Colors.orange),
+                              SizedBox(width: 8),
+                              Text(
+                                'Pause',
+                                style: TextStyle(color: Colors.orange),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                      if (applet.status == 'paused')
+                        const PopupMenuItem<String>(
+                          value: 'resume',
+                          child: Row(
+                            children: [
+                              Icon(Icons.play_arrow, color: Colors.green),
+                              SizedBox(width: 8),
+                              Text(
+                                'Resume',
+                                style: TextStyle(color: Colors.green),
+                              ),
+                            ],
+                          ),
+                        ),
                       const PopupMenuItem<String>(
                         value: 'duplicate',
                         child: Row(
                           children: [
-                            Icon(Icons.content_copy, color: Colors.orange),
+                            Icon(Icons.content_copy, color: Colors.purple),
                             SizedBox(width: 8),
                             Text(
                               'Duplicate',
-                              style: TextStyle(color: Colors.orange),
+                              style: TextStyle(color: Colors.purple),
                             ),
                           ],
                         ),
