@@ -464,6 +464,7 @@ class ExecutionViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = ExecutionListSerializer(queryset, many=True)
         return Response(serializer.data)
 
+
 # ============================================================================
 # Debug Views - Manual Trigger & Execution Monitoring
 # ============================================================================
