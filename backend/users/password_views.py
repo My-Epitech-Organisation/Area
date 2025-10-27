@@ -54,7 +54,7 @@ class ForgotPasswordView(APIView):
             reset_token = PasswordResetToken.objects.create(user=user)
 
             # Build reset URL using frontend URL
-            frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+            frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
             reset_url = f"{frontend_url}/reset-password?token={reset_token.token}"
 
             # Send email
