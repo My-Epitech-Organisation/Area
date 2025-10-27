@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useConnectedServices } from '../hooks/useOAuth';
 import type { Service, User } from '../types';
 import { getStoredUser, getAccessToken, fetchUserData, API_BASE } from '../utils/helper';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
@@ -85,13 +86,47 @@ const Dashboard: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [activeServices, setActiveServices] = useState<string[]>([]);
+  const { services: connectedServices, loading: connectedLoading } = useConnectedServices();
+
+  useEffect(() => {
+    if (!services || services.length === 0) return;
+
+    const internalDefaults = new Set(['timer', 'debug', 'weather', 'webhook', 'email']);
+
+    const connectedSet = new Set<string>();
+    if (connectedServices && connectedServices.length > 0) {
+      connectedServices.forEach((c) => {
+        if (!c.is_expired) connectedSet.add((c.service_name || '').toString().toLowerCase().replace(/[^a-z0-9]/g, ''));
+      });
+    }
+
+    const active: string[] = [];
+    services.forEach((s) => {
+      const key = (s.name || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (internalDefaults.has(key)) {
+        active.push(s.name);
+        return;
+      }
+      if (connectedSet.has(key)) {
+        active.push(s.name);
+      }
+    });
+
+    setActiveServices(active);
+  }, [services, connectedServices, connectedLoading]);
   const [_, setUserAreas] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const getServiceLogo = (serviceName: string): string | null => {
-    const key = serviceName.toLowerCase();
+  const getServiceLogo = (service: Service): string | null => {
+    if ((service as any).logo) {
+      const l = (service as any).logo as string;
+      if (l.startsWith('//')) return `https:${l}`;
+      return l;
+    }
+
+    const key = service.name.toLowerCase();
     return imagesByName[key] || null;
   };
 
@@ -259,10 +294,11 @@ const Dashboard: React.FC = () => {
         const servicesData = await servicesResponse.json();
         const servicesList = servicesData?.server?.services || [];
         const formattedServices = servicesList.map(
-          (s: { name: string; actions?: unknown[]; reactions?: unknown[] }) => ({
+          (s: { name: string; actions?: unknown[]; reactions?: unknown[]; logo?: string | null }) => ({
             name: s.name,
             actions: s.actions || [],
             reactions: s.reactions || [],
+            logo: s.logo || null,
           })
         );
         setServices(formattedServices);
@@ -282,6 +318,8 @@ const Dashboard: React.FC = () => {
         };
         if (isFullyAuthenticated()) {
           try {
+            // When authenticated, we will compute active services based on linked providers
+            // below in an effect that depends on connected services. For now set a placeholder.
             setActiveServices(generateRandomActiveServices());
             const fetchWithTimeout = async (url: string, options: RequestInit, timeout: number) => {
               const controller = new AbortController();
@@ -341,7 +379,12 @@ const Dashboard: React.FC = () => {
             setActiveServices(generateRandomActiveServices());
           }
         } else {
-          setActiveServices(generateRandomActiveServices());
+          const internalDefaults = new Set(['timer', 'debug', 'weather', 'webhook', 'email']);
+          const internalActive = formattedServices
+            .map((s: Service) => s.name)
+            .filter((n: string) => internalDefaults.has((n || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '')));
+          if (internalActive.length > 0) setActiveServices(internalActive);
+          else setActiveServices(generateRandomActiveServices());
         }
         setError(null);
       } catch (err: unknown) {
@@ -501,7 +544,7 @@ const Dashboard: React.FC = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {services.map((service) => {
                     const isActive = activeServices.includes(service.name);
-                    const logo = getServiceLogo(service.name);
+                    const logo = getServiceLogo(service);
                     return (
                       <div
                         key={service.name}
