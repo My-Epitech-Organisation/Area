@@ -36,6 +36,8 @@ except ImportError:
     # Fallback if django-filter is not installed
     DjangoFilterBackend = None
 
+from users.permissions import IsAuthenticatedAndVerified
+
 from .models import Action, Area, Execution, Reaction, Service
 from .serializers import (
     AboutServiceSerializer,
@@ -60,7 +62,7 @@ class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Service.objects.filter(status=Service.Status.ACTIVE)
     serializer_class = ServiceSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter] + (
         [DjangoFilterBackend] if DjangoFilterBackend else []
     )
@@ -87,7 +89,7 @@ class ActionViewSet(viewsets.ReadOnlyModelViewSet):
         service__status=Service.Status.ACTIVE
     )
     serializer_class = ActionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter] + (
         [DjangoFilterBackend] if DjangoFilterBackend else []
     )
@@ -114,7 +116,7 @@ class ReactionViewSet(viewsets.ReadOnlyModelViewSet):
         service__status=Service.Status.ACTIVE
     )
     serializer_class = ReactionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter] + (
         [DjangoFilterBackend] if DjangoFilterBackend else []
     )
@@ -165,7 +167,7 @@ class AreaViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = AreaSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+    permission_classes = [IsAuthenticatedAndVerified, IsOwnerOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter] + (
         [DjangoFilterBackend] if DjangoFilterBackend else []
     )
@@ -344,7 +346,7 @@ class ExecutionViewSet(viewsets.ReadOnlyModelViewSet):
     - status
     """
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter] + (
         [DjangoFilterBackend] if DjangoFilterBackend else []
     )
@@ -477,7 +479,7 @@ class ExecutionViewSet(viewsets.ReadOnlyModelViewSet):
 class DebugTriggerView(viewsets.ViewSet):
     """Manual trigger for debug actions."""
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
 
     def create(self, request, area_id=None):
         """
@@ -546,7 +548,7 @@ class DebugTriggerView(viewsets.ViewSet):
 class DebugExecutionsView(viewsets.ViewSet):
     """Retrieve executions for debugging."""
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
 
     def list(self, request, area_id=None):
         """

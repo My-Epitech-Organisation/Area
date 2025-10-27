@@ -31,13 +31,18 @@ class BaseAPITest(APITestCase):
 
     def setUp(self):
         """Set up test data for API tests."""
-        # Create test users
+        # Create test users with verified emails
         self.user1 = User.objects.create_user(
             username="user1", email="user1@example.com", password="testpass123"
         )
+        self.user1.email_verified = True
+        self.user1.save()
+
         self.user2 = User.objects.create_user(
             username="user2", email="user2@example.com", password="testpass123"
         )
+        self.user2.email_verified = True
+        self.user2.save()
 
         # Create test services
         self.github_service = Service.objects.create(
