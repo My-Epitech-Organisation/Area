@@ -22,7 +22,8 @@ chmod 777 /app/logs 2>/dev/null || true
 
 # Wait for database to be ready
 echo -e "${YELLOW}⏳ Waiting for database...${NC}"
-while ! nc -z ${DB_HOST:-db} ${DB_PORT:-5432}; do
+DB_HOST=${DB_HOST:-db}
+while ! nc -z $DB_HOST 5432; do
   echo "Database is unavailable - sleeping"
   sleep 1
 done
@@ -30,7 +31,8 @@ echo -e "${GREEN}✅ Database is ready!${NC}"
 
 # Wait for Redis to be ready
 echo -e "${YELLOW}⏳ Waiting for Redis...${NC}"
-while ! nc -z redis ${REDIS_PORT:-6379}; do
+REDIS_HOST=${REDIS_HOST:-redis}
+while ! nc -z $REDIS_HOST ${REDIS_PORT:-6379}; do
   echo "Redis is unavailable - sleeping"
   sleep 1
 done
