@@ -108,16 +108,85 @@ class MinuteField extends StatelessWidget {
 /// Widget for timezone selection with cities
 class TimezoneField extends StatelessWidget {
   static const Map<String, String> timezones = {
-    'UTC': '(UTC+0) London',
-    'CET': '(UTC+1) Paris',
-    'EET': '(UTC+2) Cairo',
-    'IST': '(UTC+5:30) India',
-    'JST': '(UTC+9) Tokyo',
-    'AEST': '(UTC+10) Sydney',
-    'GMT-5': '(UTC-5) New York',
-    'GMT-6': '(UTC-6) Chicago',
-    'GMT-7': '(UTC-7) Denver',
-    'GMT-8': '(UTC-8) Los Angeles',
+    'UTC': '(UTC+0) London, Lisbon',
+    'GMT': '(UTC+0) Greenwich Mean Time',
+    'WET': '(UTC+0) Western European Time',
+    'AZOT': '(UTC-1) Azores',
+    'CVT': '(UTC-1) Cape Verde',
+    'GST': '(UTC-2) South Georgia',
+    'FNT': '(UTC-2) Noronha',
+    'BRT': '(UTC-3) Brasília',
+    'ART': '(UTC-3) Argentina, Buenos Aires',
+    'NST': '(UTC-3:30) Newfoundland',
+    'AST': '(UTC-4) Atlantic Standard Time',
+    'EDT': '(UTC-4) Eastern Daylight Time',
+    'CDT': '(UTC-5) Central Daylight Time',
+    'EST': '(UTC-5) Eastern Standard Time',
+    'CST': '(UTC-6) Central Standard Time',
+    'MDT': '(UTC-6) Mountain Daylight Time',
+    'MST': '(UTC-7) Mountain Standard Time',
+    'PDT': '(UTC-7) Pacific Daylight Time',
+    'PST': '(UTC-8) Pacific Standard Time',
+    'AKDT': '(UTC-8) Alaska Daylight Time',
+    'AKST': '(UTC-9) Alaska Standard Time',
+    'HST': '(UTC-10) Hawaii Standard Time',
+    'SST': '(UTC-11) Samoa Standard Time',
+    'NZT': '(UTC+12) New Zealand',
+    'NZDT': '(UTC+13) New Zealand Daylight',
+
+    // European
+    'CET': '(UTC+1) Paris, Berlin, Rome',
+    'CAT': '(UTC+2) Central Africa Time',
+    'EET': '(UTC+2) Cairo, Athens, Helsinki',
+    'EEST': '(UTC+3) Eastern European Summer',
+    'MSK': '(UTC+3) Moscow',
+    'AST': '(UTC+3) Arabia Standard Time',
+    'GST': '(UTC+4) Gulf Standard Time',
+    'PKT': '(UTC+5) Pakistan',
+
+    // Asia
+    'IST': '(UTC+5:30) India, New Delhi',
+    'NPT': '(UTC+5:45) Nepal',
+    'BDT': '(UTC+6) Bangladesh',
+    'ICT': '(UTC+7) Indochina (Bangkok, Ho Chi Minh)',
+    'CST': '(UTC+8) China, Singapore',
+    'PHT': '(UTC+8) Philippines',
+    'MYT': '(UTC+8) Malaysia',
+    'SGT': '(UTC+8) Singapore',
+    'THA': '(UTC+7) Thailand',
+    'IDT': '(UTC+7) Indonesia (West)',
+    'WITA': '(UTC+8) Indonesia (Central)',
+    'EIT': '(UTC+9) Indonesia (East)',
+    'JST': '(UTC+9) Tokyo, Seoul',
+    'KST': '(UTC+9) Seoul',
+    'ACST': '(UTC+9:30) Adelaide',
+    'AEST': '(UTC+10) Sydney, Melbourne',
+    'AEDT': '(UTC+11) Australian Eastern Daylight',
+    'NZST': '(UTC+12) Auckland',
+
+    // Pacific
+    'FJT': '(UTC+12) Fiji',
+    'NZDT': '(UTC+13) New Zealand Daylight',
+    'TOT': '(UTC+13) Tonga',
+    'AEST': '(UTC+10) Sydney, Brisbane',
+    'AWST': '(UTC+8) Perth',
+
+    // Americas
+    'BRST': '(UTC-2) Brasília Summer',
+    'ART': '(UTC-3) Buenos Aires',
+    'GFT': '(UTC-3) French Guiana',
+    'PYST': '(UTC-3) Paraguay Summer',
+    'CLST': '(UTC-3) Chile Summer',
+    'VET': '(UTC-4:30) Venezuela',
+    'BOT': '(UTC-4) Bolivia',
+    'PYT': '(UTC-4) Paraguay',
+    'CLT': '(UTC-4) Chile',
+    'COT': '(UTC-5) Colombia',
+    'PET': '(UTC-5) Peru',
+    'ECT': '(UTC-5) Ecuador',
+    'CST': '(UTC-6) Central America, Mexico',
+    'PST': '(UTC-8) Los Angeles',
+    'MST': '(UTC-7) Denver',
   };
 
   final String label;
@@ -170,7 +239,6 @@ class TimezoneField extends StatelessWidget {
   }
 }
 
-/// Widget for date selection
 class DateField extends StatefulWidget {
   final String label;
   final String value;
@@ -259,8 +327,6 @@ class _DateFieldState extends State<DateField> {
   }
 }
 
-/// Widget for time selection (hour and minute) using showTimePicker
-/// This widget combines hour and minute selection into a single unified time picker
 class TimePickerField extends StatefulWidget {
   final String label;
   final int initialHour;
