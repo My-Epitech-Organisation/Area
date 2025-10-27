@@ -264,10 +264,10 @@ const Homepage: React.FC = () => {
                   </div>
                   <div className="bg-white/5 p-3 md:p-6 rounded-xl border border-white/10 text-left">
                     <h3 className="text-sm md:text-lg text-white font-semibold">
-                      Calendar → Teams
+                      Calendar → Slack
                     </h3>
                     <p className="text-xs md:text-sm lg:text-lg text-gray-300 mt-1 md:mt-2">
-                      When a meeting starts, post a message to your team&apos;s Teams channel to
+                      When a meeting starts, post a message to your team&apos;s Slack channel to
                       remind attendees.
                     </p>
                   </div>

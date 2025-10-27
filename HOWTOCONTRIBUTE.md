@@ -267,92 +267,131 @@ A **Service** represents an external platform (e.g., GitHub, Gmail, Slack) that 
 
 #### Step 1: Define the Service
 
-Add your service to `backend/automations/management/commands/init_services.py`:
+Add your service to the `services_data` list in `backend/automations/management/commands/init_services.py`:
 
 ```python
-def _create_slack_service(self):
-    """Create Slack service with actions and reactions."""
-    service, created = Service.objects.get_or_create(
-        name="slack",
-        defaults={
-            "description": "Send messages and manage Slack workspace",
-            "status": Service.Status.ACTIVE,
-        },
-    )
-
-    if created:
-        self.stdout.write(self.style.SUCCESS(f"  ✓ Created service: {service.name}"))
-    else:
-        self.stdout.write(f"  → Service already exists: {service.name}")
-
-    # Create actions
-    self._create_action(
-        service=service,
-        name="slack_new_message",
-        description="Triggered when a new message is posted in a channel"
-    )
-
-    # Create reactions
-    self._create_reaction(
-        service=service,
-        name="slack_send_message",
-        description="Send a message to a Slack channel"
-    )
-
-    return service
-```
-
-Then add to `_create_services()`:
-
-```python
-def _create_services(self):
+services_data = [
     # ... existing services
-    self._create_slack_service()
+    {
+        "name": "github",
+        "description": "GitHub repository management and notifications",
+        "status": Service.Status.ACTIVE,
+        "actions": [
+            {
+                "name": "github_new_issue",
+                "description": (
+                    "Triggered when a new issue is created in a repository"
+                ),
+                "config_schema": {
+                    "repository": {
+                        "type": "string",
+                        "label": "Repository",
+                        "description": "Repository in format owner/repo",
+                        "required": True,
+                        "placeholder": "octocat/Hello-World",
+                        "pattern": "^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$",
+                    },
+                    "labels": {
+                        "type": "array",
+                        "label": "Filter Labels",
+                        "description": "Filter by issue labels (optional)",
+                        "required": False,
+                        "items": {"type": "string"},
+                        "placeholder": "bug,enhancement",
+                    },
+                },
+            },
+        ],
+        "reactions": [
+            {
+                "name": "github_create_issue",
+                "description": "Create a new issue in a GitHub repository",
+                "config_schema": {
+                    "repository": {
+                        "type": "string",
+                        "label": "Repository",
+                        "description": "Repository in format owner/repo",
+                        "required": True,
+                        "placeholder": "octocat/Hello-World",
+                        "pattern": "^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$",
+                    },
+                    "title": {
+                        "type": "string",
+                        "label": "Issue Title",
+                        "description": "Title of the issue",
+                        "required": True,
+                        "placeholder": "Bug report",
+                        "minLength": 1,
+                        "maxLength": 200,
+                    },
+                    "body": {
+                        "type": "string",
+                        "label": "Issue Body",
+                        "description": "Detailed description of the issue",
+                        "required": False,
+                        "placeholder": "Describe the issue here...",
+                    },
+                },
+            },
+        ],
+    },
+    # ... more services
+]
 ```
 
 #### Step 2: Define JSON Schemas
 
 Add schemas in `backend/automations/validators.py`:
 
+**For Actions:**
 ```python
 ACTION_SCHEMAS = {
     # ... existing schemas
-    "slack_new_message": {
+    "github_new_issue": {
         "type": "object",
         "properties": {
-            "channel": {
+            "repository": {
                 "type": "string",
-                "description": "Slack channel ID or name",
+                "pattern": "^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$",
+                "description": "Repository in format owner/repo",
             },
-            "keyword": {
-                "type": "string",
-                "description": "Filter messages containing this keyword (optional)",
+            "labels": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Filter by issue labels (optional)",
             },
         },
-        "required": ["channel"],
+        "required": ["repository"],
         "additionalProperties": False,
     },
 }
+```
 
+**For Reactions:**
+```python
 REACTION_SCHEMAS = {
     # ... existing schemas
-    "slack_send_message": {
+    "github_create_issue": {
         "type": "object",
         "properties": {
-            "channel": {
+            "repository": {
                 "type": "string",
-                "description": "Target channel ID or name",
+                "pattern": "^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$",
             },
-            "message": {
-                "type": "string",
-                "description": "Message to send",
+            "title": {"type": "string", "minLength": 1, "maxLength": 200},
+            "body": {"type": "string", "description": "Issue description"},
+            "labels": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Issue labels",
             },
-            "username": {
-                "type": "string",
-                "description": "Bot display name (optional)",
+            "assignees": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "GitHub usernames to assign",
             },
         },
-        "required": ["channel", "message"],
+        "required": ["repository", "title"],
         "additionalProperties": False,
     },
 }
@@ -360,16 +399,19 @@ REACTION_SCHEMAS = {
 
 #### Step 3: Add Compatibility Rules
 
-Update `COMPATIBILITY_RULES` in `validators.py`:
+Update `COMPATIBILITY_RULES` in `backend/automations/validators.py`:
 
 ```python
 COMPATIBILITY_RULES = {
     # ... existing rules
-    "slack_new_message": [
-        "slack_send_message",
+    "github_new_issue": [
         "send_email",
-        "webhook_post",
+        "gmail_send_email",
+        "github_issue",
+        "teams_message",
         "log_message",
+        "webhook_post",
+        "calendar_create_event",
     ],
 }
 ```
@@ -384,7 +426,7 @@ docker-compose exec server python manage.py init_services --reset
 open http://localhost:8080/admin/automations/service/
 
 # Check API
-curl http://localhost:8080/api/services/ | jq '.results[] | select(.name=="slack")'
+curl http://localhost:8080/api/services/ | jq '.results[] | select(.name=="github")'
 ```
 
 ### 3.2 Validation Checklist
@@ -416,22 +458,22 @@ Create or update the task in `backend/automations/tasks.py`:
 
 ```python
 @shared_task(
-    name="automations.check_slack_actions",
+    name="automations.check_github_actions",
     bind=True,
     max_retries=3,
     default_retry_delay=300,
 )
-def check_slack_actions(self):
+def check_github_actions(self):
     """
-    Check Slack-based actions (polling mode).
+    Check GitHub-based actions (polling mode).
 
-    Polls Slack API for new messages matching user's AREA configurations.
+    Polls GitHub API for new issues matching user's AREA configurations.
     Runs every 5 minutes via Celery Beat.
 
     Returns:
         dict: Statistics about processed events
     """
-    logger.info("Starting Slack actions check (polling)")
+    logger.info("Starting GitHub actions check (polling)")
 
     triggered_count = 0
     skipped_count = 0
@@ -440,81 +482,46 @@ def check_slack_actions(self):
     try:
         from users.oauth.manager import OAuthManager
 
-        # Get all active areas with Slack actions
-        slack_areas = get_active_areas(["slack_new_message"])
+        # Get all active areas with GitHub actions
+        github_areas = get_active_areas(["github_new_issue"])
 
-        logger.debug(f"Found {len(slack_areas)} active Slack areas")
+        logger.debug(f"Found {len(github_areas)} active GitHub areas")
 
-        for area in slack_areas:
+        for area in github_areas:
             try:
                 # Get valid OAuth2 token for the user
-                access_token = OAuthManager.get_valid_token(area.owner, "slack")
+                access_token = OAuthManager.get_valid_token(area.owner, "github")
 
                 if not access_token:
                     logger.warning(
-                        f"No valid Slack token for user {area.owner.email}, "
+                        f"No valid GitHub token for user {area.owner.email}, "
                         f"skipping area '{area.name}'"
                     )
                     no_token_count += 1
                     continue
 
-                # Extract configuration
-                channel = area.action_config.get("channel")
-                keyword = area.action_config.get("keyword")
-
-                # Call Slack API
-                headers = {"Authorization": f"Bearer {access_token}"}
-                response = requests.get(
-                    f"https://slack.com/api/conversations.history",
-                    headers=headers,
-                    params={"channel": channel, "limit": 10},
-                    timeout=30,
-                )
-
-                if response.status_code != 200:
-                    logger.error(f"Slack API error: {response.status_code}")
-                    continue
-
-                data = response.json()
-                if not data.get("ok"):
-                    logger.error(f"Slack API error: {data.get('error')}")
-                    continue
-
-                # Process messages
-                for message in data.get("messages", []):
-                    # Filter by keyword if specified
-                    if keyword and keyword.lower() not in message.get("text", "").lower():
-                        continue
-
-                    # Create unique event ID
-                    event_id = f"slack_message_{message['ts']}"
-
-                    # Create execution (idempotent)
-                    execution, created = create_execution_safe(
-                        area=area,
-                        external_event_id=event_id,
-                        trigger_data={
-                            "message": message.get("text"),
-                            "user": message.get("user"),
-                            "timestamp": message.get("ts"),
-                            "channel": channel,
-                        },
+                # Get repository from action_config
+                repository = area.action_config.get("repository")
+                if not repository:
+                    logger.warning(
+                        f"Area {area.id}: No repository configured in action_config"
                     )
+                    skipped_count += 1
+                    continue
 
-                    if created and execution:
-                        # Queue the reaction
-                        execute_reaction.delay(execution.pk)
-                        triggered_count += 1
-                        logger.info(f"Triggered execution #{execution.pk} for Slack message")
-                    else:
-                        skipped_count += 1
+                # Create execution for new issues...
+                # (Implementation details in tasks.py)
+
+                if execution_created:
+                    triggered_count += 1
 
             except Exception as e:
-                logger.error(f"Error checking Slack area '{area.name}': {e}", exc_info=True)
+                logger.error(f"Error processing GitHub area {area.id}: {e}", exc_info=True)
+                skipped_count += 1
                 continue
 
         logger.info(
-            f"Slack check complete: {triggered_count} triggered, "
+            f"GitHub check complete: {triggered_count} triggered, "
             f"{skipped_count} skipped, {no_token_count} no token"
         )
 
@@ -526,7 +533,7 @@ def check_slack_actions(self):
         }
 
     except Exception as exc:
-        logger.error(f"Fatal error in check_slack_actions: {exc}", exc_info=True)
+        logger.error(f"Fatal error in check_github_actions: {exc}", exc_info=True)
         raise self.retry(exc=exc, countdown=300) from None
 ```
 
@@ -537,10 +544,10 @@ Add to `backend/area_project/settings.py`:
 ```python
 CELERY_BEAT_SCHEDULE = {
     # ... existing tasks
-    "check-slack-actions": {
-        "task": "automations.check_slack_actions",
+    "check-github-actions": {
+        "task": "automations.check_github_actions",
         "schedule": crontab(minute="*/5"),  # Every 5 minutes
-        "options": {"queue": "slack"},
+        "options": {"queue": "github"},
     },
 }
 ```
@@ -550,21 +557,21 @@ CELERY_BEAT_SCHEDULE = {
 ```python
 CELERY_TASK_ROUTES = {
     # ... existing routes
-    "automations.check_slack_actions": {"queue": "slack"},
+    "automations.check_github_actions": {"queue": "github"},
 }
 ```
 
 ### 4.2 Testing Actions
 
 ```python
-# backend/automations/tests/test_slack_actions.py
+# backend/automations/tests/test_github_actions.py
 from unittest.mock import MagicMock, patch
 from django.test import TestCase
 from automations.models import Area, Service, Action, Reaction
-from automations.tasks import check_slack_actions
+from automations.tasks import check_github_actions
 from users.models import User
 
-class CheckSlackActionsTest(TestCase):
+class CheckGitHubActionsTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username="testuser",
@@ -572,16 +579,16 @@ class CheckSlackActionsTest(TestCase):
             password="testpass123"
         )
 
-        # Create Slack service
-        self.slack_service = Service.objects.create(
-            name="slack",
-            description="Slack integration"
+        # Create GitHub service
+        self.github_service = Service.objects.create(
+            name="github",
+            description="GitHub integration"
         )
 
-        self.slack_action = Action.objects.create(
-            service=self.slack_service,
-            name="slack_new_message",
-            description="New Slack message"
+        self.github_action = Action.objects.create(
+            service=self.github_service,
+            name="github_new_issue",
+            description="New GitHub issue"
         )
 
         self.email_reaction = Reaction.objects.create(
@@ -592,42 +599,39 @@ class CheckSlackActionsTest(TestCase):
 
     @patch("automations.tasks.OAuthManager.get_valid_token")
     @patch("automations.tasks.requests.get")
-    def test_check_slack_actions_success(self, mock_get, mock_token):
+    def test_check_github_actions_success(self, mock_get, mock_token):
         # Mock OAuth token
-        mock_token.return_value = "test_slack_token"
+        mock_token.return_value = "test_github_token"
 
-        # Mock Slack API response
+        # Mock GitHub API response
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "ok": True,
-            "messages": [
-                {
-                    "text": "Hello world",
-                    "user": "U123",
-                    "ts": "1234567890.123456"
-                }
-            ]
-        }
+        mock_response.json.return_value = [
+            {
+                "number": 123,
+                "title": "Test issue",
+                "created_at": "2025-01-01T09:00:00Z"
+            }
+        ]
         mock_get.return_value = mock_response
 
         # Create AREA
         area = Area.objects.create(
             owner=self.user,
-            name="Test Slack AREA",
-            action=self.slack_action,
+            name="Test GitHub AREA",
+            action=self.github_action,
             reaction=self.email_reaction,
-            action_config={"channel": "C123"},
+            action_config={"repository": "testuser/test-repo"},
             status=Area.Status.ACTIVE
         )
 
         # Run task
-        result = check_slack_actions()
+        result = check_github_actions()
 
         # Assertions
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["triggered"], 1)
-        mock_token.assert_called_once_with(self.user, "slack")
+        mock_token.assert_called_once_with(self.user, "github")
 ```
 
 ### 4.3 Validation Checklist
@@ -645,7 +649,7 @@ class CheckSlackActionsTest(TestCase):
 
 ## 5. Adding a Reaction
 
-A **Reaction** is the automated action performed when an Action triggers (e.g., "send email", "post to Slack").
+A **Reaction** is the automated action performed when an Action triggers (e.g., "create issue", "send email").
 
 ### 5.1 Implementation Guide
 
@@ -689,8 +693,8 @@ def execute_reaction(self, execution_id: int):
 
     try:
         # Route to appropriate handler
-        if reaction_name == "slack_send_message":
-            result = _execute_slack_message(execution, reaction_config)
+        if reaction_name == "create_github_issue":
+            result = _execute_github_issue(execution, reaction_config)
         elif reaction_name == "send_email":
             result = _execute_send_email(execution, reaction_config)
         elif reaction_name == "webhook_post":
@@ -716,51 +720,58 @@ def execute_reaction(self, execution_id: int):
         raise
 
 
-def _execute_slack_message(execution, config):
-    """Execute Slack message reaction."""
+def _execute_github_issue(execution, config):
+    """Execute GitHub issue creation reaction."""
     from users.oauth.manager import OAuthManager
 
     # Get OAuth token
-    access_token = OAuthManager.get_valid_token(execution.area.owner, "slack")
+    access_token = OAuthManager.get_valid_token(execution.area.owner, "github")
     if not access_token:
-        raise ValueError("No valid Slack token available")
+        raise ValueError("No valid GitHub token available")
 
     # Extract config
-    channel = config.get("channel")
-    message = config.get("message")
-    username = config.get("username", "AREA Bot")
+    repository = config.get("repository")
+    title_template = config.get("title", "AREA Trigger")
+    body_template = config.get("body", "Triggered by AREA")
 
-    # Optionally, replace placeholders with trigger data
+    if not repository:
+        raise ValueError("Repository not configured in reaction_config")
+
+    # Format title and body with trigger data
     trigger_data = execution.trigger_data or {}
-    message = message.format(**trigger_data)
+    title = title_template.format(**trigger_data)
+    body = body_template.format(**trigger_data)
 
-    # Send to Slack
+    # Create GitHub issue
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+
+    payload = {
+        "title": title,
+        "body": body,
+        "labels": config.get("labels", []),
+    }
+
     response = requests.post(
-        "https://slack.com/api/chat.postMessage",
-        headers={
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json",
-        },
-        json={
-            "channel": channel,
-            "text": message,
-            "username": username,
-        },
+        f"https://api.github.com/repos/{repository}/issues",
+        headers=headers,
+        json=payload,
         timeout=30,
     )
 
-    if response.status_code != 200:
-        raise Exception(f"Slack API error: {response.status_code} - {response.text}")
+    if response.status_code != 201:
+        raise Exception(f"GitHub API error: {response.status_code} - {response.text}")
 
     data = response.json()
-    if not data.get("ok"):
-        raise Exception(f"Slack API error: {data.get('error')}")
 
-    logger.info(f"Slack message sent to {channel}: {message[:50]}...")
+    logger.info(f"GitHub issue created in {repository}: #{data['number']} - {title}")
 
     return {
-        "channel": channel,
-        "message_ts": data.get("ts"),
+        "issue_number": data["number"],
+        "issue_url": data["html_url"],
+        "repository": repository,
         "success": True,
     }
 ```
@@ -768,14 +779,14 @@ def _execute_slack_message(execution, config):
 ### 5.2 Testing Reactions
 
 ```python
-# backend/automations/tests/test_slack_reactions.py
+# backend/automations/tests/test_github_reactions.py
 from unittest.mock import patch, MagicMock
 from django.test import TestCase
 from automations.models import Area, Execution, Service, Action, Reaction
-from automations.tasks import execute_reaction, _execute_slack_message
+from automations.tasks import execute_reaction, _execute_github_issue
 from users.models import User
 
-class SlackReactionTest(TestCase):
+class GitHubReactionTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username="testuser",
@@ -783,7 +794,7 @@ class SlackReactionTest(TestCase):
         )
 
         # Create services
-        slack_service = Service.objects.create(name="slack")
+        github_service = Service.objects.create(name="github")
         timer_service = Service.objects.create(name="timer")
 
         # Create action and reaction
@@ -791,9 +802,9 @@ class SlackReactionTest(TestCase):
             service=timer_service,
             name="timer_daily"
         )
-        self.slack_reaction = Reaction.objects.create(
-            service=slack_service,
-            name="slack_send_message"
+        self.github_reaction = Reaction.objects.create(
+            service=github_service,
+            name="create_github_issue"
         )
 
         # Create AREA
@@ -801,10 +812,11 @@ class SlackReactionTest(TestCase):
             owner=self.user,
             name="Test AREA",
             action=self.timer_action,
-            reaction=self.slack_reaction,
+            reaction=self.github_reaction,
             reaction_config={
-                "channel": "C123",
-                "message": "Test message: {action_type}"
+                "repository": "testuser/test-repo",
+                "title": "Test issue: {action_type}",
+                "body": "Triggered by AREA at {timestamp}"
             }
         )
 
@@ -813,21 +825,22 @@ class SlackReactionTest(TestCase):
             area=self.area,
             external_event_id="test_event_123",
             status=Execution.Status.PENDING,
-            trigger_data={"action_type": "timer_daily"}
+            trigger_data={"action_type": "timer_daily", "timestamp": "2025-01-01T09:00:00Z"}
         )
 
     @patch("automations.tasks.OAuthManager.get_valid_token")
     @patch("automations.tasks.requests.post")
-    def test_execute_slack_message_success(self, mock_post, mock_token):
+    def test_execute_github_issue_success(self, mock_post, mock_token):
         # Mock OAuth token
-        mock_token.return_value = "test_slack_token"
+        mock_token.return_value = "test_github_token"
 
-        # Mock Slack API
+        # Mock GitHub API
         mock_response = MagicMock()
-        mock_response.status_code = 200
+        mock_response.status_code = 201
         mock_response.json.return_value = {
-            "ok": True,
-            "ts": "1234567890.123456"
+            "number": 123,
+            "html_url": "https://github.com/testuser/test-repo/issues/123",
+            "title": "Test issue: timer_daily"
         }
         mock_post.return_value = mock_response
 
@@ -841,6 +854,7 @@ class SlackReactionTest(TestCase):
         self.assertEqual(self.execution.status, Execution.Status.SUCCESS)
         self.assertIsNotNone(self.execution.completed_at)
         self.assertIn("success", self.execution.result_data)
+        self.assertEqual(self.execution.result_data["issue_number"], 123)
         mock_token.assert_called_once()
         mock_post.assert_called_once()
 ```
@@ -910,7 +924,7 @@ sequenceDiagram
 Create a new provider class in `backend/users/oauth/`:
 
 ```python
-# backend/users/oauth/slack.py
+# backend/users/oauth/github.py
 import logging
 from typing import Optional
 import requests
@@ -919,24 +933,24 @@ from .base import BaseOAuthProvider
 logger = logging.getLogger(__name__)
 
 
-class SlackOAuthProvider(BaseOAuthProvider):
+class GitHubOAuthProvider(BaseOAuthProvider):
     """
-    OAuth2 provider for Slack workspace integration.
+    OAuth2 provider for GitHub repository integration.
 
-    Implements the OAuth2 flow for Slack's API including:
+    Implements the OAuth2 flow for GitHub's API including:
     - User authorization with custom scopes
-    - Token exchange via oauth.v2.access endpoint
-    - Token refresh (Slack tokens don't expire)
-    - User info retrieval via users.identity
+    - Token exchange via GitHub's oauth/access_token endpoint
+    - Token refresh (GitHub tokens don't expire)
+    - User info retrieval via /user endpoint
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.scopes = self.config.get("scopes", ["channels:read", "chat:write"])
+        self.scopes = self.config.get("scopes", ["repo", "user"])
 
     def get_authorization_url(self, state: str) -> str:
         """
-        Generate Slack OAuth2 authorization URL.
+        Generate GitHub OAuth2 authorization URL.
 
         Args:
             state: CSRF protection token
@@ -981,16 +995,18 @@ class SlackOAuthProvider(BaseOAuthProvider):
         response = requests.post(token_url, data=data, timeout=10)
         response.raise_for_status()
 
-        result = response.json()
+        # GitHub returns URL-encoded data
+        from urllib.parse import parse_qs
+        result = parse_qs(response.text)
 
-        if not result.get("ok"):
-            error_msg = result.get("error", "Unknown error")
-            raise ValueError(f"Slack OAuth error: {error_msg}")
+        if "error" in result:
+            error_msg = result["error"][0]
+            raise ValueError(f"GitHub OAuth error: {error_msg}")
 
         return {
-            "access_token": result["authed_user"]["access_token"],
+            "access_token": result["access_token"][0],
             "token_type": "Bearer",
-            # Slack tokens don't expire
+            # GitHub tokens don't expire
             "expires_in": None,
         }
 
@@ -998,21 +1014,21 @@ class SlackOAuthProvider(BaseOAuthProvider):
         """
         Refresh an expired access token.
 
-        Slack tokens don't expire, so this returns None.
+        GitHub tokens don't expire, so this returns None.
         Override if your provider supports refresh.
 
         Args:
-            refresh_token: Not used for Slack
+            refresh_token: Not used for GitHub
 
         Returns:
-            None (Slack tokens don't require refresh)
+            None (GitHub tokens don't require refresh)
         """
-        logger.info("Slack tokens don't expire - refresh not needed")
+        logger.info("GitHub tokens don't expire - refresh not needed")
         return None
 
     def get_user_info(self, access_token: str) -> dict:
         """
-        Fetch user information from Slack API.
+        Fetch user information from GitHub API.
 
         Args:
             access_token: Valid OAuth2 access token
@@ -1031,42 +1047,27 @@ class SlackOAuthProvider(BaseOAuthProvider):
 
         result = response.json()
 
-        if not result.get("ok"):
-            error_msg = result.get("error", "Unknown error")
-            raise ValueError(f"Slack API error: {error_msg}")
-
         return {
-            "id": result["user"]["id"],
-            "name": result["user"]["name"],
-            "email": result["user"]["email"],
+            "id": result["id"],
+            "name": result.get("name"),
+            "email": result.get("email"),
+            "login": result["login"],
         }
 
     def revoke_token(self, token: str) -> bool:
         """
         Revoke an OAuth2 token.
 
+        GitHub doesn't provide token revocation, so this returns False.
+
         Args:
             token: Access token to revoke
 
         Returns:
-            True if revocation successful, False otherwise
+            False (GitHub doesn't support token revocation)
         """
-        revoke_url = self.config.get("revoke_endpoint")
-        if not revoke_url:
-            logger.warning("Slack revoke endpoint not configured")
-            return False
-
-        try:
-            response = requests.post(
-                revoke_url,
-                data={"token": token},
-                timeout=10
-            )
-            response.raise_for_status()
-            return response.json().get("ok", False)
-        except requests.RequestException as e:
-            logger.error(f"Failed to revoke Slack token: {e}")
-            return False
+        logger.warning("GitHub doesn't support token revocation")
+        return False
 ```
 
 #### Step 2: Register Provider in OAuthManager
@@ -1074,7 +1075,7 @@ class SlackOAuthProvider(BaseOAuthProvider):
 Update `backend/users/oauth/manager.py`:
 
 ```python
-from .slack import SlackOAuthProvider
+from .github import GitHubOAuthProvider
 
 class OAuthManager:
     """
@@ -1082,8 +1083,7 @@ class OAuthManager:
     """
     _provider_classes = {
         "google": GoogleOAuthProvider,
-        "github": GitHubOAuthProvider,
-        "slack": SlackOAuthProvider,  # Add your provider here
+        "github": GitHubOAuthProvider,  # Add your provider here
     }
 ```
 
@@ -1095,23 +1095,22 @@ Update `backend/area_project/settings.py`:
 OAUTH2_PROVIDERS = {
     # ... existing providers ...
 
-    "slack": {
-        "client_id": os.getenv("SLACK_CLIENT_ID", ""),
-        "client_secret": os.getenv("SLACK_CLIENT_SECRET", ""),
+    "github": {
+        "client_id": os.getenv("GITHUB_CLIENT_ID", ""),
+        "client_secret": os.getenv("GITHUB_CLIENT_SECRET", ""),
         "redirect_uri": os.getenv(
-            "SLACK_REDIRECT_URI",
-            "http://localhost:8080/auth/oauth/slack/callback/"
+            "GITHUB_REDIRECT_URI",
+            "http://localhost:8080/auth/oauth/github/callback/"
         ),
-        "authorization_endpoint": "https://slack.com/oauth/v2/authorize",
-        "token_endpoint": "https://slack.com/api/oauth.v2.access",
-        "userinfo_endpoint": "https://slack.com/api/users.identity",
-        "revoke_endpoint": "https://slack.com/api/auth.revoke",
+        "authorization_endpoint": "https://github.com/login/oauth/authorize",
+        "token_endpoint": "https://github.com/login/oauth/access_token",
+        "userinfo_endpoint": "https://api.github.com/user",
+        "revoke_endpoint": None,  # GitHub doesn't support token revocation
         "scopes": [
-            "channels:read",
-            "channels:history",
-            "chat:write",
+            "repo",
+            "user",
         ],
-        "requires_refresh": False,  # Slack tokens don't expire
+        "requires_refresh": False,  # GitHub tokens don't expire
     },
 }
 
@@ -1124,18 +1123,18 @@ OAUTH2_STATE_EXPIRY = 600  # 10 minutes
 Update your `.env` file:
 
 ```bash
-# Slack OAuth2 (Get from https://api.slack.com/apps)
-SLACK_CLIENT_ID=your-slack-client-id
-SLACK_CLIENT_SECRET=your-slack-client-secret
-SLACK_REDIRECT_URI=http://localhost:8080/auth/oauth/slack/callback/
+# GitHub OAuth2 (Get from https://github.com/settings/developers)
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+GITHUB_REDIRECT_URI=http://localhost:8080/auth/oauth/github/callback/
 ```
 
 #### Step 5: Update Frontend
 
-Add Slack to available providers in `frontend/src/pages/serviceDetail.tsx`:
+Add GitHub to available providers in `frontend/src/pages/serviceDetail.tsx`:
 
 ```typescript
-const oauthProviders = ['github', 'google', 'gmail', 'slack'];
+const oauthProviders = ['github', 'google', 'gmail'];
 ```
 
 ### 6.4 Using OAuth Tokens in Tasks
@@ -1146,46 +1145,46 @@ When implementing actions that need to call external APIs, use `OAuthManager.get
 from users.oauth.manager import OAuthManager
 from automations.models import Area, Execution
 
-@shared_task(name="automations.check_slack_messages")
-def check_slack_messages():
+@shared_task(name="automations.check_github_issues")
+def check_github_issues():
     """
-    Check for new Slack messages in monitored channels.
+    Check for new GitHub issues in monitored repositories.
     """
-    # Get all active AREAs with Slack actions
+    # Get all active AREAs with GitHub actions
     areas = Area.objects.filter(
         status=Area.Status.ACTIVE,
-        action__name="slack_new_message"
+        action__name="github_new_issue"
     ).select_related("owner", "action")
 
     for area in areas:
         try:
             # Get valid OAuth2 token (auto-refreshes if needed)
-            access_token = OAuthManager.get_valid_token(area.owner, "slack")
+            access_token = OAuthManager.get_valid_token(area.owner, "github")
 
             if not access_token:
                 logger.error(
-                    f"No valid Slack token for user {area.owner.id} "
+                    f"No valid GitHub token for user {area.owner.id} "
                     f"(AREA #{area.pk})"
                 )
                 continue
 
-            # Use token to call Slack API
-            channel_id = area.action_config.get("channel")
+            # Use token to call GitHub API
+            repository = area.action_config.get("repository")
             headers = {"Authorization": f"Bearer {access_token}"}
 
             response = requests.get(
-                "https://slack.com/api/conversations.history",
+                f"https://api.github.com/repos/{repository}/issues",
                 headers=headers,
-                params={"channel": channel_id, "limit": 10},
+                params={"state": "open", "per_page": 10},
                 timeout=10
             )
             response.raise_for_status()
 
-            # Process messages and create executions
+            # Process issues and create executions
             # ... (see Section 4 for full implementation)
 
         except requests.RequestException as e:
-            logger.error(f"Slack API error for AREA #{area.pk}: {e}")
+            logger.error(f"GitHub API error for AREA #{area.pk}: {e}")
             continue
 ```
 
@@ -1348,7 +1347,7 @@ service_token.mark_used()
 
 3. Login and go to Services page
 
-4. Click "Connect Slack" (or your provider)
+4. Click "Connect GitHub" (or your provider)
 
 5. Authorize on provider's page
 
@@ -1358,7 +1357,7 @@ service_token.mark_used()
    ```bash
    docker exec -it area_server python manage.py shell
    >>> from users.models import ServiceToken
-   >>> ServiceToken.objects.filter(service_name="slack")
+   >>> ServiceToken.objects.filter(service_name="github")
    ```
 
 #### Unit Testing
@@ -1393,7 +1392,7 @@ class OAuthCallbackBackendFirstTestCase(TestCase):
         # Mock cache state retrieval
         mock_cache.get.return_value = {
             "user_id": str(self.user.id),
-            "provider": "slack"
+            "provider": "github"
         }
 
         # Mock OAuth provider
@@ -1404,12 +1403,12 @@ class OAuthCallbackBackendFirstTestCase(TestCase):
             "expires_in": 3600,
             "token_type": "Bearer"
         }
-        mock_provider.scopes = ["channels:read", "chat:write"]
+        mock_provider.scopes = ["repo", "user"]
         mock_oauth_manager.get_provider.return_value = mock_provider
 
         # Make callback request
         response = self.client.get(
-            "/auth/oauth/slack/callback/",
+            "/auth/oauth/github/callback/",
             {
                 "code": "test_auth_code",
                 "state": "test_state_token"
@@ -1419,15 +1418,15 @@ class OAuthCallbackBackendFirstTestCase(TestCase):
         # Assertions
         self.assertEqual(response.status_code, 302)  # Redirect
         self.assertIn("success=true", response.url)
-        self.assertIn("service=slack", response.url)
+        self.assertIn("service=github", response.url)
 
         # Verify token created
         token = ServiceToken.objects.get(
             user=self.user,
-            service_name="slack"
+            service_name="github"
         )
         self.assertEqual(token.access_token, "test_access_token")
-        self.assertEqual(token.scopes, "channels:read chat:write")
+        self.assertEqual(token.scopes, "repo user")
 
         # Verify cache delete called (one-time use)
         mock_cache.delete.assert_called_once_with("oauth_state_test_state_token")
@@ -1478,7 +1477,7 @@ When implementing OAuth2 integration:
 - **OAuth2 RFC 6749**: https://tools.ietf.org/html/rfc6749
 - **Google OAuth2 Docs**: https://developers.google.com/identity/protocols/oauth2
 - **GitHub OAuth Docs**: https://docs.github.com/en/developers/apps/building-oauth-apps
-- **Slack OAuth Docs**: https://api.slack.com/authentication/oauth-v2
+- **GitHub OAuth Docs**: https://docs.github.com/en/developers/apps/building-oauth-apps
 
 ---
 
@@ -1541,7 +1540,7 @@ make lint-fix
 - Lowercase with hyphens: `/api/services/`, `/api/areas/`, `/auth/oauth/google/`
 
 **Git Branches**
-- Feature: `feature/add-slack-integration`
+- Feature: `feature/add-github-integration`
 - Bugfix: `bugfix/fix-timer-timezone`
 - Hotfix: `hotfix/critical-oauth-bug`
 - Task: `28-feature-frontend-react-servicePage-gmail-component`
@@ -1649,13 +1648,13 @@ Follow Conventional Commits:
 **Examples:**
 
 ```
-feat(automations): add Slack integration with OAuth2
+feat(automations): add GitHub integration with OAuth2
 
-- Implement slack_new_message action
-- Implement slack_send_message reaction
-- Add Slack OAuth2 provider
-- Add Celery task for polling Slack API
-- Add unit tests for Slack integration
+- Implement github_new_issue action
+- Implement create_github_issue reaction
+- Add GitHub OAuth2 provider
+- Add Celery task for polling GitHub API
+- Add unit tests for GitHub integration
 
 Closes #42
 ```
@@ -2074,7 +2073,7 @@ SELECT * FROM automations_area WHERE status = 'active';
 **Monitor Celery:**
 ```bash
 # Via Flower (web UI)
-open http://localhost:5555
+open http://localhost:5566
 
 # Via CLI
 docker-compose exec worker celery -A area_project inspect active
@@ -2136,7 +2135,7 @@ services:
 ### Internal Tools
 - Admin Panel: http://localhost:8080/admin/
 - API Root: http://localhost:8080/api/
-- Flower (Celery): http://localhost:5555/
+- Flower (Celery): http://localhost:5566/
 - About.json: http://localhost:8080/about.json
 
 ---

@@ -7,7 +7,7 @@ class ServiceProviderConfig {
     'gmail',
     'google',
     'slack',
-    'teams',
+    'twitch',
   ];
 
   static bool requiresOAuth(String serviceName) {
@@ -37,8 +37,8 @@ class ServiceProviderConfig {
         return 'GitHub';
       case 'slack':
         return 'Slack';
-      case 'teams':
-        return 'Microsoft Teams';
+      case 'twitch':
+        return 'Twitch';
       default:
         return provider;
     }
@@ -54,8 +54,8 @@ class ServiceProviderConfig {
         return 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/256px-Google_2015_logo.svg.png';
       case 'slack':
         return 'https://cdn-icons-png.flaticon.com/512/2111/2111615.png';
-      case 'teams':
-        return 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Flogos-world.net%2Fwp-content%2Fuploads%2F2021%2F04%2FMicrosoft-Teams-Logo.png&f=1&nofb=1&ipt=46d2e084ffa5f5ba094e7dc387d3425cf676b978d9900488914b4a3bed93bf55';
+      case 'twitch':
+        return 'https://cdn-icons-png.flaticon.com/512/5968/5968819.png';
       case 'timer':
         return 'https://cdn-icons-png.flaticon.com/512/109/109613.png';
       case 'email':

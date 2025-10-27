@@ -248,6 +248,26 @@ OAUTH2_PROVIDERS = {
         ],
         "requires_refresh": True,
     },
+    "slack": {
+        "client_id": os.getenv("SLACK_CLIENT_ID", ""),
+        "client_secret": os.getenv("SLACK_CLIENT_SECRET", ""),
+        "redirect_uri": os.getenv(
+            "SLACK_REDIRECT_URI", "https://areaction.app/auth/oauth/slack/callback/"
+        ),
+        "authorization_endpoint": "https://slack.com/oauth/v2/authorize",
+        "token_endpoint": "https://slack.com/api/oauth.v2.access",
+        "userinfo_endpoint": "https://slack.com/api/auth.test",
+        "scopes": [
+            "channels:read",
+            "chat:write",
+            "chat:write.public",
+            "groups:read",
+            "im:read",
+            "users:read",
+            "users:read.email",
+        ],
+        "requires_refresh": True,
+    },
 }
 
 # OAuth2 state expiry time (seconds)
@@ -256,6 +276,9 @@ OAUTH2_STATE_EXPIRY = 600  # 10 minutes
 # Google Sign-In Configuration (for mobile apps)
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+
+# External API Keys
+OPENWEATHER_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY")
 
 # Security Settings (base - extended per environment)
 SECURE_BROWSER_XSS_FILTER = True
@@ -353,6 +376,14 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 300.0,  # Every 300 seconds (5 minutes)
         "options": {
             "expires": 290,  # Task expires after 290s to avoid overlap
+        },
+    },
+    # Check weather conditions every 15 minutes
+    "check-weather-actions": {
+        "task": "automations.check_weather_actions",
+        "schedule": 1800.0,  # Every 1800 seconds (30 minutes)
+        "options": {
+            "expires": 1780,  # Task expires after 1780s to avoid overlap
         },
     },
 }

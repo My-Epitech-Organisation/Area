@@ -15,7 +15,10 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  bool _isLoadingStats = false;
+  // Use a Future reference to guard concurrent executions of _loadStats.
+  // This pattern is safer than a boolean flag because it prevents races
+  // when _loadStats is called multiple times before the flag is set.
+  Future<void>? _loadingStatsFuture;
 
   @override
   void initState() {
@@ -25,41 +28,47 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  /// Public entry that prevents concurrent executions by returning the
+  /// in-flight Future if one exists.
   Future<void> _loadStats() async {
-    // Prevent concurrent calls using a loading flag
-    if (_isLoadingStats) {
-      return;
+    if (_loadingStatsFuture != null) {
+      return _loadingStatsFuture;
     }
 
-    _isLoadingStats = true;
-
+    _loadingStatsFuture = _doLoadStats();
     try {
-      final statsProvider = context.read<AutomationStatsProvider>();
-      final userProvider = context.read<UserProvider>();
-      final appletProvider = context.read<AppletProvider>();
-      final serviceProvider = context.read<ServiceCatalogProvider>();
-
-      final futures = <Future>[];
-
-      futures.add(statsProvider.loadAllStats());
-
-      if (userProvider.profile == null && !userProvider.isLoadingProfile) {
-        futures.add(userProvider.loadProfile());
-      }
-
-      if (appletProvider.applets.isEmpty && !appletProvider.isLoading) {
-        futures.add(appletProvider.loadApplets());
-      }
-
-      if (serviceProvider.services.isEmpty &&
-          !serviceProvider.isLoadingServices) {
-        futures.add(serviceProvider.loadServices());
-      }
-
-      await Future.wait(futures);
+      await _loadingStatsFuture;
     } finally {
-      _isLoadingStats = false;
+      _loadingStatsFuture = null;
     }
+  }
+
+  /// Actual implementation separated so we can keep a single in-flight
+  /// Future reference while the work runs.
+  Future<void> _doLoadStats() async {
+    final statsProvider = context.read<AutomationStatsProvider>();
+    final userProvider = context.read<UserProvider>();
+    final appletProvider = context.read<AppletProvider>();
+    final serviceProvider = context.read<ServiceCatalogProvider>();
+
+    final futures = <Future>[];
+
+    futures.add(statsProvider.loadAllStats());
+
+    if (userProvider.profile == null && !userProvider.isLoadingProfile) {
+      futures.add(userProvider.loadProfile());
+    }
+
+    if (appletProvider.applets.isEmpty && !appletProvider.isLoading) {
+      futures.add(appletProvider.loadApplets());
+    }
+
+    if (serviceProvider.services.isEmpty &&
+        !serviceProvider.isLoadingServices) {
+      futures.add(serviceProvider.loadServices());
+    }
+
+    await Future.wait(futures);
   }
 
   @override

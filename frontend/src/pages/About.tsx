@@ -1,4 +1,9 @@
 import React from 'react';
+import nolanPapa from '../assets/nolan_papa.jpg';
+import paulAntoineSalmon from '../assets/paul_antoine_salmon.jpg';
+import maelPerrigaud from '../assets/mael_perrigaud.png';
+import santiagoPidcova from '../assets/santiago_pidcova.png';
+import matheoCoquet from '../assets/matheo_coquet.png';
 
 const About: React.FC = () => {
   return (
@@ -12,9 +17,9 @@ const About: React.FC = () => {
           <p className="text-lg text-theme-secondary leading-relaxed">
             AREA is an innovative platform designed to revolutionize your workflow by creating
             automated actions, or &quot;areactions,&quot; through seamless integration with popular
-            services like Google, GitHub, Microsoft Teams, and more. Whether you&apos;re a
-            developer, student, or productivity enthusiast, AREA empowers you to connect your
-            favorite tools and automate repetitive tasks effortlessly.
+            services like Google, GitHub, Slack, Twitch, and more. Whether you&apos;re a developer,
+            student, or productivity enthusiast, AREA empowers you to connect your favorite tools
+            and automate repetitive tasks effortlessly.
           </p>
           <p className="text-lg text-theme-secondary leading-relaxed mt-4">
             Born from a student project, AREA is not just a tool—it&apos;s a vision for smarter,
@@ -54,12 +59,12 @@ const About: React.FC = () => {
               <p className="text-theme-muted text-sm">Repositories, Issues, PRs</p>
             </div>
             <div className="bg-theme-surface p-4 rounded-lg text-center">
-              <p className="text-theme-primary font-medium">Microsoft Teams</p>
-              <p className="text-theme-muted text-sm">Messages, Channels</p>
+              <p className="text-theme-primary font-medium">Slack</p>
+              <p className="text-theme-muted text-sm">Messages, Channels, Alerts</p>
             </div>
             <div className="bg-theme-surface p-4 rounded-lg text-center">
-              <p className="text-theme-primary font-medium">Discord</p>
-              <p className="text-theme-muted text-sm">Channels, Messages</p>
+              <p className="text-theme-primary font-medium">Twitch</p>
+              <p className="text-theme-muted text-sm">Streams, Chat, Clips</p>
             </div>
             <div className="bg-theme-surface p-4 rounded-lg text-center">
               <p className="text-theme-primary font-medium">Spotify</p>
@@ -139,11 +144,7 @@ const About: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 w-full max-w-7xl mx-auto">
             <div className="bg-theme-surface p-6 rounded-lg shadow-lg flex flex-col items-center">
               <div className="w-24 h-24 rounded-full overflow-hidden mb-4">
-                <img
-                  src="src/assets/nolan_papa.jpg"
-                  alt="Nolan PAPA"
-                  className="w-full h-full object-cover"
-                />
+                <img src={nolanPapa} alt="Nolan PAPA" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-xl font-bold text-theme-primary mb-2">Nolan PAPA</h3>
               <p className="text-theme-muted">Lead Developer frontend</p>
@@ -151,7 +152,7 @@ const About: React.FC = () => {
             <div className="bg-theme-surface p-6 rounded-lg shadow-lg flex flex-col items-center">
               <div className="w-24 h-24 rounded-full overflow-hidden mb-4">
                 <img
-                  src="src/assets/paul_antoine_salmon.jpg"
+                  src={paulAntoineSalmon}
                   alt="Paul-Antoine SALMON"
                   className="w-full h-full object-cover"
                 />
@@ -162,7 +163,7 @@ const About: React.FC = () => {
             <div className="bg-theme-surface p-6 rounded-lg shadow-lg flex flex-col items-center">
               <div className="w-24 h-24 rounded-full overflow-hidden mb-4">
                 <img
-                  src="src/assets/mael_perrigaud.png"
+                  src={maelPerrigaud}
                   alt="Mael Perrigaud"
                   className="w-full h-full object-cover"
                 />
@@ -173,7 +174,7 @@ const About: React.FC = () => {
             <div className="bg-theme-surface p-6 rounded-lg shadow-lg flex flex-col items-center">
               <div className="w-24 h-24 rounded-full overflow-hidden mb-4">
                 <img
-                  src="src/assets/santiago_pidcova.png"
+                  src={santiagoPidcova}
                   alt="Santiago Pidcova"
                   className="w-full h-full object-cover"
                 />
@@ -184,7 +185,7 @@ const About: React.FC = () => {
             <div className="bg-theme-surface p-6 rounded-lg shadow-lg flex flex-col items-center">
               <div className="w-24 h-24 rounded-full overflow-hidden mb-4">
                 <img
-                  src="src/assets/matheo_coquet.png"
+                  src={matheoCoquet}
                   alt="Matheo Coquet"
                   className="w-full h-full object-cover"
                 />
