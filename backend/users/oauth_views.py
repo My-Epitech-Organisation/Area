@@ -12,7 +12,7 @@ from uuid import UUID
 
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -27,6 +27,7 @@ from .oauth_serializers import (
     ServiceConnectionListSerializer,
     ServiceDisconnectSerializer,
 )
+from .permissions import IsAuthenticatedAndVerified
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ class OAuthInitiateView(APIView):
         - expires_in: State validity duration in seconds
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
     serializer_class = OAuthInitiateResponseSerializer
 
     def get(self, request, provider: str):
@@ -374,7 +375,7 @@ class ServiceConnectionListView(APIView):
         - total_connected: Number of connected services
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
     serializer_class = ServiceConnectionListSerializer
 
     def get(self, request):
@@ -423,7 +424,7 @@ class ServiceDisconnectView(APIView):
         - revoked_at_provider: Whether token was revoked at provider
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
     serializer_class = ServiceDisconnectSerializer
 
     @extend_schema(request=None, responses={200: ServiceDisconnectSerializer})
@@ -494,7 +495,7 @@ class ConnectionHistoryView(APIView):
         - total_entries: Total number of entries available
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
     serializer_class = None  # We'll return raw data
 
     def get(self, request):

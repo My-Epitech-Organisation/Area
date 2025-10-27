@@ -14,6 +14,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.utils.html import strip_tags
@@ -52,8 +53,8 @@ class ForgotPasswordView(APIView):
             # Create new reset token
             reset_token = PasswordResetToken.objects.create(user=user)
 
-            # Build reset URL
-            frontend_url = request.build_absolute_uri("/").rstrip("/")
+            # Build reset URL using frontend URL
+            frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
             reset_url = f"{frontend_url}/reset-password?token={reset_token.token}"
 
             # Send email

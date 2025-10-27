@@ -1,8 +1,11 @@
+from datetime import timedelta
+
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from .models import User
 
@@ -21,6 +24,8 @@ class AuthTests(TestCase):
         self.user = User.objects.create_user(
             email="testuser2@example.com", password="StrongPassword123"
         )
+        self.user.email_verified = True
+        self.user.save()
 
     def test_register_user(self):
         response = self.client.post(self.register_url, self.user_data, format="json")
@@ -88,7 +93,9 @@ class AuthTests(TestCase):
         # Verify in database
         user = User.objects.get(email="test@example.com")
         self.assertFalse(user.email_verified)
-        self.assertEqual(user.email_verification_token, "")
+        # Token should be generated automatically
+        self.assertNotEqual(user.email_verification_token, "")
+        self.assertIsNotNone(user.email_verification_token_expires)
 
     def test_send_verification_email(self):
         """Test sending verification email to authenticated user"""
@@ -119,13 +126,17 @@ class AuthTests(TestCase):
             password="StrongPassword123",
         )
         user.email_verification_token = "valid-token-123"
+        user.email_verification_token_expires = timezone.now() + timedelta(hours=24)
         user.save()
 
         verify_url = reverse("verify_email", kwargs={"token": "valid-token-123"})
         response = self.client.get(verify_url)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("Email verified successfully", response.data["message"])
+        # Now returns redirect instead of JSON
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        location = response["Location"]
+        self.assertIn("verified=true", location)
+        self.assertIn("message=", location)
 
         # Check database
         user.refresh_from_db()
@@ -137,8 +148,11 @@ class AuthTests(TestCase):
         verify_url = reverse("verify_email", kwargs={"token": "invalid-token-456"})
         response = self.client.get(verify_url)
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("Invalid verification token", response.data["error"])
+        # Now returns redirect instead of JSON
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        location = response["Location"]
+        self.assertIn("verified=false", location)
+        self.assertIn("error=", location)
 
     def test_complete_authentication_flow(self):
         """Test complete flow: register → login → refresh → /users/me"""
@@ -517,5 +531,7 @@ class EdgeCaseTests(TestCase):
         verify_url = reverse("verify_email", kwargs={"token": "some-token"})
         response = self.client.get(verify_url)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("already verified", response.data["message"])
+        # Now returns redirect instead of JSON
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        location = response["Location"]
+        self.assertIn("already_verified=true", location)
