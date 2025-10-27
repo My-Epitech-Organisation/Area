@@ -109,7 +109,9 @@ class SpotifyOAuthProvider(BaseOAuthProvider):
 
         except requests.exceptions.RequestException as e:
             logger.error(f"Spotify token exchange failed: {str(e)}")
-            raise TokenExchangeError(f"Failed to exchange Spotify code: {str(e)}") from e
+            raise TokenExchangeError(
+                f"Failed to exchange Spotify code: {str(e)}"
+            ) from e
 
     def refresh_access_token(self, refresh_token: str) -> Dict:
         """
@@ -150,14 +152,18 @@ class SpotifyOAuthProvider(BaseOAuthProvider):
 
             return {
                 "access_token": token_data["access_token"],
-                "refresh_token": token_data.get("refresh_token", refresh_token),  # May be rotated
+                "refresh_token": token_data.get(
+                    "refresh_token", refresh_token
+                ),  # May be rotated
                 "expires_in": token_data["expires_in"],
                 "token_type": token_data.get("token_type", "Bearer"),
             }
 
         except requests.exceptions.RequestException as e:
             logger.error(f"Spotify token refresh failed: {str(e)}")
-            raise TokenExchangeError(f"Failed to refresh Spotify token: {str(e)}") from e
+            raise TokenExchangeError(
+                f"Failed to refresh Spotify token: {str(e)}"
+            ) from e
 
     def get_user_info(self, access_token: str) -> Dict:
         """
