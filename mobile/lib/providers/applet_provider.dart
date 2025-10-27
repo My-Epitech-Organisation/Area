@@ -159,6 +159,26 @@ class AppletProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> duplicateApplet(int id, String newName) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      final duplicatedApplet = await _appletService.duplicateApplet(id, newName);
+
+      _applets.insert(0, duplicatedApplet);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
   void clear() {
     _applets.clear();
     _error = null;

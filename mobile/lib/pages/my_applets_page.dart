@@ -105,6 +105,90 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
     }
   }
 
+  Future<void> _onDuplicateApplet(Applet applet) async {
+    final TextEditingController nameController = TextEditingController(
+      text: '${applet.name} (Copy)',
+    );
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Duplicate Automation'),
+            content: TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'New automation name',
+                hintText: 'Enter the name for the duplicated automation',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 1,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => _confirmDuplicate(applet, nameController.text),
+                style: TextButton.styleFrom(foregroundColor: Colors.blue),
+                child: const Text('Duplicate'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
+  Future<void> _confirmDuplicate(Applet applet, String newName) async {
+    Navigator.of(context).pop();
+
+    if (newName.trim().isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a name for the duplicated automation'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      final provider = context.read<AppletProvider>();
+      final success = await provider.duplicateApplet(applet.id, newName.trim());
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Automation "${newName.trim()}" created successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        await _loadApplets();
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to duplicate automation: ${provider.error}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error duplicating automation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _confirmDelete(Applet applet) async {
     Navigator.of(context).pop(); // Close the dialog
 
@@ -266,6 +350,9 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
                         case 'toggle':
                           _onToggleApplet(applet);
                           break;
+                        case 'duplicate':
+                          _onDuplicateApplet(applet);
+                          break;
                         case 'delete':
                           _onDeleteApplet(applet);
                           break;
@@ -286,6 +373,19 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
                             Text(
                               applet.status == 'active' ? 'Disable' : 'Enable',
                               style: const TextStyle(color: Colors.blue),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'duplicate',
+                        child: Row(
+                          children: [
+                            Icon(Icons.content_copy, color: Colors.orange),
+                            SizedBox(width: 8),
+                            Text(
+                              'Duplicate',
+                              style: TextStyle(color: Colors.orange),
                             ),
                           ],
                         ),

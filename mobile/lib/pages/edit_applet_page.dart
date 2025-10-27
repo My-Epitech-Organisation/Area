@@ -63,11 +63,11 @@ class _EditAppletPageState extends State<EditAppletPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Applet updated successfully')),
         );
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(true);
       }
     } else {
       setState(() {
-        _errorMessage = 'Failed to update applet';
+        _errorMessage = 'Failed to update applet: ${appletProvider.error}';
       });
     }
   }
