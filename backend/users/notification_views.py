@@ -1,17 +1,19 @@
-"""Views for OAuth notification management."""
+"""API views for user notifications."""
 
 import logging
 
+from drf_spectacular.utils import extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from users.models import OAuthNotification
-from users.notification_serializers import (
+from .models import OAuthNotification
+from .notification_serializers import (
     OAuthNotificationSerializer,
     OAuthNotificationUpdateSerializer,
 )
+from .permissions import IsAuthenticatedAndVerified
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +34,7 @@ class OAuthNotificationViewSet(viewsets.ModelViewSet):
         GET /api/notifications/unread_count/ - Get count of unread notifications
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
     serializer_class = OAuthNotificationSerializer
 
     def get_queryset(self):
