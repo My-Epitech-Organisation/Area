@@ -43,11 +43,13 @@ jobs:
 
     # Only deploy if:
     #   - Manual trigger (workflow_dispatch) OR
-    #   - CI passed successfully AND on main/master branch
+    #   - CI passed successfully AND on main/master/add-cd branch (add-cd for testing)
     if: |
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
-       (github.event.workflow_run.head_branch == 'main' || github.event.workflow_run.head_branch == 'master'))
+       (github.event.workflow_run.head_branch == 'main' ||
+        github.event.workflow_run.head_branch == 'master' ||
+        github.event.workflow_run.head_branch == 'add-cd'))
 
     # Environment protection (optional: configure in GitHub repo settings)
     environment:
