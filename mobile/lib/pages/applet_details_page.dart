@@ -200,12 +200,17 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
 
     try {
       final provider = context.read<AppletProvider>();
-      final success = await provider.duplicateApplet(_applet.id, newName.trim());
+      final success = await provider.duplicateApplet(
+        _applet.id,
+        newName.trim(),
+      );
 
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Automation "${newName.trim()}" created successfully'),
+            content: Text(
+              'Automation "${newName.trim()}" created successfully',
+            ),
             backgroundColor: Colors.green,
           ),
         );

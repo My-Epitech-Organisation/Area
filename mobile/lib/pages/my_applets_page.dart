@@ -164,7 +164,9 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Automation "${newName.trim()}" created successfully'),
+            content: Text(
+              'Automation "${newName.trim()}" created successfully',
+            ),
             backgroundColor: Colors.green,
           ),
         );

@@ -165,7 +165,10 @@ class AppletProvider extends ChangeNotifier {
       _error = null;
       notifyListeners();
 
-      final duplicatedApplet = await _appletService.duplicateApplet(id, newName);
+      final duplicatedApplet = await _appletService.duplicateApplet(
+        id,
+        newName,
+      );
 
       _applets.insert(0, duplicatedApplet);
       _isLoading = false;
