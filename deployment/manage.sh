@@ -332,7 +332,34 @@ full_update() {
     echo -e "${YELLOW}Collecting static files...${NC}"
     docker-compose exec server python manage.py collectstatic --noinput
 
-    echo -e "${GREEN}Update complete!${NC}"
+    # Healthcheck
+    echo ""
+    echo -e "${YELLOW}Running healthcheck...${NC}"
+    sleep 15  # Wait for services to fully start
+
+    HEALTHCHECK_PASSED=false
+    for i in {1..10}; do
+        if docker-compose exec -T server curl -f http://localhost:8080/health/ > /dev/null 2>&1; then
+            echo -e "${GREEN}✅ Health check passed!${NC}"
+            HEALTHCHECK_PASSED=true
+            break
+        fi
+        echo -e "${BLUE}⏳ Attempt $i/10 - waiting for services...${NC}"
+        sleep 5
+    done
+
+    if [ "$HEALTHCHECK_PASSED" = false ]; then
+        echo -e "${RED}❌ Health check failed after 10 attempts!${NC}"
+        echo -e "${RED}Services may not be healthy. Check logs with: ./manage.sh logs${NC}"
+        echo ""
+        echo -e "${YELLOW}Container status:${NC}"
+        docker-compose ps
+        exit 1
+    fi
+
+    echo ""
+    echo -e "${GREEN}✅ Update complete and services are healthy!${NC}"
+    echo ""
     docker-compose ps
 }
 
