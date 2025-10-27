@@ -384,7 +384,7 @@ const Dashboard: React.FC = () => {
           {/* Email Verification Banner */}
           <EmailVerificationBanner user={user} />
 
-        <div className="w-full flex flex-col gap-4 mb-4">
+          <div className="w-full flex flex-col gap-4 mb-4">
             <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-theme-primary">
               <h2 className="text-xl font-semibold text-theme-accent mb-3">Service Activity</h2>
               {activeServices.length > 0 ? (
