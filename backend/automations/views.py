@@ -264,7 +264,7 @@ class AreaViewSet(viewsets.ModelViewSet):
         """
         original_area = self.get_object()
 
-        new_name = request.data.get('name', f'{original_area.name} (Copy)')
+        new_name = request.data.get("name", f"{original_area.name} (Copy)")
 
         # Create a new Area with the same configuration
         duplicated_area = Area.objects.create(
@@ -272,8 +272,12 @@ class AreaViewSet(viewsets.ModelViewSet):
             name=new_name,
             action=original_area.action,
             reaction=original_area.reaction,
-            action_config=original_area.action_config.copy() if original_area.action_config else {},
-            reaction_config=original_area.reaction_config.copy() if original_area.reaction_config else {},
+            action_config=original_area.action_config.copy()
+            if original_area.action_config
+            else {},
+            reaction_config=original_area.reaction_config.copy()
+            if original_area.reaction_config
+            else {},
             status=Area.Status.ACTIVE,
         )
 
