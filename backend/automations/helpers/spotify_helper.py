@@ -12,7 +12,7 @@
 ## spotify_helper
 ##
 
-"""Spotify API helper functions for actions and reactions."""
+"""Spotify API helper functions for reactions."""
 
 import logging
 from typing import Dict, List, Optional

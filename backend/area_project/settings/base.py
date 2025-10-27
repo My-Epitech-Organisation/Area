@@ -431,14 +431,6 @@ CELERY_BEAT_SCHEDULE = {
             "expires": 115,  # Task expires after 115s to avoid overlap
         },
     },
-    # Check Spotify actions every 2 minutes
-    "check-spotify-actions": {
-        "task": "automations.check_spotify_actions",
-        "schedule": 120.0,  # Every 120 seconds (2 minutes)
-        "options": {
-            "expires": 115,  # Task expires after 115s to avoid overlap
-        },
-    },
 }
 
 # =============================================================================

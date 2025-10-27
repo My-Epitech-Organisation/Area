@@ -174,26 +174,6 @@ class Command(BaseCommand):
         else:
             self.stdout.write("  • check-slack-actions already exists")
 
-        # Spotify actions check (every 2 minutes)
-        task, created = PeriodicTask.objects.get_or_create(
-            name="check-spotify-actions",
-            defaults={
-                "task": "automations.check_spotify_actions",
-                "interval": interval_120s,
-                "enabled": True,
-                "start_time": timezone.now(),
-                "description": "Check Spotify actions (playback, library changes)",
-            },
-        )
-        if created:
-            self.stdout.write(
-                self.style.SUCCESS(
-                    "  ✓ Created check-spotify-actions task (120s interval)"
-                )
-            )
-        else:
-            self.stdout.write("  • check-spotify-actions already exists")
-
         # =====================================================================
         # Summary
         # =====================================================================

@@ -346,37 +346,6 @@ ACTION_SCHEMAS = {
         "properties": {},
         "additionalProperties": False,
     },
-    # Spotify Actions
-    "spotify_track_started": {
-        "type": "object",
-        "properties": {},
-        "additionalProperties": False,
-    },
-    "spotify_track_finished": {
-        "type": "object",
-        "properties": {},
-        "additionalProperties": False,
-    },
-    "spotify_playlist_updated": {
-        "type": "object",
-        "properties": {
-            "playlist_id": {
-                "type": "string",
-                "description": "Monitor specific playlist (leave empty for all playlists)",
-            },
-        },
-        "additionalProperties": False,
-    },
-    "spotify_liked_track": {
-        "type": "object",
-        "properties": {},
-        "additionalProperties": False,
-    },
-    "spotify_saved_album": {
-        "type": "object",
-        "properties": {},
-        "additionalProperties": False,
-    },
 }
 
 
@@ -1031,66 +1000,6 @@ COMPATIBILITY_RULES = {
         "webhook_post",
         "calendar_create_event",
         "github_create_issue",
-    ],
-    # Spotify actions
-    "spotify_track_started": [
-        "spotify_pause_playback",
-        "spotify_skip_next",
-        "spotify_skip_previous",
-        "spotify_set_volume",
-        "spotify_add_to_playlist",
-        "spotify_like_track",
-        "spotify_create_playlist",
-        "send_email",
-        "gmail_send_email",
-        "slack_send_message",
-        "webhook_post",
-        "calendar_create_event",
-        "debug_log_execution",
-    ],
-    "spotify_track_finished": [
-        "spotify_play_track",
-        "spotify_resume_playback",
-        "spotify_set_volume",
-        "spotify_create_playlist",
-        "send_email",
-        "gmail_send_email",
-        "slack_send_message",
-        "webhook_post",
-        "calendar_create_event",
-        "debug_log_execution",
-    ],
-    "spotify_playlist_updated": [
-        "spotify_play_track",
-        "spotify_add_to_playlist",
-        "spotify_create_playlist",
-        "send_email",
-        "gmail_send_email",
-        "slack_send_message",
-        "webhook_post",
-        "calendar_create_event",
-        "debug_log_execution",
-    ],
-    "spotify_liked_track": [
-        "spotify_play_track",
-        "spotify_add_to_playlist",
-        "spotify_create_playlist",
-        "send_email",
-        "gmail_send_email",
-        "slack_send_message",
-        "webhook_post",
-        "calendar_create_event",
-        "debug_log_execution",
-    ],
-    "spotify_saved_album": [
-        "spotify_play_track",
-        "spotify_create_playlist",
-        "send_email",
-        "gmail_send_email",
-        "slack_send_message",
-        "webhook_post",
-        "calendar_create_event",
-        "debug_log_execution",
     ],
 }
 
