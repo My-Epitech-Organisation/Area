@@ -189,10 +189,10 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
       if (fieldNameLower.contains('hour')) {
         ConfigField? minuteField;
         try {
-          final hourBase = fieldNameLower.replaceAll(RegExp(r'hour|_'), '');
+          final hourBase = fieldNameLower.replaceFirst(RegExp(r'_?hour$'), '');
           minuteField = fields.firstWhere((f) {
             final mName = f.name.toLowerCase();
-            final minuteBase = mName.replaceAll(RegExp(r'minute|_'), '');
+            final minuteBase = mName.replaceFirst(RegExp(r'_?minute$'), '');
             return mName.contains('minute') && hourBase == minuteBase;
           });
         } catch (_) {
