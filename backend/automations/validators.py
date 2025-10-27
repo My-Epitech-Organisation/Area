@@ -721,8 +721,8 @@ REACTION_SCHEMAS = {
         "properties": {
             "track_uri": {
                 "type": "string",
-                "description": "Spotify URI of the track to play (spotify:track:...)",
-                "pattern": "^spotify:track:[a-zA-Z0-9]+$",
+                "description": "Spotify track URI (spotify:track:...) or URL (https://open.spotify.com/track/...)",
+                "pattern": "^(spotify:track:[a-zA-Z0-9]+|https://open\\.spotify\\.com(/intl-[a-z]+)?/track/[a-zA-Z0-9]+)",
             },
             "position_ms": {
                 "type": "number",
@@ -779,7 +779,7 @@ REACTION_SCHEMAS = {
             "track_uri": {
                 "type": "string",
                 "description": "URI of track to add (leave empty to add current track)",
-                "pattern": "^spotify:track:[a-zA-Z0-9]+$",
+                "pattern": "^(spotify:track:[a-zA-Z0-9]+|https://open\\.spotify\\.com(/intl-[a-z]+)?/track/[a-zA-Z0-9]+)?$",
             },
         },
         "required": ["playlist_id"],
@@ -787,12 +787,24 @@ REACTION_SCHEMAS = {
     },
     "spotify_like_track": {
         "type": "object",
-        "properties": {},
+        "properties": {
+            "track_uri": {
+                "type": "string",
+                "description": "URI of track to like (leave empty to like current track)",
+                "pattern": "^(spotify:track:[a-zA-Z0-9]+|https://open\\.spotify\\.com(/intl-[a-z]+)?/track/[a-zA-Z0-9]+)?$",
+            },
+        },
         "additionalProperties": False,
     },
     "spotify_unlike_track": {
         "type": "object",
-        "properties": {},
+        "properties": {
+            "track_uri": {
+                "type": "string",
+                "description": "URI of track to unlike (leave empty to unlike current track)",
+                "pattern": "^(spotify:track:[a-zA-Z0-9]+|https://open\\.spotify\\.com(/intl-[a-z]+)?/track/[a-zA-Z0-9]+)?$",
+            },
+        },
         "additionalProperties": False,
     },
     "spotify_create_playlist": {
