@@ -368,7 +368,7 @@ jobs:
           docker compose logs redis || true
 
   push_to_mirror:
-    needs: [check_the_repository]
+    needs: [docker-compose-validation, check_the_repository]
     runs-on: ubuntu-latest
     if: needs.check_the_repository.outputs.same_repository == 'false'
     steps:
