@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'config_field_widgets.dart';
 import 'date_time_picker_widget.dart';
+import 'time_picker_widget.dart';
 
 /// Model representing a configuration field
 class ConfigField {
@@ -204,18 +205,20 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
 
     // Specialized widgets
     if (fieldNameLower.contains('hour')) {
-      return HourField(
+      return HourPickerWidget(
         label: field.label,
-        value: value is int ? value : int.tryParse(value.toString()) ?? 0,
+        description: field.description,
+        initialValue: value is int ? value : int.tryParse(value.toString()),
         required: field.required,
         onChanged: onChanged,
       );
     }
 
     if (fieldNameLower.contains('minute')) {
-      return MinuteField(
+      return MinutePickerWidget(
         label: field.label,
-        value: value is int ? value : int.tryParse(value.toString()) ?? 0,
+        description: field.description,
+        initialValue: value is int ? value : int.tryParse(value.toString()),
         required: field.required,
         onChanged: onChanged,
       );
