@@ -5,9 +5,9 @@ Usage:
     python manage.py test_email recipient@example.com
 """
 
+from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
 
 
 class Command(BaseCommand):
@@ -46,9 +46,7 @@ class Command(BaseCommand):
             self.stdout.write(
                 f"  SMTP User: {getattr(settings, 'EMAIL_HOST_USER', 'Not set')}"
             )
-            self.stdout.write(
-                f"  Use TLS: {getattr(settings, 'EMAIL_USE_TLS', False)}"
-            )
+            self.stdout.write(f"  Use TLS: {getattr(settings, 'EMAIL_USE_TLS', False)}")
 
         self.stdout.write(
             f"  From Email: {getattr(settings, 'DEFAULT_FROM_EMAIL', 'Not set')}"
@@ -56,7 +54,9 @@ class Command(BaseCommand):
         self.stdout.write("")
 
         # Send test email
-        self.stdout.write(self.style.HTTP_INFO(f"📤 Sending test email to: {recipient}"))
+        self.stdout.write(
+            self.style.HTTP_INFO(f"📤 Sending test email to: {recipient}")
+        )
         self.stdout.write("-" * 70)
 
         try:
