@@ -279,7 +279,8 @@ const Areaction: React.FC = () => {
             <p className="text-rose-300 mb-2">{combinedError}</p>
             {combinedError.includes('403') && (
               <p className="text-amber-300 text-sm mt-4">
-                💡 This usually means your email is not verified. Please verify your email to create automations.
+                💡 This usually means your email is not verified. Please verify your email to create
+                automations.
               </p>
             )}
             <button
