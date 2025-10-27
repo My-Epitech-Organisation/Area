@@ -142,7 +142,9 @@ def get_current_playback(access_token: str) -> Optional[Dict]:
             logger.info("No active Spotify playback found")
             return None
 
-        logger.info(f"Retrieved current Spotify playback: {result.get('is_playing', False)}")
+        logger.info(
+            f"Retrieved current Spotify playback: {result.get('is_playing', False)}"
+        )
         return result
 
     except requests.exceptions.HTTPError as e:
@@ -617,12 +619,16 @@ def parse_playback_event(event_data: Dict) -> Dict:
             "name": item.get("name"),
             "uri": item.get("uri"),
             "duration_ms": item.get("duration_ms"),
-            "artists": [{"name": artist.get("name"), "id": artist.get("id")}
-                       for artist in item.get("artists", [])],
+            "artists": [
+                {"name": artist.get("name"), "id": artist.get("id")}
+                for artist in item.get("artists", [])
+            ],
             "album": {
                 "name": item.get("album", {}).get("name"),
                 "id": item.get("album", {}).get("id"),
-            } if item.get("album") else None,
+            }
+            if item.get("album")
+            else None,
         }
 
     return parsed
@@ -686,4 +692,3 @@ def has_playback_stopped(old_playback: Optional[Dict], new_playback: Dict) -> bo
     is_playing = new_playback.get("is_playing", False) if new_playback else False
 
     return was_playing and not is_playing
-
