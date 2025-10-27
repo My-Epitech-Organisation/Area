@@ -16,9 +16,15 @@ interface EmailVerificationBannerProps {
   onVerificationSent?: () => void;
 }
 
-const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = ({ user, onVerificationSent }) => {
+const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = ({
+  user,
+  onVerificationSent,
+}) => {
   const [isResending, setIsResending] = useState(false);
-  const [resendMessage, setResendMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [resendMessage, setResendMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   // Don't show banner if user is verified or user data not loaded
   if (!user || user.email_verified) {
@@ -97,12 +103,12 @@ const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = ({ user,
           </h3>
           <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-400">
             <p className="mb-2">
-              <strong>Your account is not verified yet.</strong> To use AREA services and create automations, you
-              must verify your email address.
+              <strong>Your account is not verified yet.</strong> To use AREA services and create
+              automations, you must verify your email address.
             </p>
             <p className="mb-3">
-              We sent a verification link to <strong>{user.email || 'your email'}</strong>. Please check your
-              inbox (and spam folder) and click the link to activate your account.
+              We sent a verification link to <strong>{user.email || 'your email'}</strong>. Please
+              check your inbox (and spam folder) and click the link to activate your account.
             </p>
 
             {/* Resend Message */}
