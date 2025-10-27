@@ -139,7 +139,6 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
     }
   }
 
-
   Applet _enrichAppletData(Applet applet, ServiceCatalogProvider catalog) {
     ServiceAction? foundAction;
     String? actionServiceName;
@@ -229,9 +228,7 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
             context,
             listen: false,
           );
-          navigationProvider.navigateToPage(
-            1,
-          );
+          navigationProvider.navigateToPage(1);
         },
         tooltip: 'Create new automation',
         child: const Icon(Icons.add),

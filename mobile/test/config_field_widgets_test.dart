@@ -4,15 +4,13 @@ import 'package:mobile/widgets/create_applet/config_field_widgets.dart';
 
 void main() {
   group('HourField Widget Tests', () {
-    testWidgets('HourField displays label correctly', (WidgetTester tester) async {
+    testWidgets('HourField displays label correctly', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: HourField(
-              label: 'Start Hour',
-              value: 10,
-              onChanged: (_) {},
-            ),
+            body: HourField(label: 'Start Hour', value: 10, onChanged: (_) {}),
           ),
         ),
       );
@@ -20,15 +18,13 @@ void main() {
       expect(find.text('Start Hour'), findsOneWidget);
     });
 
-    testWidgets('HourField displays initial value', (WidgetTester tester) async {
+    testWidgets('HourField displays initial value', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: HourField(
-              label: 'Hour',
-              value: 14,
-              onChanged: (_) {},
-            ),
+            body: HourField(label: 'Hour', value: 14, onChanged: (_) {}),
           ),
         ),
       );
@@ -38,7 +34,9 @@ void main() {
       expect(textField, findsOneWidget);
     });
 
-    testWidgets('HourField shows required asterisk when required', (WidgetTester tester) async {
+    testWidgets('HourField shows required asterisk when required', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -55,7 +53,9 @@ void main() {
       expect(find.text('Hour *'), findsOneWidget);
     });
 
-    testWidgets('HourField accepts valid input (0-23)', (WidgetTester tester) async {
+    testWidgets('HourField accepts valid input (0-23)', (
+      WidgetTester tester,
+    ) async {
       int? changedValue;
 
       await tester.pumpWidget(
@@ -77,7 +77,9 @@ void main() {
       expect(changedValue, 15);
     });
 
-    testWidgets('HourField rejects invalid input (>23)', (WidgetTester tester) async {
+    testWidgets('HourField rejects invalid input (>23)', (
+      WidgetTester tester,
+    ) async {
       int? changedValue;
 
       await tester.pumpWidget(
@@ -100,7 +102,9 @@ void main() {
       expect(changedValue, isNull);
     });
 
-    testWidgets('HourField validator shows error for invalid value', (WidgetTester tester) async {
+    testWidgets('HourField validator shows error for invalid value', (
+      WidgetTester tester,
+    ) async {
       final formKey = GlobalKey<FormState>();
 
       await tester.pumpWidget(
@@ -127,11 +131,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: HourField(
-              label: 'Hour',
-              value: 10,
-              onChanged: (_) {},
-            ),
+            body: HourField(label: 'Hour', value: 10, onChanged: (_) {}),
           ),
         ),
       );
@@ -141,7 +141,9 @@ void main() {
   });
 
   group('MinuteField Widget Tests', () {
-    testWidgets('MinuteField displays label correctly', (WidgetTester tester) async {
+    testWidgets('MinuteField displays label correctly', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -157,15 +159,13 @@ void main() {
       expect(find.text('Start Minute'), findsOneWidget);
     });
 
-    testWidgets('MinuteField displays initial value', (WidgetTester tester) async {
+    testWidgets('MinuteField displays initial value', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MinuteField(
-              label: 'Minute',
-              value: 45,
-              onChanged: (_) {},
-            ),
+            body: MinuteField(label: 'Minute', value: 45, onChanged: (_) {}),
           ),
         ),
       );
@@ -173,7 +173,9 @@ void main() {
       expect(find.byType(TextFormField), findsOneWidget);
     });
 
-    testWidgets('MinuteField shows required asterisk when required', (WidgetTester tester) async {
+    testWidgets('MinuteField shows required asterisk when required', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -190,7 +192,9 @@ void main() {
       expect(find.text('Minute *'), findsOneWidget);
     });
 
-    testWidgets('MinuteField accepts valid input (0-59)', (WidgetTester tester) async {
+    testWidgets('MinuteField accepts valid input (0-59)', (
+      WidgetTester tester,
+    ) async {
       int? changedValue;
 
       await tester.pumpWidget(
@@ -212,7 +216,9 @@ void main() {
       expect(changedValue, 45);
     });
 
-    testWidgets('MinuteField rejects invalid input (>59)', (WidgetTester tester) async {
+    testWidgets('MinuteField rejects invalid input (>59)', (
+      WidgetTester tester,
+    ) async {
       int? changedValue;
 
       await tester.pumpWidget(
@@ -235,7 +241,9 @@ void main() {
       expect(changedValue, isNull);
     });
 
-    testWidgets('MinuteField validator shows error for invalid value', (WidgetTester tester) async {
+    testWidgets('MinuteField validator shows error for invalid value', (
+      WidgetTester tester,
+    ) async {
       final formKey = GlobalKey<FormState>();
 
       await tester.pumpWidget(
@@ -258,15 +266,13 @@ void main() {
       expect(formKey.currentState?.validate(), false);
     });
 
-    testWidgets('MinuteField displays minute icon', (WidgetTester tester) async {
+    testWidgets('MinuteField displays minute icon', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MinuteField(
-              label: 'Minute',
-              value: 30,
-              onChanged: (_) {},
-            ),
+            body: MinuteField(label: 'Minute', value: 30, onChanged: (_) {}),
           ),
         ),
       );
@@ -276,7 +282,9 @@ void main() {
   });
 
   group('TimezoneField Widget Tests', () {
-    testWidgets('TimezoneField displays label correctly', (WidgetTester tester) async {
+    testWidgets('TimezoneField displays label correctly', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -292,7 +300,9 @@ void main() {
       expect(find.text('Timezone'), findsOneWidget);
     });
 
-    testWidgets('TimezoneField shows required asterisk when required', (WidgetTester tester) async {
+    testWidgets('TimezoneField shows required asterisk when required', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -309,7 +319,9 @@ void main() {
       expect(find.text('Timezone *'), findsOneWidget);
     });
 
-    testWidgets('TimezoneField displays dropdown button', (WidgetTester tester) async {
+    testWidgets('TimezoneField displays dropdown button', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -325,7 +337,9 @@ void main() {
       expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
     });
 
-    testWidgets('TimezoneField displays all timezone options', (WidgetTester tester) async {
+    testWidgets('TimezoneField displays all timezone options', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -342,7 +356,9 @@ void main() {
       expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
     });
 
-    testWidgets('TimezoneField selects timezone correctly', (WidgetTester tester) async {
+    testWidgets('TimezoneField selects timezone correctly', (
+      WidgetTester tester,
+    ) async {
       String? selectedTimezone;
 
       await tester.pumpWidget(
@@ -361,7 +377,9 @@ void main() {
       expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
     });
 
-    testWidgets('TimezoneField displays selected timezone', (WidgetTester tester) async {
+    testWidgets('TimezoneField displays selected timezone', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -377,7 +395,9 @@ void main() {
       expect(find.text('(UTC+1) Paris'), findsOneWidget);
     });
 
-    testWidgets('TimezoneField defaults to UTC for invalid value', (WidgetTester tester) async {
+    testWidgets('TimezoneField defaults to UTC for invalid value', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -393,7 +413,9 @@ void main() {
       expect(find.text('(UTC+0) London'), findsOneWidget);
     });
 
-    testWidgets('TimezoneField displays world icon', (WidgetTester tester) async {
+    testWidgets('TimezoneField displays world icon', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -409,7 +431,9 @@ void main() {
       expect(find.byIcon(Icons.public), findsOneWidget);
     });
 
-    testWidgets('TimezoneField contains all expected timezones', (WidgetTester tester) async {
+    testWidgets('TimezoneField contains all expected timezones', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
