@@ -276,7 +276,7 @@ const Profile: React.FC = () => {
       const response = await fetch(`${API_BASE}/auth/send-verification-email/`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email: user.email }),
@@ -286,7 +286,11 @@ const Profile: React.FC = () => {
         setSuccess('Verification email sent! Please check your inbox.');
       } else {
         const errorData = await response.json().catch(() => ({}));
-        setError(errorData.error || errorData.detail || 'Failed to send verification email. Please try again.');
+        setError(
+          errorData.error ||
+            errorData.detail ||
+            'Failed to send verification email. Please try again.'
+        );
       }
     } catch (err) {
       console.error('Error sending verification email:', err);
@@ -343,7 +347,11 @@ const Profile: React.FC = () => {
         setSuccess('Password reset email sent! Please check your inbox for instructions.');
       } else {
         const errorData = await response.json().catch(() => ({}));
-        setError(errorData.error || errorData.detail || 'Failed to send password reset email. Please try again.');
+        setError(
+          errorData.error ||
+            errorData.detail ||
+            'Failed to send password reset email. Please try again.'
+        );
       }
     } catch (err) {
       console.error('Error sending password reset email:', err);
@@ -397,11 +405,7 @@ const Profile: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <p className="text-indigo-300">{user?.email}</p>
                   {user?.email_verified && (
-                    <svg
-                      className="w-5 h-5 text-green-400"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
+                    <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                       <title>Email verified</title>
                       <path
                         fillRule="evenodd"
@@ -614,11 +618,7 @@ const Profile: React.FC = () => {
                         >
                           {sendingPasswordReset ? (
                             <span className="flex items-center justify-center gap-2">
-                              <svg
-                                className="animate-spin h-4 w-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                              >
+                              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                                 <circle
                                   className="opacity-25"
                                   cx="12"
