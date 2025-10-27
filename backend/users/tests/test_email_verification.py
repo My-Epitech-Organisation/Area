@@ -53,6 +53,7 @@ class EmailVerificationTestCase(APITestCase):
         user = User.objects.create_user(
             email="test@example.com",
             password="testpass123",
+            username="testuser",
         )
         user.email_verified = False
         user.email_verification_token = "valid_token_12345"
@@ -63,9 +64,12 @@ class EmailVerificationTestCase(APITestCase):
         verify_url = f"/auth/verify-email/{user.email_verification_token}/"
         response = self.client.get(verify_url)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("verified successfully", response.data["message"].lower())
-        self.assertTrue(response.data["verified"])
+        # Should redirect to frontend with success parameters
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        location = response["Location"]
+        self.assertIn("verified=true", location)
+        self.assertIn("message=", location)
+        self.assertIn("email=", location)
 
         # Check that user is now verified
         user.refresh_from_db()
@@ -78,9 +82,11 @@ class EmailVerificationTestCase(APITestCase):
         verify_url = "/auth/verify-email/invalid_token_xyz/"
         response = self.client.get(verify_url)
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("invalid", response.data["error"].lower())
-        self.assertFalse(response.data["verified"])
+        # Should redirect to frontend with error parameters
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        location = response["Location"]
+        self.assertIn("verified=false", location)
+        self.assertIn("error=", location)
 
     def test_email_verification_with_expired_token(self):
         """Test verifying email with an expired token."""
@@ -88,6 +94,7 @@ class EmailVerificationTestCase(APITestCase):
         user = User.objects.create_user(
             email="test@example.com",
             password="testpass123",
+            username="testuser",
         )
         user.email_verified = False
         user.email_verification_token = "expired_token_12345"
@@ -98,10 +105,12 @@ class EmailVerificationTestCase(APITestCase):
         verify_url = f"/auth/verify-email/{user.email_verification_token}/"
         response = self.client.get(verify_url)
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("expired", response.data["error"].lower())
-        self.assertTrue(response.data.get("expired", False))
-        self.assertFalse(response.data["verified"])
+        # Should redirect to frontend with expired error
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        location = response["Location"]
+        self.assertIn("verified=false", location)
+        self.assertIn("expired=true", location)
+        self.assertIn("error=", location)
 
         # Check that user is still not verified
         user.refresh_from_db()
@@ -113,6 +122,7 @@ class EmailVerificationTestCase(APITestCase):
         user = User.objects.create_user(
             email="verified@example.com",
             password="testpass123",
+            username="verifieduser",
         )
         user.email_verified = True
         user.email_verification_token = "some_token"
@@ -122,9 +132,12 @@ class EmailVerificationTestCase(APITestCase):
         verify_url = f"/auth/verify-email/{user.email_verification_token}/"
         response = self.client.get(verify_url)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("already verified", response.data["message"].lower())
-        self.assertTrue(response.data.get("already_verified", False))
+        # Should redirect to frontend with already verified message
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        location = response["Location"]
+        self.assertIn("verified=true", location)
+        self.assertIn("already_verified=true", location)
+        self.assertIn("message=", location)
 
     def test_resend_verification_email(self):
         """Test resending verification email."""
@@ -132,6 +145,7 @@ class EmailVerificationTestCase(APITestCase):
         user = User.objects.create_user(
             email="test@example.com",
             password="testpass123",
+            username="testuser",
         )
         user.email_verified = False
         user.save()
@@ -159,6 +173,7 @@ class EmailVerificationTestCase(APITestCase):
         user = User.objects.create_user(
             email="verified@example.com",
             password="testpass123",
+            username="verifieduser",
         )
         user.email_verified = True
         user.save()
@@ -209,6 +224,7 @@ class EmailVerificationTestCase(APITestCase):
             user = User.objects.create_user(
                 email=f"user{i}@example.com",
                 password="testpass123",
+                username=f"user{i}",
             )
             user.email_verified = False
             user.email_verification_token = "initial_token"
@@ -234,6 +250,7 @@ class EmailVerificationTestCase(APITestCase):
         user = User.objects.create_user(
             email="login@example.com",
             password="testpass123",
+            username="loginuser",
         )
         user.email_verified = False
         user.email_verification_token = "valid_token"
