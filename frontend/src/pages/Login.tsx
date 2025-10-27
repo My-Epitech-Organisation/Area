@@ -201,6 +201,14 @@ const Login: React.FC = () => {
               <div className="text-theme-error text-sm">{fieldErrors.password.join(' ')}</div>
             )}
 
+            <div className="text-right mt-1">
+              <a
+                href="/forgot-password"
+                className="text-sm text-indigo-300 hover:text-indigo-200 underline"
+              >
+                Forgot password?
+              </a>
+            </div>
             <button
               type="submit"
               disabled={loading}
