@@ -104,7 +104,6 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
     _actionConfig = Map.from(widget.initialActionConfig);
     _reactionConfig = Map.from(widget.initialReactionConfig);
 
-    // Defer validation function callback to after frame build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.onValidationChanged != null) {
         widget.onValidationChanged!(
@@ -124,7 +123,6 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Action configuration
               if (widget.actionConfigSchema != null &&
                   widget.actionConfigSchema!.isNotEmpty)
                 _buildSection(
@@ -136,7 +134,6 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
                 ),
               const SizedBox(height: 24),
 
-              // Reaction configuration
               if (widget.reactionConfigSchema != null &&
                   widget.reactionConfigSchema!.isNotEmpty)
                 _buildSection(
@@ -167,7 +164,6 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
       return ConfigField.fromSchemaProperty(e.key, e.value);
     }).toList();
 
-    // Detect and combine hour/minute pairs
     final processedFields = <ConfigField>[];
     final processedNames = <String>{};
 
@@ -176,9 +172,7 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
 
       final fieldNameLower = field.name.toLowerCase();
 
-      // Check if this is an hour field and if there's a corresponding minute field
       if (fieldNameLower.contains('hour')) {
-        // Find corresponding minute field
         ConfigField? minuteField;
         try {
           final hourBase = fieldNameLower.replaceAll(RegExp(r'hour|_'), '');
@@ -192,7 +186,6 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
         }
 
         if (minuteField != null) {
-          // Add a combined time field marker
           processedNames.add(field.name);
           processedNames.add(minuteField.name);
           processedFields.add(field);
@@ -217,7 +210,6 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
               ? processedFields[idx + 1]
               : null;
 
-          // Check if this is a combined hour/minute pair
           if (field.name.toLowerCase().contains('hour') &&
               nextField != null &&
               nextField.name.toLowerCase().contains('minute')) {
@@ -233,7 +225,6 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
           } else if (field.name.toLowerCase().contains('minute') &&
               idx > 0 &&
               processedFields[idx - 1].name.toLowerCase().contains('hour')) {
-            // Skip this minute field as it's already handled by the hour field
             return const SizedBox.shrink();
           } else {
             return Padding(
