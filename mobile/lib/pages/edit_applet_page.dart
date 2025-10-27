@@ -15,7 +15,6 @@ class EditAppletPage extends StatefulWidget {
 class _EditAppletPageState extends State<EditAppletPage> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
-  late TextEditingController _descriptionController;
   late bool _isActive;
 
   bool _isLoading = false;
@@ -25,16 +24,12 @@ class _EditAppletPageState extends State<EditAppletPage> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.applet.name);
-    _descriptionController = TextEditingController(
-      text: widget.applet.description,
-    );
     _isActive = widget.applet.isActive;
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -50,7 +45,6 @@ class _EditAppletPageState extends State<EditAppletPage> {
     final success = await appletProvider.updateApplet(
       widget.applet.id,
       name: _nameController.text.trim(),
-      description: _descriptionController.text.trim(),
       status: _isActive ? 'active' : 'disabled',
     );
 
@@ -63,29 +57,55 @@ class _EditAppletPageState extends State<EditAppletPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Applet updated successfully')),
         );
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(true);
       }
     } else {
       setState(() {
-        _errorMessage = 'Failed to update applet';
+        _errorMessage = 'Failed to update applet: ${appletProvider.error}';
       });
     }
   }
 
   Future<void> _toggleActive() async {
     final appletProvider = Provider.of<AppletProvider>(context, listen: false);
-    final success = await appletProvider.toggleApplet(widget.applet.id);
 
-    if (success) {
-      setState(() {
-        _isActive = !_isActive;
-      });
+    try {
+      bool success;
+      if (_isActive) {
+        // Currently active, so pause it
+        success = await appletProvider.pauseApplet(widget.applet.id);
+      } else {
+        // Currently paused/disabled, so resume it
+        success = await appletProvider.resumeApplet(widget.applet.id);
+      }
+
+      if (success) {
+        setState(() {
+          _isActive = !_isActive;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                _isActive ? 'Automation activated' : 'Automation paused',
+              ),
+            ),
+          );
+        }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${appletProvider.error}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              _isActive ? 'Applet activated' : 'Applet deactivated',
-            ),
+            content: Text('Error toggling automation: $e'),
+            backgroundColor: Colors.red,
           ),
         );
       }
@@ -201,28 +221,6 @@ class _EditAppletPageState extends State<EditAppletPage> {
                     }
                     if (value.length < 3) {
                       return 'Name must be at least 3 characters';
-                    }
-                    return null;
-                  },
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              Semantics(
-                label: 'Applet description input field',
-                hint: 'Enter a new description for your applet',
-                child: TextFormField(
-                  controller: _descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    border: OutlineInputBorder(),
-                    helperText: 'Describe what this applet does',
-                  ),
-                  maxLines: 3,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a description';
                     }
                     return null;
                   },

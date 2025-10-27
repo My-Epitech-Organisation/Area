@@ -162,7 +162,6 @@ class ReactionData {
 class Applet {
   final int id;
   final String name;
-  final String description;
   final ActionData action;
   final ReactionData reaction;
   final Map<String, dynamic> actionConfig;
@@ -173,7 +172,6 @@ class Applet {
   Applet({
     required this.id,
     required this.name,
-    required this.description,
     required this.action,
     required this.reaction,
     required this.actionConfig,
@@ -188,7 +186,6 @@ class Applet {
       return Applet(
         id: json['id'],
         name: json['name'] ?? '',
-        description: json['description'] ?? '',
         action: ActionData.fromJson(json['action']),
         reaction: ReactionData.fromJson(json['reaction']),
         actionConfig: json['action_config'] ?? {},
@@ -211,7 +208,6 @@ class Applet {
     return {
       'id': id,
       'name': name,
-      'description': description,
       'action': action.toJson(),
       'reaction': reaction.toJson(),
       'action_config': actionConfig,
@@ -225,53 +221,6 @@ class Applet {
   String get triggerService => action.service.name;
   String get actionService => reaction.service.name;
   bool get isActive => status == 'active';
-
-  // Create from old format (for migration)
-  factory Applet.fromOldFormat({
-    required int id,
-    required String name,
-    required String description,
-    required String triggerService,
-    required String actionService,
-    required bool isActive,
-  }) {
-    // Mock data for migration - in real app, this would fetch from API
-    final mockAction = ActionData(
-      id: 1,
-      name: 'Mock Trigger',
-      description: 'Mock trigger for migration',
-      service: ServiceData(
-        id: 1,
-        name: triggerService,
-        description: 'Mock service',
-        status: 'active',
-      ),
-    );
-
-    final mockReaction = ReactionData(
-      id: 1,
-      name: 'Mock Action',
-      description: 'Mock action for migration',
-      service: ServiceData(
-        id: 2,
-        name: actionService,
-        description: 'Mock service',
-        status: 'active',
-      ),
-    );
-
-    return Applet(
-      id: id,
-      name: name,
-      description: description,
-      action: mockAction,
-      reaction: mockReaction,
-      actionConfig: {},
-      reactionConfig: {},
-      status: isActive ? 'active' : 'disabled',
-      createdAt: DateTime.now(),
-    );
-  }
 
   /// Create a copy of this applet with enriched action/reaction data
   /// This is useful when the backend returns only IDs and we need to enrich with service data
@@ -310,7 +259,6 @@ class Applet {
     return Applet(
       id: id,
       name: name,
-      description: description,
       action: enrichedAction,
       reaction: enrichedReaction,
       actionConfig: actionConfig,
