@@ -23,7 +23,7 @@ class ConfigValidator {
       // Check if field is missing or empty
       if (fieldValue == null ||
           (fieldValue is String && fieldValue.isEmpty) ||
-          (fieldValue is List && (fieldValue as List).isEmpty)) {
+          (fieldValue is List && fieldValue.isEmpty)) {
         missingFields.add(fieldName);
 
         // Provide specific error messages

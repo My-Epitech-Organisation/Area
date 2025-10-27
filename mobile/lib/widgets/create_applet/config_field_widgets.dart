@@ -22,7 +22,7 @@ class HourField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${label}${required ? ' (required)' : ''}',
+          '$label${required ? ' (required)' : ''}',
           style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
@@ -74,7 +74,7 @@ class MinuteField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${label}${required ? ' (required)' : ''}',
+          '$label${required ? ' (required)' : ''}',
           style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
@@ -168,7 +168,7 @@ class TimezoneField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${label}${required ? ' (required)' : ''}',
+          '$label${required ? ' (required)' : ''}',
           style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
