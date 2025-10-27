@@ -254,8 +254,7 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
     if (!formValid) {
       String errorMessage = 'Please fill in all required fields';
       if (_nameController.text.isEmpty) {
-        errorMessage =
-            'Please enter an automation name (at least 3 characters)';
+        errorMessage = 'Please enter an automation name';
       } else if (_nameController.text.length < 3) {
         errorMessage = 'Automation name must be at least 3 characters long';
       }
