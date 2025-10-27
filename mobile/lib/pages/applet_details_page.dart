@@ -30,7 +30,10 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
     setState(() => _isLoadingExecutions = true);
     try {
       final provider = context.read<AppletProvider>();
-      final executions = await provider.getAppletExecutions(_applet.id, limit: 20);
+      final executions = await provider.getAppletExecutions(
+        _applet.id,
+        limit: 20,
+      );
       if (mounted) {
         setState(() {
           _executions = executions;
@@ -707,10 +710,9 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
               children: [
                 Text(
                   'Execution History',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 if (_isLoadingExecutions)
                   const SizedBox(
@@ -735,10 +737,9 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Text(
                     'No executions yet',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: Colors.grey),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
                   ),
                 ),
               )
@@ -747,8 +748,7 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _executions.length,
-                separatorBuilder: (context, index) =>
-                    const Divider(height: 1),
+                separatorBuilder: (context, index) => const Divider(height: 1),
                 itemBuilder: (context, index) {
                   final execution = _executions[index];
                   return _buildExecutionItem(context, execution);
@@ -785,20 +785,18 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
                 const SizedBox(height: 4),
                 Text(
                   _formatDateTime(execution.createdAt),
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.grey),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                 ),
                 if (execution.durationSeconds != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       'Duration: ${execution.durationSeconds!.toStringAsFixed(2)}s',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: Colors.grey),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                     ),
                   ),
                 if (execution.errorMessage != null)
@@ -806,10 +804,9 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       'Error: ${execution.errorMessage}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: Colors.red),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.red),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),

@@ -77,7 +77,6 @@ class _MyHomePageState extends State<MyHomePage> {
       builder: (context, userProvider, appletProvider, statsProvider, child) {
         final userProfile = userProvider.profile;
         final applets = appletProvider.applets;
-        final areasStats = statsProvider.areasStats;
         final executionsStats = statsProvider.executionsStats;
 
         return Scaffold(
@@ -91,7 +90,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                   const SizedBox(height: 32),
 
-                  _buildMetricsCards(applets, areasStats, executionsStats),
+                  _buildMetricsCards(applets, executionsStats),
 
                   const SizedBox(height: 32),
 
@@ -153,7 +152,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildMetricsCards(
     List<Applet>? applets,
-    Map<String, dynamic>? areasStats,
     Map<String, dynamic>? executionsStats,
   ) {
     final totalApplets = applets?.length ?? 0;
