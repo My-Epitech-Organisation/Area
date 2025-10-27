@@ -42,7 +42,7 @@ const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = ({
         return;
       }
 
-      const response = await fetch(`${API_BASE}/auth/resend-verification/`, {
+      const response = await fetch(`${API_BASE}/auth/send-verification-email/`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
