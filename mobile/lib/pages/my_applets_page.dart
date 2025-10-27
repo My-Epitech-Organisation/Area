@@ -139,16 +139,13 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
     }
   }
 
-  /// Enrich applet data with service catalog information
-  /// This handles the case where the backend returns only IDs
+
   Applet _enrichAppletData(Applet applet, ServiceCatalogProvider catalog) {
-    // Find action and its service details by searching all services
     ServiceAction? foundAction;
     String? actionServiceName;
     ServiceReaction? foundReaction;
     String? reactionServiceName;
 
-    // Search through all services for the action and reaction
     for (final service in catalog.services) {
       for (final action in service.actions) {
         if (action.id == applet.action.id) {
@@ -164,7 +161,6 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
           break;
         }
       }
-      // Exit early if both found
       if (foundAction != null && foundReaction != null) break;
     }
 
@@ -217,7 +213,6 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
               itemCount: appletProvider.applets.length,
               itemBuilder: (context, index) {
                 final applet = appletProvider.applets[index];
-                // Enrich applet data with catalog information
                 final enrichedApplet = _enrichAppletData(
                   applet,
                   catalogProvider,
@@ -236,7 +231,7 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
           );
           navigationProvider.navigateToPage(
             1,
-          ); // Navigate to Create Automation tab
+          );
         },
         tooltip: 'Create new automation',
         child: const Icon(Icons.add),
