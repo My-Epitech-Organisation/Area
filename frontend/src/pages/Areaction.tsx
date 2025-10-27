@@ -3,7 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useActions, useReactions, useCreateArea } from '../hooks/useApi';
 import { findActionByName, findReactionByName, generateAreaName } from '../utils/areaHelpers';
 import { DynamicConfigForm } from '../components/DynamicConfigForm';
-import { API_BASE } from '../utils/helper';
+import { API_BASE, getStoredUser } from '../utils/helper';
+import EmailVerificationBanner from '../components/EmailVerificationBanner';
+import type { User } from '../types';
 
 type ServiceAction = {
   name: string;
@@ -29,6 +31,9 @@ const Areaction: React.FC = () => {
   const preselectedService = queryParams.get('service');
   const preselectedAction = queryParams.get('action');
   const preselectedReaction = queryParams.get('reaction');
+
+  // User state for email verification
+  const [user, setUser] = useState<User | null>(null);
 
   // Fetch actions and reactions from API
   const { data: apiActions, loading: loadingActions, error: errorActions } = useActions();
@@ -92,6 +97,14 @@ const Areaction: React.FC = () => {
     const key = name.toLowerCase();
     return imagesByName[key] ?? null;
   };
+
+  // Load user data on mount
+  useEffect(() => {
+    const storedUser = getStoredUser();
+    if (storedUser) {
+      setUser(storedUser);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -256,16 +269,26 @@ const Areaction: React.FC = () => {
 
   if (combinedError) {
     return (
-      <div className="w-screen min-h-screen bg-gradient-to-br from-black/90 via-gray-900/80 to-indigo-950 flex flex-col items-center justify-center">
-        <div className="max-w-2xl w-full bg-white/10 backdrop-blur-lg rounded-xl p-8 text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">Error</h2>
-          <p className="text-rose-300">{combinedError}</p>
-          <button
-            onClick={() => navigate('/services')}
-            className="mt-6 inline-block px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
-          >
-            Back to Services
-          </button>
+      <div className="w-screen min-h-screen bg-gradient-to-br from-black/90 via-gray-900/80 to-indigo-950 flex flex-col items-center justify-center p-6">
+        <div className="max-w-2xl w-full space-y-6">
+          {/* Email Verification Banner - Shows if user is not verified */}
+          <EmailVerificationBanner user={user} />
+
+          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 text-center">
+            <h2 className="text-2xl font-bold text-white mb-4">Error</h2>
+            <p className="text-rose-300 mb-2">{combinedError}</p>
+            {combinedError.includes('403') && (
+              <p className="text-amber-300 text-sm mt-4">
+                💡 This usually means your email is not verified. Please verify your email to create automations.
+              </p>
+            )}
+            <button
+              onClick={() => navigate('/services')}
+              className="mt-6 inline-block px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
+            >
+              Back to Services
+            </button>
+          </div>
         </div>
       </div>
     );
