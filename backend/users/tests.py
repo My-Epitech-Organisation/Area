@@ -24,6 +24,8 @@ class AuthTests(TestCase):
         self.user = User.objects.create_user(
             email="testuser2@example.com", password="StrongPassword123"
         )
+        self.user.email_verified = True
+        self.user.save()
 
     def test_register_user(self):
         response = self.client.post(self.register_url, self.user_data, format="json")

@@ -70,11 +70,13 @@ class ServiceAction {
   final int id;
   final String name;
   final String description;
+  final Map<String, dynamic>? configSchema;
 
   ServiceAction({
     required this.id,
     required this.name,
     required this.description,
+    this.configSchema,
   });
 
   factory ServiceAction.fromJson(Map<String, dynamic> json) {
@@ -82,11 +84,19 @@ class ServiceAction {
       id: json['id'] as int? ?? 0,
       name: (json['name'] as String?)?.trim() ?? '',
       description: (json['description'] as String?)?.trim() ?? '',
+      configSchema: json['config_schema'] is Map<String, dynamic>
+          ? json['config_schema'] as Map<String, dynamic>
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'id': id, 'name': name, 'description': description};
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'config_schema': configSchema,
+    };
   }
 
   /// Get display name with proper formatting
@@ -107,11 +117,13 @@ class ServiceReaction {
   final int id;
   final String name;
   final String description;
+  final Map<String, dynamic>? configSchema;
 
   ServiceReaction({
     required this.id,
     required this.name,
     required this.description,
+    this.configSchema,
   });
 
   factory ServiceReaction.fromJson(Map<String, dynamic> json) {
@@ -119,11 +131,17 @@ class ServiceReaction {
       id: json['id'] as int? ?? 0,
       name: (json['name'] as String?)?.trim() ?? '',
       description: (json['description'] as String?)?.trim() ?? '',
+      configSchema: json['config_schema'] as Map<String, dynamic>?,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'id': id, 'name': name, 'description': description};
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'config_schema': configSchema,
+    };
   }
 
   /// Get display name with proper formatting

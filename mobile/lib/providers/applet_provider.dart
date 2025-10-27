@@ -28,12 +28,26 @@ class AppletProvider extends ChangeNotifier {
 
       _applets = await _appletService.fetchApplets(forceRefresh: forceRefresh);
 
+      _enrichApplets();
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
       notifyListeners();
+    }
+  }
+
+  void _enrichApplets() {
+    debugPrint('📊 Applets loaded: ${_applets.length} applets');
+    for (final applet in _applets) {
+      if (applet.action.name.contains('Unknown') ||
+          applet.action.service.name.contains('Unknown')) {
+        debugPrint(
+          '⚠️ Applet "${applet.name}" has unknown action/service data - needs enrichment',
+        );
+      }
     }
   }
 

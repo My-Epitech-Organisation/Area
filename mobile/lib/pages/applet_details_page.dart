@@ -1,0 +1,506 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/applet.dart';
+import '../providers/applet_provider.dart';
+
+class AppletDetailsPage extends StatefulWidget {
+  final Applet applet;
+
+  const AppletDetailsPage({super.key, required this.applet});
+
+  @override
+  State<AppletDetailsPage> createState() => _AppletDetailsPageState();
+}
+
+class _AppletDetailsPageState extends State<AppletDetailsPage> {
+  late Applet _applet;
+  bool _isToggling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _applet = widget.applet;
+  }
+
+  Future<void> _toggleApplet() async {
+    setState(() => _isToggling = true);
+    try {
+      final provider = context.read<AppletProvider>();
+      final success = await provider.toggleApplet(_applet.id);
+
+      if (success && mounted) {
+        // Reload the applet to get updated status
+        final updatedApplet = provider.applets.firstWhere(
+          (a) => a.id == _applet.id,
+          orElse: () => _applet,
+        );
+        setState(() => _applet = updatedApplet);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Automation "${_applet.name}" is now ${_applet.status == 'active' ? 'active' : 'inactive'}',
+            ),
+            backgroundColor: Colors.blue,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error toggling automation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isToggling = false);
+      }
+    }
+  }
+
+  Future<void> _deleteApplet() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Automation'),
+          content: Text(
+            'Are you sure you want to delete "${_applet.name}"? This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        final provider = context.read<AppletProvider>();
+        final success = await provider.deleteApplet(_applet.id);
+
+        if (success && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Automation deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Pop back to the list
+          Navigator.of(context).pop(true);
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete automation: ${provider.error}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting automation: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: true,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_applet.name),
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: Icon(
+                _applet.status == 'active' ? Icons.pause : Icons.play_arrow,
+              ),
+              onPressed: _isToggling ? null : _toggleApplet,
+              tooltip: _applet.status == 'active' ? 'Disable' : 'Enable',
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: _deleteApplet,
+              tooltip: 'Delete',
+              color: Colors.red,
+            ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Status Card
+              _buildStatusCard(context),
+              const SizedBox(height: 24),
+
+              // Description Card
+              _buildDescriptionCard(context),
+              const SizedBox(height: 24),
+
+              // Trigger Configuration Card
+              _buildTriggerCard(context),
+              const SizedBox(height: 24),
+
+              // Action Configuration Card
+              _buildActionCard(context),
+              const SizedBox(height: 24),
+
+              // Metadata Card
+              _buildMetadataCard(context),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusCard(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _applet.status == 'active'
+                    ? Colors.green.withAlpha(204)
+                    : Colors.grey.withAlpha(204),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                _applet.status == 'active' ? Icons.check_circle : Icons.pause,
+                color: _applet.status == 'active'
+                    ? Colors.white
+                    : Colors.white70,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Status', style: Theme.of(context).textTheme.labelSmall),
+                  const SizedBox(height: 4),
+                  Text(
+                    _applet.status == 'active' ? 'Active' : 'Inactive',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: _applet.status == 'active'
+                          ? Colors.green
+                          : Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (_isToggling)
+              const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDescriptionCard(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Description',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _applet.description.isEmpty
+                  ? 'No description provided'
+                  : _applet.description,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTriggerCard(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.play_arrow,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Trigger',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildConfigSection(
+              context,
+              'Service',
+              _applet.action.service.name,
+              _applet.action.service.description,
+            ),
+            const SizedBox(height: 12),
+            _buildConfigSection(
+              context,
+              'Action',
+              _applet.action.name,
+              _applet.action.description,
+            ),
+            if (_applet.actionConfig.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _buildConfigSection(
+                context,
+                'Configuration',
+                '',
+                '',
+                data: _applet.actionConfig,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionCard(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.arrow_forward,
+                  color: Theme.of(context).colorScheme.tertiary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Action',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildConfigSection(
+              context,
+              'Service',
+              _applet.reaction.service.name,
+              _applet.reaction.service.description,
+            ),
+            const SizedBox(height: 12),
+            _buildConfigSection(
+              context,
+              'Reaction',
+              _applet.reaction.name,
+              _applet.reaction.description,
+            ),
+            if (_applet.reactionConfig.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _buildConfigSection(
+                context,
+                'Configuration',
+                '',
+                '',
+                data: _applet.reactionConfig,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConfigSection(
+    BuildContext context,
+    String label,
+    String value,
+    String description, {
+    Map<String, dynamic>? data,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: Colors.grey,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        if (data == null) ...[
+          Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          if (description.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              description,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+            ),
+          ],
+        ] else ...[
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: data.entries
+                  .map(
+                    (entry) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 1,
+                            child: Text(
+                              entry.key,
+                              style: Theme.of(context).textTheme.bodySmall,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              entry.value.toString(),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: Colors.grey.shade700),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildMetadataCard(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Metadata',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            _buildMetadataRow(context, 'ID', _applet.id.toString()),
+            _buildMetadataRow(
+              context,
+              'Created',
+              _formatDateTime(_applet.createdAt),
+            ),
+            _buildMetadataRow(context, 'Status', _applet.status),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetadataRow(BuildContext context, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+}
