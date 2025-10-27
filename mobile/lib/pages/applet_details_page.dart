@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/applet.dart';
 import '../providers/applet_provider.dart';
+import 'edit_applet_page.dart';
 
 class AppletDetailsPage extends StatefulWidget {
   final Applet applet;
@@ -58,6 +59,31 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
       if (mounted) {
         setState(() => _isToggling = false);
       }
+    }
+  }
+
+  void _editApplet() {
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (context) => EditAppletPage(applet: _applet),
+          ),
+        )
+        .then((updated) {
+          if (updated == true) {
+            _refreshAppletDetails();
+          }
+        });
+  }
+
+  Future<void> _refreshAppletDetails() async {
+    final provider = context.read<AppletProvider>();
+    final updatedApplet = provider.applets.firstWhere(
+      (a) => a.id == _applet.id,
+      orElse: () => _applet,
+    );
+    if (mounted) {
+      setState(() => _applet = updatedApplet);
     }
   }
 
@@ -120,6 +146,90 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
     }
   }
 
+  Future<void> _duplicateApplet() async {
+    final TextEditingController nameController = TextEditingController(
+      text: '${_applet.name} (Copy)',
+    );
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Duplicate Automation'),
+            content: TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'New automation name',
+                hintText: 'Enter the name for the duplicated automation',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 1,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => _confirmDuplicate(nameController.text),
+                style: TextButton.styleFrom(foregroundColor: Colors.blue),
+                child: const Text('Duplicate'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
+  Future<void> _confirmDuplicate(String newName) async {
+    Navigator.of(context).pop();
+
+    if (newName.trim().isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a name for the duplicated automation'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      final provider = context.read<AppletProvider>();
+      final success = await provider.duplicateApplet(_applet.id, newName.trim());
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Automation "${newName.trim()}" created successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop(true);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to duplicate automation: ${provider.error}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error duplicating automation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -129,6 +239,16 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
           title: Text(_applet.name),
           elevation: 0,
           actions: [
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: _editApplet,
+              tooltip: 'Edit',
+            ),
+            IconButton(
+              icon: const Icon(Icons.content_copy),
+              onPressed: _duplicateApplet,
+              tooltip: 'Duplicate',
+            ),
             IconButton(
               icon: Icon(
                 _applet.status == 'active' ? Icons.pause : Icons.play_arrow,

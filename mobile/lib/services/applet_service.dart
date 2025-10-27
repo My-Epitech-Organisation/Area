@@ -134,6 +134,23 @@ class AppletService {
     return applet;
   }
 
+  Future<Applet> duplicateApplet(int id, String newName) async {
+    final response = await _httpClient.post(
+      ApiConfig.automationDuplicateUrl(id),
+      body: {
+        'name': newName,
+      },
+    );
+
+    final applet = _httpClient.parseResponse<Applet>(
+      response,
+      (data) => Applet.fromJson(data),
+    );
+
+    _cache.remove(_cacheKeyPrefix);
+    return applet;
+  }
+
   /// Get applets by user ID
   Future<List<Applet>> getAppletsByUser(int userId) async {
     final response = await _httpClient.get(
