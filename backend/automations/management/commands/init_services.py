@@ -922,40 +922,7 @@ class Command(BaseCommand):
                 "name": "spotify",
                 "description": "Spotify integration for music playback and library management",
                 "status": Service.Status.ACTIVE,
-                "actions": [
-                    {
-                        "name": "spotify_track_started",
-                        "description": "Triggered when a new track starts playing",
-                        "config_schema": {},
-                    },
-                    {
-                        "name": "spotify_track_finished",
-                        "description": "Triggered when a track finishes playing",
-                        "config_schema": {},
-                    },
-                    {
-                        "name": "spotify_playlist_updated",
-                        "description": "Triggered when a playlist is modified (tracks added/removed)",
-                        "config_schema": {
-                            "playlist_id": {
-                                "type": "string",
-                                "label": "Playlist ID",
-                                "description": "Monitor specific playlist (leave empty for all playlists)",
-                                "required": False,
-                            },
-                        },
-                    },
-                    {
-                        "name": "spotify_liked_track",
-                        "description": "Triggered when a track is added to user's liked songs",
-                        "config_schema": {},
-                    },
-                    {
-                        "name": "spotify_saved_album",
-                        "description": "Triggered when an album is saved to user's library",
-                        "config_schema": {},
-                    },
-                ],
+                "actions": [],
                 "reactions": [
                     {
                         "name": "spotify_play_track",
