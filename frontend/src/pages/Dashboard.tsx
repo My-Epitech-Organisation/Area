@@ -12,6 +12,7 @@ import { getStoredUser, getAccessToken, fetchUserData, API_BASE } from '../utils
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import type { TooltipItem } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
+import EmailVerificationBanner from '../components/EmailVerificationBanner';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -379,6 +380,10 @@ const Dashboard: React.FC = () => {
               )}
             </div>
           </header>
+
+          {/* Email Verification Banner */}
+          <EmailVerificationBanner user={user} />
+
           <div className="w-full flex flex-col gap-4 mb-4">
             <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-theme-primary">
               <h2 className="text-xl font-semibold text-theme-accent mb-3">Service Activity</h2>
