@@ -540,7 +540,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${applet.action.service.name} → ${applet.reaction.service.name}',
+                  '${applet.action.service.name} to ${applet.reaction.service.name}',
                   style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
