@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/applet_provider.dart';
 import '../providers/navigation_provider.dart';
+import '../providers/service_catalog_provider.dart';
 import '../models/applet.dart';
+import '../models/service.dart';
 import '../widgets/state_widgets.dart';
 
 class MyAppletsPage extends StatefulWidget {
@@ -129,6 +131,45 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
     }
   }
 
+  /// Enrich applet data with service catalog information
+  /// This handles the case where the backend returns only IDs
+  Applet _enrichAppletData(Applet applet, ServiceCatalogProvider catalog) {
+    // Find action and its service details by searching all services
+    ServiceAction? foundAction;
+    String? actionServiceName;
+    ServiceReaction? foundReaction;
+    String? reactionServiceName;
+
+    // Search through all services for the action and reaction
+    for (final service in catalog.services) {
+      for (final action in service.actions) {
+        if (action.id == applet.action.id) {
+          foundAction = action;
+          actionServiceName = service.name;
+          break;
+        }
+      }
+      for (final reaction in service.reactions) {
+        if (reaction.id == applet.reaction.id) {
+          foundReaction = reaction;
+          reactionServiceName = service.name;
+          break;
+        }
+      }
+      // Exit early if both found
+      if (foundAction != null && foundReaction != null) break;
+    }
+
+    return applet.copyWithEnrichedData(
+      actionName: foundAction?.name,
+      actionDescription: foundAction?.description,
+      actionServiceName: actionServiceName,
+      reactionName: foundReaction?.name,
+      reactionDescription: foundReaction?.description,
+      reactionServiceName: reactionServiceName,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -143,21 +184,21 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
           ),
         ],
       ),
-      body: Consumer<AppletProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading && provider.applets.isEmpty) {
+      body: Consumer2<AppletProvider, ServiceCatalogProvider>(
+        builder: (context, appletProvider, catalogProvider, child) {
+          if (appletProvider.isLoading && appletProvider.applets.isEmpty) {
             return const LoadingStateWidget();
           }
 
-          if (provider.error != null && provider.applets.isEmpty) {
+          if (appletProvider.error != null && appletProvider.applets.isEmpty) {
             return ErrorStateWidget(
               title: 'Failed to load automations',
-              message: provider.error,
+              message: appletProvider.error,
               onRetry: _refreshApplets,
             );
           }
 
-          if (provider.applets.isEmpty) {
+          if (appletProvider.applets.isEmpty) {
             return _buildEmptyState();
           }
 
@@ -165,10 +206,15 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
             onRefresh: _refreshApplets,
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: provider.applets.length,
+              itemCount: appletProvider.applets.length,
               itemBuilder: (context, index) {
-                final applet = provider.applets[index];
-                return _buildAppletCard(applet);
+                final applet = appletProvider.applets[index];
+                // Enrich applet data with catalog information
+                final enrichedApplet = _enrichAppletData(
+                  applet,
+                  catalogProvider,
+                );
+                return _buildAppletCard(enrichedApplet);
               },
             ),
           );

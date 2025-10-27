@@ -272,4 +272,51 @@ class Applet {
       createdAt: DateTime.now(),
     );
   }
+
+  /// Create a copy of this applet with enriched action/reaction data
+  /// This is useful when the backend returns only IDs and we need to enrich with service data
+  Applet copyWithEnrichedData({
+    required String? actionName,
+    required String? actionDescription,
+    required String? actionServiceName,
+    required String? reactionName,
+    required String? reactionDescription,
+    required String? reactionServiceName,
+  }) {
+    final enrichedAction = ActionData(
+      id: action.id,
+      name: actionName ?? action.name,
+      description: actionDescription ?? action.description,
+      service: ServiceData(
+        id: action.service.id,
+        name: actionServiceName ?? action.service.name,
+        description: action.service.description,
+        status: action.service.status,
+      ),
+    );
+
+    final enrichedReaction = ReactionData(
+      id: reaction.id,
+      name: reactionName ?? reaction.name,
+      description: reactionDescription ?? reaction.description,
+      service: ServiceData(
+        id: reaction.service.id,
+        name: reactionServiceName ?? reaction.service.name,
+        description: reaction.service.description,
+        status: reaction.service.status,
+      ),
+    );
+
+    return Applet(
+      id: id,
+      name: name,
+      description: description,
+      action: enrichedAction,
+      reaction: enrichedReaction,
+      actionConfig: actionConfig,
+      reactionConfig: reactionConfig,
+      status: status,
+      createdAt: createdAt,
+    );
+  }
 }
