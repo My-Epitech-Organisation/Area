@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 /// A simple DateTime picker widget with manual input and calendar picker
-/// 
+///
 /// Features:
 /// - Manual text input field for ISO 8601 dates
 /// - Calendar/Clock icon on the right that opens date/time pickers
@@ -43,7 +43,7 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
     _focusNode = FocusNode();
     _parseInitialValue();
     _controller = TextEditingController(
-      text: selectedDateTime != null 
+      text: selectedDateTime != null
           ? selectedDateTime!.toIso8601String()
           : widget.initialValue ?? '',
     );
@@ -71,7 +71,7 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
   /// Parse various datetime formats
   DateTime? _parseInput(String input) {
     if (input.isEmpty) return null;
-    
+
     try {
       // Try ISO 8601 format first
       return DateTime.parse(input);
@@ -85,7 +85,7 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
         'yyyy-MM-dd',
         'dd/MM/yyyy',
       ];
-      
+
       for (final format in formats) {
         try {
           return DateFormat(format).parse(input);
@@ -207,9 +207,9 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
             children: [
               TextSpan(
                 text: widget.label,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600),
               ),
               if (widget.required)
                 const TextSpan(
@@ -247,8 +247,8 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
                 color: hasError
                     ? Colors.red.shade400
                     : isValid
-                        ? Colors.blue.shade300
-                        : Colors.grey.shade300,
+                    ? Colors.blue.shade300
+                    : Colors.grey.shade300,
                 width: hasError || isValid ? 2 : 1.5,
               ),
             ),
@@ -258,8 +258,8 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
                 color: hasError
                     ? Colors.red.shade400
                     : isValid
-                        ? Colors.blue.shade300
-                        : Colors.grey.shade300,
+                    ? Colors.blue.shade300
+                    : Colors.grey.shade300,
                 width: hasError || isValid ? 2 : 1.5,
               ),
             ),
@@ -274,11 +274,14 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
             fillColor: hasError
                 ? Colors.red.shade50
                 : isValid
-                    ? Colors.blue.shade50
-                    : Colors.grey.shade50,
+                ? Colors.blue.shade50
+                : Colors.grey.shade50,
             hintText: 'YYYY-MM-DDTHH:MM:SS or tap calendar',
             hintStyle: TextStyle(color: Colors.grey.shade400),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
             suffixIcon: GestureDetector(
               onTap: _selectDateAndTime,
               child: Container(
@@ -288,8 +291,8 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
                   color: isValid
                       ? Colors.blue.shade600
                       : hasError
-                          ? Colors.red.shade600
-                          : Colors.grey.shade600,
+                      ? Colors.red.shade600
+                      : Colors.grey.shade600,
                   size: 20,
                 ),
               ),

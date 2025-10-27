@@ -363,10 +363,11 @@ class _DateTimeFieldState extends State<DateTimeField> {
                       if (selectedDateTime != null)
                         Text(
                           DateFormat('MMM d, yyyy').format(selectedDateTime!),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey.shade600,
-                            fontSize: 12,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Colors.grey.shade600,
+                                fontSize: 12,
+                              ),
                         ),
                       Text(
                         selectedDateTime != null
