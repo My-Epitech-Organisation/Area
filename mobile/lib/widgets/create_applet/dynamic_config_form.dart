@@ -175,7 +175,7 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
       if (processedNames.contains(field.name)) continue;
 
       final fieldNameLower = field.name.toLowerCase();
-      
+
       // Check if this is an hour field and if there's a corresponding minute field
       if (fieldNameLower.contains('hour')) {
         // Find corresponding minute field
@@ -213,11 +213,13 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
         ...processedFields.asMap().entries.map((entry) {
           final idx = entry.key;
           final field = entry.value;
-          final nextField = idx + 1 < processedFields.length ? processedFields[idx + 1] : null;
+          final nextField = idx + 1 < processedFields.length
+              ? processedFields[idx + 1]
+              : null;
 
           // Check if this is a combined hour/minute pair
-          if (field.name.toLowerCase().contains('hour') && 
-              nextField != null && 
+          if (field.name.toLowerCase().contains('hour') &&
+              nextField != null &&
               nextField.name.toLowerCase().contains('minute')) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
@@ -229,8 +231,8 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
               ),
             );
           } else if (field.name.toLowerCase().contains('minute') &&
-                     idx > 0 &&
-                     processedFields[idx - 1].name.toLowerCase().contains('hour')) {
+              idx > 0 &&
+              processedFields[idx - 1].name.toLowerCase().contains('hour')) {
             // Skip this minute field as it's already handled by the hour field
             return const SizedBox.shrink();
           } else {
@@ -264,10 +266,15 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
     ValueChanged<Map<String, dynamic>> onConfigChanged,
   ) {
     final hourValue = config[hourField.name] ?? hourField.defaultValue ?? 0;
-    final minuteValue = config[minuteField.name] ?? minuteField.defaultValue ?? 0;
-    
-    final initialHour = hourValue is int ? hourValue : int.tryParse(hourValue.toString()) ?? 0;
-    final initialMinute = minuteValue is int ? minuteValue : int.tryParse(minuteValue.toString()) ?? 0;
+    final minuteValue =
+        config[minuteField.name] ?? minuteField.defaultValue ?? 0;
+
+    final initialHour = hourValue is int
+        ? hourValue
+        : int.tryParse(hourValue.toString()) ?? 0;
+    final initialMinute = minuteValue is int
+        ? minuteValue
+        : int.tryParse(minuteValue.toString()) ?? 0;
 
     return TimePickerField(
       label: 'Time',

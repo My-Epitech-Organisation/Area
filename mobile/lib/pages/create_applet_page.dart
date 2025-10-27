@@ -245,11 +245,14 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
       debugPrint('❌ Form validation failed');
       String errorMessage = 'Please fill in all required fields';
       if (_nameController.text.isEmpty) {
-        errorMessage = 'Please enter an automation name (at least 3 characters)';
+        errorMessage =
+            'Please enter an automation name (at least 3 characters)';
         debugPrint('📋 Validation error: Empty automation name');
       } else if (_nameController.text.length < 3) {
         errorMessage = 'Automation name must be at least 3 characters long';
-        debugPrint('📋 Validation error: Automation name too short (${_nameController.text.length} < 3)');
+        debugPrint(
+          '📋 Validation error: Automation name too short (${_nameController.text.length} < 3)',
+        );
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
