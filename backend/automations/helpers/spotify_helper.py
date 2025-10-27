@@ -5,13 +5,6 @@
 ## spotify_helper
 ##
 
-##
-## EPITECH PROJECT, 2025
-## Area
-## File description:
-## spotify_helper
-##
-
 """Spotify API helper functions for reactions."""
 
 import logging
