@@ -103,11 +103,31 @@ if not CORS_ALLOW_ALL_ORIGINS:
 # EMAIL CONFIGURATION
 # =============================================================================
 
-# Email backend - default to console for development
-# Can be overridden to SMTP for testing email functionality
+# Email backend - Can use SMTP or console for development
+# SMTP: Set EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend in .env
+# Console: Prints emails to terminal (default for dev)
 EMAIL_BACKEND = os.getenv(
     "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
 )
+
+# SMTP Configuration (if using SMTP backend)
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False") == "True"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@areaction.app")
+
+# Email timeout (seconds)
+EMAIL_TIMEOUT = 10
+
+print(f"📧 Email backend: {EMAIL_BACKEND}")
+if "smtp" in EMAIL_BACKEND.lower():
+    print(f"📧 SMTP Host: {EMAIL_HOST}:{EMAIL_PORT}")
+    print(f"📧 SMTP User: {EMAIL_HOST_USER or '(not set)'}")
+    print(f"📧 From Email: {DEFAULT_FROM_EMAIL}")
+
 
 # =============================================================================
 # SECURITY SETTINGS (Disabled for Docker Dev)
