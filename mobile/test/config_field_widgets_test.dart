@@ -288,10 +288,13 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TimezoneField(
-              label: 'Timezone',
-              value: 'UTC',
-              onChanged: (_) {},
+            body: SizedBox(
+              width: 400,
+              child: TimezoneField(
+                label: 'Timezone',
+                value: 'UTC',
+                onChanged: (_) {},
+              ),
             ),
           ),
         ),
@@ -306,11 +309,14 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TimezoneField(
-              label: 'Timezone',
-              value: 'UTC',
-              required: true,
-              onChanged: (_) {},
+            body: SizedBox(
+              width: 400,
+              child: TimezoneField(
+                label: 'Timezone',
+                value: 'UTC',
+                required: true,
+                onChanged: (_) {},
+              ),
             ),
           ),
         ),
@@ -325,10 +331,13 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TimezoneField(
-              label: 'Timezone',
-              value: 'UTC',
-              onChanged: (_) {},
+            body: SizedBox(
+              width: 400,
+              child: TimezoneField(
+                label: 'Timezone',
+                value: 'UTC',
+                onChanged: (_) {},
+              ),
             ),
           ),
         ),
@@ -343,10 +352,13 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TimezoneField(
-              label: 'Timezone',
-              value: 'UTC',
-              onChanged: (_) {},
+            body: SizedBox(
+              width: 400,
+              child: TimezoneField(
+                label: 'Timezone',
+                value: 'UTC',
+                onChanged: (_) {},
+              ),
             ),
           ),
         ),
@@ -359,15 +371,16 @@ void main() {
     testWidgets('TimezoneField selects timezone correctly', (
       WidgetTester tester,
     ) async {
-      String? selectedTimezone;
-
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TimezoneField(
-              label: 'Timezone',
-              value: 'UTC',
-              onChanged: (val) => selectedTimezone = val,
+            body: SizedBox(
+              width: 400,
+              child: TimezoneField(
+                label: 'Timezone',
+                value: 'UTC',
+                onChanged: (_) {},
+              ),
             ),
           ),
         ),
@@ -383,10 +396,13 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TimezoneField(
-              label: 'Timezone',
-              value: 'CET',
-              onChanged: (_) {},
+            body: SizedBox(
+              width: 400,
+              child: TimezoneField(
+                label: 'Timezone',
+                value: 'CET',
+                onChanged: (_) {},
+              ),
             ),
           ),
         ),
@@ -401,10 +417,13 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TimezoneField(
-              label: 'Timezone',
-              value: 'INVALID',
-              onChanged: (_) {},
+            body: SizedBox(
+              width: 400,
+              child: TimezoneField(
+                label: 'Timezone',
+                value: 'INVALID',
+                onChanged: (_) {},
+              ),
             ),
           ),
         ),
@@ -419,10 +438,13 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TimezoneField(
-              label: 'Timezone',
-              value: 'UTC',
-              onChanged: (_) {},
+            body: SizedBox(
+              width: 400,
+              child: TimezoneField(
+                label: 'Timezone',
+                value: 'UTC',
+                onChanged: (_) {},
+              ),
             ),
           ),
         ),
@@ -437,10 +459,13 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TimezoneField(
-              label: 'Timezone',
-              value: 'UTC',
-              onChanged: (_) {},
+            body: SizedBox(
+              width: 400,
+              child: TimezoneField(
+                label: 'Timezone',
+                value: 'UTC',
+                onChanged: (_) {},
+              ),
             ),
           ),
         ),
