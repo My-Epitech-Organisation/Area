@@ -65,7 +65,7 @@ class AppletProvider extends ChangeNotifier {
       notifyListeners();
 
       final newApplet = await _appletService.createApplet(
-        description: description,
+        name: description,
         actionId: actionId,
         reactionId: reactionId,
         actionConfig: actionConfig,
@@ -87,7 +87,6 @@ class AppletProvider extends ChangeNotifier {
   Future<bool> updateApplet(
     int id, {
     String? name,
-    String? description,
     String? status,
     Map<String, dynamic>? actionConfig,
     Map<String, dynamic>? reactionConfig,
@@ -100,7 +99,6 @@ class AppletProvider extends ChangeNotifier {
       final updatedApplet = await _appletService.updateApplet(
         id,
         name: name,
-        description: description,
         status: status,
         actionConfig: actionConfig,
         reactionConfig: reactionConfig,
@@ -144,15 +142,16 @@ class AppletProvider extends ChangeNotifier {
 
   Future<bool> toggleApplet(int id) async {
     try {
-      final updatedApplet = await _appletService.toggleApplet(id);
+      // Check current status and toggle appropriately
+      final applet = _applets.firstWhere((a) => a.id == id);
 
-      final index = _applets.indexWhere((a) => a.id == id);
-      if (index != -1) {
-        _applets[index] = updatedApplet;
-        notifyListeners();
+      if (applet.isActive) {
+        // Pause if active
+        return await pauseApplet(id);
+      } else {
+        // Resume if paused
+        return await resumeApplet(id);
       }
-
-      return true;
     } catch (e) {
       _error = e.toString();
       notifyListeners();

@@ -347,10 +347,6 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
               _buildStatusCard(context),
               const SizedBox(height: 24),
 
-              // Description Card
-              _buildDescriptionCard(context),
-              const SizedBox(height: 24),
-
               // Trigger Configuration Card
               _buildTriggerCard(context),
               const SizedBox(height: 24),
@@ -413,34 +409,6 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDescriptionCard(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Description',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              _applet.description.isEmpty
-                  ? 'No description provided'
-                  : _applet.description,
-              style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
         ),
