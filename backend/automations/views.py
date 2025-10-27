@@ -464,94 +464,120 @@ class ExecutionViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = ExecutionListSerializer(queryset, many=True)
         return Response(serializer.data)
 
+# ============================================================================
+# Debug Views - Manual Trigger & Execution Monitoring
+# ============================================================================
 
-class ActionSchemaView(viewsets.ViewSet):
-    """
-    ViewSet for retrieving action configuration schemas.
 
-    Provides endpoints to get JSON schemas for action configuration forms.
-    """
+@extend_schema(
+    tags=["Debug"],
+    summary="Manually trigger a debug action",
+    description="Trigger a manual execution for an Area with debug_manual_trigger action",
+)
+class DebugTriggerView(viewsets.ViewSet):
+    """Manual trigger for debug actions."""
 
     permission_classes = [permissions.IsAuthenticated]
 
-    @extend_schema(
-        summary="Get action configuration schema",
-        description="Retrieve the JSON schema for configuring a specific action.",
-        parameters=[
-            OpenApiParameter(
-                name="action_name",
-                type=str,
-                location=OpenApiParameter.PATH,
-                description="Name of the action to get schema for",
-            )
-        ],
-        responses={
-            200: "Action schema retrieved successfully",
-            404: "Action schema not found",
-        },
-    )
-    def retrieve(self, request: Request, pk: str = None) -> Response:
+    def create(self, request, area_id=None):
         """
-        Get schema for a specific action.
+        Manually trigger an Area's reaction for testing.
 
-        URL: /api/schemas/actions/{action_name}/
+        POST /debug/trigger/{area_id}/
         """
+        from .tasks import execute_reaction_task
+
         try:
-            schema = get_action_schema(pk)
-            if schema is None:
+            # Get the area and verify ownership + debug action
+            area = Area.objects.get(id=area_id, owner=request.user, status="active")
+
+            if area.action.name != "debug_manual_trigger":
                 return Response(
-                    {"detail": f"Schema for action '{pk}' not found."},
-                    status=status.HTTP_404_NOT_FOUND,
+                    {
+                        "error": "This endpoint only works with debug_manual_trigger actions"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
-            return Response(schema)
+
+            # Create a manual execution with unique external_event_id
+            trigger_data = {
+                "manual_trigger": True,
+                "triggered_by": request.user.email,
+                "timestamp": time.time(),
+            }
+
+            execution = Execution.objects.create(
+                area=area,
+                external_event_id=f"debug_manual_{uuid.uuid4()}",
+                trigger_data=trigger_data,
+                status=Execution.Status.PENDING,
+            )
+
+            # Execute the reaction asynchronously
+            execute_reaction_task.delay(execution.pk)
+
+            return Response(
+                {
+                    "success": True,
+                    "execution_id": execution.id,
+                    "area_name": area.name,
+                    "message": "Debug execution triggered successfully",
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Area.DoesNotExist:
+            return Response(
+                {"error": "Area not found or access denied"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         except Exception as e:
             return Response(
-                {"detail": f"Error retrieving action schema: {str(e)}"},
+                {"error": f"Failed to trigger execution: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
-class ReactionSchemaView(viewsets.ViewSet):
-    """
-    ViewSet for retrieving reaction configuration schemas.
-
-    Provides endpoints to get JSON schemas for reaction configuration forms.
-    """
+@extend_schema(
+    tags=["Debug"],
+    summary="Get debug executions for an Area",
+    description="Retrieve recent executions for a debug Area",
+)
+class DebugExecutionsView(viewsets.ViewSet):
+    """Retrieve executions for debugging."""
 
     permission_classes = [permissions.IsAuthenticated]
 
-    @extend_schema(
-        summary="Get reaction configuration schema",
-        description="Retrieve the JSON schema for configuring a specific reaction.",
-        parameters=[
-            OpenApiParameter(
-                name="reaction_name",
-                type=str,
-                location=OpenApiParameter.PATH,
-                description="Name of the reaction to get schema for",
-            )
-        ],
-        responses={
-            200: "Reaction schema retrieved successfully",
-            404: "Reaction schema not found",
-        },
-    )
-    def retrieve(self, request: Request, pk: str = None) -> Response:
+    def list(self, request, area_id=None):
         """
-        Get schema for a specific reaction.
+        Get recent executions for a debug Area.
 
-        URL: /api/schemas/reactions/{reaction_name}/
+        GET /debug/executions/{area_id}/
         """
         try:
-            schema = get_reaction_schema(pk)
-            if schema is None:
-                return Response(
-                    {"detail": f"Schema for reaction '{pk}' not found."},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-            return Response(schema)
-        except Exception as e:
+            # Verify area ownership
+            area = Area.objects.get(id=area_id, owner=request.user)
+
+            # Get recent executions (last 20)
+            executions = Execution.objects.filter(area=area).order_by("-created_at")[
+                :20
+            ]
+
+            serializer = ExecutionListSerializer(executions, many=True)
+
             return Response(
-                {"detail": f"Error retrieving reaction schema: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                {
+                    "area_id": area.id,
+                    "area_name": area.name,
+                    "action": area.action.name,
+                    "reaction": area.reaction.name,
+                    "executions": serializer.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Area.DoesNotExist:
+            return Response(
+                {"error": "Area not found or access denied"},
+                status=status.HTTP_404_NOT_FOUND,
             )
