@@ -22,7 +22,6 @@ const Login: React.FC = () => {
     const message = searchParams.get('message');
     const error = searchParams.get('error');
     const emailParam = searchParams.get('email');
-    const expired = searchParams.get('expired');
 
     if (verified === 'true' && message) {
       setVerificationMessage(message);
