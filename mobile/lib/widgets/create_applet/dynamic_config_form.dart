@@ -158,10 +158,24 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
     ValueChanged<Map<String, dynamic>> onConfigChanged,
   ) {
     final properties = schema['properties'] as Map<String, dynamic>? ?? {};
+    final requiredFields = (schema['required'] as List?)?.cast<String>() ?? [];
+
     if (properties.isEmpty) return const SizedBox.shrink();
 
+    // Create ConfigField objects with required information
     final fields = properties.entries.map((e) {
-      return ConfigField.fromSchemaProperty(e.key, e.value);
+      final field = ConfigField.fromSchemaProperty(e.key, e.value);
+      // Mark as required if it's in the required fields list
+      return ConfigField(
+        name: field.name,
+        label: field.label,
+        type: field.type,
+        description: field.description,
+        defaultValue: field.defaultValue,
+        required: requiredFields.contains(field.name) || field.required,
+        enumValues: field.enumValues,
+        validation: field.validation,
+      );
     }).toList();
 
     final processedFields = <ConfigField>[];
@@ -354,13 +368,29 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${field.label}${field.required ? ' *' : ''}',
-            style: Theme.of(context).textTheme.labelSmall,
+            '${field.label}${field.required ? ' (required)' : ''}',
+            style: Theme.of(context).textTheme.labelLarge,
           ),
           const SizedBox(height: 8),
+          if (field.description != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                field.description!,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
+              ),
+            ),
           DropdownButtonFormField<String>(
             initialValue: value.toString(),
-            decoration: const InputDecoration(border: OutlineInputBorder()),
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              errorText: field.required && value.isEmpty
+                  ? '${field.label} is required'
+                  : null,
+            ),
             items: field.enumValues!.map((val) {
               return DropdownMenuItem(value: val, child: Text(val));
             }).toList(),
@@ -368,7 +398,8 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
               if (val != null) onChanged(val);
             },
             validator: field.required
-                ? (val) => val == null ? '${field.label} is required' : null
+                ? (val) =>
+                    val == null || val.isEmpty ? 'This field is required' : null
                 : null,
           ),
         ],
@@ -379,17 +410,71 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
     return TextFormField(
       initialValue: value.toString(),
       decoration: InputDecoration(
-        labelText: '${field.label}${field.required ? ' *' : ''}',
+        label: field.required
+            ? RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: field.label,
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    TextSpan(
+                      text: ' (required)',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Colors.grey[600],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : Text(field.label),
         border: const OutlineInputBorder(),
         helperText: field.description,
+        helperMaxLines: 2,
+        helperStyle: TextStyle(
+          color: Colors.grey[600],
+          fontSize: 12,
+        ),
+        hintText: _getHintText(field),
       ),
       keyboardType: fieldTypeLower == 'number'
           ? TextInputType.number
           : TextInputType.text,
       onChanged: onChanged,
       validator: field.required
-          ? (val) => val?.isEmpty ?? true ? '${field.label} is required' : null
+          ? (val) {
+              if (val?.isEmpty ?? true) {
+                final errorMsg = '${field.label} is required';
+                if (field.description != null) {
+                  return '$errorMsg - ${field.description}';
+                }
+                return errorMsg;
+              }
+              return null;
+            }
           : null,
     );
+  }
+
+  /// Get a helpful hint text based on field name and type
+  String _getHintText(ConfigField field) {
+    final nameLower = field.name.toLowerCase();
+
+    if (nameLower.contains('email')) {
+      return 'example@domain.com';
+    } else if (nameLower.contains('url') || nameLower.contains('link')) {
+      return 'https://example.com';
+    } else if (nameLower.contains('phone')) {
+      return '+1 (555) 123-4567';
+    } else if (nameLower.contains('message') || nameLower.contains('body')) {
+      return 'Enter your message...';
+    } else if (nameLower.contains('title') || nameLower.contains('summary')) {
+      return 'Enter a title...';
+    } else if (nameLower.contains('description')) {
+      return 'Enter a description...';
+    }
+
+    return field.description ?? 'Enter ${field.label.toLowerCase()}...';
   }
 }

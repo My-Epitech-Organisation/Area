@@ -22,8 +22,8 @@ class HourField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '$label${required ? ' *' : ''}',
-          style: Theme.of(context).textTheme.labelSmall,
+          '${label}${required ? ' (required)' : ''}',
+          style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
         TextFormField(
@@ -74,8 +74,8 @@ class MinuteField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '$label${required ? ' *' : ''}',
-          style: Theme.of(context).textTheme.labelSmall,
+          '${label}${required ? ' (required)' : ''}',
+          style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
         TextFormField(
@@ -168,8 +168,8 @@ class TimezoneField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '$label${required ? ' *' : ''}',
-          style: Theme.of(context).textTheme.labelSmall,
+          '${label}${required ? ' (required)' : ''}',
+          style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
@@ -343,8 +343,8 @@ class _TimePickerFieldState extends State<TimePickerField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${widget.label}${widget.required ? ' *' : ''}',
-          style: Theme.of(context).textTheme.labelSmall,
+          '${widget.label}${widget.required ? ' (required)' : ''}',
+          style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
         InkWell(
