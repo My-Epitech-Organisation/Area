@@ -15,51 +15,11 @@ class AppletDetailsPage extends StatefulWidget {
 
 class _AppletDetailsPageState extends State<AppletDetailsPage> {
   late Applet _applet;
-  bool _isToggling = false;
 
   @override
   void initState() {
     super.initState();
     _applet = widget.applet;
-  }
-
-  Future<void> _toggleApplet() async {
-    setState(() => _isToggling = true);
-    try {
-      final provider = context.read<AppletProvider>();
-      final success = await provider.toggleApplet(_applet.id);
-
-      if (success && mounted) {
-        // Reload the applet to get updated status
-        final updatedApplet = provider.applets.firstWhere(
-          (a) => a.id == _applet.id,
-          orElse: () => _applet,
-        );
-        setState(() => _applet = updatedApplet);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Automation "${_applet.name}" is now ${_applet.status == 'active' ? 'active' : 'inactive'}',
-            ),
-            backgroundColor: Colors.blue,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error toggling automation: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isToggling = false);
-      }
-    }
   }
 
   void _editApplet() {
@@ -235,6 +195,82 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
     }
   }
 
+  Future<void> _pauseApplet() async {
+    try {
+      final provider = context.read<AppletProvider>();
+      final success = await provider.pauseApplet(_applet.id);
+
+      if (success && mounted) {
+        final updatedApplet = provider.applets.firstWhere(
+          (a) => a.id == _applet.id,
+          orElse: () => _applet,
+        );
+        setState(() => _applet = updatedApplet);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Automation paused'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pause automation: ${provider.error}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error pausing automation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _resumeApplet() async {
+    try {
+      final provider = context.read<AppletProvider>();
+      final success = await provider.resumeApplet(_applet.id);
+
+      if (success && mounted) {
+        final updatedApplet = provider.applets.firstWhere(
+          (a) => a.id == _applet.id,
+          orElse: () => _applet,
+        );
+        setState(() => _applet = updatedApplet);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Automation resumed'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to resume automation: ${provider.error}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error resuming automation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -254,13 +290,20 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
               onPressed: _duplicateApplet,
               tooltip: 'Duplicate',
             ),
-            IconButton(
-              icon: Icon(
-                _applet.status == 'active' ? Icons.pause : Icons.play_arrow,
+            if (_applet.status == 'paused')
+              IconButton(
+                icon: const Icon(Icons.play_arrow),
+                onPressed: _resumeApplet,
+                tooltip: 'Resume',
+                color: Colors.green,
+              )
+            else if (_applet.status == 'active')
+              IconButton(
+                icon: const Icon(Icons.pause),
+                onPressed: _pauseApplet,
+                tooltip: 'Pause',
+                color: Colors.orange,
               ),
-              onPressed: _isToggling ? null : _toggleApplet,
-              tooltip: _applet.status == 'active' ? 'Disable' : 'Enable',
-            ),
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: _deleteApplet,
@@ -341,12 +384,6 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
                 ],
               ),
             ),
-            if (_isToggling)
-              const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
           ],
         ),
       ),

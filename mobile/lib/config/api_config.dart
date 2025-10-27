@@ -85,6 +85,8 @@ class ApiConfig {
   static String automationToggleUrl(int id) => '$apiBaseUrl/areas/$id/toggle/';
   static String automationDuplicateUrl(int id) =>
       '$apiBaseUrl/areas/$id/duplicate/';
+  static String automationPauseUrl(int id) => '$apiBaseUrl/areas/$id/pause/';
+  static String automationResumeUrl(int id) => '$apiBaseUrl/areas/$id/resume/';
   static String serviceActionsUrl(int serviceId) =>
       '$apiBaseUrl/services/$serviceId/actions/';
   static String serviceReactionsUrl(int serviceId) =>

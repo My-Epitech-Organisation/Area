@@ -182,6 +182,42 @@ class AppletProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> pauseApplet(int id) async {
+    try {
+      final updatedApplet = await _appletService.pauseApplet(id);
+
+      final index = _applets.indexWhere((a) => a.id == id);
+      if (index != -1) {
+        _applets[index] = updatedApplet;
+        notifyListeners();
+      }
+
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> resumeApplet(int id) async {
+    try {
+      final updatedApplet = await _appletService.resumeApplet(id);
+
+      final index = _applets.indexWhere((a) => a.id == id);
+      if (index != -1) {
+        _applets[index] = updatedApplet;
+        notifyListeners();
+      }
+
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
   void clear() {
     _applets.clear();
     _error = null;
