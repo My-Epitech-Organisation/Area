@@ -111,7 +111,9 @@ class EmailVerificationEnforcementTestCase(APITestCase):
         response = self.client.post("/auth/resend-verification/")
 
         # Should succeed (200 or 201)
-        self.assertIn(response.status_code, [status.HTTP_200_OK, status.HTTP_201_CREATED])
+        self.assertIn(
+            response.status_code, [status.HTTP_200_OK, status.HTTP_201_CREATED]
+        )
 
     def test_superuser_bypasses_verification(self):
         """Superuser should bypass email verification requirement."""
