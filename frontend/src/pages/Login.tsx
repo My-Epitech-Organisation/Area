@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import parseErrors from '../utils/parseErrors';
 import { API_BASE } from '../utils/helper';
 
@@ -8,6 +9,47 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Notification states for email verification
+  const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [showVerificationAlert, setShowVerificationAlert] = useState(false);
+
+  // Check for email verification parameters on component mount
+  useEffect(() => {
+    const verified = searchParams.get('verified');
+    const message = searchParams.get('message');
+    const error = searchParams.get('error');
+    const emailParam = searchParams.get('email');
+
+    if (verified === 'true' && message) {
+      setVerificationMessage(message);
+      setShowVerificationAlert(true);
+      if (emailParam) {
+        setemail(emailParam); // Pre-fill email field
+      }
+      // Clear URL parameters after reading them
+      setTimeout(() => {
+        setSearchParams({});
+      }, 100);
+    } else if (error) {
+      setVerificationError(error);
+      setShowVerificationAlert(true);
+      // Clear URL parameters after reading them
+      setTimeout(() => {
+        setSearchParams({});
+      }, 100);
+    }
+
+    // Auto-hide alerts after 10 seconds
+    if (message || error) {
+      const timer = setTimeout(() => {
+        setShowVerificationAlert(false);
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +129,62 @@ const Login: React.FC = () => {
           className="w-full max-w-md bg-white/5 p-8 rounded-xl backdrop-blur-sm border border-white/10"
         >
           <div className="flex flex-col gap-4">
+            {/* Email Verification Success Alert */}
+            {showVerificationAlert && verificationMessage && (
+              <div className="text-green-400 text-sm p-4 bg-green-900/20 rounded-lg border border-green-500/30 flex items-start gap-3">
+                <svg
+                  className="w-5 h-5 mt-0.5 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div className="flex-1">
+                  <p className="font-semibold">✓ Email Verified!</p>
+                  <p className="text-green-300/90 mt-1">{verificationMessage}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowVerificationAlert(false)}
+                  className="text-green-400 hover:text-green-300"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+            {/* Email Verification Error Alert */}
+            {showVerificationAlert && verificationError && (
+              <div className="text-red-400 text-sm p-4 bg-red-900/20 rounded-lg border border-red-500/30 flex items-start gap-3">
+                <svg
+                  className="w-5 h-5 mt-0.5 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div className="flex-1">
+                  <p className="font-semibold">⚠ Verification Failed</p>
+                  <p className="text-red-300/90 mt-1">{verificationError}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowVerificationAlert(false)}
+                  className="text-red-400 hover:text-red-300"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
             {generalError && (
               <div className="text-theme-error text-sm p-3 bg-red-900/20 rounded">
                 {generalError}
@@ -118,6 +216,14 @@ const Login: React.FC = () => {
               <div className="text-theme-error text-sm">{fieldErrors.password.join(' ')}</div>
             )}
 
+            <div className="text-right mt-1">
+              <a
+                href="/forgot-password"
+                className="text-sm text-indigo-300 hover:text-indigo-200 underline"
+              >
+                Forgot password?
+              </a>
+            </div>
             <button
               type="submit"
               disabled={loading}

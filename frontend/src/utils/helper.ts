@@ -48,6 +48,7 @@ export const fetchUserData = async (): Promise<User | null> => {
         username: userData.username || 'User',
         email: userData.email || '',
         id: userData.id || userData.pk,
+        email_verified: userData.email_verified || false,
       };
 
       localStorage.setItem('user', JSON.stringify(user));
