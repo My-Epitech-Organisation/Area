@@ -137,9 +137,7 @@ class AppletService {
   Future<Applet> duplicateApplet(int id, String newName) async {
     final response = await _httpClient.post(
       ApiConfig.automationDuplicateUrl(id),
-      body: {
-        'name': newName,
-      },
+      body: {'name': newName},
     );
 
     final applet = _httpClient.parseResponse<Applet>(
