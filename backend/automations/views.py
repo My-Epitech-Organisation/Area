@@ -48,7 +48,6 @@ from .serializers import (
     ReactionSerializer,
     ServiceSerializer,
 )
-from .validators import get_action_schema, get_reaction_schema
 
 
 class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
