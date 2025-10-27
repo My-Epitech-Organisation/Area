@@ -40,7 +40,7 @@ class IsEmailVerified(permissions.BasePermission):
             return True
 
         # Check if email is verified
-        return getattr(request.user, 'email_verified', False)
+        return getattr(request.user, "email_verified", False)
 
 
 class IsAuthenticatedAndVerified(permissions.BasePermission):
@@ -63,7 +63,7 @@ class IsAuthenticatedAndVerified(permissions.BasePermission):
             return True
 
         # Check email verification
-        if not getattr(request.user, 'email_verified', False):
+        if not getattr(request.user, "email_verified", False):
             self.message = (
                 "Email verification required. Please verify your email address "
                 "before using the application. Check your inbox for the verification link "
