@@ -4,6 +4,8 @@ import 'dynamic_config_form.dart';
 class ConfigStepCard extends StatefulWidget {
   final String selectedActionName;
   final String selectedReactionName;
+  final Map<String, dynamic>? actionConfigSchema;
+  final Map<String, dynamic>? reactionConfigSchema;
   final Map<String, dynamic> actionConfig;
   final Map<String, dynamic> reactionConfig;
   final ValueChanged<Map<String, dynamic>> onActionConfigChanged;
@@ -14,6 +16,8 @@ class ConfigStepCard extends StatefulWidget {
     super.key,
     required this.selectedActionName,
     required this.selectedReactionName,
+    this.actionConfigSchema,
+    this.reactionConfigSchema,
     required this.actionConfig,
     required this.reactionConfig,
     required this.onActionConfigChanged,
@@ -73,13 +77,19 @@ class _ConfigStepCardState extends State<ConfigStepCard> {
             DynamicConfigForm(
               actionName: widget.selectedActionName,
               reactionName: widget.selectedReactionName,
+              actionConfigSchema: widget.actionConfigSchema,
+              reactionConfigSchema: widget.reactionConfigSchema,
               initialActionConfig: widget.actionConfig,
               initialReactionConfig: widget.reactionConfig,
               onActionConfigChanged: widget.onActionConfigChanged,
               onReactionConfigChanged: widget.onReactionConfigChanged,
               onValidationChanged: (validateFunction) {
-                setState(() {
-                  _validateForm = validateFunction;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    setState(() {
+                      _validateForm = validateFunction;
+                    });
+                  }
                 });
               },
             ),

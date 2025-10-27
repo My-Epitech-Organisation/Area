@@ -37,20 +37,38 @@ class AutomationDetailsCard extends StatelessWidget {
               child: TextFormField(
                 controller: nameController,
                 decoration: InputDecoration(
-                  labelText: 'Automation Name',
+                  label: RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Automation Name',
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                        TextSpan(
+                          text: ' (required)',
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: Colors.grey[600],
+                                fontStyle: FontStyle.italic,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
                   hintText: 'e.g., Daily Report Generator',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                   prefixIcon: const Icon(Icons.title),
                   helperText: 'Choose a descriptive name for your automation',
+                  helperMaxLines: 2,
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter an automation name';
+                    return 'Automation name is required - Please enter an automation name';
                   }
                   if (value.length < 3) {
-                    return 'Name must be at least 3 characters long';
+                    return 'Automation name must be at least 3 characters long';
                   }
                   return null;
                 },

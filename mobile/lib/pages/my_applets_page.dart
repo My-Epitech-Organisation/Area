@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/applet_provider.dart';
 import '../providers/navigation_provider.dart';
+import '../providers/service_catalog_provider.dart';
 import '../models/applet.dart';
+import '../models/service.dart';
 import '../widgets/state_widgets.dart';
+import 'applet_details_page.dart';
 
 class MyAppletsPage extends StatefulWidget {
   const MyAppletsPage({super.key});
@@ -31,10 +34,17 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
   }
 
   void _onAppletTap(Applet applet) {
-    // TODO: Navigate to applet details/edit page
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Tapped on: ${applet.name}')));
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (context) => AppletDetailsPage(applet: applet),
+          ),
+        )
+        .then((deleted) {
+          if (deleted == true) {
+            _refreshApplets();
+          }
+        });
   }
 
   void _onDeleteApplet(Applet applet) {
@@ -129,6 +139,40 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
     }
   }
 
+  Applet _enrichAppletData(Applet applet, ServiceCatalogProvider catalog) {
+    ServiceAction? foundAction;
+    String? actionServiceName;
+    ServiceReaction? foundReaction;
+    String? reactionServiceName;
+
+    for (final service in catalog.services) {
+      for (final action in service.actions) {
+        if (action.id == applet.action.id) {
+          foundAction = action;
+          actionServiceName = service.name;
+          break;
+        }
+      }
+      for (final reaction in service.reactions) {
+        if (reaction.id == applet.reaction.id) {
+          foundReaction = reaction;
+          reactionServiceName = service.name;
+          break;
+        }
+      }
+      if (foundAction != null && foundReaction != null) break;
+    }
+
+    return applet.copyWithEnrichedData(
+      actionName: foundAction?.name,
+      actionDescription: foundAction?.description,
+      actionServiceName: actionServiceName,
+      reactionName: foundReaction?.name,
+      reactionDescription: foundReaction?.description,
+      reactionServiceName: reactionServiceName,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -143,21 +187,21 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
           ),
         ],
       ),
-      body: Consumer<AppletProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading && provider.applets.isEmpty) {
+      body: Consumer2<AppletProvider, ServiceCatalogProvider>(
+        builder: (context, appletProvider, catalogProvider, child) {
+          if (appletProvider.isLoading && appletProvider.applets.isEmpty) {
             return const LoadingStateWidget();
           }
 
-          if (provider.error != null && provider.applets.isEmpty) {
+          if (appletProvider.error != null && appletProvider.applets.isEmpty) {
             return ErrorStateWidget(
               title: 'Failed to load automations',
-              message: provider.error,
+              message: appletProvider.error,
               onRetry: _refreshApplets,
             );
           }
 
-          if (provider.applets.isEmpty) {
+          if (appletProvider.applets.isEmpty) {
             return _buildEmptyState();
           }
 
@@ -165,10 +209,14 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
             onRefresh: _refreshApplets,
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: provider.applets.length,
+              itemCount: appletProvider.applets.length,
               itemBuilder: (context, index) {
-                final applet = provider.applets[index];
-                return _buildAppletCard(applet);
+                final applet = appletProvider.applets[index];
+                final enrichedApplet = _enrichAppletData(
+                  applet,
+                  catalogProvider,
+                );
+                return _buildAppletCard(enrichedApplet);
               },
             ),
           );
@@ -180,9 +228,7 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
             context,
             listen: false,
           );
-          navigationProvider.navigateToPage(
-            1,
-          ); // Navigate to Create Automation tab
+          navigationProvider.navigateToPage(1);
         },
         tooltip: 'Create new automation',
         child: const Icon(Icons.add),
