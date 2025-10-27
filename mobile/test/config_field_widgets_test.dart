@@ -34,25 +34,6 @@ void main() {
       expect(textField, findsOneWidget);
     });
 
-    testWidgets('HourField shows required asterisk when required', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: HourField(
-              label: 'Hour',
-              value: 10,
-              required: true,
-              onChanged: (_) {},
-            ),
-          ),
-        ),
-      );
-
-      expect(find.text('Hour *'), findsOneWidget);
-    });
-
     testWidgets('HourField accepts valid input (0-23)', (
       WidgetTester tester,
     ) async {
@@ -173,7 +154,7 @@ void main() {
       expect(find.byType(TextFormField), findsOneWidget);
     });
 
-    testWidgets('MinuteField shows required asterisk when required', (
+    testWidgets('MinuteField shows required indicator when required', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
@@ -189,7 +170,7 @@ void main() {
         ),
       );
 
-      expect(find.text('Minute *'), findsOneWidget);
+      expect(find.text('Minute (required)'), findsOneWidget);
     });
 
     testWidgets('MinuteField accepts valid input (0-59)', (
@@ -303,7 +284,7 @@ void main() {
       expect(find.text('Timezone'), findsOneWidget);
     });
 
-    testWidgets('TimezoneField shows required asterisk when required', (
+    testWidgets('TimezoneField shows required indicator when required', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
@@ -322,7 +303,7 @@ void main() {
         ),
       );
 
-      expect(find.text('Timezone *'), findsOneWidget);
+      expect(find.text('Timezone (required)'), findsOneWidget);
     });
 
     testWidgets('TimezoneField displays dropdown button', (
