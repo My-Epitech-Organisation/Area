@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../services/schema_service.dart';
+import 'config_field_widgets.dart';
+import 'date_time_picker_widget.dart';
+import 'time_picker_widget.dart';
 
 /// Model representing a configuration field
 class ConfigField {
@@ -65,6 +67,8 @@ class ConfigField {
 class DynamicConfigForm extends StatefulWidget {
   final String actionName;
   final String reactionName;
+  final Map<String, dynamic>? actionConfigSchema;
+  final Map<String, dynamic>? reactionConfigSchema;
   final Map<String, dynamic> initialActionConfig;
   final Map<String, dynamic> initialReactionConfig;
   final ValueChanged<Map<String, dynamic>> onActionConfigChanged;
@@ -75,6 +79,8 @@ class DynamicConfigForm extends StatefulWidget {
     super.key,
     required this.actionName,
     required this.reactionName,
+    this.actionConfigSchema,
+    this.reactionConfigSchema,
     required this.initialActionConfig,
     required this.initialReactionConfig,
     required this.onActionConfigChanged,
@@ -87,309 +93,386 @@ class DynamicConfigForm extends StatefulWidget {
 }
 
 class _DynamicConfigFormState extends State<DynamicConfigForm> {
-  final _schemaService = SchemaService();
   final _formKey = GlobalKey<FormState>();
 
   Map<String, dynamic> _actionConfig = {};
   Map<String, dynamic> _reactionConfig = {};
-
-  Map<String, dynamic>? _actionSchema;
-  Map<String, dynamic>? _reactionSchema;
-
-  bool _loadingSchemas = true;
 
   @override
   void initState() {
     super.initState();
     _actionConfig = Map.from(widget.initialActionConfig);
     _reactionConfig = Map.from(widget.initialReactionConfig);
-    // Provide validation function to parent
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.onValidationChanged?.call(() => validate());
+      if (widget.onValidationChanged != null) {
+        widget.onValidationChanged!(
+          () => _formKey.currentState?.validate() ?? false,
+        );
+      }
     });
-    _loadSchemas();
   }
 
-  Future<void> _loadSchemas() async {
-    try {
-      final actionSchema = await _schemaService.getActionSchema(
-        widget.actionName,
-      );
-      final reactionSchema = await _schemaService.getReactionSchema(
-        widget.reactionName,
-      );
-
-      setState(() {
-        _actionSchema = actionSchema;
-        _reactionSchema = reactionSchema;
-        _loadingSchemas = false;
-      });
-    } catch (e) {
-      setState(() {
-        _loadingSchemas = false;
-      });
-    }
-  }
-
-  List<ConfigField> _parseSchemaFields(Map<String, dynamic>? schema) {
-    if (schema == null) return [];
-
-    final properties = schema['properties'] as Map<String, dynamic>? ?? {};
-    final required = schema['required'] as List<dynamic>? ?? [];
-
-    return properties.entries.map((entry) {
-      final property = Map<String, dynamic>.from(
-        entry.value as Map<String, dynamic>,
-      );
-      property['required'] = required.contains(
-        entry.key,
-      ); // Check if field name is in required list
-      return ConfigField.fromSchemaProperty(entry.key, property);
-    }).toList();
-  }
-
-  Widget _buildConfigSection({
-    required String title,
-    required List<ConfigField> fields,
-    required Map<String, dynamic> config,
-    required ValueChanged<Map<String, dynamic>> onChanged,
-  }) {
-    if (fields.isEmpty) {
-      return Card(
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Form(
+        key: _formKey,
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            'No configuration required for $title',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontStyle: FontStyle.italic,
-              color: Colors.grey,
-            ),
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (widget.actionConfigSchema != null &&
+                  widget.actionConfigSchema!.isNotEmpty)
+                _buildSection(
+                  context,
+                  'Action Configuration',
+                  widget.actionConfigSchema!,
+                  _actionConfig,
+                  widget.onActionConfigChanged,
+                ),
+              const SizedBox(height: 24),
+
+              if (widget.reactionConfigSchema != null &&
+                  widget.reactionConfigSchema!.isNotEmpty)
+                _buildSection(
+                  context,
+                  'Reaction Configuration',
+                  widget.reactionConfigSchema!,
+                  _reactionConfig,
+                  widget.onReactionConfigChanged,
+                ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSection(
+    BuildContext context,
+    String title,
+    Map<String, dynamic> schema,
+    Map<String, dynamic> config,
+    ValueChanged<Map<String, dynamic>> onConfigChanged,
+  ) {
+    final properties = schema['properties'] as Map<String, dynamic>? ?? {};
+    final requiredFields = (schema['required'] as List?)?.cast<String>() ?? [];
+
+    if (properties.isEmpty) return const SizedBox.shrink();
+
+    // Create ConfigField objects with required information
+    final fields = properties.entries.map((e) {
+      final field = ConfigField.fromSchemaProperty(e.key, e.value);
+      // Mark as required if it's in the required fields list
+      return ConfigField(
+        name: field.name,
+        label: field.label,
+        type: field.type,
+        description: field.description,
+        defaultValue: field.defaultValue,
+        required: requiredFields.contains(field.name) || field.required,
+        enumValues: field.enumValues,
+        validation: field.validation,
       );
+    }).toList();
+
+    final processedFields = <ConfigField>[];
+    final processedNames = <String>{};
+
+    for (final field in fields) {
+      if (processedNames.contains(field.name)) continue;
+
+      final fieldNameLower = field.name.toLowerCase();
+
+      if (fieldNameLower.contains('hour')) {
+        ConfigField? minuteField;
+        try {
+          final hourBase = fieldNameLower.replaceFirst(RegExp(r'_?hour$'), '');
+          minuteField = fields.firstWhere((f) {
+            final mName = f.name.toLowerCase();
+            final minuteBase = mName.replaceFirst(RegExp(r'_?minute$'), '');
+            return mName.contains('minute') && hourBase == minuteBase;
+          });
+        } catch (_) {
+          minuteField = null;
+        }
+
+        if (minuteField != null) {
+          processedNames.add(field.name);
+          processedNames.add(minuteField.name);
+          processedFields.add(field);
+          processedFields.add(minuteField);
+        } else {
+          processedFields.add(field);
+        }
+      } else if (!fieldNameLower.contains('minute')) {
+        processedFields.add(field);
+      }
     }
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 16),
-            ...fields.map(
-              (field) => _buildFieldWidget(field, config, onChanged),
-            ),
-          ],
-        ),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 16),
+        ...processedFields.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final field = entry.value;
+          final nextField = idx + 1 < processedFields.length
+              ? processedFields[idx + 1]
+              : null;
+
+          if (field.name.toLowerCase().contains('hour') &&
+              nextField != null &&
+              nextField.name.toLowerCase().contains('minute')) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildCombinedTimeField(
+                field,
+                nextField,
+                config,
+                onConfigChanged,
+              ),
+            );
+          } else if (field.name.toLowerCase().contains('minute') &&
+              idx > 0 &&
+              processedFields[idx - 1].name.toLowerCase().contains('hour')) {
+            return const SizedBox.shrink();
+          } else {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildField(field, config, onConfigChanged),
+            );
+          }
+        }),
+      ],
+    );
+  }
+
+  Widget _buildField(
+    ConfigField field,
+    Map<String, dynamic> config,
+    ValueChanged<Map<String, dynamic>> onConfigChanged,
+  ) {
+    final value = config[field.name] ?? field.defaultValue ?? '';
+
+    return _buildFieldWidget(field, value, (newValue) {
+      config[field.name] = newValue;
+      onConfigChanged(config);
+    });
+  }
+
+  Widget _buildCombinedTimeField(
+    ConfigField hourField,
+    ConfigField minuteField,
+    Map<String, dynamic> config,
+    ValueChanged<Map<String, dynamic>> onConfigChanged,
+  ) {
+    final hourValue = config[hourField.name] ?? hourField.defaultValue ?? 0;
+    final minuteValue =
+        config[minuteField.name] ?? minuteField.defaultValue ?? 0;
+
+    final initialHour = hourValue is int
+        ? hourValue
+        : int.tryParse(hourValue.toString()) ?? 0;
+    final initialMinute = minuteValue is int
+        ? minuteValue
+        : int.tryParse(minuteValue.toString()) ?? 0;
+
+    return TimePickerField(
+      label: 'Time',
+      initialHour: initialHour.clamp(0, 23),
+      initialMinute: initialMinute.clamp(0, 59),
+      required: hourField.required || minuteField.required,
+      onChanged: (hour, minute) {
+        config[hourField.name] = hour;
+        config[minuteField.name] = minute;
+        onConfigChanged(config);
+      },
     );
   }
 
   Widget _buildFieldWidget(
     ConfigField field,
-    Map<String, dynamic> config,
-    ValueChanged<Map<String, dynamic>> onChanged,
+    dynamic value,
+    ValueChanged<dynamic> onChanged,
   ) {
-    final currentValue = config[field.name] ?? field.defaultValue ?? '';
+    final fieldNameLower = field.name.toLowerCase();
+    final fieldTypeLower = field.type.toLowerCase();
 
-    switch (field.type) {
-      case 'string':
-        if (field.enumValues != null && field.enumValues!.isNotEmpty) {
-          // Dropdown for enum values
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: DropdownButtonFormField<String>(
-              initialValue: currentValue.isNotEmpty ? currentValue : null,
-              decoration: InputDecoration(
-                labelText: field.label + (field.required ? ' *' : ''),
-                hintText: field.description,
-                border: const OutlineInputBorder(),
-              ),
-              items: field.enumValues!.map((value) {
-                return DropdownMenuItem(value: value, child: Text(value));
-              }).toList(),
-              onChanged: (value) {
-                config[field.name] = value ?? '';
-                onChanged(config);
-              },
-              validator: field.required
-                  ? (value) =>
-                        value == null || value.isEmpty ? 'Required field' : null
-                  : null,
-            ),
-          );
-        } else {
-          // Text field for strings
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: TextFormField(
-              initialValue: currentValue,
-              decoration: InputDecoration(
-                labelText: field.label + (field.required ? ' *' : ''),
-                hintText: field.description,
-                border: const OutlineInputBorder(),
-              ),
-              onChanged: (value) {
-                config[field.name] = value;
-                onChanged(config);
-              },
-              validator: field.required
-                  ? (value) =>
-                        value == null || value.isEmpty ? 'Required field' : null
-                  : null,
-            ),
-          );
-        }
-
-      case 'integer':
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: TextFormField(
-            initialValue: currentValue.toString(),
-            decoration: InputDecoration(
-              labelText: field.label + (field.required ? ' *' : ''),
-              hintText: field.description,
-              border: const OutlineInputBorder(),
-            ),
-            keyboardType: TextInputType.number,
-            onChanged: (value) {
-              final intValue = int.tryParse(value);
-              if (intValue != null) {
-                config[field.name] = intValue;
-                onChanged(config);
-              }
-            },
-            validator: (value) {
-              if (field.required && (value == null || value.isEmpty)) {
-                return 'Required field';
-              }
-              if (value != null && value.isNotEmpty) {
-                final intValue = int.tryParse(value);
-                if (intValue == null) return 'Must be a number';
-              }
-              return null;
-            },
-          ),
-        );
-
-      case 'boolean':
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: CheckboxListTile(
-            title: Text(field.label + (field.required ? ' *' : '')),
-            subtitle: field.description != null
-                ? Text(field.description!)
-                : null,
-            value: currentValue is bool ? currentValue : false,
-            onChanged: (value) {
-              config[field.name] = value ?? false;
-              onChanged(config);
-            },
-          ),
-        );
-
-      case 'array':
-        // For now, treat arrays as text fields with comma-separated values
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: TextFormField(
-            initialValue: currentValue is List
-                ? currentValue.join(', ')
-                : currentValue.toString(),
-            decoration: InputDecoration(
-              labelText: field.label + (field.required ? ' *' : ''),
-              hintText: field.description ?? 'Comma-separated values',
-              border: const OutlineInputBorder(),
-            ),
-            onChanged: (value) {
-              // Split by comma and trim whitespace
-              final arrayValue = value
-                  .split(',')
-                  .map((s) => s.trim())
-                  .where((s) => s.isNotEmpty)
-                  .toList();
-              config[field.name] = arrayValue;
-              onChanged(config);
-            },
-            validator: field.required
-                ? (value) =>
-                      value == null || value.isEmpty ? 'Required field' : null
-                : null,
-          ),
-        );
-
-      default:
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: TextFormField(
-            initialValue: currentValue.toString(),
-            decoration: InputDecoration(
-              labelText: field.label + (field.required ? ' *' : ''),
-              hintText: field.description,
-              border: const OutlineInputBorder(),
-            ),
-            onChanged: (value) {
-              config[field.name] = value;
-              onChanged(config);
-            },
-            validator: field.required
-                ? (value) =>
-                      value == null || value.isEmpty ? 'Required field' : null
-                : null,
-          ),
-        );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_loadingSchemas) {
-      return const Center(child: CircularProgressIndicator());
+    // Specialized widgets
+    if (fieldNameLower.contains('hour')) {
+      return HourPickerWidget(
+        label: field.label,
+        description: field.description,
+        initialValue: value is int ? value : int.tryParse(value.toString()),
+        required: field.required,
+        onChanged: onChanged,
+      );
     }
 
-    final actionFields = _parseSchemaFields(_actionSchema);
-    final reactionFields = _parseSchemaFields(_reactionSchema);
+    if (fieldNameLower.contains('minute')) {
+      return MinutePickerWidget(
+        label: field.label,
+        description: field.description,
+        initialValue: value is int ? value : int.tryParse(value.toString()),
+        required: field.required,
+        onChanged: onChanged,
+      );
+    }
 
-    return Form(
-      key: _formKey,
-      child: Column(
+    if (fieldNameLower.contains('timezone')) {
+      return TimezoneField(
+        label: field.label,
+        value: value.toString(),
+        required: field.required,
+        onChanged: onChanged,
+      );
+    }
+
+    // Check for datetime type from JSON schema (ISO 8601 dates)
+    if (fieldTypeLower == 'datetime') {
+      return DateTimePickerWidget(
+        label: field.label,
+        description: field.description,
+        initialValue: value.toString(),
+        required: field.required,
+        onChanged: onChanged,
+      );
+    }
+
+    if (fieldNameLower.contains('date') && fieldNameLower.contains('time')) {
+      return DateTimePickerWidget(
+        label: field.label,
+        description: field.description,
+        initialValue: value.toString(),
+        required: field.required,
+        onChanged: onChanged,
+      );
+    }
+
+    if (fieldNameLower.contains('date')) {
+      return DateField(
+        label: field.label,
+        value: value.toString(),
+        required: field.required,
+        onChanged: onChanged,
+      );
+    }
+
+    // Enum dropdown
+    if (field.enumValues != null && field.enumValues!.isNotEmpty) {
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildConfigSection(
-            title: 'Action Configuration',
-            fields: actionFields,
-            config: _actionConfig,
-            onChanged: (config) {
-              setState(() {
-                _actionConfig = config;
-              });
-              widget.onActionConfigChanged(config);
-            },
+          Text(
+            '${field.label}${field.required ? ' (required)' : ''}',
+            style: Theme.of(context).textTheme.labelLarge,
           ),
-          const SizedBox(height: 16),
-          _buildConfigSection(
-            title: 'Reaction Configuration',
-            fields: reactionFields,
-            config: _reactionConfig,
-            onChanged: (config) {
-              setState(() {
-                _reactionConfig = config;
-              });
-              widget.onReactionConfigChanged(config);
+          const SizedBox(height: 8),
+          if (field.description != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                field.description!,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          DropdownButtonFormField<String>(
+            initialValue: value.toString(),
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              errorText: field.required && value.isEmpty
+                  ? '${field.label} is required'
+                  : null,
+            ),
+            items: field.enumValues!.map((val) {
+              return DropdownMenuItem(value: val, child: Text(val));
+            }).toList(),
+            onChanged: (val) {
+              if (val != null) onChanged(val);
             },
+            validator: field.required
+                ? (val) => val == null || val.isEmpty
+                      ? 'This field is required'
+                      : null
+                : null,
           ),
         ],
+      );
+    }
+
+    // Default text field
+    return TextFormField(
+      initialValue: value.toString(),
+      decoration: InputDecoration(
+        label: field.required
+            ? RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: field.label,
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    TextSpan(
+                      text: ' (required)',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Colors.grey[600],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : Text(field.label),
+        border: const OutlineInputBorder(),
+        helperText: field.description,
+        helperMaxLines: 2,
+        helperStyle: TextStyle(color: Colors.grey[600], fontSize: 12),
+        hintText: _getHintText(field),
       ),
+      keyboardType: fieldTypeLower == 'number'
+          ? TextInputType.number
+          : TextInputType.text,
+      onChanged: onChanged,
+      validator: field.required
+          ? (val) {
+              if (val?.isEmpty ?? true) {
+                final errorMsg = '${field.label} is required';
+                if (field.description != null) {
+                  return '$errorMsg - ${field.description}';
+                }
+                return errorMsg;
+              }
+              return null;
+            }
+          : null,
     );
   }
 
-  bool validate() {
-    return _formKey.currentState?.validate() ?? false;
+  /// Get a helpful hint text based on field name and type
+  String _getHintText(ConfigField field) {
+    final nameLower = field.name.toLowerCase();
+
+    if (nameLower.contains('email')) {
+      return 'example@domain.com';
+    } else if (nameLower.contains('url') || nameLower.contains('link')) {
+      return 'https://example.com';
+    } else if (nameLower.contains('phone')) {
+      return '+1 (555) 123-4567';
+    } else if (nameLower.contains('message') || nameLower.contains('body')) {
+      return 'Enter your message...';
+    } else if (nameLower.contains('title') || nameLower.contains('summary')) {
+      return 'Enter a title...';
+    } else if (nameLower.contains('description')) {
+      return 'Enter a description...';
+    }
+
+    return field.description ?? 'Enter ${field.label.toLowerCase()}...';
   }
 }

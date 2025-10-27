@@ -43,8 +43,8 @@
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <!-- Handles OAuth callbacks like: myapp://auth/oauth/google/callback -->
-                <data android:scheme="myapp" android:host="auth"/>
+                <!-- Handles OAuth callbacks like: area://auth/oauth/google/callback -->
+                <data android:scheme="area" android:host="auth"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

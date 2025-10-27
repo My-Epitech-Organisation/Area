@@ -6,6 +6,7 @@ import '../providers/connected_services_provider.dart';
 import '../providers/navigation_provider.dart';
 import '../providers/automation_stats_provider.dart';
 import '../services/applet_service.dart';
+import '../utils/config_validator.dart';
 
 class CreateAppletPage extends StatefulWidget {
   const CreateAppletPage({super.key});
@@ -46,6 +47,59 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  void _showErrorSnackBar(
+    String message, {
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+          duration: duration,
+        ),
+      );
+    }
+  }
+
+  void _showSuccessSnackBar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message, style: const TextStyle(color: Colors.white)),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  bool _validateConfigSchema({
+    required Map<String, dynamic>? schema,
+    required Map<String, dynamic> config,
+  }) {
+    if (schema == null || schema.isEmpty) {
+      return true;
+    }
+
+    final validationResult = ConfigValidator.validate(
+      schema: schema,
+      config: config,
+      configName: '',
+    );
+
+    if (!validationResult.isValid) {
+      String errorMessage = 'Please fill in the following required fields:\n';
+      for (final error in validationResult.errors) {
+        errorMessage += '• $error\n';
+      }
+      _showErrorSnackBar(errorMessage, duration: const Duration(seconds: 5));
+      return false;
+    }
+
+    return true;
   }
 
   @override
@@ -138,6 +192,14 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
                   ConfigStepCard(
                     selectedActionName: _selectedTriggerAction!,
                     selectedReactionName: _selectedActionReaction!,
+                    actionConfigSchema: context
+                        .read<ServiceCatalogProvider>()
+                        .getAction(_selectedTriggerAction!)
+                        ?.configSchema,
+                    reactionConfigSchema: context
+                        .read<ServiceCatalogProvider>()
+                        .getReaction(_selectedActionReaction!)
+                        ?.configSchema,
                     actionConfig: _actionConfig,
                     reactionConfig: _reactionConfig,
                     onActionConfigChanged: (config) {
@@ -187,82 +249,65 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
   }
 
   Future<void> _createAutomation() async {
-    debugPrint('🚀 Starting automation creation...');
-    debugPrint('📊 Current state:');
-    debugPrint('  - _selectedTriggerService: $_selectedTriggerService');
-    debugPrint('  - _selectedTriggerAction: $_selectedTriggerAction');
-    debugPrint('  - _selectedActionService: $_selectedActionService');
-    debugPrint('  - _selectedActionReaction: $_selectedActionReaction');
-    debugPrint('  - _selectedActionId: $_selectedActionId');
-    debugPrint('  - _selectedReactionId: $_selectedReactionId');
-    debugPrint('  - _nameController.text: "${_nameController.text}"');
-
     final formValid = _formKey.currentState?.validate() ?? false;
-    debugPrint('📝 Form validation: $formValid');
 
-    if (formValid) {
-      debugPrint('✅ Form is valid, checking selections...');
-
-      // Validate that all required fields are selected
-      if (_selectedTriggerService == null || _selectedTriggerAction == null) {
-        debugPrint('❌ Missing trigger selection');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select a trigger'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
+    if (!formValid) {
+      String errorMessage = 'Please fill in all required fields';
+      if (_nameController.text.isEmpty) {
+        errorMessage = 'Please enter an automation name';
+      } else if (_nameController.text.length < 3) {
+        errorMessage = 'Automation name must be at least 3 characters long';
       }
-
-      debugPrint(
-        '✅ Trigger selected: $_selectedTriggerService -> $_selectedTriggerAction',
-      );
-
-      if (_selectedActionService == null || _selectedActionReaction == null) {
-        debugPrint('❌ Missing action selection');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select an action'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      debugPrint(
-        '✅ Action selected: $_selectedActionService -> $_selectedActionReaction',
-      );
-    } else {
-      debugPrint('❌ Form validation failed');
-      // The form validation will show its own error messages
+      _showErrorSnackBar(errorMessage);
       return;
     }
 
+    // Validate trigger selection
+    if (_selectedTriggerService == null || _selectedTriggerAction == null) {
+      _showErrorSnackBar('Please select a trigger');
+      return;
+    }
+
+    // Validate action selection
+    if (_selectedActionService == null || _selectedActionReaction == null) {
+      _showErrorSnackBar('Please select an action');
+      return;
+    }
+
+    // Validate IDs are set
     if (_selectedActionId == null || _selectedReactionId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid action or reaction selected'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showErrorSnackBar('Invalid action or reaction selected');
       return;
     }
 
-    // Validate configuration form if it exists
-    if (_selectedTriggerService != null &&
-        _selectedTriggerAction != null &&
-        _selectedActionService != null &&
-        _selectedActionReaction != null) {
-      if (!(_validateConfigForm?.call() ?? true)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please fill in all required configuration fields'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
+    // Validate configuration forms
+    if (!(_validateConfigForm?.call() ?? true)) {
+      _showErrorSnackBar('Please fill in all required configuration fields');
+      return;
+    }
+
+    // Validate reaction configuration
+    final reaction = context.read<ServiceCatalogProvider>().getReaction(
+      _selectedActionReaction!,
+    );
+
+    if (!_validateConfigSchema(
+      schema: reaction?.configSchema,
+      config: _reactionConfig,
+    )) {
+      return;
+    }
+
+    // Validate action configuration
+    final action = context.read<ServiceCatalogProvider>().getAction(
+      _selectedTriggerAction!,
+    );
+
+    if (!_validateConfigSchema(
+      schema: action?.configSchema,
+      config: _actionConfig,
+    )) {
+      return;
     }
 
     setState(() {
@@ -281,10 +326,6 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
         reactionConfig: _reactionConfig.isNotEmpty ? _reactionConfig : {},
       );
 
-      debugPrint(
-        '✅ Automation created successfully: ${applet.name} (ID: ${applet.id})',
-      );
-
       // Refresh statistics to reflect the new automation
       if (mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -294,16 +335,8 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
       }
 
       if (mounted) {
-        debugPrint('📱 Showing success snackbar...');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Automation "${applet.name}" created successfully!',
-              style: const TextStyle(color: Colors.white),
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-          ),
+        _showSuccessSnackBar(
+          'Automation "${applet.name}" created successfully!',
         );
 
         // Reset form
@@ -318,27 +351,14 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
         });
         _formKey.currentState?.reset();
 
-        // Navigate to "My Automations" page to show the newly created automation
-        debugPrint('🔄 Navigating to My Automations page...');
-        context.read<NavigationProvider>().navigateToPage(
-          2,
-        ); // Index 2 = My Automations
+        // Navigate to "My Automations" page
+        context.read<NavigationProvider>().navigateToPage(2);
       }
-    } catch (e, stackTrace) {
-      debugPrint('❌ ERROR creating automation: $e');
-      debugPrint('📚 Stack trace: $stackTrace');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to create automation: ${e.toString()}',
-              style: const TextStyle(color: Colors.white),
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
+    } catch (e) {
+      _showErrorSnackBar(
+        'Failed to create automation: ${e.toString()}',
+        duration: const Duration(seconds: 5),
+      );
     } finally {
       if (mounted) {
         setState(() {

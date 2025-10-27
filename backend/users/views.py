@@ -23,6 +23,7 @@ from django.utils import timezone
 from django.utils.http import urlencode
 
 from .models import OAuthNotification, User
+from .permissions import IsAuthenticatedAndVerified
 from .serializers import (
     EmailTokenObtainPairSerializer,
     OAuthNotificationSerializer,
@@ -178,6 +179,14 @@ The AREA Team
 
 
 class UserDetailView(APIView):
+    """
+    Get or update current user's profile information.
+
+    This endpoint uses IsAuthenticated (not IsAuthenticatedAndVerified)
+    because users need to be able to view their profile to see their
+    email verification status and access profile settings.
+    """
+
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
@@ -201,6 +210,9 @@ class SendEmailVerificationView(APIView):
 
     Allows users to request a new verification email if they didn't receive
     the original one or if the token expired.
+
+    Note: This endpoint uses IsAuthenticated (not IsAuthenticatedAndVerified)
+    because unverified users need to be able to request verification emails.
     """
 
     permission_classes = (IsAuthenticated,)
@@ -408,7 +420,7 @@ class EmailTokenObtainPairView(TokenObtainPairView):
 
 class OAuthNotificationListView(generics.ListAPIView):
     serializer_class = OAuthNotificationSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
 
     def get_queryset(self):
         return OAuthNotification.objects.filter(user=self.request.user).order_by(

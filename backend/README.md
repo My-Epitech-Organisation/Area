@@ -7,7 +7,7 @@ This Django backend implements the REST API for the AREA (Action-Reaction) appli
 ### ✅ Authentication and User Management
 - ✅ User registration with validation
 - ✅ JWT Authentication (Access + Refresh tokens)
-- ✅ Email verification with token system
+- ✅ **Email verification with token system** (ENFORCED - required before app usage)
 - ✅ User profile management
 - ✅ Brute force protection (throttling)
 - ✅ Complete input data validation
