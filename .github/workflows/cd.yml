@@ -41,10 +41,13 @@ jobs:
     name: 🚀 Deploy to Production
     runs-on: ubuntu-latest
 
-    # Only deploy if CI passed successfully AND on main/master branch
+    # Only deploy if:
+    #   - Manual trigger (workflow_dispatch) OR
+    #   - CI passed successfully AND on main/master branch
     if: |
-      github.event.workflow_run.conclusion == 'success' &&
-      (github.event.workflow_run.head_branch == 'main' || github.event.workflow_run.head_branch == 'master')
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       (github.event.workflow_run.head_branch == 'main' || github.event.workflow_run.head_branch == 'master'))
 
     # Environment protection (optional: configure in GitHub repo settings)
     environment:
