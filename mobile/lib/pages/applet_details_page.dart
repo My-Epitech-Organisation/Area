@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/applet.dart';
+import '../models/execution.dart';
 import '../providers/applet_provider.dart';
+import 'edit_applet_page.dart';
 
 class AppletDetailsPage extends StatefulWidget {
   final Applet applet;
@@ -14,50 +16,60 @@ class AppletDetailsPage extends StatefulWidget {
 
 class _AppletDetailsPageState extends State<AppletDetailsPage> {
   late Applet _applet;
-  bool _isToggling = false;
+  List<Execution> _executions = [];
+  bool _isLoadingExecutions = false;
 
   @override
   void initState() {
     super.initState();
     _applet = widget.applet;
+    _loadExecutions();
   }
 
-  Future<void> _toggleApplet() async {
-    setState(() => _isToggling = true);
+  Future<void> _loadExecutions() async {
+    setState(() => _isLoadingExecutions = true);
     try {
       final provider = context.read<AppletProvider>();
-      final success = await provider.toggleApplet(_applet.id);
-
-      if (success && mounted) {
-        // Reload the applet to get updated status
-        final updatedApplet = provider.applets.firstWhere(
-          (a) => a.id == _applet.id,
-          orElse: () => _applet,
-        );
-        setState(() => _applet = updatedApplet);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Automation "${_applet.name}" is now ${_applet.status == 'active' ? 'active' : 'inactive'}',
-            ),
-            backgroundColor: Colors.blue,
-          ),
-        );
+      final executions = await provider.getAppletExecutions(
+        _applet.id,
+        limit: 20,
+      );
+      if (mounted) {
+        setState(() {
+          _executions = executions;
+          _isLoadingExecutions = false;
+        });
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error toggling automation: $e'),
-            backgroundColor: Colors.red,
+        setState(() => _isLoadingExecutions = false);
+        debugPrint('Error loading executions: $e');
+      }
+    }
+  }
+
+  void _editApplet() {
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (context) => EditAppletPage(applet: _applet),
           ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isToggling = false);
-      }
+        )
+        .then((updated) {
+          if (updated == true) {
+            _refreshAppletDetails();
+          }
+        });
+  }
+
+  Future<void> _refreshAppletDetails() async {
+    final provider = context.read<AppletProvider>();
+    final updatedApplet = provider.applets.firstWhere(
+      (a) => a.id == _applet.id,
+      orElse: () => _applet,
+    );
+    if (mounted) {
+      setState(() => _applet = updatedApplet);
     }
   }
 
@@ -120,6 +132,171 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
     }
   }
 
+  Future<void> _duplicateApplet() async {
+    final TextEditingController nameController = TextEditingController(
+      text: '${_applet.name} (Copy)',
+    );
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Duplicate Automation'),
+            content: TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'New automation name',
+                hintText: 'Enter the name for the duplicated automation',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 1,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => _confirmDuplicate(nameController.text),
+                style: TextButton.styleFrom(foregroundColor: Colors.blue),
+                child: const Text('Duplicate'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
+  Future<void> _confirmDuplicate(String newName) async {
+    Navigator.of(context).pop();
+
+    if (newName.trim().isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a name for the duplicated automation'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      final provider = context.read<AppletProvider>();
+      final success = await provider.duplicateApplet(
+        _applet.id,
+        newName.trim(),
+      );
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Automation "${newName.trim()}" created successfully',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop(true);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to duplicate automation: ${provider.error}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error duplicating automation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _pauseApplet() async {
+    try {
+      final provider = context.read<AppletProvider>();
+      final success = await provider.pauseApplet(_applet.id);
+
+      if (success && mounted) {
+        final updatedApplet = provider.applets.firstWhere(
+          (a) => a.id == _applet.id,
+          orElse: () => _applet,
+        );
+        setState(() => _applet = updatedApplet);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Automation paused'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pause automation: ${provider.error}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error pausing automation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _resumeApplet() async {
+    try {
+      final provider = context.read<AppletProvider>();
+      final success = await provider.resumeApplet(_applet.id);
+
+      if (success && mounted) {
+        final updatedApplet = provider.applets.firstWhere(
+          (a) => a.id == _applet.id,
+          orElse: () => _applet,
+        );
+        setState(() => _applet = updatedApplet);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Automation resumed'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to resume automation: ${provider.error}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error resuming automation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -130,12 +307,29 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
           elevation: 0,
           actions: [
             IconButton(
-              icon: Icon(
-                _applet.status == 'active' ? Icons.pause : Icons.play_arrow,
-              ),
-              onPressed: _isToggling ? null : _toggleApplet,
-              tooltip: _applet.status == 'active' ? 'Disable' : 'Enable',
+              icon: const Icon(Icons.edit),
+              onPressed: _editApplet,
+              tooltip: 'Edit',
             ),
+            IconButton(
+              icon: const Icon(Icons.content_copy),
+              onPressed: _duplicateApplet,
+              tooltip: 'Duplicate',
+            ),
+            if (_applet.status == 'paused')
+              IconButton(
+                icon: const Icon(Icons.play_arrow),
+                onPressed: _resumeApplet,
+                tooltip: 'Resume',
+                color: Colors.green,
+              )
+            else if (_applet.status == 'active')
+              IconButton(
+                icon: const Icon(Icons.pause),
+                onPressed: _pauseApplet,
+                tooltip: 'Pause',
+                color: Colors.orange,
+              ),
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: _deleteApplet,
@@ -153,10 +347,6 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
               _buildStatusCard(context),
               const SizedBox(height: 24),
 
-              // Description Card
-              _buildDescriptionCard(context),
-              const SizedBox(height: 24),
-
               // Trigger Configuration Card
               _buildTriggerCard(context),
               const SizedBox(height: 24),
@@ -167,6 +357,10 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
 
               // Metadata Card
               _buildMetadataCard(context),
+              const SizedBox(height: 24),
+
+              // Execution History Card
+              _buildExecutionHistoryCard(context),
             ],
           ),
         ),
@@ -215,40 +409,6 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
                   ),
                 ],
               ),
-            ),
-            if (_isToggling)
-              const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDescriptionCard(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Description',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              _applet.description.isEmpty
-                  ? 'No description provided'
-                  : _applet.description,
-              style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
         ),
@@ -502,5 +662,128 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
 
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  Widget _buildExecutionHistoryCard(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Execution History',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (_isLoadingExecutions)
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: _loadExecutions,
+                    tooltip: 'Refresh',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_executions.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Text(
+                    'No executions yet',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                  ),
+                ),
+              )
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _executions.length,
+                separatorBuilder: (context, index) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final execution = _executions[index];
+                  return _buildExecutionItem(context, execution);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExecutionItem(BuildContext context, Execution execution) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Icon(
+            execution.getStatusIcon(),
+            color: execution.getStatusColor(),
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  execution.status.toUpperCase(),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: execution.getStatusColor(),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _formatDateTime(execution.createdAt),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                ),
+                if (execution.durationSeconds case final duration?)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Duration: ${duration.toStringAsFixed(2)}s',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                    ),
+                  ),
+                if (execution.errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Error: ${execution.errorMessage}',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.red),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

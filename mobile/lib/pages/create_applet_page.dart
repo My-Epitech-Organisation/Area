@@ -317,7 +317,7 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
     try {
       final appletService = AppletService();
       final applet = await appletService.createApplet(
-        description: _nameController.text.isNotEmpty
+        name: _nameController.text.isNotEmpty
             ? _nameController.text
             : 'Created from mobile app',
         actionId: _selectedActionId!,
