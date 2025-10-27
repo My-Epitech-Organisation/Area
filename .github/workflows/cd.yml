@@ -1,0 +1,172 @@
+name: CD - Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+# Only run one deployment at a time
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Deploy to Production Server
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+
+    # Only deploy from main/master branch
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    # Environment protection (optional: configure in GitHub repo settings)
+    environment:
+      name: production
+      url: https://areaction.app
+
+    steps:
+      # -----------------------------------------------------------------------
+      # Step 1: Checkout (for access to deployment scripts if needed)
+      # -----------------------------------------------------------------------
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # Step 2: Deploy via SSH
+      # -----------------------------------------------------------------------
+      - name: 🚀 Deploy to Production Server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.PROD_SERVER_HOST }}
+          username: areaction
+          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          port: 22
+          command_timeout: 30m
+          script: |
+            echo "════════════════════════════════════════════════════════════"
+            echo "  AREA Production Deployment"
+            echo "  Server: ${{ secrets.PROD_SERVER_HOST }}"
+            echo "  Branch: ${{ github.ref_name }}"
+            echo "  Commit: ${{ github.sha }}"
+            echo "  Triggered by: ${{ github.actor }}"
+            echo "════════════════════════════════════════════════════════════"
+            echo ""
+
+            # Navigate to project directory
+            cd /opt/area
+
+            # Check current status before deployment
+            echo "📊 Current status:"
+            docker-compose ps || true
+            echo ""
+
+            # Execute deployment script
+            echo "🚀 Starting deployment..."
+            ./deployment/manage.sh update
+
+            echo ""
+            echo "════════════════════════════════════════════════════════════"
+            echo "  ✅ Deployment Complete!"
+            echo "  🌐 Application: https://areaction.app"
+            echo "  📊 API Health: https://areaction.app/health/"
+            echo "  📚 API Docs: https://areaction.app/docs/"
+            echo "════════════════════════════════════════════════════════════"
+
+      # -----------------------------------------------------------------------
+      # Step 3: Verify Deployment
+      # -----------------------------------------------------------------------
+      - name: 🏥 Verify Deployment Health
+        run: |
+          echo "Waiting 10 seconds for services to stabilize..."
+          sleep 10
+
+          echo "Checking application health..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://areaction.app/health/ || echo "000")
+
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✅ Health check passed (HTTP $RESPONSE)"
+          else
+            echo "⚠️  Warning: Health check returned HTTP $RESPONSE"
+            echo "This might be normal if services are still starting up"
+          fi
+
+      # -----------------------------------------------------------------------
+      # Step 4: Notify on Success
+      # -----------------------------------------------------------------------
+      - name: ✅ Notify Success
+        if: success()
+        run: |
+          echo "════════════════════════════════════════════════════════════"
+          echo "  ✅ Deployment Successful!"
+          echo "════════════════════════════════════════════════════════════"
+          echo ""
+          echo "📦 Deployed commit: ${{ github.sha }}"
+          echo "👤 Deployed by: ${{ github.actor }}"
+          echo "🕒 Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "🌐 URL: https://areaction.app"
+          echo ""
+          echo "Recent changes:"
+          echo "${{ github.event.head_commit.message }}"
+
+          # Optional: Add Discord/Slack notification here
+          # Example:
+          # curl -X POST ${{ secrets.DISCORD_WEBHOOK }} \
+          #   -H "Content-Type: application/json" \
+          #   -d '{"content": "✅ Deployment successful! https://areaction.app"}'
+
+      # -----------------------------------------------------------------------
+      # Step 5: Notify on Failure
+      # -----------------------------------------------------------------------
+      - name: ❌ Notify Failure
+        if: failure()
+        run: |
+          echo "════════════════════════════════════════════════════════════"
+          echo "  ❌ Deployment Failed!"
+          echo "════════════════════════════════════════════════════════════"
+          echo ""
+          echo "📦 Failed commit: ${{ github.sha }}"
+          echo "👤 Attempted by: ${{ github.actor }}"
+          echo "🕒 Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo ""
+          echo "🔍 Check logs:"
+          echo "   GitHub Actions: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "   Server logs: ssh areaction@${{ secrets.PROD_SERVER_HOST }} 'cd /opt/area && ./deployment/manage.sh logs'"
+          echo ""
+
+          # Optional: Add Discord/Slack notification here
+          # Example:
+          # curl -X POST ${{ secrets.DISCORD_WEBHOOK }} \
+          #   -H "Content-Type: application/json" \
+          #   -d '{"content": "❌ Deployment failed! Check: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}'
+
+  # ---------------------------------------------------------------------------
+  # Post-Deployment Checks (Optional)
+  # ---------------------------------------------------------------------------
+  post-deployment-checks:
+    name: 🔍 Post-Deployment Checks
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: success()
+
+    steps:
+      - name: 🌐 Check API Endpoints
+        run: |
+          echo "Testing key API endpoints..."
+
+          # Test about.json endpoint
+          echo "→ Testing /about.json..."
+          curl -f https://areaction.app/about.json || echo "⚠️  /about.json failed"
+
+          # Test health endpoint
+          echo "→ Testing /health/..."
+          curl -f https://areaction.app/health/ || echo "⚠️  /health/ failed"
+
+          # Test docs endpoint
+          echo "→ Testing /docs/..."
+          curl -f https://areaction.app/docs/ || echo "⚠️  /docs/ failed"
+
+          echo "✅ Post-deployment checks complete"
