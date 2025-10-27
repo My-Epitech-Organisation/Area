@@ -36,7 +36,7 @@ const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = ({
     setResendMessage(null);
 
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem('access');
       if (!token) {
         setResendMessage({ type: 'error', text: 'Please log in again' });
         return;
