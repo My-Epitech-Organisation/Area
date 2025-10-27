@@ -443,11 +443,9 @@ def add_to_playlist(
 
             track_uri = playback["item"]["uri"]
 
-        # Extract track ID from URI if needed
-        if track_uri.startswith("spotify:track:"):
-            track_id = track_uri.split(":")[-1]
-        else:
-            track_id = track_uri
+        # Ensure track_uri is in correct format
+        if not track_uri.startswith("spotify:track:"):
+            track_uri = f"spotify:track:{track_uri}"
 
         _make_spotify_request(
             f"/playlists/{playlist_id}/tracks",
