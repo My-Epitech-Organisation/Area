@@ -58,17 +58,6 @@ urlpatterns = [
     ),
     # API endpoints
     path("api/", include(router.urls)),
-    # Schema endpoints
-    path(
-        "api/schemas/actions/<str:pk>/",
-        views.ActionSchemaView.as_view({"get": "retrieve"}),
-        name="action-schema",
-    ),
-    path(
-        "api/schemas/reactions/<str:pk>/",
-        views.ReactionSchemaView.as_view({"get": "retrieve"}),
-        name="reaction-schema",
-    ),
     # Special endpoint for service discovery
     path("about.json", views.about_json_view, name="about"),
     # Webhook receiver endpoint
