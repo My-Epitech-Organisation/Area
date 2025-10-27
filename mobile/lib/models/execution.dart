@@ -33,9 +33,15 @@ class Execution {
         id: json['id'],
         areaId: json['area'],
         status: json['status'] ?? 'pending',
-        createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
-        startedAt: json['started_at'] != null ? DateTime.parse(json['started_at']) : null,
-        completedAt: json['completed_at'] != null ? DateTime.parse(json['completed_at']) : null,
+        createdAt: DateTime.parse(
+          json['created_at'] ?? DateTime.now().toIso8601String(),
+        ),
+        startedAt: json['started_at'] != null
+            ? DateTime.parse(json['started_at'])
+            : null,
+        completedAt: json['completed_at'] != null
+            ? DateTime.parse(json['completed_at'])
+            : null,
         triggerData: json['trigger_data'] ?? {},
         resultData: json['result_data'] ?? {},
         errorMessage: json['error_message'],

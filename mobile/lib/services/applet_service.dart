@@ -150,7 +150,7 @@ class AppletService {
     return applet;
   }
 
-  /// Get applets by user ID
+  /// Get automations (applets) by user ID
   Future<List<Applet>> getAppletsByUser(int userId) async {
     final response = await _httpClient.get(
       ApiConfig.userAutomationsUrl(userId.toString()),
@@ -170,23 +170,6 @@ class AppletService {
     });
   }
 
-  /// Get applet execution logs
-  Future<List<Map<String, dynamic>>> getAppletLogs(
-    int appletId, {
-    int limit = 50,
-  }) async {
-    final response = await _httpClient.get(
-      ApiConfig.appletLogsUrl(appletId, limit: limit),
-    );
-
-    return _httpClient.parseResponse<List<Map<String, dynamic>>>(
-      response,
-      (data) => (data as List<dynamic>)
-          .map((item) => item as Map<String, dynamic>)
-          .toList(),
-    );
-  }
-
   Future<List<Execution>> getAppletExecutions(
     int areaId, {
     int limit = 50,
@@ -195,19 +178,16 @@ class AppletService {
       ApiConfig.appletExecutionsUrl(areaId, limit: limit),
     );
 
-    return _httpClient.parseResponse<List<Execution>>(
-      response,
-      (data) {
-        if (data is Map && data.containsKey('results')) {
-          final results = data['results'] as List<dynamic>;
-          return results.map((json) => Execution.fromJson(json)).toList();
-        }
-        if (data is List) {
-          return data.map((json) => Execution.fromJson(json)).toList();
-        }
-        throw Exception('Unexpected executions API response format: $data');
-      },
-    );
+    return _httpClient.parseResponse<List<Execution>>(response, (data) {
+      if (data is Map && data.containsKey('results')) {
+        final results = data['results'] as List<dynamic>;
+        return results.map((json) => Execution.fromJson(json)).toList();
+      }
+      if (data is List) {
+        return data.map((json) => Execution.fromJson(json)).toList();
+      }
+      throw Exception('Unexpected executions API response format: $data');
+    });
   }
 
   Future<Applet> pauseApplet(int id) async {

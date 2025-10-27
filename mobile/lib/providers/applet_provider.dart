@@ -219,7 +219,10 @@ class AppletProvider extends ChangeNotifier {
     }
   }
 
-  Future<List<Execution>> getAppletExecutions(int areaId, {int limit = 50}) async {
+  Future<List<Execution>> getAppletExecutions(
+    int areaId, {
+    int limit = 50,
+  }) async {
     try {
       return await _appletService.getAppletExecutions(areaId, limit: limit);
     } catch (e) {
