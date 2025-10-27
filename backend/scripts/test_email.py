@@ -10,16 +10,17 @@ Or:
 """
 
 import sys
-from django.core.mail import send_mail
+
 from django.conf import settings
+from django.core.mail import send_mail
 
 
 def test_email_configuration():
     """Test email configuration by sending a test email."""
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🔧 Testing Email Configuration")
-    print("="*70)
+    print("=" * 70)
 
     # Display current configuration
     print(f"\n📧 Email Backend: {settings.EMAIL_BACKEND}")
@@ -34,7 +35,7 @@ def test_email_configuration():
     print(f"📧 From Email: {getattr(settings, 'DEFAULT_FROM_EMAIL', 'Not set')}")
 
     # Ask for test email
-    print("\n" + "-"*70)
+    print("\n" + "-" * 70)
     test_email = input("Enter test email address (or press Enter to skip): ").strip()
 
     if not test_email:
@@ -42,7 +43,7 @@ def test_email_configuration():
         return False
 
     print(f"\n📤 Sending test email to: {test_email}")
-    print("-"*70)
+    print("-" * 70)
 
     try:
         # Send test email
@@ -112,7 +113,7 @@ The AREA Team
 
         print("\n✅ Test email sent successfully!")
         print("\nPlease check your inbox (and spam folder) for the test email.")
-        print("="*70 + "\n")
+        print("=" * 70 + "\n")
         return True
 
     except Exception as e:
@@ -122,7 +123,7 @@ The AREA Team
         print("  2. Verify EMAIL_HOST_PASSWORD is correct (use Gmail App Password)")
         print("  3. Check firewall/network settings")
         print("  4. Verify SMTP server is reachable")
-        print("="*70 + "\n")
+        print("=" * 70 + "\n")
         return False
 
 
