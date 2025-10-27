@@ -21,6 +21,7 @@ export interface User {
   username?: string;
   email?: string;
   id?: number | string;
+  email_verified?: boolean;
 }
 
 export interface ServiceCardProps {
