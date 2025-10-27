@@ -107,63 +107,76 @@ The AREA Team
 """
 
         # HTML message
-        html_message = f"""
-<!DOCTYPE html>
-<html>
+        html_message = f"""<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email Address</title>
 </head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to AREA!</h1>
-    </div>
-
-    <div style="background-color: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-        <p style="font-size: 16px;">Hello <strong>{user.username or user.email.split('@')[0]}</strong>,</p>
-
-        <p style="font-size: 16px;">Thank you for creating an account with AREA! We're excited to have you on board.</p>
-
-        <p style="font-size: 16px;">Please verify your email address by clicking the button below:</p>
-
-        <div style="text-align: center; margin: 30px 0;">
-            <a href="{verification_url}"
-               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                      color: white;
-                      padding: 15px 40px;
-                      text-decoration: none;
-                      border-radius: 5px;
-                      font-weight: bold;
-                      display: inline-block;
-                      font-size: 16px;">
-                Verify Email Address
-            </a>
-        </div>
-
-        <p style="font-size: 14px; color: #666;">Or copy and paste this link into your browser:</p>
-        <p style="font-size: 12px; color: #667eea; word-break: break-all; background-color: #fff; padding: 10px; border-radius: 5px;">
-            {verification_url}
-        </p>
-
-        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
-
-        <p style="font-size: 14px; color: #666;">
-            <strong>Note:</strong> This link will expire in 24 hours for security reasons.
-        </p>
-
-        <p style="font-size: 14px; color: #666;">
-            If you didn't create an account with AREA, please ignore this email.
-        </p>
-
-        <p style="font-size: 14px; color: #666; margin-top: 30px;">
-            Best regards,<br>
-            <strong>The AREA Team</strong>
-        </p>
-    </div>
-
-    <div style="text-align: center; margin-top: 20px; padding: 20px; color: #999; font-size: 12px;">
-        <p>This is an automated email. Please do not reply to this message.</p>
-    </div>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="padding: 40px 30px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px;">Welcome to AREA!</h1>
+                        </td>
+                    </tr>
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="margin: 0 0 20px 0; color: #333333; font-size: 16px; line-height: 1.5;">
+                                Hello <strong>{user.username or user.email.split('@')[0]}</strong>,
+                            </p>
+                            <p style="margin: 0 0 20px 0; color: #333333; font-size: 16px; line-height: 1.5;">
+                                Thank you for creating an account with AREA! We're excited to have you on board.
+                            </p>
+                            <p style="margin: 0 0 30px 0; color: #333333; font-size: 16px; line-height: 1.5;">
+                                Please verify your email address by clicking the button below:
+                            </p>
+                            <!-- Button -->
+                            <table role="presentation" style="margin: 0 auto;">
+                                <tr>
+                                    <td style="border-radius: 5px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                        <a href="{verification_url}" target="_blank" style="display: inline-block; padding: 15px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold;">
+                                            Verify Email Address
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="margin: 30px 0 20px 0; color: #666666; font-size: 14px; line-height: 1.5;">
+                                Or copy and paste this link into your browser:
+                            </p>
+                            <p style="margin: 0 0 30px 0; padding: 15px; background-color: #f8f8f8; border-radius: 4px; word-break: break-all; color: #667eea; font-size: 14px;">
+                                {verification_url}
+                            </p>
+                            <p style="margin: 0 0 20px 0; color: #999999; font-size: 14px; line-height: 1.5;">
+                                <strong>Note:</strong> This link will expire in 24 hours for security reasons.
+                            </p>
+                            <p style="margin: 0 0 30px 0; color: #999999; font-size: 14px; line-height: 1.5;">
+                                If you didn't create an account with AREA, please ignore this email.
+                            </p>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 30px; text-align: center; background-color: #f8f8f8; border-radius: 0 0 8px 8px;">
+                            <p style="margin: 0; color: #666666; font-size: 14px;">
+                                Best regards,<br>
+                                <strong>The AREA Team</strong>
+                            </p>
+                            <p style="margin: 15px 0 0 0; color: #999999; font-size: 12px;">
+                                This is an automated email. Please do not reply to this message.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
 """
