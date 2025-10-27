@@ -2537,11 +2537,26 @@ def _execute_reaction_logic(
         if not access_token:
             raise ValueError(f"No valid Spotify token for user {area.owner.username}")
 
-        track_uri = reaction_config.get("track_uri")
+        track_input = reaction_config.get("track_uri")
         position_ms = reaction_config.get("position_ms", 0)
 
-        if not track_uri:
-            raise ValueError("Track URI is required for spotify_play_track")
+        if not track_input:
+            raise ValueError("Track URI/URL is required for spotify_play_track")
+
+        # Convert URL to URI if needed
+        if track_input.startswith("https://open.spotify.com"):
+            # Extract track ID from URL
+            # URL format: https://open.spotify.com/track/{track_id} or https://open.spotify.com/intl-{locale}/track/{track_id}
+            import re
+            match = re.search(r'/track/([a-zA-Z0-9]+)', track_input)
+            if match:
+                track_id = match.group(1)
+                track_uri = f"spotify:track:{track_id}"
+            else:
+                raise ValueError(f"Invalid Spotify URL format: {track_input}")
+        else:
+            # Assume it's already a URI
+            track_uri = track_input
 
         try:
             result = play_track(access_token, track_uri, position_ms)
@@ -2666,10 +2681,26 @@ def _execute_reaction_logic(
             raise ValueError(f"No valid Spotify token for user {area.owner.username}")
 
         playlist_id = reaction_config.get("playlist_id")
-        track_uri = reaction_config.get("track_uri")
+        track_input = reaction_config.get("track_uri")
 
         if not playlist_id:
             raise ValueError("Playlist ID is required for spotify_add_to_playlist")
+
+        # Convert URL to URI if needed
+        track_uri = None
+        if track_input:
+            if track_input.startswith("https://open.spotify.com"):
+                # Extract track ID from URL
+                import re
+                match = re.search(r'/track/([a-zA-Z0-9]+)', track_input)
+                if match:
+                    track_id = match.group(1)
+                    track_uri = f"spotify:track:{track_id}"
+                else:
+                    raise ValueError(f"Invalid Spotify URL format: {track_input}")
+            else:
+                # Assume it's already a URI
+                track_uri = track_input
 
         try:
             result = add_to_playlist(access_token, playlist_id, track_uri)
@@ -2691,10 +2722,30 @@ def _execute_reaction_logic(
         if not access_token:
             raise ValueError(f"No valid Spotify token for user {area.owner.username}")
 
-        try:
-            result = like_track(access_token)
+        track_input = reaction_config.get("track_uri")
+        track_id = None
 
-            logger.info("[REACTION SPOTIFY] Liked current track")
+        # Convert URL to ID if needed
+        if track_input:
+            if track_input.startswith("https://open.spotify.com"):
+                # Extract track ID from URL
+                import re
+                match = re.search(r'/track/([a-zA-Z0-9]+)', track_input)
+                if match:
+                    track_id = match.group(1)
+                else:
+                    raise ValueError(f"Invalid Spotify URL format: {track_input}")
+            elif track_input.startswith("spotify:track:"):
+                # Extract ID from URI
+                track_id = track_input.split(":")[-1]
+            else:
+                # Assume it's already an ID
+                track_id = track_input
+
+        try:
+            result = like_track(access_token, track_id)
+
+            logger.info("[REACTION SPOTIFY] Liked track")
             return result
 
         except Exception as e:
@@ -2711,10 +2762,30 @@ def _execute_reaction_logic(
         if not access_token:
             raise ValueError(f"No valid Spotify token for user {area.owner.username}")
 
-        try:
-            result = unlike_track(access_token)
+        track_input = reaction_config.get("track_uri")
+        track_id = None
 
-            logger.info("[REACTION SPOTIFY] Unliked current track")
+        # Convert URL to ID if needed
+        if track_input:
+            if track_input.startswith("https://open.spotify.com"):
+                # Extract track ID from URL
+                import re
+                match = re.search(r'/track/([a-zA-Z0-9]+)', track_input)
+                if match:
+                    track_id = match.group(1)
+                else:
+                    raise ValueError(f"Invalid Spotify URL format: {track_input}")
+            elif track_input.startswith("spotify:track:"):
+                # Extract ID from URI
+                track_id = track_input.split(":")[-1]
+            else:
+                # Assume it's already an ID
+                track_id = track_id
+
+        try:
+            result = unlike_track(access_token, track_id)
+
+            logger.info("[REACTION SPOTIFY] Unliked track")
             return result
 
         except Exception as e:
