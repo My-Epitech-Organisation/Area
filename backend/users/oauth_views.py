@@ -12,7 +12,7 @@ from uuid import UUID
 
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -21,13 +21,13 @@ from django.conf import settings
 from .models import ServiceToken
 from .oauth import OAuthManager
 from .oauth.exceptions import InvalidProviderError, OAuthError, OAuthStateError
-from .permissions import IsAuthenticatedAndVerified
 from .oauth_serializers import (
     OAuthCallbackSerializer,
     OAuthInitiateResponseSerializer,
     ServiceConnectionListSerializer,
     ServiceDisconnectSerializer,
 )
+from .permissions import IsAuthenticatedAndVerified
 
 logger = logging.getLogger(__name__)
 
