@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:collection/collection.dart';
 import '../models/applet.dart';
+import '../models/execution.dart';
 import '../services/services.dart';
 
 class AppletProvider extends ChangeNotifier {
@@ -64,7 +66,7 @@ class AppletProvider extends ChangeNotifier {
       notifyListeners();
 
       final newApplet = await _appletService.createApplet(
-        description: description,
+        name: description,
         actionId: actionId,
         reactionId: reactionId,
         actionConfig: actionConfig,
@@ -86,7 +88,6 @@ class AppletProvider extends ChangeNotifier {
   Future<bool> updateApplet(
     int id, {
     String? name,
-    String? description,
     String? status,
     Map<String, dynamic>? actionConfig,
     Map<String, dynamic>? reactionConfig,
@@ -99,7 +100,6 @@ class AppletProvider extends ChangeNotifier {
       final updatedApplet = await _appletService.updateApplet(
         id,
         name: name,
-        description: description,
         status: status,
         actionConfig: actionConfig,
         reactionConfig: reactionConfig,
@@ -143,7 +143,55 @@ class AppletProvider extends ChangeNotifier {
 
   Future<bool> toggleApplet(int id) async {
     try {
-      final updatedApplet = await _appletService.toggleApplet(id);
+      // Check current status and toggle appropriately
+      final applet = _applets.firstWhereOrNull((a) => a.id == id);
+
+      if (applet == null) {
+        _error = 'Applet not found';
+        notifyListeners();
+        return false;
+      }
+
+      if (applet.isActive) {
+        // Pause if active
+        return await pauseApplet(id);
+      } else {
+        // Resume if paused
+        return await resumeApplet(id);
+      }
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> duplicateApplet(int id, String newName) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      final duplicatedApplet = await _appletService.duplicateApplet(
+        id,
+        newName,
+      );
+
+      _applets.insert(0, duplicatedApplet);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> pauseApplet(int id) async {
+    try {
+      final updatedApplet = await _appletService.pauseApplet(id);
 
       final index = _applets.indexWhere((a) => a.id == id);
       if (index != -1) {
@@ -156,6 +204,37 @@ class AppletProvider extends ChangeNotifier {
       _error = e.toString();
       notifyListeners();
       return false;
+    }
+  }
+
+  Future<bool> resumeApplet(int id) async {
+    try {
+      final updatedApplet = await _appletService.resumeApplet(id);
+
+      final index = _applets.indexWhere((a) => a.id == id);
+      if (index != -1) {
+        _applets[index] = updatedApplet;
+        notifyListeners();
+      }
+
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<List<Execution>> getAppletExecutions(
+    int areaId, {
+    int limit = 50,
+  }) async {
+    try {
+      return await _appletService.getAppletExecutions(areaId, limit: limit);
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return [];
     }
   }
 

@@ -72,23 +72,76 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
     );
   }
 
-  Future<void> _onToggleApplet(Applet applet) async {
-    try {
-      final provider = context.read<AppletProvider>();
-      final success = await provider.toggleApplet(applet.id);
+  Future<void> _onDuplicateApplet(Applet applet) async {
+    final TextEditingController nameController = TextEditingController(
+      text: '${applet.name} (Copy)',
+    );
 
-      if (success && mounted) {
-        final newStatus = applet.status == 'active' ? 'disabled' : 'active';
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Duplicate Automation'),
+            content: TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'New automation name',
+                hintText: 'Enter the name for the duplicated automation',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 1,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => _confirmDuplicate(applet, nameController.text),
+                style: TextButton.styleFrom(foregroundColor: Colors.blue),
+                child: const Text('Duplicate'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
+  Future<void> _confirmDuplicate(Applet applet, String newName) async {
+    Navigator.of(context).pop();
+
+    if (newName.trim().isEmpty) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Automation "${applet.name}" is now $newStatus'),
-            backgroundColor: Colors.blue,
+          const SnackBar(
+            content: Text('Please enter a name for the duplicated automation'),
+            backgroundColor: Colors.red,
           ),
         );
+      }
+      return;
+    }
+
+    try {
+      final provider = context.read<AppletProvider>();
+      final success = await provider.duplicateApplet(applet.id, newName.trim());
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Automation "${newName.trim()}" created successfully',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+        await _loadApplets();
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to toggle automation: ${provider.error}'),
+            content: Text('Failed to duplicate automation: ${provider.error}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -97,7 +150,7 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error toggling automation: $e'),
+            content: Text('Error duplicating automation: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -132,6 +185,70 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error deleting automation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _onPauseApplet(Applet applet) async {
+    try {
+      final provider = context.read<AppletProvider>();
+      final success = await provider.pauseApplet(applet.id);
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Automation "${applet.name}" is now paused'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pause automation: ${provider.error}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error pausing automation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _onResumeApplet(Applet applet) async {
+    try {
+      final provider = context.read<AppletProvider>();
+      final success = await provider.resumeApplet(applet.id);
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Automation "${applet.name}" is now active'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to resume automation: ${provider.error}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error resuming automation: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -263,8 +380,14 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
                   PopupMenuButton<String>(
                     onSelected: (value) {
                       switch (value) {
-                        case 'toggle':
-                          _onToggleApplet(applet);
+                        case 'pause':
+                          _onPauseApplet(applet);
+                          break;
+                        case 'resume':
+                          _onResumeApplet(applet);
+                          break;
+                        case 'duplicate':
+                          _onDuplicateApplet(applet);
                           break;
                         case 'delete':
                           _onDeleteApplet(applet);
@@ -272,20 +395,43 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
                       }
                     },
                     itemBuilder: (BuildContext context) => [
-                      PopupMenuItem<String>(
-                        value: 'toggle',
+                      if (applet.status != 'paused')
+                        const PopupMenuItem<String>(
+                          value: 'pause',
+                          child: Row(
+                            children: [
+                              Icon(Icons.pause, color: Colors.orange),
+                              SizedBox(width: 8),
+                              Text(
+                                'Pause',
+                                style: TextStyle(color: Colors.orange),
+                              ),
+                            ],
+                          ),
+                        ),
+                      if (applet.status == 'paused')
+                        const PopupMenuItem<String>(
+                          value: 'resume',
+                          child: Row(
+                            children: [
+                              Icon(Icons.play_arrow, color: Colors.green),
+                              SizedBox(width: 8),
+                              Text(
+                                'Resume',
+                                style: TextStyle(color: Colors.green),
+                              ),
+                            ],
+                          ),
+                        ),
+                      const PopupMenuItem<String>(
+                        value: 'duplicate',
                         child: Row(
                           children: [
-                            Icon(
-                              applet.status == 'active'
-                                  ? Icons.pause
-                                  : Icons.play_arrow,
-                              color: Colors.blue,
-                            ),
-                            const SizedBox(width: 8),
+                            Icon(Icons.content_copy, color: Colors.purple),
+                            SizedBox(width: 8),
                             Text(
-                              applet.status == 'active' ? 'Disable' : 'Enable',
-                              style: const TextStyle(color: Colors.blue),
+                              'Duplicate',
+                              style: TextStyle(color: Colors.purple),
                             ),
                           ],
                         ),
@@ -303,11 +449,6 @@ class _MyAppletsPageState extends State<MyAppletsPage> {
                     ],
                   ),
                 ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                applet.description,
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
               ),
               const SizedBox(height: 12),
               Row(
