@@ -258,3 +258,97 @@ class _DateFieldState extends State<DateField> {
     );
   }
 }
+
+/// Widget for time selection (hour and minute) using showTimePicker
+/// This widget combines hour and minute selection into a single unified time picker
+class TimePickerField extends StatefulWidget {
+  final String label;
+  final int initialHour;
+  final int initialMinute;
+  final bool required;
+  final Function(int hour, int minute) onChanged;
+
+  const TimePickerField({
+    super.key,
+    required this.label,
+    this.initialHour = 0,
+    this.initialMinute = 0,
+    this.required = false,
+    required this.onChanged,
+  });
+
+  @override
+  State<TimePickerField> createState() => _TimePickerFieldState();
+}
+
+class _TimePickerFieldState extends State<TimePickerField> {
+  late int selectedHour;
+  late int selectedMinute;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedHour = widget.initialHour;
+    selectedMinute = widget.initialMinute;
+  }
+
+  void _openTimePicker() async {
+    final ctx = context;
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: ctx,
+      initialTime: TimeOfDay(
+        hour: selectedHour.clamp(0, 23),
+        minute: selectedMinute.clamp(0, 59),
+      ),
+    );
+
+    if (pickedTime != null) {
+      if (!mounted) return;
+      setState(() {
+        selectedHour = pickedTime.hour;
+        selectedMinute = pickedTime.minute;
+      });
+      widget.onChanged(pickedTime.hour, pickedTime.minute);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '${widget.label}${widget.required ? ' *' : ''}',
+          style: Theme.of(context).textTheme.labelSmall,
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: _openTimePicker,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade400),
+              borderRadius: BorderRadius.circular(4),
+              color: Colors.white,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${selectedHour.toString().padLeft(2, '0')}:${selectedMinute.toString().padLeft(2, '0')}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.access_time, color: Colors.blue.shade600),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

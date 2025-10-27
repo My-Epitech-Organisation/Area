@@ -167,16 +167,78 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
       return ConfigField.fromSchemaProperty(e.key, e.value);
     }).toList();
 
+    // Detect and combine hour/minute pairs
+    final processedFields = <ConfigField>[];
+    final processedNames = <String>{};
+
+    for (final field in fields) {
+      if (processedNames.contains(field.name)) continue;
+
+      final fieldNameLower = field.name.toLowerCase();
+      
+      // Check if this is an hour field and if there's a corresponding minute field
+      if (fieldNameLower.contains('hour')) {
+        // Find corresponding minute field
+        ConfigField? minuteField;
+        try {
+          final hourBase = fieldNameLower.replaceAll(RegExp(r'hour|_'), '');
+          minuteField = fields.firstWhere((f) {
+            final mName = f.name.toLowerCase();
+            final minuteBase = mName.replaceAll(RegExp(r'minute|_'), '');
+            return mName.contains('minute') && hourBase == minuteBase;
+          });
+        } catch (_) {
+          minuteField = null;
+        }
+
+        if (minuteField != null) {
+          // Add a combined time field marker
+          processedNames.add(field.name);
+          processedNames.add(minuteField.name);
+          processedFields.add(field);
+          processedFields.add(minuteField);
+        } else {
+          processedFields.add(field);
+        }
+      } else if (!fieldNameLower.contains('minute')) {
+        processedFields.add(field);
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 16),
-        ...fields.map((field) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: _buildField(field, config, onConfigChanged),
-          );
+        ...processedFields.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final field = entry.value;
+          final nextField = idx + 1 < processedFields.length ? processedFields[idx + 1] : null;
+
+          // Check if this is a combined hour/minute pair
+          if (field.name.toLowerCase().contains('hour') && 
+              nextField != null && 
+              nextField.name.toLowerCase().contains('minute')) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildCombinedTimeField(
+                field,
+                nextField,
+                config,
+                onConfigChanged,
+              ),
+            );
+          } else if (field.name.toLowerCase().contains('minute') &&
+                     idx > 0 &&
+                     processedFields[idx - 1].name.toLowerCase().contains('hour')) {
+            // Skip this minute field as it's already handled by the hour field
+            return const SizedBox.shrink();
+          } else {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildField(field, config, onConfigChanged),
+            );
+          }
         }),
       ],
     );
@@ -193,6 +255,31 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
       config[field.name] = newValue;
       onConfigChanged(config);
     });
+  }
+
+  Widget _buildCombinedTimeField(
+    ConfigField hourField,
+    ConfigField minuteField,
+    Map<String, dynamic> config,
+    ValueChanged<Map<String, dynamic>> onConfigChanged,
+  ) {
+    final hourValue = config[hourField.name] ?? hourField.defaultValue ?? 0;
+    final minuteValue = config[minuteField.name] ?? minuteField.defaultValue ?? 0;
+    
+    final initialHour = hourValue is int ? hourValue : int.tryParse(hourValue.toString()) ?? 0;
+    final initialMinute = minuteValue is int ? minuteValue : int.tryParse(minuteValue.toString()) ?? 0;
+
+    return TimePickerField(
+      label: 'Time',
+      initialHour: initialHour.clamp(0, 23),
+      initialMinute: initialMinute.clamp(0, 59),
+      required: hourField.required || minuteField.required,
+      onChanged: (hour, minute) {
+        config[hourField.name] = hour;
+        config[minuteField.name] = minute;
+        onConfigChanged(config);
+      },
+    );
   }
 
   Widget _buildFieldWidget(
