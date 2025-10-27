@@ -42,7 +42,7 @@ jobs:
 
     # Only deploy if:
     #   - Manual trigger (workflow_dispatch) OR
-    #   - CI passed successfully AND on main/master/add-cd branch (add-cd for testing)
+    #   - CI passed successfully AND on main/master branch
     if: |
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
