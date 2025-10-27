@@ -5,9 +5,9 @@
 ## views
 ##
 
+import logging
 import secrets
 import string
-import logging
 from datetime import timedelta
 
 from rest_framework import generics, status, viewsets
@@ -30,7 +30,6 @@ from .serializers import (
     UserSerializer,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -40,6 +39,7 @@ class RegisterView(generics.CreateAPIView):
 
     Creates a new user account and automatically sends an email verification link.
     """
+
     queryset = User.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = UserSerializer
@@ -61,7 +61,9 @@ class RegisterView(generics.CreateAPIView):
             logger.info(f"Verification email sent successfully to {user.email}")
         except Exception as e:
             # Log error but don't fail registration
-            logger.error(f"Failed to send verification email to {user.email}: {e}", exc_info=True)
+            logger.error(
+                f"Failed to send verification email to {user.email}: {e}", exc_info=True
+            )
             print(f"Warning: Failed to send verification email: {e}")
 
     def _send_verification_email(self, user, token):
@@ -186,6 +188,7 @@ class SendEmailVerificationView(APIView):
     Allows users to request a new verification email if they didn't receive
     the original one or if the token expired.
     """
+
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
@@ -225,9 +228,7 @@ class SendEmailVerificationView(APIView):
         subject = "AREA - Verify Your Email Address"
 
         # Build verification URL
-        verification_url = request.build_absolute_uri(
-            f"/auth/verify-email/{token}/"
-        )
+        verification_url = request.build_absolute_uri(f"/auth/verify-email/{token}/")
 
         # Plain text message
         message = f"""
@@ -327,32 +328,37 @@ class VerifyEmailView(APIView):
     Can be accessed without authentication (public endpoint).
     Redirects to frontend with verification result.
     """
+
     permission_classes = (AllowAny,)
 
     def get(self, request, token):
         # Get frontend URL from settings or environment
-        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+        frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
 
         try:
             user = User.objects.get(email_verification_token=token)
 
             if user.email_verified:
                 # Already verified - redirect to login with info message
-                params = urlencode({
-                    'verified': 'true',
-                    'already_verified': 'true',
-                    'message': 'Your email is already verified. You can log in.',
-                })
+                params = urlencode(
+                    {
+                        "verified": "true",
+                        "already_verified": "true",
+                        "message": "Your email is already verified. You can log in.",
+                    }
+                )
                 return redirect(f"{frontend_url}/login?{params}")
 
             # Check if token is expired
             if not user.is_email_verification_token_valid():
                 # Expired token - redirect to resend page
-                params = urlencode({
-                    'verified': 'false',
-                    'expired': 'true',
-                    'error': 'Verification token has expired. Please request a new one.',
-                })
+                params = urlencode(
+                    {
+                        "verified": "false",
+                        "expired": "true",
+                        "error": "Verification token has expired. Please request a new one.",
+                    }
+                )
                 return redirect(f"{frontend_url}/login?{params}")
 
             # Mark email as verified
@@ -362,19 +368,23 @@ class VerifyEmailView(APIView):
             user.save()
 
             # Success - redirect to login with success message
-            params = urlencode({
-                'verified': 'true',
-                'message': 'Email verified successfully! You can now log in.',
-                'email': user.email,
-            })
+            params = urlencode(
+                {
+                    "verified": "true",
+                    "message": "Email verified successfully! You can now log in.",
+                    "email": user.email,
+                }
+            )
             return redirect(f"{frontend_url}/login?{params}")
 
         except User.DoesNotExist:
             # Invalid token - redirect to login with error
-            params = urlencode({
-                'verified': 'false',
-                'error': 'Invalid verification link. Please try again or request a new one.',
-            })
+            params = urlencode(
+                {
+                    "verified": "false",
+                    "error": "Invalid verification link. Please try again or request a new one.",
+                }
+            )
             return redirect(f"{frontend_url}/login?{params}")
 
 
