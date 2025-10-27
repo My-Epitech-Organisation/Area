@@ -20,6 +20,60 @@ from .validators import (
     validate_action_reaction_compatibility,
     validate_reaction_config,
 )
+import requests
+from urllib.parse import urlparse, unquote
+
+
+_WIKI_IMAGE_CACHE = {}
+
+
+def _resolve_wikipedia_file_url(url_or_text: str) -> str | None:
+    """Given a Wikipedia file page URL or text containing 'File:...', query the
+    appropriate Wikimedia API to obtain the direct image URL (upload.wikimedia.org).
+
+    Returns the direct image URL or None on failure.
+    """
+    try:
+        parsed = urlparse(url_or_text)
+        netloc = parsed.netloc or "en.wikipedia.org"
+        fragment = parsed.fragment or ""
+        path = parsed.path or ""
+
+        import re
+
+        m = re.search(r"File:([^/#?]+)", fragment) or re.search(r"/wiki/File:([^/#?]+)", path) or re.search(r"File:([^/#?]+)", url_or_text)
+        if not m:
+            return None
+
+        filename = unquote(m.group(1))
+        key = (netloc, filename)
+        if key in _WIKI_IMAGE_CACHE:
+            return _WIKI_IMAGE_CACHE[key]
+
+        api_url = (
+            f"https://{netloc}/w/api.php?action=query&titles=File:{requests.utils.requote_uri(filename)}"
+            "&prop=imageinfo&iiprop=url&format=json&formatversion=2"
+        )
+
+        resp = requests.get(api_url, timeout=5)
+        if not resp.ok:
+            _WIKI_IMAGE_CACHE[key] = None
+            return None
+
+        data = resp.json()
+        pages = data.get("query", {}).get("pages", [])
+        if pages:
+            imageinfo = pages[0].get("imageinfo")
+            if imageinfo and len(imageinfo) > 0:
+                img_url = imageinfo[0].get("url")
+                _WIKI_IMAGE_CACHE[key] = img_url
+                return img_url
+
+        _WIKI_IMAGE_CACHE[key] = None
+        return None
+    except Exception:
+        return None
+
 
 
 class ServiceSerializer(serializers.ModelSerializer):
@@ -392,10 +446,64 @@ class AboutServiceSerializer(serializers.ModelSerializer):
 
     actions = AboutActionSerializer(many=True, read_only=True)
     reactions = AboutReactionSerializer(many=True, read_only=True)
+    logo = serializers.SerializerMethodField()
 
     class Meta:
         model = Service
-        fields = ["name", "actions", "reactions"]
+        fields = ["name", "actions", "reactions", "logo"]
+
+    def get_logo(self, obj):
+        """Return the configured logo URL for the service or a fallback.
+
+        - Use an internal mapping of known services to their official/Wikipedia SVG URLs.
+        - If a service is not present in the mapping, return None.
+        """
+        try:
+            name = (obj.name or "").strip().lower()
+        except Exception:
+            return None
+        # Inline mapping: service name (lowercase) -> direct image or wiki file page URL
+        mapping = {
+            # Direct upload.wikimedia.org URLs for reliable browser rendering
+            "timer": "https://upload.wikimedia.org/wikipedia/commons/d/dd/OOjs_UI_icon_clock.svg",
+            "debug": "https://upload.wikimedia.org/wikipedia/commons/0/0b/Gear_icon_svg.svg",
+            "email": "https://upload.wikimedia.org/wikipedia/commons/7/7f/OOjs_UI_icon_message.svg",
+            "webhook": "https://upload.wikimedia.org/wikipedia/commons/7/72/OOjs_UI_icon_link-ltr.svg",
+            "weather": "https://upload.wikimedia.org/wikipedia/commons/b/bf/Circle-icons-weather.svg",
+            # External services
+            "teams": "https://upload.wikimedia.org/wikipedia/commons/5/50/Microsoft_Teams.png",
+            "github": "https://upload.wikimedia.org/wikipedia/commons/c/c2/GitHub_Invertocat_Logo.svg",
+            "gmail": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg",
+            "slack": "https://upload.wikimedia.org/wikipedia/commons/7/76/Slack_Icon.png",
+            "twitch": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Twitch_Glitch_Logo_Purple.svg",
+            "google_calendar": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg",
+        }
+
+        import re
+
+        def _normalize_key(s: str) -> str:
+            return re.sub(r"[^a-z0-9]", "", (s or "").lower())
+
+        candidates = [name, name.replace("_", ""), name.replace(" ", ""), _normalize_key(name)]
+
+        found = None
+        for k in candidates:
+            if k in mapping:
+                found = mapping[k]
+                break
+
+        if not found:
+            return None
+
+        if ("wikipedia.org" in found) or ("/media/" in found) or ("File:" in found):
+            direct = _resolve_wikipedia_file_url(found)
+            if direct:
+                return direct
+
+        return found
+
+
+
 
 
 # Serializers pour Execution (journaling)
