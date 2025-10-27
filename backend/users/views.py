@@ -33,6 +33,22 @@ from .serializers import (
 logger = logging.getLogger(__name__)
 
 
+def generate_verification_token(user):
+    """
+    Generate a secure verification token and set expiration.
+
+    Args:
+        user: User instance to set token on
+
+    Returns:
+        str: The generated token
+    """
+    token = secrets.token_urlsafe(32)
+    user.email_verification_token = token
+    user.email_verification_token_expires = timezone.now() + timedelta(hours=24)
+    return token
+
+
 class RegisterView(generics.CreateAPIView):
     """
     User registration endpoint.
@@ -49,9 +65,7 @@ class RegisterView(generics.CreateAPIView):
         user = serializer.save()
 
         # Generate verification token with 24h expiration
-        token = secrets.token_urlsafe(32)
-        user.email_verification_token = token
-        user.email_verification_token_expires = timezone.now() + timedelta(hours=24)
+        token = generate_verification_token(user)
         user.save()
 
         # Send verification email
@@ -201,9 +215,7 @@ class SendEmailVerificationView(APIView):
             )
 
         # Generate new verification token with 24h expiration
-        token = secrets.token_urlsafe(32)
-        user.email_verification_token = token
-        user.email_verification_token_expires = timezone.now() + timedelta(hours=24)
+        token = generate_verification_token(user)
         user.save()
 
         # Send verification email
