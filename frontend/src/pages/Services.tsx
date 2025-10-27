@@ -86,9 +86,13 @@ const Services: React.FC = () => {
               const rawLogo = s.logo ?? s.icon ?? null;
               let logo: string | null = null;
               if (rawLogo) {
-                const raw = String(rawLogo);
-                if (/^(https?:)?\/\//.test(raw) || raw.startsWith('/')) {
+                const raw = String(rawLogo).trim();
+                if (/^https?:\/\//i.test(raw)) {
                   logo = raw;
+                } else if (raw.startsWith('//')) {
+                  logo = `https:${raw}`;
+                } else if (raw.startsWith('/')) {
+                  logo = `${baseUrl}${raw}`;
                 } else {
                   const base =
                     raw
