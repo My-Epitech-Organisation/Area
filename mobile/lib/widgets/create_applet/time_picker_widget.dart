@@ -73,8 +73,10 @@ class _TimePickerWidgetState extends State<TimePickerWidget> {
     if (_isValidValue(value)) {
       final intValue = int.parse(value);
       setState(() => _value = intValue);
-      // Format with leading zero
-      _controller.text = intValue.toString().padLeft(2, '0');
+      _controller.value = TextEditingValue(
+        text: intValue.toString().padLeft(2, '0'),
+        selection: _controller.selection,
+      );
       widget.onChanged(intValue);
     }
   }
