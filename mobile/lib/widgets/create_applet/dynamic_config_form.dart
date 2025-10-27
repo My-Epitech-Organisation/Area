@@ -398,8 +398,9 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
               if (val != null) onChanged(val);
             },
             validator: field.required
-                ? (val) =>
-                    val == null || val.isEmpty ? 'This field is required' : null
+                ? (val) => val == null || val.isEmpty
+                      ? 'This field is required'
+                      : null
                 : null,
           ),
         ],
@@ -432,10 +433,7 @@ class _DynamicConfigFormState extends State<DynamicConfigForm> {
         border: const OutlineInputBorder(),
         helperText: field.description,
         helperMaxLines: 2,
-        helperStyle: TextStyle(
-          color: Colors.grey[600],
-          fontSize: 12,
-        ),
+        helperStyle: TextStyle(color: Colors.grey[600], fontSize: 12),
         hintText: _getHintText(field),
       ),
       keyboardType: fieldTypeLower == 'number'
