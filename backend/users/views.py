@@ -202,7 +202,7 @@ class SendEmailVerificationView(APIView):
 
     Allows users to request a new verification email if they didn't receive
     the original one or if the token expired.
-    
+
     Note: This endpoint uses IsAuthenticated (not IsAuthenticatedAndVerified)
     because unverified users need to be able to request verification emails.
     """
