@@ -215,7 +215,10 @@ const Services: React.FC = () => {
   }, [flatMode]);
 
   useEffect(() => {
-    if (!hoverCarousel && !hoverHistory) return;
+    if (flatMode)
+      return;
+    if (!hoverCarousel && !hoverHistory)
+      return;
 
     const handler = (e: WheelEvent) => {
       if (hoverCarousel && !isDragging) {
@@ -241,7 +244,8 @@ const Services: React.FC = () => {
     const historyEl = historyContainerRef.current;
     const flatEl = flatListRef.current;
 
-    if (!wheelEl && !historyEl && !flatEl) return;
+    if (!wheelEl && !historyEl && !flatEl)
+      return;
 
     const onWheelCarousel = (e: WheelEvent) => {
       try {
@@ -268,14 +272,20 @@ const Services: React.FC = () => {
       }
     };
 
-    if (wheelEl)
-      wheelEl.addEventListener('wheel', onWheelCarousel as EventListener, { passive: false });
-    if (historyEl)
-      historyEl.addEventListener('wheel', onWheelHistory as EventListener, { passive: false });
+    if (!flatMode) {
+      if (wheelEl)
+        wheelEl.addEventListener('wheel', onWheelCarousel as EventListener, { passive: false });
+      if (historyEl)
+        historyEl.addEventListener('wheel', onWheelHistory as EventListener, { passive: false });
+    }
 
     return () => {
-      if (wheelEl) wheelEl.removeEventListener('wheel', onWheelCarousel as EventListener);
-      if (historyEl) historyEl.removeEventListener('wheel', onWheelHistory as EventListener);
+      if (!flatMode) {
+        if (wheelEl)
+          wheelEl.removeEventListener('wheel', onWheelCarousel as EventListener);
+        if (historyEl)
+          historyEl.removeEventListener('wheel', onWheelHistory as EventListener);
+      }
     };
   }, [flatMode, isDragging]);
 
