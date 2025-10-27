@@ -26,6 +26,7 @@ from rest_framework.response import Response
 
 from django.db.models import Q, QuerySet
 from django.http import JsonResponse
+from django.http import StreamingHttpResponse, HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
@@ -48,6 +49,8 @@ from .serializers import (
     ReactionSerializer,
     ServiceSerializer,
 )
+import requests
+from django.views.decorators.http import require_http_methods
 
 
 class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
@@ -290,7 +293,7 @@ def about_json_view(request):
         "actions", "reactions"
     )
 
-    serializer = AboutServiceSerializer(services, many=True)
+    serializer = AboutServiceSerializer(services, many=True, context={"request": request})
 
     about_data = {
         "client": {"host": request.get_host()},
@@ -301,6 +304,70 @@ def about_json_view(request):
     }
 
     return JsonResponse(about_data)
+
+
+@require_http_methods(["GET"])
+def logo_proxy_view(request, service: str):
+    """Proxy and return the logo image for a given service.
+
+    """
+    try:
+        svc = Service.objects.get(name__iexact=service)
+    except Service.DoesNotExist:
+        return HttpResponse(status=404)
+
+    serializer = AboutServiceSerializer(svc, context={"request": request})
+    logo_val = serializer.get_logo(svc)
+    if not logo_val:
+        return HttpResponse(status=404)
+
+    direct_url = logo_val
+    try:
+        import re
+        parsed = requests.utils.urlparse(logo_val)
+        netloc = parsed.netloc or "en.wikipedia.org"
+        fragment = parsed.fragment or ""
+        path = parsed.path or ""
+
+        m = re.search(r"File:([^/#?]+)", fragment) or re.search(r"/wiki/File:([^/#?]+)", path) or re.search(r"File:([^/#?]+)", logo_val)
+        if m:
+            filename = requests.utils.requote_uri(m.group(1))
+            api_url = (
+                f"https://{netloc}/w/api.php?action=query&titles=File:{filename}"
+                "&prop=imageinfo&iiprop=url&format=json&formatversion=2"
+            )
+            api_resp = requests.get(api_url, timeout=5)
+            if api_resp.ok:
+                data = api_resp.json()
+                pages = data.get("query", {}).get("pages", [])
+                if pages:
+                    imageinfo = pages[0].get("imageinfo")
+                    if imageinfo and len(imageinfo) > 0:
+                        direct_url = imageinfo[0].get("url") or direct_url
+    except Exception:
+        direct_url = logo_val
+
+    try:
+        from django.shortcuts import redirect
+
+        parsed = requests.utils.urlparse(direct_url)
+        host = parsed.netloc or ""
+        if host.endswith("upload.wikimedia.org") or direct_url.startswith("https://"):
+            return redirect(direct_url)
+    except Exception:
+        pass
+
+    try:
+        resp = requests.get(direct_url, stream=True, timeout=10)
+        if not resp.ok:
+            return HttpResponse(status=502)
+
+        content_type = resp.headers.get("Content-Type", "application/octet-stream")
+        stream = StreamingHttpResponse(resp.iter_content(chunk_size=8192), content_type=content_type)
+        stream["Cache-Control"] = "public, max-age=3600"
+        return stream
+    except requests.RequestException:
+        return HttpResponse(status=502)
 
 
 @extend_schema(
