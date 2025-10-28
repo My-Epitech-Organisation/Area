@@ -87,12 +87,6 @@ const Navbar: React.FC = () => {
               Services
             </Link>
             <Link
-              to="/about"
-              className="text-theme-primary text-sm lg:text-lg font-semibold hover:text-theme-accent transition"
-            >
-              About Us
-            </Link>
-            <Link
               to="/dashboard"
               className="text-theme-primary text-sm lg:text-lg font-semibold hover:text-theme-accent transition"
             >
@@ -103,6 +97,12 @@ const Navbar: React.FC = () => {
               className="text-theme-primary text-sm lg:text-lg font-semibold hover:text-theme-accent transition"
             >
               Profile
+            </Link>
+            <Link
+              to="/about"
+              className="text-theme-primary text-sm lg:text-lg font-semibold hover:text-theme-accent transition"
+            >
+              About Us
             </Link>
           </div>
 
@@ -165,13 +165,6 @@ const Navbar: React.FC = () => {
                 Services
               </Link>
               <Link
-                to="/about"
-                className="block text-theme-primary text-lg font-semibold hover:text-theme-accent transition"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                About Us
-              </Link>
-              <Link
                 to="/dashboard"
                 className="block text-theme-primary text-lg font-semibold hover:text-theme-accent transition"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -184,6 +177,13 @@ const Navbar: React.FC = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Profile
+              </Link>
+              <Link
+                to="/about"
+                className="block text-theme-primary text-lg font-semibold hover:text-theme-accent transition"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                About Us
               </Link>
             </div>
           </div>
