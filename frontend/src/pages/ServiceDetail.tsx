@@ -222,7 +222,8 @@ const ServiceDetail: React.FC = () => {
                   style={
                     isInternalService(service.name)
                       ? {
-                          filter: 'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))'
+                          filter:
+                            'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))',
                         }
                       : undefined
                   }
