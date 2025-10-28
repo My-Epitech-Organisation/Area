@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { API_BASE } from '../utils/helper';
+import { API_BASE, getStoredUser } from '../utils/helper';
 import type { ServiceModel } from '../types/services';
+import type { User } from '../types';
+import EmailVerificationBanner from '../components/EmailVerificationBanner';
 
 type AboutService = {
   id: number | string;
@@ -65,6 +67,15 @@ const Services: React.FC = () => {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Load user data
+    const storedUser = getStoredUser();
+    if (storedUser) {
+      setUser(storedUser);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -423,6 +434,8 @@ const Services: React.FC = () => {
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">Services</h1>
         <p className="text-gray-300 mt-3">Explore available action → reaction services</p>
       </header>
+
+      {user && <EmailVerificationBanner user={user} />}
 
       <main className="w-full max-w-6xl mt-12">
         <div className="flex items-center justify-end gap-4 mb-4">

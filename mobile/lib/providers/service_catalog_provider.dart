@@ -34,6 +34,28 @@ class ServiceCatalogProvider extends ChangeNotifier {
     return _reactionIdsCache[reactionName];
   }
 
+  ServiceAction? getAction(String actionName) {
+    for (final actions in _actionsCache.values) {
+      for (final action in actions) {
+        if (action.name == actionName) {
+          return action;
+        }
+      }
+    }
+    return null;
+  }
+
+  ServiceReaction? getReaction(String reactionName) {
+    for (final reactions in _reactionsCache.values) {
+      for (final reaction in reactions) {
+        if (reaction.name == reactionName) {
+          return reaction;
+        }
+      }
+    }
+    return null;
+  }
+
   Future<void> loadServices({bool forceRefresh = false}) async {
     try {
       _isLoadingServices = true;
