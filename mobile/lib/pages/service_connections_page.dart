@@ -7,7 +7,6 @@ import '../providers/service_catalog_provider.dart';
 import '../services/oauth_service.dart';
 import '../utils/service_icons.dart';
 import '../config/service_provider_config.dart';
-import '../widgets/connection_history_widget.dart';
 
 class ServiceConnectionsPage extends StatefulWidget {
   const ServiceConnectionsPage({super.key});
@@ -267,11 +266,6 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
                   color: Colors.blue,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'These services need OAuth authentication to access your accounts',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
               const SizedBox(height: 12),
               ...sortedServices
                   .where(
@@ -283,17 +277,12 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
               const SizedBox(height: 24),
 
               const Text(
-                'Built-in Services',
+                'Active Services',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.green,
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'These services are always available and don\'t require external connections',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
               ),
               const SizedBox(height: 12),
               ...sortedServices
@@ -302,44 +291,6 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
                         !ServiceProviderConfig.requiresOAuth(service.name),
                   )
                   .map((service) => _buildServiceCard(service)),
-
-              const SizedBox(height: 24),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.info_outline, color: Colors.blue),
-                          SizedBox(width: 8),
-                          Text(
-                            'About Service Connections',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Connect your services to create powerful automations '
-                        'between different platforms.',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Total services: ${allServices.length}, Connected: ${_connectedServices.length}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const ConnectionHistoryWidget(),
             ],
           ),
         );

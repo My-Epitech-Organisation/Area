@@ -16,6 +16,7 @@ from .exceptions import InvalidProviderError, TokenRefreshError
 from .github import GitHubOAuthProvider
 from .google import GoogleOAuthProvider
 from .slack import SlackOAuthProvider
+from .spotify import SpotifyOAuthProvider
 from .twitch import TwitchOAuthProvider
 
 logger = logging.getLogger(__name__)
@@ -65,6 +66,7 @@ class OAuthManager:
         "google": GoogleOAuthProvider,
         "github": GitHubOAuthProvider,
         "slack": SlackOAuthProvider,
+        "spotify": SpotifyOAuthProvider,
         "twitch": TwitchOAuthProvider,
     }
 

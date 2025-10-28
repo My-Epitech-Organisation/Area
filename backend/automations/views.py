@@ -37,6 +37,8 @@ except ImportError:
     # Fallback if django-filter is not installed
     DjangoFilterBackend = None
 
+from users.permissions import IsAuthenticatedAndVerified
+
 from .models import Action, Area, Execution, Reaction, Service
 from .serializers import (
     AboutServiceSerializer,
@@ -63,7 +65,7 @@ class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Service.objects.filter(status=Service.Status.ACTIVE)
     serializer_class = ServiceSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter] + (
         [DjangoFilterBackend] if DjangoFilterBackend else []
     )
@@ -90,7 +92,7 @@ class ActionViewSet(viewsets.ReadOnlyModelViewSet):
         service__status=Service.Status.ACTIVE
     )
     serializer_class = ActionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter] + (
         [DjangoFilterBackend] if DjangoFilterBackend else []
     )
@@ -117,7 +119,7 @@ class ReactionViewSet(viewsets.ReadOnlyModelViewSet):
         service__status=Service.Status.ACTIVE
     )
     serializer_class = ReactionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter] + (
         [DjangoFilterBackend] if DjangoFilterBackend else []
     )
@@ -168,7 +170,7 @@ class AreaViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = AreaSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+    permission_classes = [IsAuthenticatedAndVerified, IsOwnerOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter] + (
         [DjangoFilterBackend] if DjangoFilterBackend else []
     )
@@ -254,6 +256,36 @@ class AreaViewSet(viewsets.ModelViewSet):
             area.save()
         serializer = self.get_serializer(area)
         return Response(serializer.data)
+
+    @action(detail=True, methods=["post"])
+    def duplicate(self, request, pk=None):
+        """
+        Custom action to duplicate an Area.
+
+        Creates a new Area with the same action, reaction, and configuration
+        as the original, but with a new name.
+        """
+        original_area = self.get_object()
+
+        new_name = request.data.get("name", f"{original_area.name} (Copy)")
+
+        # Create a new Area with the same configuration
+        duplicated_area = Area.objects.create(
+            owner=original_area.owner,
+            name=new_name,
+            action=original_area.action,
+            reaction=original_area.reaction,
+            action_config=original_area.action_config.copy()
+            if original_area.action_config
+            else {},
+            reaction_config=original_area.reaction_config.copy()
+            if original_area.reaction_config
+            else {},
+            status=Area.Status.ACTIVE,
+        )
+
+        serializer = self.get_serializer(duplicated_area)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=False)
     def stats(self, request):
@@ -411,7 +443,7 @@ class ExecutionViewSet(viewsets.ReadOnlyModelViewSet):
     - status
     """
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter] + (
         [DjangoFilterBackend] if DjangoFilterBackend else []
     )
@@ -544,7 +576,7 @@ class ExecutionViewSet(viewsets.ReadOnlyModelViewSet):
 class DebugTriggerView(viewsets.ViewSet):
     """Manual trigger for debug actions."""
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
 
     def create(self, request, area_id=None):
         """
@@ -613,7 +645,7 @@ class DebugTriggerView(viewsets.ViewSet):
 class DebugExecutionsView(viewsets.ViewSet):
     """Retrieve executions for debugging."""
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
 
     def list(self, request, area_id=None):
         """

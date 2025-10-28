@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../models/applet.dart';
+import '../models/execution.dart';
 import '../config/api_config.dart';
 import 'http_client_service.dart';
 import 'cache_service.dart';
@@ -46,7 +47,7 @@ class AppletService {
 
   /// Create a new applet
   Future<Applet> createApplet({
-    required String description,
+    required String name,
     required int actionId,
     required int reactionId,
     required Map<String, dynamic> actionConfig,
@@ -55,7 +56,7 @@ class AppletService {
     final response = await _httpClient.post(
       ApiConfig.automationsUrl,
       body: {
-        'name': description,
+        'name': name,
         'action': actionId,
         'reaction': reactionId,
         'action_config': actionConfig,
@@ -83,7 +84,6 @@ class AppletService {
   Future<Applet> updateApplet(
     int id, {
     String? name,
-    String? description,
     String? status,
     Map<String, dynamic>? actionConfig,
     Map<String, dynamic>? reactionConfig,
@@ -91,7 +91,6 @@ class AppletService {
     final updateData = <String, dynamic>{};
 
     if (name != null) updateData['name'] = name;
-    if (description != null) updateData['description'] = description;
     if (status != null) updateData['status'] = status;
     if (actionConfig != null) updateData['action_config'] = actionConfig;
     if (reactionConfig != null) updateData['reaction_config'] = reactionConfig;
@@ -121,9 +120,8 @@ class AppletService {
     }
   }
 
-  /// Toggle applet active/inactive state
-  Future<Applet> toggleApplet(int id) async {
-    final response = await _httpClient.post(ApiConfig.automationToggleUrl(id));
+  Future<Applet> pauseApplet(int id) async {
+    final response = await _httpClient.post(ApiConfig.automationPauseUrl(id));
 
     final applet = _httpClient.parseResponse<Applet>(
       response,
@@ -134,7 +132,34 @@ class AppletService {
     return applet;
   }
 
-  /// Get applets by user ID
+  Future<Applet> resumeApplet(int id) async {
+    final response = await _httpClient.post(ApiConfig.automationResumeUrl(id));
+
+    final applet = _httpClient.parseResponse<Applet>(
+      response,
+      (data) => Applet.fromJson(data),
+    );
+
+    _cache.remove(_cacheKeyPrefix);
+    return applet;
+  }
+
+  Future<Applet> duplicateApplet(int id, String newName) async {
+    final response = await _httpClient.post(
+      ApiConfig.automationDuplicateUrl(id),
+      body: {'name': newName},
+    );
+
+    final applet = _httpClient.parseResponse<Applet>(
+      response,
+      (data) => Applet.fromJson(data),
+    );
+
+    _cache.remove(_cacheKeyPrefix);
+    return applet;
+  }
+
+  /// Get automations (applets) by user ID
   Future<List<Applet>> getAppletsByUser(int userId) async {
     final response = await _httpClient.get(
       ApiConfig.userAutomationsUrl(userId.toString()),
@@ -154,21 +179,24 @@ class AppletService {
     });
   }
 
-  /// Get applet execution logs
-  Future<List<Map<String, dynamic>>> getAppletLogs(
-    int appletId, {
+  Future<List<Execution>> getAppletExecutions(
+    int areaId, {
     int limit = 50,
   }) async {
     final response = await _httpClient.get(
-      ApiConfig.appletLogsUrl(appletId, limit: limit),
+      ApiConfig.appletExecutionsUrl(areaId, limit: limit),
     );
 
-    return _httpClient.parseResponse<List<Map<String, dynamic>>>(
-      response,
-      (data) => (data as List<dynamic>)
-          .map((item) => item as Map<String, dynamic>)
-          .toList(),
-    );
+    return _httpClient.parseResponse<List<Execution>>(response, (data) {
+      if (data is Map && data.containsKey('results')) {
+        final results = data['results'] as List<dynamic>;
+        return results.map((json) => Execution.fromJson(json)).toList();
+      }
+      if (data is List) {
+        return data.map((json) => Execution.fromJson(json)).toList();
+      }
+      throw Exception('Unexpected executions API response format: $data');
+    });
   }
 
   /// Clear all applet-related cache

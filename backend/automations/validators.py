@@ -715,6 +715,82 @@ REACTION_SCHEMAS = {
         },
         "additionalProperties": False,
     },
+    # Spotify Reactions
+    "spotify_play_track": {
+        "type": "object",
+        "properties": {
+            "track_uri": {
+                "type": "string",
+                "description": "Spotify track URI (spotify:track:...) or URL (https://open.spotify.com/track/...)",
+                "pattern": "^(spotify:track:[a-zA-Z0-9]+|https://open\\.spotify\\.com(/intl-[a-z]+)?/track/[a-zA-Z0-9]+)",
+            },
+            "position_ms": {
+                "type": "number",
+                "description": "Position in milliseconds to start playing from",
+                "default": 0,
+                "minimum": 0,
+            },
+        },
+        "required": ["track_uri"],
+        "additionalProperties": False,
+    },
+    "spotify_pause_playback": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
+    "spotify_resume_playback": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
+    "spotify_skip_next": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
+    "spotify_skip_previous": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
+    "spotify_set_volume": {
+        "type": "object",
+        "properties": {
+            "volume_percent": {
+                "type": "number",
+                "description": "Volume level as percentage (0-100)",
+                "minimum": 0,
+                "maximum": 100,
+                "default": 50,
+            },
+        },
+        "required": ["volume_percent"],
+        "additionalProperties": False,
+    },
+    "spotify_create_playlist": {
+        "type": "object",
+        "properties": {
+            "name": {
+                "type": "string",
+                "description": "Name for the new playlist",
+                "minLength": 1,
+                "maxLength": 100,
+            },
+            "description": {
+                "type": "string",
+                "description": "Optional description for the playlist",
+                "maxLength": 300,
+            },
+            "public": {
+                "type": "boolean",
+                "description": "Make the playlist public",
+                "default": False,
+            },
+        },
+        "required": ["name"],
+        "additionalProperties": False,
+    },
 }
 
 
