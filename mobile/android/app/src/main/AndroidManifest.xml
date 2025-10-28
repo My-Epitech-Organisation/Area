@@ -46,6 +46,18 @@
                 <!-- Handles OAuth callbacks like: area://auth/oauth/google/callback -->
                 <data android:scheme="area" android:host="auth"/>
             </intent-filter>
+
+            <!-- HTTP Deep Link for OAuth2 Callbacks (Android Emulator) -->
+            <!-- This intercepts http://localhost:8082/auth/oauth/... callbacks from Google -->
+            <!-- The emulator browser can't reach localhost:8082 directly, but Android App Links -->
+            <!-- can intercept the intent and convert it to the area:// scheme -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <!-- Intercept localhost:8082 OAuth callbacks -->
+                <data android:scheme="http" android:host="localhost" android:port="8082" android:pathPattern="/auth/oauth/.*"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
