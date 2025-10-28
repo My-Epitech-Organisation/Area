@@ -392,10 +392,35 @@ class AboutServiceSerializer(serializers.ModelSerializer):
 
     actions = AboutActionSerializer(many=True, read_only=True)
     reactions = AboutReactionSerializer(many=True, read_only=True)
+    requires_oauth = serializers.SerializerMethodField()
 
     class Meta:
         model = Service
-        fields = ["name", "actions", "reactions"]
+        fields = ["name", "requires_oauth", "actions", "reactions"]
+
+    def get_requires_oauth(self, obj):
+        """Check if this service requires OAuth authentication.
+
+        Services that require OAuth:
+        - Direct OAuth providers (google, github, slack, spotify, twitch)
+        - Services that map to OAuth tokens (gmail->google, google_calendar->google)
+        """
+        from django.conf import settings
+
+        oauth_names = settings.OAUTH2_PROVIDERS.keys()
+
+        # Direct OAuth providers
+        if obj.name in oauth_names:
+            return True
+
+        # Services that map to OAuth tokens
+        service_oauth_map = {
+            'gmail': 'google',
+            'google_calendar': 'google',
+        }
+
+        mapped_oauth = service_oauth_map.get(obj.name)
+        return mapped_oauth in oauth_names if mapped_oauth else False
 
 
 # Serializers pour Execution (journaling)
