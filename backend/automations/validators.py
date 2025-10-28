@@ -1087,7 +1087,6 @@ def validate_action_reaction_compatibility(action_name, reaction_name):
         )
 
 
-
 def get_action_schema(action_name):
     """Get the JSON schema for an action."""
     return ACTION_SCHEMAS.get(action_name)
