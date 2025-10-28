@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useConnectedServices } from '../hooks/useOAuth';
 import type { Service, User } from '../types';
 import { getStoredUser, getAccessToken, fetchUserData, API_BASE } from '../utils/helper';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
@@ -86,15 +87,68 @@ const Dashboard: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [activeServices, setActiveServices] = useState<string[]>([]);
+  const { services: connectedServices, loading: connectedLoading } = useConnectedServices();
+
+  const normalizeServiceName = (name: string | null | undefined): string => {
+    return (name || '')
+      .toString()
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '');
+  };
+
+  useEffect(() => {
+    if (!services || services.length === 0) return;
+
+    const internalDefaults = new Set(['timer', 'debug', 'weather', 'webhook', 'email']);
+
+    const connectedSet = new Set<string>();
+    if (connectedServices && connectedServices.length > 0) {
+      connectedServices.forEach((c) => {
+        if (!c.is_expired) connectedSet.add(normalizeServiceName(c.service_name));
+      });
+    }
+
+    const active: string[] = [];
+    services.forEach((s) => {
+      const key = normalizeServiceName(s.name);
+      if (internalDefaults.has(key)) {
+        active.push(s.name);
+        return;
+      }
+      if (connectedSet.has(key)) {
+        active.push(s.name);
+      }
+    });
+
+    setActiveServices(active);
+  }, [services, connectedServices, connectedLoading]);
   const [_, setUserAreas] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const getServiceLogo = (serviceName: string): string | null => {
-    const key = serviceName.toLowerCase();
+  const getServiceLogo = (service: Service): string | null => {
+    if (service.logo) {
+      const l = service.logo;
+      if (l.startsWith('//')) return `https:${l}`;
+      return l;
+    }
+
+    const key = service.name.toLowerCase();
     return imagesByName[key] || null;
   };
+
+  const sortedServices = React.useMemo(() => {
+    const sorted = [...services];
+    const activeSet = new Set(activeServices.map((s) => (s || '').toString().toLowerCase()));
+    sorted.sort((a, b) => {
+      const aActive = activeSet.has((a.name || '').toString().toLowerCase()) ? 0 : 1;
+      const bActive = activeSet.has((b.name || '').toString().toLowerCase()) ? 0 : 1;
+      if (aActive !== bActive) return aActive - bActive;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+    return sorted;
+  }, [services, activeServices]);
 
   const handleServiceClick = (serviceName: string) => {
     navigate(`/services/${serviceName.toLowerCase()}`);
@@ -260,10 +314,16 @@ const Dashboard: React.FC = () => {
         const servicesData = await servicesResponse.json();
         const servicesList = servicesData?.server?.services || [];
         const formattedServices = servicesList.map(
-          (s: { name: string; actions?: unknown[]; reactions?: unknown[] }) => ({
+          (s: {
+            name: string;
+            actions?: unknown[];
+            reactions?: unknown[];
+            logo?: string | null;
+          }) => ({
             name: s.name,
             actions: s.actions || [],
             reactions: s.reactions || [],
+            logo: s.logo || null,
           })
         );
         setServices(formattedServices);
@@ -342,7 +402,19 @@ const Dashboard: React.FC = () => {
             setActiveServices(generateRandomActiveServices());
           }
         } else {
-          setActiveServices(generateRandomActiveServices());
+          const internalDefaults = new Set(['timer', 'debug', 'weather', 'webhook', 'email']);
+          const internalActive = formattedServices
+            .map((s: Service) => s.name)
+            .filter((n: string) =>
+              internalDefaults.has(
+                (n || '')
+                  .toString()
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]/g, '')
+              )
+            );
+          if (internalActive.length > 0) setActiveServices(internalActive);
+          else setActiveServices(generateRandomActiveServices());
         }
         setError(null);
       } catch (err: unknown) {
@@ -354,6 +426,27 @@ const Dashboard: React.FC = () => {
     };
     fetchData();
   }, [navigate]);
+
+  const handleRefreshUserData = async () => {
+    try {
+      const updatedUser = await fetchUserData();
+      if (updatedUser) {
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+    } catch (err) {
+      console.error('Error refreshing user data:', err);
+    }
+  };
+
+  useEffect(() => {
+    const handleFocus = () => {
+      handleRefreshUserData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   return (
     <div className="w-full min-h-screen bg-dashboard flex flex-col md:flex-row pt-16">
@@ -382,58 +475,9 @@ const Dashboard: React.FC = () => {
           </header>
 
           {/* Email Verification Banner */}
-          <EmailVerificationBanner user={user} />
+          <EmailVerificationBanner user={user} onVerificationSent={handleRefreshUserData} />
 
           <div className="w-full flex flex-col gap-4 mb-4">
-            <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-theme-primary">
-              <h2 className="text-xl font-semibold text-theme-accent mb-3">Service Activity</h2>
-              {activeServices.length > 0 ? (
-                <>
-                  <div className="h-32 md:h-[180px] relative">
-                    <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-white bg-opacity-20"></div>
-                    <div className="absolute left-0 bottom-0 top-0 w-[1px] bg-white bg-opacity-20"></div>
-                    <div className="flex h-full items-end justify-between px-2">
-                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => {
-                        const heightMultiplier =
-                          activeServices.length > 0
-                            ? Math.min(120, activeServices.length * 40)
-                            : 30;
-                        return (
-                          <div key={day} className="flex flex-col items-center w-1/7">
-                            <div
-                              className="w-8 bg-gradient-chart-bar rounded-t-sm"
-                              style={{
-                                height: `${(i >= 5 ? 80 : 40) + Math.random() * heightMultiplier}px`,
-                                opacity: i === 6 ? 1 : 0.7 + i * 0.05,
-                              }}
-                            ></div>
-                            <span className="text-xs mt-2 text-gray-400">{day}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <div className="mt-4 text-sm text-gray-400 text-center">
-                    Last 7 days activity across {activeServices.length} active service
-                    {activeServices.length !== 1 ? 's' : ''}
-                  </div>
-                </>
-              ) : loading ? (
-                <div className="h-32 md:h-[180px] flex items-center justify-center">
-                  <div className="animate-pulse text-indigo-300">Loading activity data...</div>
-                </div>
-              ) : (
-                <div className="h-32 md:h-[180px] flex flex-col items-center justify-center">
-                  <p className="text-gray-400 mb-3">No active services yet</p>
-                  <button
-                    onClick={() => navigate('/services')}
-                    className="px-4 py-2 bg-gradient-button-primary hover:bg-gradient-button-primary rounded-lg text-white transition-colors"
-                  >
-                    Explore Services
-                  </button>
-                </div>
-              )}
-            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-theme-primary">
                 <h2 className="text-xl font-semibold text-theme-accent mb-3">Services Usage</h2>
@@ -443,14 +487,14 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-theme-primary">
                 <h2 className="text-xl font-semibold text-theme-accent mb-3">Quick Actions</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
                     onClick={() => navigate('/Areaction')}
-                    className="bg-gradient-button-primary hover:bg-gradient-button-primary text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
+                    className="bg-gradient-to-br from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 border-2 border-indigo-400 text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105 transform"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-8 w-8 mb-2"
+                      className="h-10 w-10 mb-2"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -462,15 +506,35 @@ const Dashboard: React.FC = () => {
                         d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                       />
                     </svg>
-                    <span className="font-medium">New Automation</span>
+                    <span className="font-semibold text-base">New Automation</span>
                   </button>
                   <button
-                    onClick={() => navigate('/profile')}
-                    className="bg-gradient-button-secondary hover:bg-gradient-button-secondary text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
+                    onClick={() => navigate('/Areaction')}
+                    className="bg-gradient-to-br from-pink-600 to-pink-700 hover:from-pink-700 hover:to-pink-800 border-2 border-pink-400 text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105 transform"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-8 w-8 mb-2"
+                      className="h-10 w-10 mb-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414a1 1 0 00-.707-.293H4"
+                      />
+                    </svg>
+                    <span className="font-semibold text-base">My Automations</span>
+                  </button>
+                  <button
+                    onClick={() => navigate('/profile')}
+                    className="bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 border-2 border-purple-400 text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105 transform sm:col-span-2"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-10 w-10 mb-2"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -482,7 +546,7 @@ const Dashboard: React.FC = () => {
                         d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2a1 1 0 001 1h14a1 1 0 001-1v-2c0-2.66-5.33-4-8-4z"
                       />
                     </svg>
-                    <span className="font-medium">View my profile</span>
+                    <span className="font-semibold text-base">View Profile</span>
                   </button>
                 </div>
               </div>
@@ -503,34 +567,44 @@ const Dashboard: React.FC = () => {
                   <p className="text-gray-400">No services available</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {services.map((service) => {
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                  {sortedServices.map((service) => {
                     const isActive = activeServices.includes(service.name);
-                    const logo = getServiceLogo(service.name);
+                    const logo = getServiceLogo(service);
                     return (
                       <div
                         key={service.name}
                         onClick={() => handleServiceClick(service.name)}
-                        className="bg-white bg-opacity-10 rounded-xl p-3 cursor-pointer transform transition-all duration-300 hover:bg-opacity-20 hover:scale-105 hover:shadow-lg flex flex-col items-center text-center aspect-square"
+                        className="bg-white bg-opacity-10 rounded-xl p-3 cursor-pointer transform transition-all duration-300 hover:bg-opacity-20 hover:scale-105 hover:shadow-lg flex flex-col items-center text-center"
                       >
-                        <div className="w-24 h-24 rounded-full bg-white bg-opacity-10 flex items-center justify-center overflow-hidden mb-3 mt-1">
+                        <div className="w-16 h-16 rounded-full bg-white bg-opacity-10 flex items-center justify-center overflow-hidden mb-2">
                           {logo ? (
                             <img
                               src={logo}
                               alt={`${service.name} logo`}
-                              className="w-16 h-16 object-contain"
+                              className="w-12 h-12 object-contain"
+                              style={
+                                ['timer', 'debug', 'email', 'webhook', 'weather'].includes(
+                                  service.name.toLowerCase()
+                                )
+                                  ? {
+                                      filter:
+                                        'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))',
+                                    }
+                                  : undefined
+                              }
                             />
                           ) : (
-                            <div className="text-4xl font-bold text-white opacity-50">
+                            <div className="text-2xl font-bold text-white opacity-50">
                               {service.name.charAt(0)}
                             </div>
                           )}
                         </div>
-                        <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
+                        <h3 className="text-sm font-semibold text-white mb-2 line-clamp-1">
                           {service.name}
                         </h3>
                         <span
-                          className={`px-4 py-1 rounded-full text-base font-medium mt-auto mb-1 ${isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
                         >
                           {isActive ? 'Active' : 'Inactive'}
                         </span>
