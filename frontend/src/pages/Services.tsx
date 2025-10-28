@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { API_BASE, getStoredUser } from '../utils/helper';
+import { API_BASE, getStoredUser, fetchUserData } from '../utils/helper';
 import type { ServiceModel } from '../types/services';
 import type { User } from '../types';
 import EmailVerificationBanner from '../components/EmailVerificationBanner';
@@ -75,6 +75,27 @@ const Services: React.FC = () => {
     if (storedUser) {
       setUser(storedUser);
     }
+  }, []);
+
+  const handleRefreshUserData = async () => {
+    try {
+      const updatedUser = await fetchUserData();
+      if (updatedUser) {
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+    } catch (err) {
+      console.error('Error refreshing user data:', err);
+    }
+  };
+
+  useEffect(() => {
+    const handleFocus = () => {
+      handleRefreshUserData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   useEffect(() => {
@@ -435,7 +456,7 @@ const Services: React.FC = () => {
         <p className="text-gray-300 mt-3">Explore available action → reaction services</p>
       </header>
 
-      {user && <EmailVerificationBanner user={user} />}
+      {user && <EmailVerificationBanner user={user} onVerificationSent={handleRefreshUserData} />}
 
       <main className="w-full max-w-6xl mt-12">
         <div className="flex items-center justify-end gap-4 mb-4">
