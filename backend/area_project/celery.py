@@ -33,7 +33,7 @@ def get_beat_schedule():
     """
     Generate Celery Beat schedule based on environment.
 
-    DEV MODE (ENVIRONMENT=development):
+    DEV MODE (ENVIRONMENT=local|docker):
       - Uses POLLING for GitHub, Twitch, Slack (easier to debug)
       - No webhook configuration required
 
@@ -45,8 +45,11 @@ def get_beat_schedule():
     # Import here to avoid circular imports
     from django.conf import settings
 
-    environment = getattr(settings, "ENVIRONMENT", "development")
+    environment = getattr(settings, "ENVIRONMENT", "local")
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
+
+    # Determine if we're in development mode (local or docker)
+    is_dev = environment in ("local", "docker", "development")
 
     # Base schedule (always active)
     schedule = {
@@ -73,7 +76,7 @@ def get_beat_schedule():
     }
 
     # DEV MODE: Always enable polling for easier debugging
-    if environment == "development":
+    if is_dev:
         schedule.update({
             "check-github-actions": {
                 "task": "automations.check_github_actions",
@@ -88,7 +91,7 @@ def get_beat_schedule():
                 "schedule": 120.0,  # Every 2 minutes
             },
         })
-        print("🔧 [CELERY BEAT] DEV MODE: Polling enabled for GitHub, Twitch, Slack")
+        print(f"🔧 [CELERY BEAT] DEV MODE ({environment}): Polling enabled for GitHub, Twitch, Slack")
 
     # PROD MODE: Only enable polling if webhooks are NOT configured
     else:
