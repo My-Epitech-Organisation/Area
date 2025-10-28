@@ -408,6 +408,27 @@ const Dashboard: React.FC = () => {
     fetchData();
   }, [navigate]);
 
+  const handleRefreshUserData = async () => {
+    try {
+      const updatedUser = await fetchUserData();
+      if (updatedUser) {
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+    } catch (err) {
+      console.error('Error refreshing user data:', err);
+    }
+  };
+
+  useEffect(() => {
+    const handleFocus = () => {
+      handleRefreshUserData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
   return (
     <div className="w-full min-h-screen bg-dashboard flex flex-col md:flex-row pt-16">
       <div className="flex flex-1">
@@ -435,7 +456,7 @@ const Dashboard: React.FC = () => {
           </header>
 
           {/* Email Verification Banner */}
-          <EmailVerificationBanner user={user} />
+          <EmailVerificationBanner user={user} onVerificationSent={handleRefreshUserData} />
 
           <div className="w-full flex flex-col gap-4 mb-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -447,14 +468,14 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-theme-primary">
                 <h2 className="text-xl font-semibold text-theme-accent mb-3">Quick Actions</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
                     onClick={() => navigate('/Areaction')}
-                    className="bg-gradient-button-primary hover:bg-gradient-button-primary text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
+                    className="bg-gradient-to-br from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 border-2 border-indigo-400 text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105 transform"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-8 w-8 mb-2"
+                      className="h-10 w-10 mb-2"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -466,35 +487,15 @@ const Dashboard: React.FC = () => {
                         d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                       />
                     </svg>
-                    <span className="font-medium">New Automation</span>
-                  </button>
-                  <button
-                    onClick={() => navigate('/profile')}
-                    className="bg-gradient-button-secondary hover:bg-gradient-button-secondary text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-8 w-8 mb-2"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2a1 1 0 001 1h14a1 1 0 001-1v-2c0-2.66-5.33-4-8-4z"
-                      />
-                    </svg>
-                    <span className="font-medium">View my profile</span>
+                    <span className="font-semibold text-base">New Automation</span>
                   </button>
                   <button
                     onClick={() => navigate('/Areaction')}
-                    className="bg-gradient-button-tertiary hover:bg-gradient-button-tertiary text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
+                    className="bg-gradient-to-br from-pink-600 to-pink-700 hover:from-pink-700 hover:to-pink-800 border-2 border-pink-400 text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105 transform"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-8 w-8 mb-2"
+                      className="h-10 w-10 mb-2"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -506,7 +507,27 @@ const Dashboard: React.FC = () => {
                         d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414a1 1 0 00-.707-.293H4"
                       />
                     </svg>
-                    <span className="font-medium">My Automation</span>
+                    <span className="font-semibold text-base">My Automations</span>
+                  </button>
+                  <button
+                    onClick={() => navigate('/profile')}
+                    className="bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 border-2 border-purple-400 text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105 transform sm:col-span-2"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-10 w-10 mb-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2a1 1 0 001 1h14a1 1 0 001-1v-2c0-2.66-5.33-4-8-4z"
+                      />
+                    </svg>
+                    <span className="font-semibold text-base">View Profile</span>
                   </button>
                 </div>
               </div>
@@ -527,8 +548,7 @@ const Dashboard: React.FC = () => {
                   <p className="text-gray-400">No services available</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {/** render sorted services (active ones first) */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                   {sortedServices.map((service) => {
                     const isActive = activeServices.includes(service.name);
                     const logo = getServiceLogo(service);
@@ -536,26 +556,26 @@ const Dashboard: React.FC = () => {
                       <div
                         key={service.name}
                         onClick={() => handleServiceClick(service.name)}
-                        className="bg-white bg-opacity-10 rounded-xl p-3 cursor-pointer transform transition-all duration-300 hover:bg-opacity-20 hover:scale-105 hover:shadow-lg flex flex-col items-center text-center aspect-square"
+                        className="bg-white bg-opacity-10 rounded-xl p-3 cursor-pointer transform transition-all duration-300 hover:bg-opacity-20 hover:scale-105 hover:shadow-lg flex flex-col items-center text-center"
                       >
-                        <div className="w-24 h-24 rounded-full bg-white bg-opacity-10 flex items-center justify-center overflow-hidden mb-3 mt-1">
+                        <div className="w-16 h-16 rounded-full bg-white bg-opacity-10 flex items-center justify-center overflow-hidden mb-2">
                           {logo ? (
                             <img
                               src={logo}
                               alt={`${service.name} logo`}
-                              className="w-16 h-16 object-contain"
+                              className="w-12 h-12 object-contain"
                             />
                           ) : (
-                            <div className="text-4xl font-bold text-white opacity-50">
+                            <div className="text-2xl font-bold text-white opacity-50">
                               {service.name.charAt(0)}
                             </div>
                           )}
                         </div>
-                        <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
+                        <h3 className="text-sm font-semibold text-white mb-2 line-clamp-1">
                           {service.name}
                         </h3>
                         <span
-                          className={`px-4 py-1 rounded-full text-base font-medium mt-auto mb-1 ${isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
                         >
                           {isActive ? 'Active' : 'Inactive'}
                         </span>
