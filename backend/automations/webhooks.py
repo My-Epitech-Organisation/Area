@@ -38,7 +38,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import Area, Service
-from .tasks import create_execution_safe, execute_reaction, get_active_areas
+from .tasks import create_execution_safe, get_active_areas
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +130,62 @@ def validate_twitch_signature(payload_body: bytes, headers: dict, secret: str) -
     return hmac.compare_digest(computed_signature, expected_signature)
 
 
+def validate_slack_signature(payload_body: bytes, headers: dict, secret: str) -> bool:
+    """
+    Validate Slack Events API webhook signature.
+
+    Slack sends signature in headers:
+    - X-Slack-Request-Timestamp
+    - X-Slack-Signature (format: "v0=<signature>")
+
+    Args:
+        payload_body: Raw request body as bytes
+        headers: Request headers dict
+        secret: Slack signing secret
+
+    Returns:
+        True if signature is valid, False otherwise
+    """
+    timestamp = headers.get("X-Slack-Request-Timestamp")
+    signature_header = headers.get("X-Slack-Signature")
+
+    if not all([timestamp, signature_header]):
+        logger.warning("Slack webhook: Missing required headers")
+        return False
+
+    if not signature_header.startswith("v0="):
+        logger.warning(f"Slack webhook: Invalid signature format: {signature_header}")
+        return False
+
+    # Check timestamp to prevent replay attacks (within 5 minutes)
+    try:
+        request_timestamp = int(timestamp)
+        current_timestamp = int(timezone.now().timestamp())
+        if abs(current_timestamp - request_timestamp) > 60 * 5:
+            logger.warning("Slack webhook: Request timestamp too old")
+            return False
+    except (ValueError, TypeError):
+        logger.warning(f"Slack webhook: Invalid timestamp: {timestamp}")
+        return False
+
+    # Extract signature from header
+    expected_signature = signature_header.split("=", 1)[1]
+
+    # Construct signing basestring
+    # Format: v0:<timestamp>:<body>
+    sig_basestring = f"v0:{timestamp}:".encode("utf-8") + payload_body
+
+    # Compute HMAC-SHA256
+    computed_signature = hmac.new(
+        key=secret.encode("utf-8"),
+        msg=sig_basestring,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+
+    # Constant-time comparison to prevent timing attacks
+    return hmac.compare_digest(computed_signature, expected_signature)
+
+
 def validate_webhook_signature(
     service_name: str, payload_body: bytes, headers: dict, secret: str
 ) -> bool:
@@ -152,6 +208,8 @@ def validate_webhook_signature(
         return validate_github_signature(payload_body, signature_header, secret)
     elif service_name == "twitch":
         return validate_twitch_signature(payload_body, headers, secret)
+    elif service_name == "slack":
+        return validate_slack_signature(payload_body, headers, secret)
     elif service_name == "gmail":
         return True
     # Unknown service, reject validation
@@ -159,7 +217,7 @@ def validate_webhook_signature(
 
 
 def extract_event_id(
-    service_name: str, event_data: dict, headers: dict = None
+    service_name: str, event_data: dict, headers: Optional[dict] = None
 ) -> Optional[str]:
     """
     Extract unique event ID from webhook payload.
@@ -200,6 +258,17 @@ def extract_event_id(
         if subscription.get("id") and event:
             return f"twitch_{subscription['type']}_{subscription['id']}"
 
+    elif service_name == "slack":
+        # Slack provides event ID in payload
+        event_id = event_data.get("event_id")
+        if event_id:
+            return f"slack_event_{event_id}"
+        
+        # For message events, use channel + timestamp
+        event = event_data.get("event", {})
+        if event.get("channel") and event.get("ts"):
+            return f"slack_{event['channel']}_{event['ts']}"
+
     elif service_name == "gmail":
         # Gmail Pub/Sub provides message ID
         message_id = event_data.get("message", {}).get("messageId")
@@ -230,14 +299,14 @@ def match_webhook_to_areas(
     action_name_map = {
         "github": {
             "push": "github_push",
-            "pull_request": "github_pull_request",
-            "issues": "github_issue",
+            "pull_request": "github_new_pr",
+            "issues": "github_new_issue",
             "issue_comment": "github_issue_comment",
             "star": "github_star",
         },
         "gmail": {
-            "message": "gmail_received",
-            "email_received": "gmail_received",
+            "message": "gmail_new_email",
+            "email_received": "gmail_new_email",
         },
         "twitch": {
             "stream.online": "twitch_stream_online",
@@ -245,6 +314,11 @@ def match_webhook_to_areas(
             "channel.follow": "twitch_new_follower",
             "channel.subscribe": "twitch_new_subscriber",
             "channel.update": "twitch_channel_update",
+        },
+        "slack": {
+            "message": "slack_new_message",
+            "app_mention": "slack_user_mention",
+            "member_joined_channel": "slack_channel_join",
         },
     }
 
@@ -277,10 +351,11 @@ def process_webhook_event(
     Process a validated webhook event.
 
     Steps:
-    1. Extract unique event ID
-    2. Match event to active Areas
-    3. Create executions for matched Areas
-    4. Queue reactions
+    1. Handle service-specific challenges/verification
+    2. Extract unique event ID
+    3. Match event to active Areas
+    4. Create executions for matched Areas
+    5. Queue reactions
 
     Args:
         service_name: Name of the service
@@ -291,13 +366,13 @@ def process_webhook_event(
     Returns:
         Processing result with statistics
     """
-    # Extract event ID for idempotency
-    external_event_id = extract_event_id(service_name, event_data, headers)
-    if not external_event_id:
-        logger.error(f"Could not extract event ID for {service_name}/{event_type}")
+    # Handle Slack URL verification challenge
+    if service_name == "slack" and event_type == "url_verification":
+        challenge = event_data.get("challenge")
+        logger.info("Slack URL verification challenge received")
         return {
-            "status": "error",
-            "message": "Could not extract event ID",
+            "status": "challenge",
+            "challenge": challenge,
         }
 
     # Handle Twitch EventSub challenge verification
@@ -325,6 +400,20 @@ def process_webhook_event(
         # Extract actual event type from Twitch payload
         if "subscription" in event_data:
             event_type = event_data["subscription"]["type"]
+
+    # Extract Slack event type from nested event object
+    if service_name == "slack" and "event" in event_data:
+        slack_event = event_data["event"]
+        event_type = slack_event.get("type", event_type)
+
+    # Extract event ID for idempotency
+    external_event_id = extract_event_id(service_name, event_data, headers)
+    if not external_event_id:
+        logger.error(f"Could not extract event ID for {service_name}/{event_type}")
+        return {
+            "status": "error",
+            "message": "Could not extract event ID",
+        }
 
     # Match to areas
     matched_areas = match_webhook_to_areas(service_name, event_type, event_data)
@@ -370,7 +459,9 @@ def process_webhook_event(
 
             if created and execution:
                 # Queue reaction execution
-                execute_reaction.delay(execution.pk)
+                from .tasks import execute_reaction_task
+                
+                execute_reaction_task.delay(execution.pk)
                 executions_created += 1
                 logger.info(
                     f"Webhook {service_name}/{event_type} triggered area '{area.name}' "
@@ -482,6 +573,16 @@ def webhook_receiver(request: Request, service: str) -> Response:
     # Extract event type
     if service == "github":
         event_type = request.headers.get("X-GitHub-Event", "unknown")
+    elif service == "twitch":
+        # Twitch sends message type in header
+        event_type = request.headers.get("Twitch-Eventsub-Message-Type", "notification")
+    elif service == "slack":
+        # Slack sends event type in payload
+        event_type = event_data.get("type", "event_callback")
+        # For event_callback, also get nested event type
+        if event_type == "event_callback" and "event" in event_data:
+            slack_event_type = event_data["event"].get("type", "unknown")
+            logger.info(f"Slack event_callback with nested event: {slack_event_type}")
     elif service == "gmail":
         event_type = event_data.get("eventType", "message")
     else:
@@ -497,6 +598,13 @@ def webhook_receiver(request: Request, service: str) -> Response:
             event_data=event_data,
             headers=headers_dict,
         )
+
+        # Handle challenge responses (Twitch and Slack)
+        if result.get("status") == "challenge" and "challenge" in result:
+            return Response(
+                {"challenge": result["challenge"]},
+                status=status.HTTP_200_OK
+            )
 
         return Response(result, status=status.HTTP_200_OK)
 
