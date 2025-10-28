@@ -245,11 +245,8 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
 
         final sortedServices = [...allServices]
           ..sort((a, b) {
-            final aRequiresOAuth = ServiceProviderConfig.requiresOAuth(a.name);
-            final bRequiresOAuth = ServiceProviderConfig.requiresOAuth(b.name);
-
-            if (aRequiresOAuth && !bRequiresOAuth) return -1;
-            if (!aRequiresOAuth && bRequiresOAuth) return 1;
+            if (a.requiresOAuth && !b.requiresOAuth) return -1;
+            if (!a.requiresOAuth && b.requiresOAuth) return 1;
             return a.displayName.compareTo(b.displayName);
           });
 
@@ -268,10 +265,7 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
               ),
               const SizedBox(height: 12),
               ...sortedServices
-                  .where(
-                    (service) =>
-                        ServiceProviderConfig.requiresOAuth(service.name),
-                  )
+                  .where((service) => service.requiresOAuth)
                   .map((service) => _buildServiceCard(service)),
 
               const SizedBox(height: 24),
@@ -286,10 +280,7 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
               ),
               const SizedBox(height: 12),
               ...sortedServices
-                  .where(
-                    (service) =>
-                        !ServiceProviderConfig.requiresOAuth(service.name),
-                  )
+                  .where((service) => !service.requiresOAuth)
                   .map((service) => _buildServiceCard(service)),
             ],
           ),
@@ -299,7 +290,7 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
   }
 
   Widget _buildServiceCard(Service service) {
-    final requiresOAuth = ServiceProviderConfig.requiresOAuth(service.name);
+    final requiresOAuth = service.requiresOAuth;
     final isConnected = _isServiceConnected(service.name);
 
     return Card(

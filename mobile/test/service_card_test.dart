@@ -8,7 +8,13 @@ void main() {
     late Service testService;
 
     setUp(() {
-      testService = Service(id: 1, name: 'github', actions: [], reactions: []);
+      testService = Service(
+        id: 1,
+        name: 'github',
+        requiresOAuth: true,
+        actions: [],
+        reactions: [],
+      );
     });
 
     testWidgets('should display service name correctly', (
@@ -29,6 +35,7 @@ void main() {
       final serviceWithData = Service(
         id: 2,
         name: 'discord',
+        requiresOAuth: false,
         actions: [
           ServiceAction(
             id: 1,
@@ -59,9 +66,27 @@ void main() {
       WidgetTester tester,
     ) async {
       final services = [
-        Service(id: 1, name: 'github', actions: [], reactions: []),
-        Service(id: 2, name: 'discord', actions: [], reactions: []),
-        Service(id: 3, name: 'unknown', actions: [], reactions: []),
+        Service(
+          id: 1,
+          name: 'github',
+          requiresOAuth: true,
+          actions: [],
+          reactions: [],
+        ),
+        Service(
+          id: 2,
+          name: 'discord',
+          requiresOAuth: false,
+          actions: [],
+          reactions: [],
+        ),
+        Service(
+          id: 3,
+          name: 'unknown',
+          requiresOAuth: false,
+          actions: [],
+          reactions: [],
+        ),
       ];
 
       for (final service in services) {

@@ -4,12 +4,14 @@ import '../config/service_provider_config.dart';
 class Service {
   final int id;
   final String name;
+  final bool requiresOAuth;
   final List<ServiceAction> actions;
   final List<ServiceReaction> reactions;
 
   Service({
     required this.id,
     required this.name,
+    required this.requiresOAuth,
     required this.actions,
     required this.reactions,
   });
@@ -18,6 +20,7 @@ class Service {
     return Service(
       id: json['id'] as int? ?? 0,
       name: (json['name'] as String?)?.trim() ?? '',
+      requiresOAuth: (json['requires_oauth'] as bool?) ?? false,
       actions:
           (json['actions'] as List<dynamic>?)
               ?.map(
@@ -41,6 +44,7 @@ class Service {
     return {
       'id': id,
       'name': name,
+      'requires_oauth': requiresOAuth,
       'actions': actions.map((action) => action.toJson()).toList(),
       'reactions': reactions.map((reaction) => reaction.toJson()).toList(),
     };

@@ -1,3 +1,5 @@
+import '../utils/service_token_mapper.dart';
+
 /// Service Provider Configuration
 ///
 /// Centralized configuration for all OAuth service providers (Google, GitHub, etc.)
@@ -6,25 +8,22 @@ class ServiceProviderConfig {
     'github',
     'gmail',
     'google',
+    'google_calendar',
     'slack',
+    'spotify',
     'twitch',
   ];
 
   static bool requiresOAuth(String serviceName) {
-    // Map gmail to google for OAuth purposes
+    // Map gmail/google_calendar to google for OAuth purposes
     final mappedName = mapServiceName(serviceName);
     return oauthServices.contains(mappedName.toLowerCase());
   }
 
-  /// Map service names for consistency (gmail -> google)
+  /// Map service names for consistency (gmail/google_calendar -> google)
   /// This is used to normalize service names across the application
   static String mapServiceName(String serviceName) {
-    switch (serviceName.toLowerCase()) {
-      case 'gmail':
-        return 'google';
-      default:
-        return serviceName;
-    }
+    return ServiceTokenMapper.resolveTokenService(serviceName);
   }
 
   /// Get user-friendly provider name
@@ -37,6 +36,8 @@ class ServiceProviderConfig {
         return 'GitHub';
       case 'slack':
         return 'Slack';
+      case 'spotify':
+        return 'Spotify';
       case 'twitch':
         return 'Twitch';
       default:
@@ -54,6 +55,8 @@ class ServiceProviderConfig {
         return 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/256px-Google_2015_logo.svg.png';
       case 'slack':
         return 'https://cdn-icons-png.flaticon.com/512/2111/2111615.png';
+      case 'spotify':
+        return 'https://cdn-icons-png.flaticon.com/512/2111/2111624.png';
       case 'twitch':
         return 'https://cdn-icons-png.flaticon.com/512/5968/5968819.png';
       case 'timer':
