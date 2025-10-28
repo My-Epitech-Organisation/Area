@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useActions, useReactions, useCreateArea, useAreas, useUpdateArea, useDeleteArea } from '../hooks/useApi';
+import {
+  useActions,
+  useReactions,
+  useCreateArea,
+  useAreas,
+  useUpdateArea,
+  useDeleteArea,
+} from '../hooks/useApi';
 import { findActionByName, findReactionByName, generateAreaName } from '../utils/areaHelpers';
 import { DynamicConfigForm } from '../components/DynamicConfigForm';
 import { API_BASE, getStoredUser, fetchUserData } from '../utils/helper';
@@ -42,7 +49,7 @@ const Areaction: React.FC = () => {
   const { data: userAreas, loading: loadingAreas, refetch: refetchAreas } = useAreas();
   const { createArea, loading: creatingArea } = useCreateArea();
   const { updateArea, loading: updatingArea } = useUpdateArea();
-  const { deleteArea, loading: deletingArea } = useDeleteArea();
+  const { deleteArea, loading: _ } = useDeleteArea();
 
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -303,9 +310,7 @@ const Areaction: React.FC = () => {
       return;
     }
 
-    const actionService = services.find((s) =>
-      s.actions.some((a) => a.name === actionObj.name)
-    );
+    const actionService = services.find((s) => s.actions.some((a) => a.name === actionObj.name));
     const reactionService = services.find((s) =>
       s.reactions.some((r) => r.name === reactionObj.name)
     );
@@ -957,7 +962,9 @@ const Areaction: React.FC = () => {
                 />
               </svg>
               <p className="text-gray-300 text-lg">No automations yet</p>
-              <p className="text-gray-400 mt-2">Create your first automation above to get started!</p>
+              <p className="text-gray-400 mt-2">
+                Create your first automation above to get started!
+              </p>
             </div>
           ) : (
             <div className="bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden">
@@ -965,11 +972,21 @@ const Areaction: React.FC = () => {
                 <table className="w-full">
                   <thead className="bg-white/10">
                     <tr>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-200">Name</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-200">Action</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-200">Reaction</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-200">Status</th>
-                      <th className="px-6 py-4 text-right text-sm font-semibold text-gray-200">Actions</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-200">
+                        Name
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-200">
+                        Action
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-200">
+                        Reaction
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-200">
+                        Status
+                      </th>
+                      <th className="px-6 py-4 text-right text-sm font-semibold text-gray-200">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/10">
@@ -978,10 +995,7 @@ const Areaction: React.FC = () => {
                       const reactionObj = apiReactions?.find((r) => r.id === area.reaction);
 
                       return (
-                        <tr
-                          key={area.id}
-                          className="hover:bg-white/5 transition-colors"
-                        >
+                        <tr key={area.id} className="hover:bg-white/5 transition-colors">
                           <td className="px-6 py-4 text-white font-medium">{area.name}</td>
                           <td className="px-6 py-4">
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-indigo-600/20 text-indigo-300">
