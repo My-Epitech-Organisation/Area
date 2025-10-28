@@ -263,8 +263,7 @@ export function useDeleteArea() {
 
         const errorData: ApiError = await response.json().catch(() => ({}));
         const errorMessage: string =
-          (errorData.detail as string) ||
-          `HTTP ${response.status}: ${response.statusText}`;
+          (errorData.detail as string) || `HTTP ${response.status}: ${response.statusText}`;
         throw new Error(errorMessage);
       }
 
