@@ -293,6 +293,7 @@ const Areaction: React.FC = () => {
         setReactionConfig({});
         setMessage(null);
         setMessageType(null);
+        setEditingAreaId(null);
       }, 1500);
     } catch (err: unknown) {
       setMessage(err instanceof Error ? err.message : 'Failed to save automation');
