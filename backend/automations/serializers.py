@@ -464,17 +464,17 @@ class AboutServiceSerializer(serializers.ModelSerializer):
             return None
         # Inline mapping: service name (lowercase) -> direct image or wiki file page URL
         mapping = {
-            # Direct upload.wikimedia.org URLs for reliable browser rendering
-            "timer": "https://upload.wikimedia.org/wikipedia/commons/d/dd/OOjs_UI_icon_clock.svg",
-            "debug": "https://upload.wikimedia.org/wikipedia/commons/0/0b/Gear_icon_svg.svg",
-            "email": "https://upload.wikimedia.org/wikipedia/commons/7/7f/OOjs_UI_icon_message.svg",
-            "webhook": "https://upload.wikimedia.org/wikipedia/commons/7/72/OOjs_UI_icon_link-ltr.svg",
-            "weather": "https://upload.wikimedia.org/wikipedia/commons/b/bf/Circle-icons-weather.svg",
-            # External services
-            "teams": "https://upload.wikimedia.org/wikipedia/commons/5/50/Microsoft_Teams.png",
+            # Internal services with black icons (will have white outline via CSS)
+            "timer": "https://api.iconify.design/mdi/timer-outline.svg?color=black",
+            "debug": "https://api.iconify.design/mdi/cog-outline.svg?color=black",
+            "email": "https://api.iconify.design/mdi/email-outline.svg?color=black",
+            "webhook": "https://api.iconify.design/mdi/webhook.svg?color=black",
+            "weather": "https://api.iconify.design/mdi/weather-partly-cloudy.svg?color=black",
+            # External services - Using Wikipedia images (original colors, no border)
+            "teams": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Microsoft_Office_Teams_%282018%E2%80%93present%29.svg",
             "github": "https://upload.wikimedia.org/wikipedia/commons/c/c2/GitHub_Invertocat_Logo.svg",
             "gmail": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg",
-            "slack": "https://upload.wikimedia.org/wikipedia/commons/7/76/Slack_Icon.png",
+            "slack": "https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg",
             "twitch": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Twitch_Glitch_Logo_Purple.svg",
             "google_calendar": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg",
             "spotify": "https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg",
