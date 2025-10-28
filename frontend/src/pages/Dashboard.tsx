@@ -564,6 +564,13 @@ const Dashboard: React.FC = () => {
                               src={logo}
                               alt={`${service.name} logo`}
                               className="w-12 h-12 object-contain"
+                              style={
+                                ['timer', 'debug', 'email', 'webhook', 'weather'].includes(service.name.toLowerCase())
+                                  ? {
+                                      filter: 'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))'
+                                    }
+                                  : undefined
+                              }
                             />
                           ) : (
                             <div className="text-2xl font-bold text-white opacity-50">
