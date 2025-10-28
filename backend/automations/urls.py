@@ -37,6 +37,13 @@ router.register(r"reactions", views.ReactionViewSet, basename="reaction")
 router.register(r"areas", views.AreaViewSet, basename="area")
 router.register(r"executions", views.ExecutionViewSet, basename="execution")
 
+# Import webhook views
+try:
+    from . import webhook_views
+    router.register(r"webhooks/manage", webhook_views.WebhookManagementViewSet, basename="webhook")
+except ImportError:
+    pass  # webhook_views may not be available yet
+
 app_name = "automations"
 
 urlpatterns = [
