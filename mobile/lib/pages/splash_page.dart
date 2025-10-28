@@ -23,10 +23,12 @@ class _SplashPageState extends State<SplashPage> {
     try {
       if (!mounted) return;
 
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.checkAuthStatus();
+
       await Future.delayed(const Duration(milliseconds: 200));
 
       if (mounted) {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final navigator = Navigator.of(context);
         final isAuth = authProvider.isAuthenticated;
 
