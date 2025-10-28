@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Action, Area, Execution, Reaction, Service, WebhookSubscription
+from .models import Action, Area, Execution, Reaction, Service, WebhookSubscription, GitHubAppInstallation
 
 
 @admin.register(Service)
@@ -232,3 +232,56 @@ class WebhookSubscriptionAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         """Webhook subscriptions are managed programmatically."""
         return request.user.is_superuser
+
+
+@admin.register(GitHubAppInstallation)
+class GitHubAppInstallationAdmin(admin.ModelAdmin):
+    """Admin configuration for GitHubAppInstallation model."""
+
+    list_display = (
+        "id",
+        "user",
+        "account_login",
+        "account_type",
+        "installation_id",
+        "is_active",
+        "repository_count",
+        "created_at",
+    )
+    list_filter = ("account_type", "is_active", "created_at")
+    search_fields = (
+        "user__username",
+        "user__email",
+        "account_login",
+        "installation_id",
+    )
+    readonly_fields = ("installation_id", "created_at", "updated_at", "repository_count")
+    list_per_page = 25
+
+    fieldsets = (
+        (
+            "Installation Information",
+            {
+                "fields": (
+                    "user",
+                    "installation_id",
+                    "account_login",
+                    "account_type",
+                    "is_active",
+                )
+            },
+        ),
+        ("Repositories", {"fields": ("repositories", "repository_count")}),
+        ("Timestamps", {"fields": ("created_at", "updated_at")}),
+    )
+
+    def repository_count(self, obj):
+        """Display the number of repositories."""
+        return len(obj.repositories) if obj.repositories else 0
+
+    repository_count.short_description = "Repository Count"  # type: ignore
+
+    def has_add_permission(self, request):
+        """GitHub App installations are managed via webhooks."""
+        return False
+
