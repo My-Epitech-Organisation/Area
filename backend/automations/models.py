@@ -274,3 +274,106 @@ class ActionState(models.Model):
 
     def __str__(self):
         return f"State for Area #{self.area.id} ({self.area.action.name})"
+
+
+class WebhookSubscription(models.Model):
+    """
+    Track active webhook subscriptions for users.
+
+    This model tracks which webhooks are active for which users,
+    especially useful for services like Twitch EventSub that require
+    explicit subscription management.
+    """
+
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Active"
+        PENDING = "pending", "Pending Verification"
+        FAILED = "failed", "Failed"
+        REVOKED = "revoked", "Revoked"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="webhook_subscriptions",
+    )
+    service = models.ForeignKey(
+        Service,
+        on_delete=models.CASCADE,
+        related_name="webhook_subscriptions",
+    )
+
+    # External subscription ID (for Twitch EventSub, etc.)
+    external_subscription_id = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="External service's subscription ID (e.g., Twitch EventSub ID)",
+    )
+
+    # Event type being monitored
+    event_type = models.CharField(
+        max_length=100,
+        help_text="Type of event (e.g., 'stream.online', 'issues', 'message')",
+    )
+
+    # Configuration for the webhook
+    config = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Webhook configuration (e.g., repository, channel, broadcaster_id)",
+    )
+
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    last_event_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp of the last received webhook event",
+    )
+    event_count = models.IntegerField(
+        default=0,
+        help_text="Total number of events received",
+    )
+
+    class Meta:
+        verbose_name = "Webhook Subscription"
+        verbose_name_plural = "Webhook Subscriptions"
+        indexes = [
+            models.Index(fields=["user", "service", "status"]),
+            models.Index(fields=["external_subscription_id"]),
+            models.Index(fields=["status", "updated_at"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "service", "event_type", "config"],
+                name="unique_user_webhook_subscription",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.service.name}:{self.event_type} for {self.user.username}"
+
+    def mark_active(self):
+        """Mark webhook as active."""
+        self.status = self.Status.ACTIVE
+        self.save(update_fields=["status", "updated_at"])
+
+    def mark_revoked(self):
+        """Mark webhook as revoked."""
+        self.status = self.Status.REVOKED
+        self.save(update_fields=["status", "updated_at"])
+
+    def record_event(self):
+        """Record that an event was received."""
+        from django.utils import timezone
+
+        self.last_event_at = timezone.now()
+        self.event_count += 1
+        self.save(update_fields=["last_event_at", "event_count", "updated_at"])
