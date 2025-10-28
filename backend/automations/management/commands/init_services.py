@@ -981,36 +981,6 @@ class Command(BaseCommand):
                         },
                     },
                     {
-                        "name": "spotify_add_to_playlist",
-                        "description": "Add the current or specified track to a playlist",
-                        "config_schema": {
-                            "playlist_id": {
-                                "type": "string",
-                                "label": "Playlist ID",
-                                "description": "ID of the playlist to add the track to",
-                                "required": True,
-                                "placeholder": "your-playlist-id",
-                            },
-                            "track_uri": {
-                                "type": "string",
-                                "label": "Track URI",
-                                "description": "URI of track to add (leave empty to add current track)",
-                                "required": False,
-                                "placeholder": "spotify:track:4iV5W9uYEdYUVa79Axb7Rh",
-                            },
-                        },
-                    },
-                    {
-                        "name": "spotify_like_track",
-                        "description": "Like (save) the current track",
-                        "config_schema": {},
-                    },
-                    {
-                        "name": "spotify_unlike_track",
-                        "description": "Unlike (unsave) the current track",
-                        "config_schema": {},
-                    },
-                    {
                         "name": "spotify_create_playlist",
                         "description": "Create a new playlist",
                         "config_schema": {

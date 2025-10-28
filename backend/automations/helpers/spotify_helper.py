@@ -333,7 +333,6 @@ def set_volume(access_token: str, volume_percent: int) -> Dict:
         logger.error(f"Unexpected error in set_volume: {e}")
         raise
 
-
 # ==================== Track Management ====================
 
 
@@ -375,95 +374,6 @@ def like_track(access_token: str, track_id: Optional[str] = None) -> Dict:
     except Exception as e:
         logger.error(f"Unexpected error in like_track: {e}")
         raise
-
-
-def unlike_track(access_token: str, track_id: Optional[str] = None) -> Dict:
-    """
-    Unlike (unsave) a track from the user's library.
-
-    Args:
-        access_token: Valid Spotify access token
-        track_id: Spotify track ID (if None, uses currently playing track)
-
-    Returns:
-        Dict with operation result
-
-    Raises:
-        ValueError: If Spotify API returns an error
-    """
-    try:
-        if track_id is None:
-            # Get currently playing track
-            playback = get_current_playback(access_token)
-            if not playback or not playback.get("item"):
-                raise ValueError("No track currently playing")
-
-            track_id = playback["item"]["id"]
-
-        _make_spotify_request(
-            f"/me/tracks?ids={track_id}",
-            access_token,
-            method="DELETE",
-        )
-
-        logger.info(f"Unliked Spotify track: {track_id}")
-        return {"success": True, "track_id": track_id}
-
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Spotify unlike_track failed for {track_id}: {e}")
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error in unlike_track: {e}")
-        raise
-
-
-def add_to_playlist(
-    access_token: str, playlist_id: str, track_uri: Optional[str] = None
-) -> Dict:
-    """
-    Add a track to a playlist.
-
-    Args:
-        access_token: Valid Spotify access token
-        playlist_id: Spotify playlist ID
-        track_uri: Spotify track URI (if None, uses currently playing track)
-
-    Returns:
-        Dict with operation result
-
-    Raises:
-        ValueError: If Spotify API returns an error
-    """
-    try:
-        if track_uri is None:
-            # Get currently playing track
-            playback = get_current_playback(access_token)
-            if not playback or not playback.get("item"):
-                raise ValueError("No track currently playing")
-
-            track_uri = playback["item"]["uri"]
-
-        # Ensure track_uri is in correct format
-        if not track_uri.startswith("spotify:track:"):
-            track_uri = f"spotify:track:{track_uri}"
-
-        _make_spotify_request(
-            f"/playlists/{playlist_id}/tracks",
-            access_token,
-            method="POST",
-            json_data={"uris": [track_uri]},
-        )
-
-        logger.info(f"Added track {track_uri} to Spotify playlist {playlist_id}")
-        return {"success": True, "playlist_id": playlist_id, "track_uri": track_uri}
-
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Spotify add_to_playlist failed: {e}")
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error in add_to_playlist: {e}")
-        raise
-
 
 # ==================== Playlist Management ====================
 
