@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Action, Area, Execution, Reaction, Service
+from .models import Action, Area, Execution, Reaction, Service, WebhookSubscription
 
 
 @admin.register(Service)
@@ -175,3 +175,60 @@ class ExecutionAdmin(admin.ModelAdmin):
             return True
         # Only allow deletion of terminal executions
         return bool(obj and obj.is_terminal)
+
+
+@admin.register(WebhookSubscription)
+class WebhookSubscriptionAdmin(admin.ModelAdmin):
+    """Admin configuration for WebhookSubscription model."""
+
+    list_display = (
+        "id",
+        "user",
+        "service",
+        "event_type",
+        "status",
+        "event_count",
+        "last_event_at",
+        "created_at",
+    )
+    list_filter = ("service", "status", "event_type")
+    search_fields = (
+        "user__username",
+        "user__email",
+        "service__name",
+        "event_type",
+        "external_subscription_id",
+    )
+    readonly_fields = ("created_at", "updated_at", "event_count", "last_event_at")
+    list_per_page = 25
+
+    fieldsets = (
+        (
+            "Subscription Information",
+            {
+                "fields": (
+                    "user",
+                    "service",
+                    "event_type",
+                    "external_subscription_id",
+                    "status",
+                )
+            },
+        ),
+        ("Configuration", {"fields": ("config",)}),
+        (
+            "Statistics",
+            {
+                "fields": (
+                    "event_count",
+                    "last_event_at",
+                    "created_at",
+                    "updated_at",
+                )
+            },
+        ),
+    )
+
+    def has_add_permission(self, request):
+        """Webhook subscriptions are managed programmatically."""
+        return request.user.is_superuser
