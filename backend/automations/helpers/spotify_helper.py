@@ -333,6 +333,7 @@ def set_volume(access_token: str, volume_percent: int) -> Dict:
         logger.error(f"Unexpected error in set_volume: {e}")
         raise
 
+
 # ==================== Track Management ====================
 
 
@@ -374,6 +375,7 @@ def like_track(access_token: str, track_id: Optional[str] = None) -> Dict:
     except Exception as e:
         logger.error(f"Unexpected error in like_track: {e}")
         raise
+
 
 # ==================== Playlist Management ====================
 

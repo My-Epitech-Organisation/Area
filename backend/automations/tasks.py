@@ -2548,7 +2548,8 @@ def _execute_reaction_logic(
             # Extract track ID from URL
             # URL format: https://open.spotify.com/track/{track_id} or https://open.spotify.com/intl-{locale}/track/{track_id}
             import re
-            match = re.search(r'/track/([a-zA-Z0-9]+)', track_input)
+
+            match = re.search(r"/track/([a-zA-Z0-9]+)", track_input)
             if match:
                 track_id = match.group(1)
                 track_uri = f"spotify:track:{track_id}"
