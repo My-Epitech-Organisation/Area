@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/execution.dart';
+import '../utils/date_time_utils.dart';
 
 /// Shows detailed information about an execution in a bottom sheet
 void showExecutionDetailsBottomSheet(
@@ -101,19 +102,19 @@ class ExecutionDetailsBottomSheet extends StatelessWidget {
                 const SizedBox(height: 12),
                 _buildDetailRow(
                   'Created',
-                  _formatDateTime(execution.createdAt),
+                  DateTimeUtils.formatDateTime(execution.createdAt),
                 ),
                 const SizedBox(height: 12),
                 if (execution.startedAt != null)
                   _buildDetailRow(
                     'Started',
-                    _formatDateTime(execution.startedAt!),
+                    DateTimeUtils.formatDateTime(execution.startedAt!),
                   ),
                 if (execution.startedAt != null) const SizedBox(height: 12),
                 if (execution.completedAt != null)
                   _buildDetailRow(
                     'Completed',
-                    _formatDateTime(execution.completedAt!),
+                    DateTimeUtils.formatDateTime(execution.completedAt!),
                   ),
                 if (execution.completedAt != null) const SizedBox(height: 12),
                 if (execution.durationSeconds != null)
@@ -275,23 +276,5 @@ class ExecutionDetailsBottomSheet extends StatelessWidget {
             .toList(),
       ),
     );
-  }
-
-  String _formatDateTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inMinutes < 1) return 'Just now';
-    if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
-    }
-    if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
-    }
-    if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    }
-
-    return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 }

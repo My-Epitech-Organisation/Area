@@ -4,6 +4,7 @@ import '../models/applet.dart';
 import '../models/execution.dart';
 import '../providers/applet_provider.dart';
 import '../widgets/execution_details_sheet.dart';
+import '../utils/date_time_utils.dart';
 import 'edit_applet_page.dart';
 
 class AppletDetailsPage extends StatefulWidget {
@@ -624,7 +625,7 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
             _buildMetadataRow(
               context,
               'Created',
-              _formatDateTime(_applet.createdAt),
+              DateTimeUtils.formatDateTime(_applet.createdAt),
             ),
             _buildMetadataRow(context, 'Status', _applet.status),
           ],
@@ -659,24 +660,6 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
         ],
       ),
     );
-  }
-
-  String _formatDateTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inMinutes < 1) return 'Just now';
-    if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
-    }
-    if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
-    }
-    if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    }
-
-    return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
   Widget _buildExecutionHistoryCard(BuildContext context) {
@@ -769,7 +752,7 @@ class _AppletDetailsPageState extends State<AppletDetailsPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _formatDateTime(execution.createdAt),
+                    DateTimeUtils.formatDateTime(execution.createdAt),
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: Colors.grey),
