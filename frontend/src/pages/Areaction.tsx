@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useActions, useReactions, useCreateArea, useAreas, useUpdateArea, useDeleteArea } from '../hooks/useApi';
 import { findActionByName, findReactionByName, generateAreaName } from '../utils/areaHelpers';
 import { DynamicConfigForm } from '../components/DynamicConfigForm';
-import { API_BASE, getStoredUser } from '../utils/helper';
+import { API_BASE, getStoredUser, fetchUserData } from '../utils/helper';
 import type { Area } from '../types/api';
 import EmailVerificationBanner from '../components/EmailVerificationBanner';
 import type { User } from '../types';
@@ -111,6 +111,27 @@ const Areaction: React.FC = () => {
     if (storedUser) {
       setUser(storedUser);
     }
+  }, []);
+
+  const handleRefreshUserData = async () => {
+    try {
+      const updatedUser = await fetchUserData();
+      if (updatedUser) {
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+    } catch (err) {
+      console.error('Error refreshing user data:', err);
+    }
+  };
+
+  useEffect(() => {
+    const handleFocus = () => {
+      handleRefreshUserData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   useEffect(() => {
@@ -394,7 +415,7 @@ const Areaction: React.FC = () => {
       <div className="w-screen min-h-screen bg-gradient-to-br from-black/90 via-gray-900/80 to-indigo-950 flex flex-col items-center justify-center p-6">
         <div className="max-w-2xl w-full space-y-6">
           {/* Email Verification Banner - Shows if user is not verified */}
-          <EmailVerificationBanner user={user} />
+          <EmailVerificationBanner user={user} onVerificationSent={handleRefreshUserData} />
 
           <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 text-center">
             <h2 className="text-2xl font-bold text-white mb-4">Error</h2>
