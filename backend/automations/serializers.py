@@ -477,6 +477,8 @@ class AboutServiceSerializer(serializers.ModelSerializer):
             "slack": "https://upload.wikimedia.org/wikipedia/commons/7/76/Slack_Icon.png",
             "twitch": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Twitch_Glitch_Logo_Purple.svg",
             "google_calendar": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg",
+            "spotify": "https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg",
+            "discord": "https://upload.wikimedia.org/wikipedia/commons/9/98/Discord_logo_2015.svg",
         }
 
         import re
