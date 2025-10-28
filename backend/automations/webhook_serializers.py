@@ -13,7 +13,7 @@ class WebhookSubscriptionSerializer(serializers.ModelSerializer):
     service_name = serializers.CharField(source="service.name", read_only=True)
     username = serializers.CharField(source="user.username", read_only=True)
     is_active = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = WebhookSubscription
         fields = [
