@@ -125,7 +125,7 @@ class WebhookManagementViewSet(viewsets.ReadOnlyModelViewSet):
             "twitch": "automations.check_twitch_actions",
             "slack": "automations.check_slack_actions",
         }
-        
+
         polling_enabled = not webhook_configured  # Simplified check
 
         webhook_url = getattr(settings, "BACKEND_URL", "http://localhost:8080")
