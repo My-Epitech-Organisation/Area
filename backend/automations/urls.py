@@ -60,6 +60,8 @@ urlpatterns = [
     path("api/", include(router.urls)),
     # Special endpoint for service discovery
     path("about.json", views.about_json_view, name="about"),
+    # Logo proxy endpoint
+    path("logos/<str:service>/", views.logo_proxy_view, name="logo-proxy"),
     # Webhook receiver endpoint
     path("webhooks/<str:service>/", webhook_receiver, name="webhook-receiver"),
     # Debug endpoints

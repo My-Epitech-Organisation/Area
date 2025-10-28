@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { API_BASE, getStoredUser } from '../utils/helper';
+import { API_BASE, getStoredUser, fetchUserData } from '../utils/helper';
 import type { ServiceModel } from '../types/services';
 import type { User } from '../types';
 import EmailVerificationBanner from '../components/EmailVerificationBanner';
@@ -14,6 +14,10 @@ type AboutService = {
 };
 
 const Services: React.FC = () => {
+  const isInternalService = (serviceName: string) => {
+    return ['timer', 'debug', 'email', 'webhook', 'weather'].includes(serviceName.toLowerCase());
+  };
+
   const wheelRef = useRef<HTMLDivElement>(null);
   const carouselContainerRef = useRef<HTMLDivElement | null>(null);
   const historyContainerRef = useRef<HTMLDivElement | null>(null);
@@ -25,7 +29,7 @@ const Services: React.FC = () => {
   const flatListRef = useRef<HTMLDivElement | null>(null);
   const [mounted, setMounted] = useState(false);
   const rotationSpeed = 5;
-  const radius = window.innerWidth < 768 ? 200 : 350;
+  const radius = window.innerWidth < 768 ? 250 : 450;
 
   const imageModules = import.meta.glob('../assets/*.{png,jpg,jpeg,svg,gif}', {
     eager: true,
@@ -77,6 +81,27 @@ const Services: React.FC = () => {
     }
   }, []);
 
+  const handleRefreshUserData = async () => {
+    try {
+      const updatedUser = await fetchUserData();
+      if (updatedUser) {
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+    } catch (err) {
+      console.error('Error refreshing user data:', err);
+    }
+  };
+
+  useEffect(() => {
+    const handleFocus = () => {
+      handleRefreshUserData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     const fetchAbout = async () => {
@@ -97,9 +122,13 @@ const Services: React.FC = () => {
               const rawLogo = s.logo ?? s.icon ?? null;
               let logo: string | null = null;
               if (rawLogo) {
-                const raw = String(rawLogo);
-                if (/^(https?:)?\/\//.test(raw) || raw.startsWith('/')) {
+                const raw = String(rawLogo).trim();
+                if (/^https?:\/\//i.test(raw)) {
                   logo = raw;
+                } else if (raw.startsWith('//')) {
+                  logo = `https:${raw}`;
+                } else if (raw.startsWith('/')) {
+                  logo = `${baseUrl}${raw}`;
                 } else {
                   const base =
                     raw
@@ -226,6 +255,7 @@ const Services: React.FC = () => {
   }, [flatMode]);
 
   useEffect(() => {
+    if (flatMode) return;
     if (!hoverCarousel && !hoverHistory) return;
 
     const handler = (e: WheelEvent) => {
@@ -245,7 +275,7 @@ const Services: React.FC = () => {
 
     document.addEventListener('wheel', handler as EventListener, { passive: false, capture: true });
     return () => document.removeEventListener('wheel', handler as EventListener, true);
-  }, [hoverCarousel, hoverHistory, isDragging]);
+  }, [hoverCarousel, hoverHistory, isDragging, flatMode]);
 
   useEffect(() => {
     const wheelEl = wheelRef.current;
@@ -279,14 +309,18 @@ const Services: React.FC = () => {
       }
     };
 
-    if (wheelEl)
-      wheelEl.addEventListener('wheel', onWheelCarousel as EventListener, { passive: false });
-    if (historyEl)
-      historyEl.addEventListener('wheel', onWheelHistory as EventListener, { passive: false });
+    if (!flatMode) {
+      if (wheelEl)
+        wheelEl.addEventListener('wheel', onWheelCarousel as EventListener, { passive: false });
+      if (historyEl)
+        historyEl.addEventListener('wheel', onWheelHistory as EventListener, { passive: false });
+    }
 
     return () => {
-      if (wheelEl) wheelEl.removeEventListener('wheel', onWheelCarousel as EventListener);
-      if (historyEl) historyEl.removeEventListener('wheel', onWheelHistory as EventListener);
+      if (!flatMode) {
+        if (wheelEl) wheelEl.removeEventListener('wheel', onWheelCarousel as EventListener);
+        if (historyEl) historyEl.removeEventListener('wheel', onWheelHistory as EventListener);
+      }
     };
   }, [flatMode, isDragging]);
 
@@ -421,7 +455,7 @@ const Services: React.FC = () => {
         <p className="text-gray-300 mt-3">Explore available action → reaction services</p>
       </header>
 
-      {user && <EmailVerificationBanner user={user} />}
+      {user && <EmailVerificationBanner user={user} onVerificationSent={handleRefreshUserData} />}
 
       <main className="w-full max-w-6xl mt-12">
         <div className="flex items-center justify-end gap-4 mb-4">
@@ -547,7 +581,15 @@ const Services: React.FC = () => {
                               <img
                                 src={s.logo}
                                 alt={`${s.Name} logo`}
-                                className="w-full h-full object-contain"
+                                className="w-full h-full object-contain p-2"
+                                style={
+                                  isInternalService(s.Name)
+                                    ? {
+                                        filter:
+                                          'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))',
+                                      }
+                                    : undefined
+                                }
                               />
                             ) : (
                               <div className="text-xl md:text-2xl font-bold text-white drop-shadow-lg">
@@ -643,6 +685,14 @@ const Services: React.FC = () => {
                                   className="w-full h-full object-contain p-2"
                                   loading="lazy"
                                   decoding="async"
+                                  style={
+                                    isInternalService(s.Name)
+                                      ? {
+                                          filter:
+                                            'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))',
+                                        }
+                                      : undefined
+                                  }
                                 />
                               ) : (
                                 <div className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg">
@@ -710,9 +760,17 @@ const Services: React.FC = () => {
                             <img
                               src={h.logo}
                               alt={`${h.Name} logo`}
-                              className="w-full h-full object-contain"
+                              className="w-full h-full object-contain p-3"
                               loading="lazy"
                               decoding="async"
+                              style={
+                                isInternalService(h.Name)
+                                  ? {
+                                      filter:
+                                        'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))',
+                                    }
+                                  : undefined
+                              }
                             />
                           ) : (
                             <div className="text-xl md:text-2xl font-semibold text-white/80">
