@@ -29,7 +29,7 @@ const Services: React.FC = () => {
   const flatListRef = useRef<HTMLDivElement | null>(null);
   const [mounted, setMounted] = useState(false);
   const rotationSpeed = 5;
-  const radius = window.innerWidth < 768 ? 200 : 350;
+  const radius = window.innerWidth < 768 ? 250 : 450;
 
   const imageModules = import.meta.glob('../assets/*.{png,jpg,jpeg,svg,gif}', {
     eager: true,
@@ -255,10 +255,8 @@ const Services: React.FC = () => {
   }, [flatMode]);
 
   useEffect(() => {
-    if (flatMode)
-      return;
-    if (!hoverCarousel && !hoverHistory)
-      return;
+    if (flatMode) return;
+    if (!hoverCarousel && !hoverHistory) return;
 
     const handler = (e: WheelEvent) => {
       if (hoverCarousel && !isDragging) {
@@ -277,15 +275,14 @@ const Services: React.FC = () => {
 
     document.addEventListener('wheel', handler as EventListener, { passive: false, capture: true });
     return () => document.removeEventListener('wheel', handler as EventListener, true);
-  }, [hoverCarousel, hoverHistory, isDragging]);
+  }, [hoverCarousel, hoverHistory, isDragging, flatMode]);
 
   useEffect(() => {
     const wheelEl = wheelRef.current;
     const historyEl = historyContainerRef.current;
     const flatEl = flatListRef.current;
 
-    if (!wheelEl && !historyEl && !flatEl)
-      return;
+    if (!wheelEl && !historyEl && !flatEl) return;
 
     const onWheelCarousel = (e: WheelEvent) => {
       try {
@@ -321,10 +318,8 @@ const Services: React.FC = () => {
 
     return () => {
       if (!flatMode) {
-        if (wheelEl)
-          wheelEl.removeEventListener('wheel', onWheelCarousel as EventListener);
-        if (historyEl)
-          historyEl.removeEventListener('wheel', onWheelHistory as EventListener);
+        if (wheelEl) wheelEl.removeEventListener('wheel', onWheelCarousel as EventListener);
+        if (historyEl) historyEl.removeEventListener('wheel', onWheelHistory as EventListener);
       }
     };
   }, [flatMode, isDragging]);
@@ -590,7 +585,8 @@ const Services: React.FC = () => {
                                 style={
                                   isInternalService(s.Name)
                                     ? {
-                                        filter: 'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))'
+                                        filter:
+                                          'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))',
                                       }
                                     : undefined
                                 }
@@ -692,7 +688,8 @@ const Services: React.FC = () => {
                                   style={
                                     isInternalService(s.Name)
                                       ? {
-                                          filter: 'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))'
+                                          filter:
+                                            'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))',
                                         }
                                       : undefined
                                   }
@@ -769,7 +766,8 @@ const Services: React.FC = () => {
                               style={
                                 isInternalService(h.Name)
                                   ? {
-                                      filter: 'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))'
+                                      filter:
+                                        'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))',
                                     }
                                   : undefined
                               }
