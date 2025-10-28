@@ -345,7 +345,9 @@
 .text-theme-error {
   color: var(--text-error);
 }
-
+.text-theme-logout{
+  color: var(--color-error-dark);
+}
 /* Background Colors */
 .bg-theme-primary {
   background-color: var(--bg-primary);
