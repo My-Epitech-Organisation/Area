@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import '../models/execution.dart';
 
 /// Shows detailed information about an execution in a bottom sheet
-void showExecutionDetailsBottomSheet(BuildContext context, Execution execution) {
+void showExecutionDetailsBottomSheet(
+  BuildContext context,
+  Execution execution,
+) {
   showModalBottomSheet(
     context: context,
     builder: (BuildContext context) {
@@ -18,10 +21,7 @@ void showExecutionDetailsBottomSheet(BuildContext context, Execution execution) 
 class ExecutionDetailsBottomSheet extends StatelessWidget {
   final Execution execution;
 
-  const ExecutionDetailsBottomSheet({
-    super.key,
-    required this.execution,
-  });
+  const ExecutionDetailsBottomSheet({super.key, required this.execution});
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +121,8 @@ class ExecutionDetailsBottomSheet extends StatelessWidget {
                     'Duration',
                     '${execution.durationSeconds!.toStringAsFixed(2)}s',
                   ),
-                if (execution.durationSeconds != null) const SizedBox(height: 12),
+                if (execution.durationSeconds != null)
+                  const SizedBox(height: 12),
                 _buildDetailRow('Retry Count', execution.retryCount.toString()),
                 const SizedBox(height: 24),
 
