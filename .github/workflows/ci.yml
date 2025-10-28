@@ -197,6 +197,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: check-changes
     if: github.event_name == 'workflow_dispatch' || needs.check-changes.outputs.mobile == 'true'
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
