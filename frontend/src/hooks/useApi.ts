@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import type { Action, Reaction, PaginatedResponse, ApiError } from '../types/api';
+import type { Action, Reaction, Area, PaginatedResponse, ApiError } from '../types/api';
 import { API_BASE } from '../utils/helper';
 
 interface UseApiResult<T> {
@@ -96,6 +96,13 @@ export function useReactions(): UseApiResult<Reaction[]> {
 }
 
 /**
+ * Hook for fetching user's areas/automations
+ */
+export function useAreas(): UseApiResult<Area[]> {
+  return usePaginatedApi<Area>('/api/areas/');
+}
+
+/**
  * Hook for creating an area
  */
 export function useCreateArea() {
@@ -156,4 +163,120 @@ export function useCreateArea() {
   };
 
   return { createArea, loading, error };
+}
+
+/**
+ * Hook for updating an area
+ */
+export function useUpdateArea() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const updateArea = async (
+    areaId: number,
+    payload: {
+      name?: string;
+      action?: number;
+      reaction?: number;
+      action_config?: Record<string, unknown>;
+      reaction_config?: Record<string, unknown>;
+      status?: 'active' | 'disabled' | 'paused';
+    }
+  ) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem('access');
+
+      if (!token) {
+        throw new Error('Authentication required. Please login.');
+      }
+
+      const response = await fetch(`${API_BASE}/api/areas/${areaId}/`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Session expired. Please login again.');
+        }
+
+        const errorData: ApiError = await response.json().catch(() => ({}));
+        const errorMessage: string =
+          (errorData.detail as string) ||
+          (Array.isArray(Object.values(errorData)[0])
+            ? (Object.values(errorData)[0] as string[])[0]
+            : (Object.values(errorData)[0] as string)) ||
+          `HTTP ${response.status}: ${response.statusText}`;
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update automation';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { updateArea, loading, error };
+}
+
+/**
+ * Hook for deleting an area
+ */
+export function useDeleteArea() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const deleteArea = async (areaId: number) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem('access');
+
+      if (!token) {
+        throw new Error('Authentication required. Please login.');
+      }
+
+      const response = await fetch(`${API_BASE}/api/areas/${areaId}/`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Session expired. Please login again.');
+        }
+
+        const errorData: ApiError = await response.json().catch(() => ({}));
+        const errorMessage: string =
+          (errorData.detail as string) ||
+          `HTTP ${response.status}: ${response.statusText}`;
+        throw new Error(errorMessage);
+      }
+
+      return true;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete automation';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { deleteArea, loading, error };
 }
