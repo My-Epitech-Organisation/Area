@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../config/app_config.dart';
 import '../providers/auth_provider.dart';
-import '../providers/provider_manager.dart';
 import 'login_page.dart';
 import '../swipe_navigation_page.dart';
 
@@ -22,15 +21,14 @@ class _SplashPageState extends State<SplashPage> {
 
   Future<void> _initializeApp() async {
     try {
-      // Initialize app with ProviderManager
-      await ProviderManager.initializeApp(context);
-
       if (!mounted) return;
+
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.checkAuthStatus();
 
       await Future.delayed(const Duration(milliseconds: 200));
 
       if (mounted) {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final navigator = Navigator.of(context);
         final isAuth = authProvider.isAuthenticated;
 
