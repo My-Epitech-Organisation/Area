@@ -3,9 +3,7 @@ import 'package:provider/provider.dart';
 import '../config/app_config.dart';
 import '../providers/auth_provider.dart';
 import '../providers/provider_manager.dart';
-import '../widgets/debug_config_widget.dart';
 import '../widgets/google_sign_in_button.dart';
-import 'forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -126,31 +124,29 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return DebugConfigWidget(
-      child: Scaffold(
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 40),
-                  _buildHeader(),
-                  const SizedBox(height: 48),
-                  _buildFormFields(),
-                  const SizedBox(height: 24),
-                  _buildSubmitButton(),
-                  if (_isLogin) _buildForgotPasswordButton(),
-                  const SizedBox(height: 16),
-                  _buildGoogleSignInButton(),
-                  if (_errorMessage != null) _buildErrorMessage(),
-                  const SizedBox(height: 24),
-                  _buildToggleModeButton(),
-                ],
-              ),
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 40),
+                _buildHeader(),
+                const SizedBox(height: 48),
+                _buildFormFields(),
+                const SizedBox(height: 24),
+                _buildSubmitButton(),
+                if (_isLogin) _buildForgotPasswordButton(),
+                const SizedBox(height: 16),
+                _buildGoogleSignInButton(),
+                if (_errorMessage != null) _buildErrorMessage(),
+                const SizedBox(height: 24),
+                _buildToggleModeButton(),
+              ],
             ),
           ),
         ),
@@ -344,9 +340,8 @@ class _LoginPageState extends State<LoginPage> {
       alignment: Alignment.centerRight,
       child: TextButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ForgotPasswordPage()),
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Password reset coming soon')),
           );
         },
         child: const Text(
