@@ -3,11 +3,6 @@ import 'package:provider/provider.dart';
 import 'providers.dart';
 
 class ProviderManager {
-  static Future<void> initializeApp(BuildContext context) async {
-    final authProvider = context.read<AuthProvider>();
-    await authProvider.checkAuthStatus();
-  }
-
   static Future<void> onLogin(BuildContext context) async {
     if (!context.mounted) return;
 
