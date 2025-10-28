@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'providers/providers.dart';
+import 'providers/compatibility_provider.dart';
 import 'pages/splash_page.dart';
 import 'pages/login_page.dart';
 import 'pages/reset_password_page.dart';
@@ -49,6 +50,9 @@ class _MyAppState extends State<MyApp> {
   bool _initialLinkHandled = false;
   late OAuthDeepLinkHandler _oauthHandler;
 
+  Uri? _lastHandledUri;
+  DateTime? _lastHandledTime;
+
   @override
   void initState() {
     super.initState();
@@ -56,7 +60,6 @@ class _MyAppState extends State<MyApp> {
     _oauthHandler = OAuthDeepLinkHandler();
     _oauthHandler.onOAuthComplete = _handleOAuthComplete;
     _initDeepLinkListener();
-    _initOAuthHandler();
   }
 
   @override
@@ -64,10 +67,6 @@ class _MyAppState extends State<MyApp> {
     _sub?.cancel();
     _oauthHandler.dispose();
     super.dispose();
-  }
-
-  Future<void> _initOAuthHandler() async {
-    await _oauthHandler.initialize();
   }
 
   void _handleOAuthComplete(String provider, bool success, String? message) {
@@ -116,6 +115,22 @@ class _MyAppState extends State<MyApp> {
   void _handleDeepLink(Uri uri) {
     debugPrint('Handling deep link: $uri');
 
+    final now = DateTime.now();
+    if (_lastHandledUri?.toString() == uri.toString() &&
+        _lastHandledTime != null &&
+        now.difference(_lastHandledTime!).inSeconds < 2) {
+      debugPrint('Duplicate deep link ignored (same URI within 2 seconds)');
+      return;
+    }
+
+    _lastHandledUri = uri;
+    _lastHandledTime = now;
+
+    if (_oauthHandler.isOAuthCallback(uri)) {
+      _oauthHandler.handleDeepLink(uri);
+      return;
+    }
+
     if (uri.scheme == AppConfig.urlScheme &&
         uri.host == AppConfig.resetPasswordDeepLink) {
       final token = uri.queryParameters['token'];
@@ -146,6 +161,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(create: (_) => ServiceCatalogProvider()),
         ChangeNotifierProvider(create: (_) => ConnectedServicesProvider()),
         ChangeNotifierProvider(create: (_) => AutomationStatsProvider()),
+        ChangeNotifierProvider(create: (_) => CompatibilityProvider()),
       ],
       child: Builder(
         builder: (context) {
@@ -166,6 +182,18 @@ class _MyAppState extends State<MyApp> {
               });
             }
           };
+
+          // Load compatibility rules when app starts
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final compatibilityProvider = Provider.of<CompatibilityProvider>(
+              context,
+              listen: false,
+            );
+            if (!compatibilityProvider.isLoaded &&
+                !compatibilityProvider.isLoading) {
+              compatibilityProvider.loadRules();
+            }
+          });
 
           return MaterialApp(
             navigatorKey: navigatorKey,

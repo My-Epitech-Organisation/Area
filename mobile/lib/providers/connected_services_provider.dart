@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/oauth_service.dart';
 import '../models/service_token.dart';
+import '../utils/service_token_mapper.dart';
 
 /// Provider for managing connected OAuth services
 class ConnectedServicesProvider extends ChangeNotifier {
@@ -17,9 +18,11 @@ class ConnectedServicesProvider extends ChangeNotifier {
   String? get error => _error;
 
   /// Check if a specific service is connected
+  /// Maps service names (e.g., gmail -> google) to find the actual token
   bool isServiceConnected(String serviceName) {
+    final tokenName = ServiceTokenMapper.resolveTokenService(serviceName);
     return _connectedServices.any(
-      (s) => s.serviceName.toLowerCase() == serviceName.toLowerCase(),
+      (s) => s.serviceName.toLowerCase() == tokenName.toLowerCase(),
     );
   }
 

@@ -153,6 +153,7 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
                       _selectedActionId = context
                           .read<ServiceCatalogProvider>()
                           .getActionId(value!);
+                      _actionConfig = {};
                     });
                   },
                 ),
@@ -165,6 +166,7 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
                   ActionConfigCard(
                     selectedService: _selectedActionService,
                     selectedReaction: _selectedActionReaction,
+                    selectedTriggerAction: _selectedTriggerAction,
                     onServiceChanged: (value) {
                       setState(() {
                         _selectedActionService = value;
@@ -179,6 +181,7 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
                         _selectedReactionId = context
                             .read<ServiceCatalogProvider>()
                             .getReactionId(value!);
+                        _reactionConfig = {};
                       });
                     },
                   ),
@@ -339,7 +342,7 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
           'Automation "${applet.name}" created successfully!',
         );
 
-        // Reset form
+        // Reset form completely
         _nameController.clear();
         setState(() {
           _selectedTriggerService = null;
@@ -348,6 +351,8 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
           _selectedActionReaction = null;
           _selectedActionId = null;
           _selectedReactionId = null;
+          _actionConfig = {};
+          _reactionConfig = {};
         });
         _formKey.currentState?.reset();
 

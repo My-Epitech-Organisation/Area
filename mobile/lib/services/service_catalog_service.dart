@@ -102,6 +102,7 @@ class ServiceCatalogService {
       return Service(
         id: serviceId,
         name: serviceName,
+        requiresOAuth: (serviceJson['requires_oauth'] as bool?) ?? false,
         actions: actionsByService[serviceId] ?? [],
         reactions: reactionsByService[serviceId] ?? [],
       );
