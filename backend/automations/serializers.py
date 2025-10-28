@@ -7,6 +7,10 @@ This module provides Django REST Framework serializers for:
 - Area CRUD operations with validation
 """
 
+import re
+from urllib.parse import unquote, urlparse
+
+import requests
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -20,9 +24,6 @@ from .validators import (
     validate_action_reaction_compatibility,
     validate_reaction_config,
 )
-import requests
-from urllib.parse import urlparse, unquote
-
 
 _WIKI_IMAGE_CACHE = {}
 
@@ -39,9 +40,11 @@ def _resolve_wikipedia_file_url(url_or_text: str) -> str | None:
         fragment = parsed.fragment or ""
         path = parsed.path or ""
 
-        import re
-
-        m = re.search(r"File:([^/#?]+)", fragment) or re.search(r"/wiki/File:([^/#?]+)", path) or re.search(r"File:([^/#?]+)", url_or_text)
+        m = (
+            re.search(r"File:([^/#?]+)", fragment)
+            or re.search(r"/wiki/File:([^/#?]+)", path)
+            or re.search(r"File:([^/#?]+)", url_or_text)
+        )
         if not m:
             return None
 
@@ -73,7 +76,6 @@ def _resolve_wikipedia_file_url(url_or_text: str) -> str | None:
         return None
     except Exception:
         return None
-
 
 
 class ServiceSerializer(serializers.ModelSerializer):
@@ -481,12 +483,15 @@ class AboutServiceSerializer(serializers.ModelSerializer):
             "discord": "https://upload.wikimedia.org/wikipedia/commons/9/98/Discord_logo_2015.svg",
         }
 
-        import re
-
         def _normalize_key(s: str) -> str:
             return re.sub(r"[^a-z0-9]", "", (s or "").lower())
 
-        candidates = [name, name.replace("_", ""), name.replace(" ", ""), _normalize_key(name)]
+        candidates = [
+            name,
+            name.replace("_", ""),
+            name.replace(" ", ""),
+            _normalize_key(name),
+        ]
 
         found = None
         for k in candidates:
@@ -503,9 +508,6 @@ class AboutServiceSerializer(serializers.ModelSerializer):
                 return direct
 
         return found
-
-
-
 
 
 # Serializers pour Execution (journaling)
