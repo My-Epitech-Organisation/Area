@@ -377,3 +377,85 @@ class WebhookSubscription(models.Model):
         self.last_event_at = timezone.now()
         self.event_count += 1
         self.save(update_fields=["last_event_at", "event_count", "updated_at"])
+
+
+class GitHubAppInstallation(models.Model):
+    """
+    Track GitHub App installations per user.
+
+    When a user installs the AREA GitHub App on their account/org,
+    this model stores the installation details to enable automatic
+    webhook configuration for their repositories.
+    """
+
+    class AccountType(models.TextChoices):
+        USER = "User", "User"
+        ORGANIZATION = "Organization", "Organization"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="github_app_installations",
+        help_text="AREA user who installed the app"
+    )
+
+    installation_id = models.BigIntegerField(
+        unique=True,
+        help_text="GitHub App installation ID"
+    )
+
+    account_login = models.CharField(
+        max_length=255,
+        help_text="GitHub username or organization name"
+    )
+
+    account_type = models.CharField(
+        max_length=20,
+        choices=AccountType.choices,
+        default=AccountType.USER
+    )
+
+    # Repositories where app is installed (JSON list of full names)
+    repositories = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of repo full names (e.g., ['owner/repo1', 'owner/repo2'])"
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        help_text="False if user uninstalled the app"
+    )
+
+    installed_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "github_app_installations"
+        indexes = [
+            models.Index(fields=["user", "installation_id"]),
+            models.Index(fields=["installation_id"]),
+            models.Index(fields=["account_login"]),
+        ]
+
+    def __str__(self):
+        return f"{self.account_login} (installation {self.installation_id})"
+
+    def has_repository(self, repo_full_name: str) -> bool:
+        """Check if app is installed on a specific repository."""
+        return repo_full_name in self.repositories
+
+    def add_repositories(self, repo_names: list[str]):
+        """Add repositories to the installation."""
+        self.repositories = list(set(self.repositories + repo_names))
+        self.save(update_fields=["repositories", "updated_at"])
+
+    def remove_repositories(self, repo_names: list[str]):
+        """Remove repositories from the installation."""
+        self.repositories = [r for r in self.repositories if r not in repo_names]
+        self.save(update_fields=["repositories", "updated_at"])
+
+    def deactivate(self):
+        """Mark installation as inactive (uninstalled)."""
+        self.is_active = False
+        self.save(update_fields=["is_active", "updated_at"])
