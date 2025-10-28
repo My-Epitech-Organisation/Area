@@ -355,16 +355,46 @@ def check_timer_actions(self):
 )
 def check_github_actions(self):
     """
-    Check GitHub-based actions (polling mode).
+    Check GitHub-based actions (DEPRECATED - USE WEBHOOKS).
 
-    This task runs every 5 minutes via Celery Beat.
-    Uses OAuth2 tokens to access GitHub API for each user's areas.
-    For production, webhooks are preferred over polling.
+    ⚠️ WARNING: This polling task is DEPRECATED and should not be used in production.
+    GitHub provides webhooks for real-time event notifications which are:
+    - Instant (no 5-minute delay)
+    - More reliable (no missed events)
+    - More efficient (no API calls for polling)
+
+    To enable webhooks:
+    1. Configure WEBHOOK_SECRETS['github'] in settings
+    2. Set up GitHub webhook at: https://github.com/<owner>/<repo>/settings/hooks
+    3. Point webhook to: https://your-domain.com/webhooks/github/
+    4. Select events: issues, pull_request, push, etc.
+
+    This task is kept for backward compatibility and testing only.
+    It should be disabled in production by removing it from Celery Beat schedule.
 
     Returns:
         dict: Statistics about processed GitHub events
     """
-    logger.info("Starting GitHub actions check (polling)")
+    logger.warning(
+        "GitHub polling is DEPRECATED. Please use webhooks for production. "
+        "See documentation: docs/WEBHOOKS.md"
+    )
+    
+    # Return early if webhooks are configured (detect by checking settings)
+    from django.conf import settings
+    webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
+    if webhook_secrets.get("github"):
+        logger.info(
+            "GitHub webhook is configured. Skipping polling task. "
+            "Remove this task from Celery Beat schedule."
+        )
+        return {
+            "status": "skipped",
+            "reason": "webhooks_enabled",
+            "message": "GitHub webhooks are configured. Polling is disabled.",
+        }
+
+    logger.info("Starting GitHub actions check (polling mode - DEPRECATED)")
 
     triggered_count = 0
     skipped_count = 0
@@ -989,23 +1019,48 @@ def _build_gmail_query(area: Area) -> str:
 )
 def check_twitch_actions(self):
     """
-    Poll Twitch for stream status changes and other events.
+    Poll Twitch for stream status changes and other events (DEPRECATED - USE WEBHOOKS).
 
-    Checks all active Areas with Twitch actions and triggers executions
-    when conditions are met.
+    ⚠️ WARNING: This polling task is DEPRECATED. Twitch EventSub webhooks provide:
+    - Real-time notifications (< 1 second vs 5 minutes)
+    - Better reliability (no missed events)
+    - Lower API usage (no polling overhead)
 
-    Supported actions:
+    To enable webhooks:
+    1. Configure WEBHOOK_SECRETS['twitch'] in settings
+    2. Create EventSub subscriptions via Twitch API or management command
+    3. Point webhook to: https://your-domain.com/webhooks/twitch/
+    4. Subscribe to: stream.online, stream.offline, channel.follow, channel.subscribe
+
+    Supported actions (when polling is enabled):
     - twitch_stream_online: Stream goes live
     - twitch_stream_offline: Stream goes offline
     - twitch_new_follower: New follower
     - twitch_new_subscriber: New subscription
     - twitch_channel_update: Channel info changes
 
-    Note: For production, EventSub webhooks are preferred for real-time events.
-
     Returns:
         dict: Summary of polling results
     """
+    logger.warning(
+        "Twitch polling is DEPRECATED. Use EventSub webhooks for production. "
+        "See: https://dev.twitch.tv/docs/eventsub"
+    )
+    
+    # Return early if webhooks are configured
+    from django.conf import settings
+    webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
+    if webhook_secrets.get("twitch"):
+        logger.info(
+            "Twitch webhook is configured. Skipping polling task. "
+            "Remove this task from Celery Beat schedule."
+        )
+        return {
+            "status": "skipped",
+            "reason": "webhooks_enabled",
+            "message": "Twitch EventSub webhooks are configured. Polling is disabled.",
+        }
+
     from django.conf import settings
 
     from users.oauth.manager import OAuthManager
@@ -1017,7 +1072,7 @@ def check_twitch_actions(self):
         get_user_info,
     )
 
-    logger.info("Checking Twitch actions...")
+    logger.info("Checking Twitch actions (polling mode - DEPRECATED)...")
 
     try:
         # Get all active Areas with Twitch actions
@@ -1300,22 +1355,47 @@ def check_twitch_actions(self):
 )
 def check_slack_actions(self):
     """
-    Poll Slack for new messages and events.
+    Poll Slack for new messages and events (DEPRECATED - USE WEBHOOKS).
 
-    Checks all active Areas with Slack actions and triggers executions
-    when new matching events are found.
+    ⚠️ WARNING: This polling task is DEPRECATED. Slack Events API provides:
+    - Real-time event delivery
+    - Better message ordering and reliability
+    - Reduced API rate limit usage
 
-    Supported actions:
+    To enable webhooks:
+    1. Configure WEBHOOK_SECRETS['slack'] in settings
+    2. Enable Events API in your Slack App settings
+    3. Subscribe to events: message.channels, app_mention, member_joined_channel
+    4. Point Request URL to: https://your-domain.com/webhooks/slack/
+
+    Supported actions (when polling is enabled):
     - slack_new_message: Any new message in a channel
     - slack_message_with_keyword: Message containing specific keyword
     - slack_user_mention: User mentioned in a message
     - slack_channel_join: User joins a channel
 
-    Note: For production, Slack Events API webhooks are preferred over polling.
-
     Returns:
         dict: Summary of polling results
     """
+    logger.warning(
+        "Slack polling is DEPRECATED. Use Slack Events API for production. "
+        "See: https://api.slack.com/events-api"
+    )
+    
+    # Return early if webhooks are configured
+    from django.conf import settings
+    webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
+    if webhook_secrets.get("slack"):
+        logger.info(
+            "Slack webhook is configured. Skipping polling task. "
+            "Remove this task from Celery Beat schedule."
+        )
+        return {
+            "status": "skipped",
+            "reason": "webhooks_enabled",
+            "message": "Slack Events API webhooks are configured. Polling is disabled.",
+        }
+
     from users.oauth.manager import OAuthManager
 
     from .helpers.slack_helper import (
@@ -1323,7 +1403,7 @@ def check_slack_actions(self):
         parse_message_event,
     )
 
-    logger.info("Checking Slack actions...")
+    logger.info("Checking Slack actions (polling mode - DEPRECATED)...")
 
     try:
         # Get all active Areas with Slack actions
