@@ -89,6 +89,13 @@ const Dashboard: React.FC = () => {
   const [activeServices, setActiveServices] = useState<string[]>([]);
   const { services: connectedServices, loading: connectedLoading } = useConnectedServices();
 
+  const normalizeServiceName = (name: string | null | undefined): string => {
+    return (name || '')
+      .toString()
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '');
+  };
+
   useEffect(() => {
     if (!services || services.length === 0) return;
 
@@ -97,13 +104,13 @@ const Dashboard: React.FC = () => {
     const connectedSet = new Set<string>();
     if (connectedServices && connectedServices.length > 0) {
       connectedServices.forEach((c) => {
-        if (!c.is_expired) connectedSet.add((c.service_name || '').toString().toLowerCase().replace(/[^a-z0-9]/g, ''));
+        if (!c.is_expired) connectedSet.add(normalizeServiceName(c.service_name));
       });
     }
 
     const active: string[] = [];
     services.forEach((s) => {
-      const key = (s.name || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+      const key = normalizeServiceName(s.name);
       if (internalDefaults.has(key)) {
         active.push(s.name);
         return;
@@ -121,8 +128,8 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
   const getServiceLogo = (service: Service): string | null => {
-    if ((service as any).logo) {
-      const l = (service as any).logo as string;
+    if (service.logo) {
+      const l = service.logo;
       if (l.startsWith('//')) return `https:${l}`;
       return l;
     }
@@ -307,7 +314,12 @@ const Dashboard: React.FC = () => {
         const servicesData = await servicesResponse.json();
         const servicesList = servicesData?.server?.services || [];
         const formattedServices = servicesList.map(
-          (s: { name: string; actions?: unknown[]; reactions?: unknown[]; logo?: string | null }) => ({
+          (s: {
+            name: string;
+            actions?: unknown[];
+            reactions?: unknown[];
+            logo?: string | null;
+          }) => ({
             name: s.name,
             actions: s.actions || [],
             reactions: s.reactions || [],
@@ -393,7 +405,14 @@ const Dashboard: React.FC = () => {
           const internalDefaults = new Set(['timer', 'debug', 'weather', 'webhook', 'email']);
           const internalActive = formattedServices
             .map((s: Service) => s.name)
-            .filter((n: string) => internalDefaults.has((n || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '')));
+            .filter((n: string) =>
+              internalDefaults.has(
+                (n || '')
+                  .toString()
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]/g, '')
+              )
+            );
           if (internalActive.length > 0) setActiveServices(internalActive);
           else setActiveServices(generateRandomActiveServices());
         }
@@ -565,9 +584,12 @@ const Dashboard: React.FC = () => {
                               alt={`${service.name} logo`}
                               className="w-12 h-12 object-contain"
                               style={
-                                ['timer', 'debug', 'email', 'webhook', 'weather'].includes(service.name.toLowerCase())
+                                ['timer', 'debug', 'email', 'webhook', 'weather'].includes(
+                                  service.name.toLowerCase()
+                                )
                                   ? {
-                                      filter: 'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))'
+                                      filter:
+                                        'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))',
                                     }
                                   : undefined
                               }
