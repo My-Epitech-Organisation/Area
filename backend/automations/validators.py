@@ -878,6 +878,13 @@ COMPATIBILITY_RULES = {
     "webhook_trigger": ["*"],
     # Weather actions
     "weather_trigger": ["*"],
+    "weather_rain_detected": ["*"],
+    "weather_snow_detected": ["*"],
+    "weather_temperature_above": ["*"],
+    "weather_temperature_below": ["*"],
+    "weather_extreme_heat": ["*"],
+    "weather_extreme_cold": ["*"],
+    "weather_windy": ["*"],
     # Debug actions - can trigger anything for testing
     "debug_manual_trigger": ["*"],
     # Twitch actions - can trigger Twitch reactions and notification reactions
@@ -1064,12 +1071,21 @@ def validate_action_reaction_compatibility(action_name, reaction_name):
     if "*" in compatible_reactions:
         return
 
+    # Debug actions can trigger any reaction (for testing purposes)
+    if action_name.startswith("debug_"):
+        return
+
+    # Debug reactions are always compatible with any action (for testing purposes)
+    if reaction_name.startswith("debug_"):
+        return
+
     # Check if the specific reaction is allowed
     if reaction_name not in compatible_reactions:
         raise serializers.ValidationError(
             f"Action '{action_name}' is not compatible with reaction '{reaction_name}'. "
             f"Compatible reactions: {', '.join(compatible_reactions)}"
         )
+
 
 
 def get_action_schema(action_name):
