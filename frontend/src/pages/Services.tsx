@@ -14,6 +14,10 @@ type AboutService = {
 };
 
 const Services: React.FC = () => {
+  const isInternalService = (serviceName: string) => {
+    return ['timer', 'debug', 'email', 'webhook', 'weather'].includes(serviceName.toLowerCase());
+  };
+
   const wheelRef = useRef<HTMLDivElement>(null);
   const carouselContainerRef = useRef<HTMLDivElement | null>(null);
   const historyContainerRef = useRef<HTMLDivElement | null>(null);
@@ -582,7 +586,14 @@ const Services: React.FC = () => {
                               <img
                                 src={s.logo}
                                 alt={`${s.Name} logo`}
-                                className="w-full h-full object-contain"
+                                className="w-full h-full object-contain p-2"
+                                style={
+                                  isInternalService(s.Name)
+                                    ? {
+                                        filter: 'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))'
+                                      }
+                                    : undefined
+                                }
                               />
                             ) : (
                               <div className="text-xl md:text-2xl font-bold text-white drop-shadow-lg">
@@ -678,6 +689,13 @@ const Services: React.FC = () => {
                                   className="w-full h-full object-contain p-2"
                                   loading="lazy"
                                   decoding="async"
+                                  style={
+                                    isInternalService(s.Name)
+                                      ? {
+                                          filter: 'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))'
+                                        }
+                                      : undefined
+                                  }
                                 />
                               ) : (
                                 <div className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg">
@@ -745,9 +763,16 @@ const Services: React.FC = () => {
                             <img
                               src={h.logo}
                               alt={`${h.Name} logo`}
-                              className="w-full h-full object-contain"
+                              className="w-full h-full object-contain p-3"
                               loading="lazy"
                               decoding="async"
+                              style={
+                                isInternalService(h.Name)
+                                  ? {
+                                      filter: 'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))'
+                                    }
+                                  : undefined
+                              }
                             />
                           ) : (
                             <div className="text-xl md:text-2xl font-semibold text-white/80">
