@@ -44,6 +44,7 @@ backend/staticfiles/
 *.env.local
 !.env.example
 !.env.production
+*.pem
 
 # PoC
 Poc/
