@@ -6,6 +6,7 @@ import 'providers/user_provider.dart';
 import 'providers/navigation_provider.dart';
 import 'providers/automation_stats_provider.dart';
 import 'providers/service_catalog_provider.dart';
+import 'utils/statistics_helper.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -30,12 +31,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   /// Public entry that prevents concurrent executions by returning the
   /// in-flight Future if one exists.
-  Future<void> _loadStats() async {
+  Future<void> _loadStats({bool forceRefresh = false}) async {
     if (_loadingStatsFuture != null) {
       return _loadingStatsFuture;
     }
 
-    _loadingStatsFuture = _doLoadStats();
+    _loadingStatsFuture = _doLoadStats(forceRefresh: forceRefresh);
     try {
       await _loadingStatsFuture;
     } finally {
@@ -45,7 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   /// Actual implementation separated so we can keep a single in-flight
   /// Future reference while the work runs.
-  Future<void> _doLoadStats() async {
+  Future<void> _doLoadStats({bool forceRefresh = false}) async {
     final statsProvider = context.read<AutomationStatsProvider>();
     final userProvider = context.read<UserProvider>();
     final appletProvider = context.read<AppletProvider>();
@@ -53,14 +54,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
     final futures = <Future>[];
 
-    futures.add(statsProvider.loadAllStats());
+    futures.add(statsProvider.loadAllStats(forceRefresh: forceRefresh));
 
     if (userProvider.profile == null && !userProvider.isLoadingProfile) {
       futures.add(userProvider.loadProfile());
     }
 
     if (appletProvider.applets.isEmpty && !appletProvider.isLoading) {
-      futures.add(appletProvider.loadApplets());
+      futures.add(appletProvider.loadApplets(forceRefresh: forceRefresh));
     }
 
     if (serviceProvider.services.isEmpty &&
@@ -81,25 +82,23 @@ class _MyHomePageState extends State<MyHomePage> {
 
         return Scaffold(
           body: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(userProfile),
-
-                  const SizedBox(height: 32),
-
-                  _buildMetricsCards(applets, executionsStats),
-
-                  const SizedBox(height: 32),
-
-                  _buildQuickActions(context),
-
-                  const SizedBox(height: 32),
-
-                  _buildRecentApplets(applets),
-                ],
+            child: RefreshIndicator(
+              onRefresh: () => _loadStats(forceRefresh: true),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20.0),
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(userProfile),
+                    const SizedBox(height: 32),
+                    _buildMetricsCards(applets, executionsStats),
+                    const SizedBox(height: 32),
+                    _buildQuickActions(context),
+                    const SizedBox(height: 32),
+                    _buildRecentApplets(applets),
+                  ],
+                ),
               ),
             ),
           ),
@@ -154,14 +153,17 @@ class _MyHomePageState extends State<MyHomePage> {
     List<Applet>? applets,
     Map<String, dynamic>? executionsStats,
   ) {
-    final totalApplets = applets?.length ?? 0;
-    final activeApplets =
-        applets?.where((applet) => applet.isActive).length ?? 0;
+    final stats = StatisticsHelper.calculateStats(applets, executionsStats);
+    final successRate = StatisticsHelper.getSuccessRatePercentage(
+      stats['successfulExecutions']!,
+      stats['totalExecutions']!,
+    );
 
-    // Executions stats
-    final totalExecutions = executionsStats?['total'] ?? 0;
-    final successfulExecutions = executionsStats?['success'] ?? 0;
-    final failedExecutions = executionsStats?['failed'] ?? 0;
+    final healthStatus = StatisticsHelper.getHealthStatus(
+      stats['successfulExecutions']!,
+      stats['failedExecutions']!,
+    );
+    final healthColor = _getHealthStatusColor(healthStatus);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,36 +186,32 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             _buildMetricCard(
               title: 'Total',
-              value: totalApplets.toString(),
+              value: stats['totalApplets'].toString(),
               icon: Icons.apps,
               color: Colors.blue,
               subtitle: 'Automations',
             ),
             _buildMetricCard(
               title: 'Active',
-              value: activeApplets.toString(),
+              value: stats['activeApplets'].toString(),
               icon: Icons.check_circle,
               color: Colors.green,
               subtitle: 'Running',
             ),
             _buildMetricCard(
               title: 'Executions',
-              value: totalExecutions.toString(),
+              value: stats['totalExecutions'].toString(),
               icon: Icons.play_arrow,
               color: Colors.teal,
               subtitle: 'Total runs',
             ),
             _buildMetricCard(
               title: 'Success Rate',
-              value: totalExecutions > 0
-                  ? '${((successfulExecutions / totalExecutions) * 100).round()}%'
-                  : '0%',
+              value: '$successRate%',
               icon: Icons.trending_up,
-              color: successfulExecutions > failedExecutions
-                  ? Colors.green
-                  : Colors.red,
+              color: healthColor,
               subtitle:
-                  '$successfulExecutions/${totalExecutions - successfulExecutions}',
+                  '${stats['successfulExecutions']}/${stats['failedExecutions']}',
             ),
           ],
         ),
@@ -566,5 +564,15 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
     );
+  }
+
+  /// Convert health status to color for UI display
+  Color _getHealthStatusColor(String healthStatus) {
+    return switch (healthStatus) {
+      'healthy' => Colors.green,
+      'warning' => Colors.orange,
+      'critical' => Colors.red,
+      _ => Colors.grey,
+    };
   }
 }

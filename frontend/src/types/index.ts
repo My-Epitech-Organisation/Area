@@ -14,6 +14,7 @@ export interface Service {
   name: string;
   actions: ActionReaction[];
   reactions: ActionReaction[];
+  logo?: string | null;
 }
 
 export interface User {
