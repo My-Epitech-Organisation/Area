@@ -341,6 +341,160 @@ def match_webhook_to_areas(
     return list(areas)
 
 
+def process_github_app_installation(event_type: str, action: str, event_data: dict) -> dict:
+    """
+    Process GitHub App installation events.
+
+    Events handled:
+    - installation.created → User installs the app
+    - installation.deleted → User uninstalls the app
+    - installation_repositories.added → Repos added to installation
+    - installation_repositories.removed → Repos removed from installation
+
+    Args:
+        event_type: "installation" or "installation_repositories"
+        action: "created", "deleted", "added", "removed"
+        event_data: GitHub webhook payload
+
+    Returns:
+        Processing result
+    """
+    from .models import GitHubAppInstallation
+    from users.models import User
+
+    installation = event_data.get("installation", {})
+    installation_id = installation.get("id")
+    account = installation.get("account", {})
+    account_login = account.get("login")
+    account_type = account.get("type")  # "User" or "Organization"
+
+    if not installation_id:
+        logger.error("GitHub App event missing installation.id")
+        return {"status": "error", "message": "Missing installation ID"}
+
+    logger.info(
+        f"Processing GitHub App {event_type}.{action} "
+        f"for installation {installation_id} ({account_login})"
+    )
+
+    if event_type == "installation":
+        if action == "created":
+            # User installed the app
+            repositories = [
+                repo["full_name"]
+                for repo in event_data.get("repositories", [])
+            ]
+
+            # Try to find user by GitHub username
+            # Note: This requires the user to have connected via OAuth first
+            user = User.objects.filter(
+                tokens__service__name="github",
+                tokens__external_user_id=account.get("id")
+            ).first()
+
+            if not user:
+                # Create installation without user link
+                # User will link it when they log in via OAuth
+                logger.warning(
+                    f"No AREA user found for GitHub account {account_login}. "
+                    "Installation will be linked when user logs in."
+                )
+
+            GitHubAppInstallation.objects.update_or_create(
+                installation_id=installation_id,
+                defaults={
+                    "user": user,
+                    "account_login": account_login,
+                    "account_type": account_type,
+                    "repositories": repositories,
+                    "is_active": True,
+                }
+            )
+
+            logger.info(
+                f"GitHub App installed: {installation_id} "
+                f"with {len(repositories)} repositories"
+            )
+
+            return {
+                "status": "success",
+                "action": "created",
+                "installation_id": installation_id,
+                "repositories_count": len(repositories)
+            }
+
+        elif action == "deleted":
+            # User uninstalled the app
+            installation_obj = GitHubAppInstallation.objects.filter(
+                installation_id=installation_id
+            ).first()
+
+            if installation_obj:
+                installation_obj.deactivate()
+                logger.info(f"GitHub App uninstalled: {installation_id}")
+
+            return {
+                "status": "success",
+                "action": "deleted",
+                "installation_id": installation_id
+            }
+
+    elif event_type == "installation_repositories":
+        installation_obj = GitHubAppInstallation.objects.filter(
+            installation_id=installation_id
+        ).first()
+
+        if not installation_obj:
+            logger.warning(
+                f"Installation {installation_id} not found for repositories event"
+            )
+            return {
+                "status": "error",
+                "message": "Installation not found"
+            }
+
+        if action == "added":
+            added_repos = [
+                repo["full_name"]
+                for repo in event_data.get("repositories_added", [])
+            ]
+            installation_obj.add_repositories(added_repos)
+            logger.info(
+                f"Added {len(added_repos)} repositories to "
+                f"installation {installation_id}"
+            )
+
+            return {
+                "status": "success",
+                "action": "added",
+                "installation_id": installation_id,
+                "repositories_added": len(added_repos)
+            }
+
+        elif action == "removed":
+            removed_repos = [
+                repo["full_name"]
+                for repo in event_data.get("repositories_removed", [])
+            ]
+            installation_obj.remove_repositories(removed_repos)
+            logger.info(
+                f"Removed {len(removed_repos)} repositories from "
+                f"installation {installation_id}"
+            )
+
+            return {
+                "status": "success",
+                "action": "removed",
+                "installation_id": installation_id,
+                "repositories_removed": len(removed_repos)
+            }
+
+    return {
+        "status": "ignored",
+        "message": f"Unsupported event: {event_type}.{action}"
+    }
+
+
 def process_webhook_event(
     service_name: str,
     event_type: str,
@@ -573,6 +727,31 @@ def webhook_receiver(request: Request, service: str) -> Response:
     # Extract event type
     if service == "github":
         event_type = request.headers.get("X-GitHub-Event", "unknown")
+
+        # Handle GitHub App installation events
+        if event_type in ["installation", "installation_repositories"]:
+            action = event_data.get("action", "unknown")
+            logger.info(
+                f"Processing GitHub App {event_type}.{action} event"
+            )
+
+            try:
+                result = process_github_app_installation(
+                    event_type=event_type,
+                    action=action,
+                    event_data=event_data
+                )
+                return Response(result, status=status.HTTP_200_OK)
+            except Exception as e:
+                logger.error(
+                    f"Error processing GitHub App installation: {e}",
+                    exc_info=True
+                )
+                return Response(
+                    {"error": "Internal server error"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
     elif service == "twitch":
         # Twitch sends message type in header
         event_type = request.headers.get("Twitch-Eventsub-Message-Type", "notification")
