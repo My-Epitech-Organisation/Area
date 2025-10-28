@@ -59,38 +59,95 @@ class ForgotPasswordView(APIView):
 
             # Send email
             subject = "Password Reset Request - AREA"
-            html_message = f"""
-            <html>
-            <body>
-                <h2>Password Reset Request</h2>
-                <p>Hello,</p>
-                <p>You have requested to reset your password for your AREA account.</p>
-                <p>Click the link below to reset your password:</p>
-                <p>
-                    <a href="{reset_url}"
-                    style="background-color: #4CAF50; color: white;
-                    padding: 10px 20px; text-decoration: none;
-                    border-radius: 5px; display: inline-block;">
-                    Reset Password</a>
-                </p>
-                <p>Or copy and paste this URL into your browser:</p>
-                <p>{reset_url}</p>
-                <p>This link will expire in 1 hour.</p>
-                <p>
-                    If you did not request a password reset,
-                    please ignore this email.
-                </p>
-                <br>
-                <p>Best regards,<br>The AREA Team</p>
-            </body>
-            </html>
-            """
+            html_message = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Reset Request</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="padding: 40px 30px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px 12px 0 0;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">🔒 Password Reset</h1>
+                        </td>
+                    </tr>
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px; background-color: #fafbff;">
+                            <p style="margin: 0 0 20px 0; color: #333333; font-size: 16px; line-height: 1.6;">
+                                Hello,
+                            </p>
+                            <p style="margin: 0 0 20px 0; color: #555555; font-size: 16px; line-height: 1.6;">
+                                You have requested to reset your password for your <strong style="color: #667eea;">AREA</strong> account.
+                            </p>
+                            <p style="margin: 0 0 30px 0; color: #555555; font-size: 16px; line-height: 1.6;">
+                                Click the button below to create a new password:
+                            </p>
+                            <!-- Button -->
+                            <table role="presentation" style="margin: 0 auto;">
+                                <tr>
+                                    <td style="border-radius: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);">
+                                        <a href="{reset_url}" target="_blank" style="display: inline-block; padding: 16px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; letter-spacing: 0.5px;">
+                                            Reset My Password
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="margin: 30px 0 20px 0; color: #888888; font-size: 14px; line-height: 1.5; text-align: center;">
+                                Or copy and paste this URL into your browser:
+                            </p>
+                            <p style="margin: 0 0 30px 0; padding: 15px; background-color: #f0f3ff; border-left: 4px solid #667eea; border-radius: 4px; word-break: break-all; color: #667eea; font-size: 13px; font-family: 'Courier New', monospace;">
+                                {reset_url}
+                            </p>
+                            <div style="margin: 30px 0; padding: 20px; background-color: #fff8e6; border-left: 4px solid #ffc107; border-radius: 4px;">
+                                <p style="margin: 0; color: #856404; font-size: 14px; line-height: 1.5;">
+                                    ⚠️ <strong>Security Notice:</strong> This link will expire in <strong>1 hour</strong>.
+                                </p>
+                            </div>
+                            <p style="margin: 0; color: #999999; font-size: 14px; line-height: 1.5; text-align: center;">
+                                If you didn't request a password reset, please ignore this email or contact support if you have concerns.
+                            </p>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 30px; text-align: center; background: linear-gradient(135deg, #f5f7ff 0%, #faf5ff 100%); border-radius: 0 0 12px 12px;">
+                            <p style="margin: 0 0 10px 0; color: #667eea; font-size: 16px; font-weight: bold;">
+                                The AREA Team
+                            </p>
+                            <p style="margin: 0; color: #999999; font-size: 12px;">
+                                Automating your digital life, one action at a time
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+                <!-- Bottom text -->
+                <table role="presentation" style="width: 600px; margin-top: 20px;">
+                    <tr>
+                        <td style="text-align: center;">
+                            <p style="margin: 0; color: #ffffff; font-size: 12px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+                                This is an automated email. Please do not reply to this message.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>"""
             plain_message = strip_tags(html_message)
 
             send_mail(
                 subject=subject,
                 message=plain_message,
-                from_email="epi.areaction@gmail.com",
+                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[email],
                 html_message=html_message,
                 fail_silently=False,

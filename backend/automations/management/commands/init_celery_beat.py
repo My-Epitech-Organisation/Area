@@ -22,13 +22,6 @@ class Command(BaseCommand):
         # 1. Create interval schedules
         # =====================================================================
 
-        # 100 seconds - For Twitch action checking
-        interval_100s, created = IntervalSchedule.objects.get_or_create(
-            every=100, period=IntervalSchedule.SECONDS
-        )
-        if created:
-            self.stdout.write(self.style.SUCCESS("  ✓ Created 100-second interval"))
-
         # 60 seconds - For timer actions
         interval_60s, created = IntervalSchedule.objects.get_or_create(
             every=60, period=IntervalSchedule.SECONDS
@@ -36,46 +29,30 @@ class Command(BaseCommand):
         if created:
             self.stdout.write(self.style.SUCCESS("  ✓ Created 60-second interval"))
 
-        # 300 seconds (5 minutes) - For GitHub actions
+        # 120 seconds (2 minutes) - For real-time services (Twitch, Slack, Spotify)
+        interval_120s, created = IntervalSchedule.objects.get_or_create(
+            every=120, period=IntervalSchedule.SECONDS
+        )
+        if created:
+            self.stdout.write(self.style.SUCCESS("  ✓ Created 120-second interval"))
+
+        # 300 seconds (5 minutes) - For email and repository services
         interval_300s, created = IntervalSchedule.objects.get_or_create(
             every=300, period=IntervalSchedule.SECONDS
         )
         if created:
             self.stdout.write(self.style.SUCCESS("  ✓ Created 300-second interval"))
 
+        # 1800 seconds (30 minutes) - For weather services
+        interval_1800s, created = IntervalSchedule.objects.get_or_create(
+            every=1800, period=IntervalSchedule.SECONDS
+        )
+        if created:
+            self.stdout.write(self.style.SUCCESS("  ✓ Created 1800-second interval"))
+
         # =====================================================================
         # 2. Create periodic tasks
         # =====================================================================
-
-        # Twitch actions check (every 100 seconds)
-        task, created = PeriodicTask.objects.get_or_create(
-            name="check-twitch-actions",
-            defaults={
-                "task": "automations.check_twitch_actions",
-                "interval": interval_100s,
-                "enabled": True,
-                "start_time": timezone.now(),
-                "description": "Check Twitch actions (stream status, followers, subscribers, etc.)",
-            },
-        )
-        if created:
-            self.stdout.write(
-                self.style.SUCCESS(
-                    "  ✓ Created check-twitch-actions task (100s interval)"
-                )
-            )
-        else:
-            # Update interval in case it changed
-            if task.interval != interval_100s:
-                task.interval = interval_100s
-                task.save()
-                self.stdout.write(
-                    self.style.WARNING(
-                        "  ⚠ Updated check-twitch-actions interval to 100s"
-                    )
-                )
-            else:
-                self.stdout.write("  • check-twitch-actions already exists")
 
         # Timer actions check (every 60 seconds)
         task, created = PeriodicTask.objects.get_or_create(
@@ -97,7 +74,7 @@ class Command(BaseCommand):
         else:
             self.stdout.write("  • check-timer-actions already exists")
 
-        # GitHub actions check (every 300 seconds)
+        # GitHub actions check (every 5 minutes)
         task, created = PeriodicTask.objects.get_or_create(
             name="check-github-actions",
             defaults={
@@ -117,6 +94,86 @@ class Command(BaseCommand):
         else:
             self.stdout.write("  • check-github-actions already exists")
 
+        # Gmail actions check (every 5 minutes)
+        task, created = PeriodicTask.objects.get_or_create(
+            name="check-gmail-actions",
+            defaults={
+                "task": "automations.check_gmail_actions",
+                "interval": interval_300s,
+                "enabled": True,
+                "start_time": timezone.now(),
+                "description": "Check Gmail actions (new emails, labels, etc.)",
+            },
+        )
+        if created:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "  ✓ Created check-gmail-actions task (300s interval)"
+                )
+            )
+        else:
+            self.stdout.write("  • check-gmail-actions already exists")
+
+        # Weather actions check (every 30 minutes)
+        task, created = PeriodicTask.objects.get_or_create(
+            name="check-weather-actions",
+            defaults={
+                "task": "automations.check_weather_actions",
+                "interval": interval_1800s,
+                "enabled": True,
+                "start_time": timezone.now(),
+                "description": "Check weather conditions and trigger alerts",
+            },
+        )
+        if created:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "  ✓ Created check-weather-actions task (1800s interval)"
+                )
+            )
+        else:
+            self.stdout.write("  • check-weather-actions already exists")
+
+        # Twitch actions check (every 2 minutes)
+        task, created = PeriodicTask.objects.get_or_create(
+            name="check-twitch-actions",
+            defaults={
+                "task": "automations.check_twitch_actions",
+                "interval": interval_120s,
+                "enabled": True,
+                "start_time": timezone.now(),
+                "description": "Check Twitch actions (stream status, followers, subscribers, etc.)",
+            },
+        )
+        if created:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "  ✓ Created check-twitch-actions task (120s interval)"
+                )
+            )
+        else:
+            self.stdout.write("  • check-twitch-actions already exists")
+
+        # Slack actions check (every 2 minutes)
+        task, created = PeriodicTask.objects.get_or_create(
+            name="check-slack-actions",
+            defaults={
+                "task": "automations.check_slack_actions",
+                "interval": interval_120s,
+                "enabled": True,
+                "start_time": timezone.now(),
+                "description": "Check Slack actions (new messages, keywords, mentions)",
+            },
+        )
+        if created:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "  ✓ Created check-slack-actions task (120s interval)"
+                )
+            )
+        else:
+            self.stdout.write("  • check-slack-actions already exists")
+
         # =====================================================================
         # Summary
         # =====================================================================
@@ -126,5 +183,5 @@ class Command(BaseCommand):
         )
         self.stdout.write(f"   Total periodic tasks: {total_tasks}")
         self.stdout.write(
-            "\n💡 Note: For production, change Twitch interval to 300s (5 minutes)"
+            "\n💡 Note: All polling tasks are now scheduled. Intervals can be adjusted per environment."
         )
