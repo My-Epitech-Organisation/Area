@@ -115,7 +115,7 @@ const Navbar: React.FC = () => {
                 </span>
                 <button
                   onClick={handleLogout}
-                  className="text-theme-primary text-sm lg:text-lg font-semibold hover:text-theme-error transition"
+                  className="text-theme-error text-sm lg:text-lg font-semibold hover:text-theme-logout transition"
                 >
                   Log Out
                 </button>
