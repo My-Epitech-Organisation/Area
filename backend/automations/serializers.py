@@ -7,6 +7,10 @@ This module provides Django REST Framework serializers for:
 - Area CRUD operations with validation
 """
 
+import re
+from urllib.parse import unquote, urlparse
+
+import requests
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -20,6 +24,58 @@ from .validators import (
     validate_action_reaction_compatibility,
     validate_reaction_config,
 )
+
+_WIKI_IMAGE_CACHE = {}
+
+
+def _resolve_wikipedia_file_url(url_or_text: str) -> str | None:
+    """Given a Wikipedia file page URL or text containing 'File:...', query the
+    appropriate Wikimedia API to obtain the direct image URL (upload.wikimedia.org).
+
+    Returns the direct image URL or None on failure.
+    """
+    try:
+        parsed = urlparse(url_or_text)
+        netloc = parsed.netloc or "en.wikipedia.org"
+        fragment = parsed.fragment or ""
+        path = parsed.path or ""
+
+        m = (
+            re.search(r"File:([^/#?]+)", fragment)
+            or re.search(r"/wiki/File:([^/#?]+)", path)
+            or re.search(r"File:([^/#?]+)", url_or_text)
+        )
+        if not m:
+            return None
+
+        filename = unquote(m.group(1))
+        key = (netloc, filename)
+        if key in _WIKI_IMAGE_CACHE:
+            return _WIKI_IMAGE_CACHE[key]
+
+        api_url = (
+            f"https://{netloc}/w/api.php?action=query&titles=File:{requests.utils.requote_uri(filename)}"
+            "&prop=imageinfo&iiprop=url&format=json&formatversion=2"
+        )
+
+        resp = requests.get(api_url, timeout=5)
+        if not resp.ok:
+            _WIKI_IMAGE_CACHE[key] = None
+            return None
+
+        data = resp.json()
+        pages = data.get("query", {}).get("pages", [])
+        if pages:
+            imageinfo = pages[0].get("imageinfo")
+            if imageinfo and len(imageinfo) > 0:
+                img_url = imageinfo[0].get("url")
+                _WIKI_IMAGE_CACHE[key] = img_url
+                return img_url
+
+        _WIKI_IMAGE_CACHE[key] = None
+        return None
+    except Exception:
+        return None
 
 
 class ServiceSerializer(serializers.ModelSerializer):
@@ -393,10 +449,66 @@ class AboutServiceSerializer(serializers.ModelSerializer):
     actions = AboutActionSerializer(many=True, read_only=True)
     reactions = AboutReactionSerializer(many=True, read_only=True)
     requires_oauth = serializers.SerializerMethodField()
+    logo = serializers.SerializerMethodField()
 
     class Meta:
         model = Service
-        fields = ["name", "requires_oauth", "actions", "reactions"]
+        fields = ["name", "requires_oauth", "actions", "reactions", "logo"]
+
+    def get_logo(self, obj):
+        """Return the configured logo URL for the service or a fallback.
+
+        - Use an internal mapping of known services to their official/Wikipedia SVG URLs.
+        - If a service is not present in the mapping, return None.
+        """
+        try:
+            name = (obj.name or "").strip().lower()
+        except Exception:
+            return None
+        # Inline mapping: service name (lowercase) -> direct image or wiki file page URL
+        mapping = {
+            # Internal services with black icons (will have white outline via CSS)
+            "timer": "https://api.iconify.design/mdi/timer-outline.svg?color=black",
+            "debug": "https://api.iconify.design/mdi/cog-outline.svg?color=black",
+            "email": "https://api.iconify.design/mdi/email-outline.svg?color=black",
+            "webhook": "https://api.iconify.design/mdi/webhook.svg?color=black",
+            "weather": "https://api.iconify.design/mdi/weather-partly-cloudy.svg?color=black",
+            # External services - Using Wikipedia images (original colors, no border)
+            "teams": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Microsoft_Office_Teams_%282018%E2%80%93present%29.svg",
+            "github": "https://upload.wikimedia.org/wikipedia/commons/c/c2/GitHub_Invertocat_Logo.svg",
+            "gmail": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg",
+            "slack": "https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg",
+            "twitch": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Twitch_Glitch_Logo_Purple.svg",
+            "google_calendar": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg",
+            "spotify": "https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg",
+            "discord": "https://upload.wikimedia.org/wikipedia/commons/9/98/Discord_logo_2015.svg",
+        }
+
+        def _normalize_key(s: str) -> str:
+            return re.sub(r"[^a-z0-9]", "", (s or "").lower())
+
+        candidates = [
+            name,
+            name.replace("_", ""),
+            name.replace(" ", ""),
+            _normalize_key(name),
+        ]
+
+        found = None
+        for k in candidates:
+            if k in mapping:
+                found = mapping[k]
+                break
+
+        if not found:
+            return None
+
+        if ("wikipedia.org" in found) or ("/media/" in found) or ("File:" in found):
+            direct = _resolve_wikipedia_file_url(found)
+            if direct:
+                return direct
+
+        return found
 
     def get_requires_oauth(self, obj):
         """Check if this service requires OAuth authentication.
