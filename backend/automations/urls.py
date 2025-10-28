@@ -44,6 +44,9 @@ try:
 except ImportError:
     pass  # webhook_views may not be available yet
 
+# Import GitHub App views
+from . import github_app_views
+
 app_name = "automations"
 
 urlpatterns = [
@@ -71,6 +74,10 @@ urlpatterns = [
     path("logos/<str:service>/", views.logo_proxy_view, name="logo-proxy"),
     # Webhook receiver endpoint
     path("webhooks/<str:service>/", webhook_receiver, name="webhook-receiver"),
+    # GitHub App endpoints
+    path("api/github-app/status/", github_app_views.github_app_status, name="github-app-status"),
+    path("api/github-app/link-installation/", github_app_views.github_app_link_installation, name="github-app-link"),
+    path("api/github-app/repositories/", github_app_views.github_app_repositories, name="github-app-repos"),
     # Debug endpoints
     path(
         "api/debug/trigger/<int:area_id>/",
