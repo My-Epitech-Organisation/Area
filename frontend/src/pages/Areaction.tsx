@@ -1,9 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useActions, useReactions, useCreateArea } from '../hooks/useApi';
+import {
+  useActions,
+  useReactions,
+  useCreateArea,
+  useAreas,
+  useUpdateArea,
+  useDeleteArea,
+} from '../hooks/useApi';
 import { findActionByName, findReactionByName, generateAreaName } from '../utils/areaHelpers';
 import { DynamicConfigForm } from '../components/DynamicConfigForm';
-import { API_BASE, getStoredUser } from '../utils/helper';
+import { API_BASE, getStoredUser, fetchUserData } from '../utils/helper';
+import type { Area } from '../types/api';
 import EmailVerificationBanner from '../components/EmailVerificationBanner';
 import type { User } from '../types';
 
@@ -38,11 +46,17 @@ const Areaction: React.FC = () => {
   // Fetch actions and reactions from API
   const { data: apiActions, loading: loadingActions, error: errorActions } = useActions();
   const { data: apiReactions, loading: loadingReactions, error: errorReactions } = useReactions();
+  const { data: userAreas, loading: loadingAreas, refetch: refetchAreas } = useAreas();
   const { createArea, loading: creatingArea } = useCreateArea();
+  const { updateArea, loading: updatingArea } = useUpdateArea();
+  const { deleteArea, loading: _ } = useDeleteArea();
 
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Editing state
+  const [editingAreaId, setEditingAreaId] = useState<number | null>(null);
 
   const [selectedActionService, setSelectedActionService] = useState<string | null>(null);
   const [selectedReactionService, setSelectedReactionService] = useState<string | null>(null);
@@ -104,6 +118,27 @@ const Areaction: React.FC = () => {
     if (storedUser) {
       setUser(storedUser);
     }
+  }, []);
+
+  const handleRefreshUserData = async () => {
+    try {
+      const updatedUser = await fetchUserData();
+      if (updatedUser) {
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+    } catch (err) {
+      console.error('Error refreshing user data:', err);
+    }
+  };
+
+  useEffect(() => {
+    const handleFocus = () => {
+      handleRefreshUserData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   useEffect(() => {
@@ -205,7 +240,6 @@ const Areaction: React.FC = () => {
       return;
     }
 
-    // Find the actual Action and Reaction objects from API
     const actionObj = findActionByName(apiActions || [], selectedAction!);
     const reactionObj = findReactionByName(apiReactions || [], selectedReaction!);
 
@@ -222,27 +256,142 @@ const Areaction: React.FC = () => {
     }
 
     try {
-      // Create the AREA with proper payload
+      if (editingAreaId) {
+        await updateArea(editingAreaId, {
+          name: generateAreaName(selectedAction!, selectedReaction!),
+          action: actionObj.id,
+          reaction: reactionObj.id,
+          action_config: actionConfig,
+          reaction_config: reactionConfig,
+        });
+
+        setMessage('Automation updated successfully!');
+        setMessageType('success');
+        setEditingAreaId(null);
+      } else {
+        await createArea({
+          name: generateAreaName(selectedAction!, selectedReaction!),
+          action: actionObj.id,
+          reaction: reactionObj.id,
+          action_config: actionConfig,
+          reaction_config: reactionConfig,
+          status: 'active',
+        });
+
+        setMessage('Automation created successfully!');
+        setMessageType('success');
+      }
+
+      refetchAreas();
+
+      setTimeout(() => {
+        setSelectedActionService(null);
+        setSelectedReactionService(null);
+        setSelectedAction(null);
+        setSelectedReaction(null);
+        setActionConfig({});
+        setReactionConfig({});
+        setMessage(null);
+        setMessageType(null);
+        setEditingAreaId(null);
+      }, 1500);
+    } catch (err: unknown) {
+      setMessage(err instanceof Error ? err.message : 'Failed to save automation');
+      setMessageType('error');
+    }
+  };
+
+  const handleEditArea = (area: Area) => {
+    const actionObj = apiActions?.find((a) => a.id === area.action);
+    const reactionObj = apiReactions?.find((r) => r.id === area.reaction);
+
+    if (!actionObj || !reactionObj) {
+      setMessage('Error loading automation details');
+      setMessageType('error');
+      return;
+    }
+
+    const actionService = services.find((s) => s.actions.some((a) => a.name === actionObj.name));
+    const reactionService = services.find((s) =>
+      s.reactions.some((r) => r.name === reactionObj.name)
+    );
+
+    setEditingAreaId(area.id);
+    setSelectedActionService(actionService?.name || null);
+    setSelectedAction(actionObj.name);
+    setSelectedReactionService(reactionService?.name || null);
+    setSelectedReaction(reactionObj.name);
+    setActionConfig(area.action_config || {});
+    setReactionConfig(area.reaction_config || {});
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDuplicateArea = async (area: Area) => {
+    const actionObj = apiActions?.find((a) => a.id === area.action);
+    const reactionObj = apiReactions?.find((r) => r.id === area.reaction);
+
+    if (!actionObj || !reactionObj) {
+      setMessage('Error duplicating automation');
+      setMessageType('error');
+      return;
+    }
+
+    try {
       await createArea({
-        name: generateAreaName(selectedAction!, selectedReaction!),
-        action: actionObj.id,
-        reaction: reactionObj.id,
-        action_config: actionConfig,
-        reaction_config: reactionConfig,
+        name: `${area.name} (Copy)`,
+        action: area.action,
+        reaction: area.reaction,
+        action_config: area.action_config,
+        reaction_config: area.reaction_config,
         status: 'active',
       });
 
-      setMessage('Automation created successfully!');
+      setMessage('Automation duplicated successfully!');
       setMessageType('success');
+      refetchAreas();
 
-      // Redirect to dashboard after 1.5 seconds
       setTimeout(() => {
-        navigate('/dashboard');
-      }, 1500);
+        setMessage(null);
+        setMessageType(null);
+      }, 2000);
     } catch (err: unknown) {
-      setMessage(err instanceof Error ? err.message : 'Failed to create automation');
+      setMessage(err instanceof Error ? err.message : 'Failed to duplicate automation');
       setMessageType('error');
     }
+  };
+
+  const handleDeleteArea = async (areaId: number) => {
+    if (!confirm('Are you sure you want to delete this automation?')) {
+      return;
+    }
+
+    try {
+      await deleteArea(areaId);
+      setMessage('Automation deleted successfully!');
+      setMessageType('success');
+      refetchAreas();
+
+      setTimeout(() => {
+        setMessage(null);
+        setMessageType(null);
+      }, 2000);
+    } catch (err: unknown) {
+      setMessage(err instanceof Error ? err.message : 'Failed to delete automation');
+      setMessageType('error');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingAreaId(null);
+    setSelectedActionService(null);
+    setSelectedReactionService(null);
+    setSelectedAction(null);
+    setSelectedReaction(null);
+    setActionConfig({});
+    setReactionConfig({});
+    setMessage(null);
+    setMessageType(null);
   };
 
   const formatName = (name: string): string => {
@@ -272,7 +421,7 @@ const Areaction: React.FC = () => {
       <div className="w-screen min-h-screen bg-gradient-to-br from-black/90 via-gray-900/80 to-indigo-950 flex flex-col items-center justify-center p-6">
         <div className="max-w-2xl w-full space-y-6">
           {/* Email Verification Banner - Shows if user is not verified */}
-          <EmailVerificationBanner user={user} />
+          <EmailVerificationBanner user={user} onVerificationSent={handleRefreshUserData} />
 
           <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 text-center">
             <h2 className="text-2xl font-bold text-white mb-4">Error</h2>
@@ -716,7 +865,15 @@ const Areaction: React.FC = () => {
           </div>
         )}
 
-        <div className="mt-10 flex justify-center">
+        <div className="mt-10 flex justify-center gap-4">
+          {editingAreaId && (
+            <button
+              onClick={handleCancelEdit}
+              className="px-8 py-4 rounded-xl font-medium flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white transition-colors"
+            >
+              Cancel
+            </button>
+          )}
           <button
             onClick={handleCreateAutomation}
             disabled={
@@ -724,22 +881,24 @@ const Areaction: React.FC = () => {
               !selectedReactionService ||
               !selectedAction ||
               !selectedReaction ||
-              creatingArea
+              creatingArea ||
+              updatingArea
             }
             className={`px-8 py-4 rounded-xl font-medium flex items-center gap-2 transition-colors ${
               !selectedActionService ||
               !selectedReactionService ||
               !selectedAction ||
               !selectedReaction ||
-              creatingArea
+              creatingArea ||
+              updatingArea
                 ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
                 : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white'
             }`}
           >
-            {creatingArea ? (
+            {creatingArea || updatingArea ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-                Creating...
+                {editingAreaId ? 'Updating...' : 'Creating...'}
               </>
             ) : (
               <>
@@ -755,10 +914,172 @@ const Areaction: React.FC = () => {
                     clipRule="evenodd"
                   />
                 </svg>
-                Create Automation
+                {editingAreaId ? 'Update Automation' : 'Create Automation'}
               </>
             )}
           </button>
+        </div>
+        <div className="mt-16 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-3xl font-bold text-white">My Automations</h2>
+            <button
+              onClick={refetchAreas}
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center gap-2"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Refresh
+            </button>
+          </div>
+
+          {loadingAreas ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+            </div>
+          ) : !userAreas || userAreas.length === 0 ? (
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-12 text-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-16 w-16 mx-auto text-gray-400 mb-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                />
+              </svg>
+              <p className="text-gray-300 text-lg">No automations yet</p>
+              <p className="text-gray-400 mt-2">
+                Create your first automation above to get started!
+              </p>
+            </div>
+          ) : (
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-white/10">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-200">
+                        Name
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-200">
+                        Action
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-200">
+                        Reaction
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-200">
+                        Status
+                      </th>
+                      <th className="px-6 py-4 text-right text-sm font-semibold text-gray-200">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/10">
+                    {userAreas.map((area) => {
+                      const actionObj = apiActions?.find((a) => a.id === area.action);
+                      const reactionObj = apiReactions?.find((r) => r.id === area.reaction);
+
+                      return (
+                        <tr key={area.id} className="hover:bg-white/5 transition-colors">
+                          <td className="px-6 py-4 text-white font-medium">{area.name}</td>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-indigo-600/20 text-indigo-300">
+                              {actionObj ? formatName(actionObj.name) : 'Unknown'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-600/20 text-purple-300">
+                              {reactionObj ? formatName(reactionObj.name) : 'Unknown'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span
+                              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                                area.status === 'active'
+                                  ? 'bg-green-600/20 text-green-300'
+                                  : area.status === 'paused'
+                                    ? 'bg-yellow-600/20 text-yellow-300'
+                                    : 'bg-red-600/20 text-red-300'
+                              }`}
+                            >
+                              {area.status.charAt(0).toUpperCase() + area.status.slice(1)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => handleDuplicateArea(area)}
+                                title="Duplicate"
+                                className="p-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 rounded-lg transition-colors"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-5 w-5"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" />
+                                  <path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h8a2 2 0 00-2-2H5z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleEditArea(area)}
+                                title="Edit"
+                                className="p-2 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 rounded-lg transition-colors"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-5 w-5"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteArea(area.id)}
+                                title="Delete"
+                                className="p-2 bg-red-600/20 hover:bg-red-600/40 text-red-300 rounded-lg transition-colors"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-5 w-5"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
