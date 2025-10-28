@@ -379,7 +379,7 @@ def check_github_actions(self):
         "GitHub polling is DEPRECATED. Please use webhooks for production. "
         "See documentation: docs/WEBHOOKS.md"
     )
-    
+
     # Return early if webhooks are configured (detect by checking settings)
     from django.conf import settings
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
@@ -1046,7 +1046,7 @@ def check_twitch_actions(self):
         "Twitch polling is DEPRECATED. Use EventSub webhooks for production. "
         "See: https://dev.twitch.tv/docs/eventsub"
     )
-    
+
     # Return early if webhooks are configured
     from django.conf import settings
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
@@ -1381,7 +1381,7 @@ def check_slack_actions(self):
         "Slack polling is DEPRECATED. Use Slack Events API for production. "
         "See: https://api.slack.com/events-api"
     )
-    
+
     # Return early if webhooks are configured
     from django.conf import settings
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
