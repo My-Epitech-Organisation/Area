@@ -263,7 +263,7 @@ def extract_event_id(
         event_id = event_data.get("event_id")
         if event_id:
             return f"slack_event_{event_id}"
-        
+
         # For message events, use channel + timestamp
         event = event_data.get("event", {})
         if event.get("channel") and event.get("ts"):
@@ -460,7 +460,7 @@ def process_webhook_event(
             if created and execution:
                 # Queue reaction execution
                 from .tasks import execute_reaction_task
-                
+
                 execute_reaction_task.delay(execution.pk)
                 executions_created += 1
                 logger.info(
