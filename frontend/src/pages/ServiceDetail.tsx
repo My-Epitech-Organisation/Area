@@ -28,6 +28,10 @@ const ServiceDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const isInternalService = (serviceName: string) => {
+    return ['timer', 'debug', 'email', 'webhook', 'weather'].includes(serviceName.toLowerCase());
+  };
+
   // OAuth hooks
   const {
     services: connectedServices,
@@ -215,6 +219,13 @@ const ServiceDetail: React.FC = () => {
                   src={logo}
                   alt={`${service.name} logo`}
                   className="w-full h-full object-contain"
+                  style={
+                    isInternalService(service.name)
+                      ? {
+                          filter: 'drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.4))'
+                        }
+                      : undefined
+                  }
                 />
               ) : (
                 <span className="text-4xl font-bold text-white">
