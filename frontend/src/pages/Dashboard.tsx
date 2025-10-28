@@ -130,6 +130,18 @@ const Dashboard: React.FC = () => {
     return imagesByName[key] || null;
   };
 
+  const sortedServices = React.useMemo(() => {
+    const sorted = [...services];
+    const activeSet = new Set(activeServices.map((s) => (s || '').toString().toLowerCase()));
+    sorted.sort((a, b) => {
+      const aActive = activeSet.has((a.name || '').toString().toLowerCase()) ? 0 : 1;
+      const bActive = activeSet.has((b.name || '').toString().toLowerCase()) ? 0 : 1;
+      if (aActive !== bActive) return aActive - bActive;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+    return sorted;
+  }, [services, activeServices]);
+
   const handleServiceClick = (serviceName: string) => {
     navigate(`/services/${serviceName.toLowerCase()}`);
   };
@@ -318,8 +330,6 @@ const Dashboard: React.FC = () => {
         };
         if (isFullyAuthenticated()) {
           try {
-            // When authenticated, we will compute active services based on linked providers
-            // below in an effect that depends on connected services. For now set a placeholder.
             setActiveServices(generateRandomActiveServices());
             const fetchWithTimeout = async (url: string, options: RequestInit, timeout: number) => {
               const controller = new AbortController();
@@ -423,55 +433,6 @@ const Dashboard: React.FC = () => {
             </div>
           </header>
           <div className="w-full flex flex-col gap-4 mb-4">
-            <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-theme-primary">
-              <h2 className="text-xl font-semibold text-theme-accent mb-3">Service Activity</h2>
-              {activeServices.length > 0 ? (
-                <>
-                  <div className="h-32 md:h-[180px] relative">
-                    <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-white bg-opacity-20"></div>
-                    <div className="absolute left-0 bottom-0 top-0 w-[1px] bg-white bg-opacity-20"></div>
-                    <div className="flex h-full items-end justify-between px-2">
-                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => {
-                        const heightMultiplier =
-                          activeServices.length > 0
-                            ? Math.min(120, activeServices.length * 40)
-                            : 30;
-                        return (
-                          <div key={day} className="flex flex-col items-center w-1/7">
-                            <div
-                              className="w-8 bg-gradient-chart-bar rounded-t-sm"
-                              style={{
-                                height: `${(i >= 5 ? 80 : 40) + Math.random() * heightMultiplier}px`,
-                                opacity: i === 6 ? 1 : 0.7 + i * 0.05,
-                              }}
-                            ></div>
-                            <span className="text-xs mt-2 text-gray-400">{day}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <div className="mt-4 text-sm text-gray-400 text-center">
-                    Last 7 days activity across {activeServices.length} active service
-                    {activeServices.length !== 1 ? 's' : ''}
-                  </div>
-                </>
-              ) : loading ? (
-                <div className="h-32 md:h-[180px] flex items-center justify-center">
-                  <div className="animate-pulse text-indigo-300">Loading activity data...</div>
-                </div>
-              ) : (
-                <div className="h-32 md:h-[180px] flex flex-col items-center justify-center">
-                  <p className="text-gray-400 mb-3">No active services yet</p>
-                  <button
-                    onClick={() => navigate('/services')}
-                    className="px-4 py-2 bg-gradient-button-primary hover:bg-gradient-button-primary rounded-lg text-white transition-colors"
-                  >
-                    Explore Services
-                  </button>
-                </div>
-              )}
-            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-2xl p-5 text-theme-primary">
                 <h2 className="text-xl font-semibold text-theme-accent mb-3">Services Usage</h2>
@@ -522,6 +483,26 @@ const Dashboard: React.FC = () => {
                     </svg>
                     <span className="font-medium">View my profile</span>
                   </button>
+                  <button
+                    onClick={() => navigate('/Areaction')}
+                    className="bg-gradient-button-tertiary hover:bg-gradient-button-tertiary text-white rounded-xl p-4 flex flex-col items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-8 w-8 mb-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414a1 1 0 00-.707-.293H4"
+                      />
+                    </svg>
+                    <span className="font-medium">My Automation</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -542,7 +523,8 @@ const Dashboard: React.FC = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {services.map((service) => {
+                  {/** render sorted services (active ones first) */}
+                  {sortedServices.map((service) => {
                     const isActive = activeServices.includes(service.name);
                     const logo = getServiceLogo(service);
                     return (
