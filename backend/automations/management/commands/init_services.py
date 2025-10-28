@@ -918,6 +918,97 @@ class Command(BaseCommand):
                     },
                 ],
             },
+            {
+                "name": "spotify",
+                "description": "Spotify integration for music playback and library management",
+                "status": Service.Status.ACTIVE,
+                "actions": [],
+                "reactions": [
+                    {
+                        "name": "spotify_play_track",
+                        "description": "Play a specific track on Spotify",
+                        "config_schema": {
+                            "track_uri": {
+                                "type": "string",
+                                "label": "Track URI",
+                                "description": "Spotify URI of the track to play (spotify:track:...)",
+                                "required": True,
+                                "placeholder": "spotify:track:4iV5W9uYEdYUVa79Axb7Rh",
+                            },
+                            "position_ms": {
+                                "type": "number",
+                                "label": "Start Position (ms)",
+                                "description": "Position to start playing from in milliseconds",
+                                "required": False,
+                                "default": 0,
+                                "minimum": 0,
+                            },
+                        },
+                    },
+                    {
+                        "name": "spotify_pause_playback",
+                        "description": "Pause the currently playing track",
+                        "config_schema": {},
+                    },
+                    {
+                        "name": "spotify_resume_playback",
+                        "description": "Resume playback of the current track",
+                        "config_schema": {},
+                    },
+                    {
+                        "name": "spotify_skip_next",
+                        "description": "Skip to the next track in the queue",
+                        "config_schema": {},
+                    },
+                    {
+                        "name": "spotify_skip_previous",
+                        "description": "Skip to the previous track",
+                        "config_schema": {},
+                    },
+                    {
+                        "name": "spotify_set_volume",
+                        "description": "Set the playback volume",
+                        "config_schema": {
+                            "volume_percent": {
+                                "type": "number",
+                                "label": "Volume (%)",
+                                "description": "Volume level as percentage (0-100)",
+                                "required": True,
+                                "minimum": 0,
+                                "maximum": 100,
+                                "default": 50,
+                            },
+                        },
+                    },
+                    {
+                        "name": "spotify_create_playlist",
+                        "description": "Create a new playlist",
+                        "config_schema": {
+                            "name": {
+                                "type": "string",
+                                "label": "Playlist Name",
+                                "description": "Name for the new playlist",
+                                "required": True,
+                                "placeholder": "My New Playlist",
+                            },
+                            "description": {
+                                "type": "string",
+                                "label": "Description",
+                                "description": "Optional description for the playlist",
+                                "required": False,
+                                "placeholder": "A playlist created by AREA",
+                            },
+                            "public": {
+                                "type": "boolean",
+                                "label": "Public",
+                                "description": "Make the playlist public",
+                                "required": False,
+                                "default": False,
+                            },
+                        },
+                    },
+                ],
+            },
         ]
 
         # Create services

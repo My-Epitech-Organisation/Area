@@ -2526,6 +2526,178 @@ def _execute_reaction_logic(
         logger.info(f"[REACTION TWITCH] Updated category to: {game_name}")
         return {"updated": True, "game_name": game_name, "game_id": game_id}
 
+    # ==================== Spotify Reactions ====================
+    elif reaction_name == "spotify_play_track":
+        # Play a specific track
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.spotify_helper import play_track
+
+        access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+        if not access_token:
+            raise ValueError(f"No valid Spotify token for user {area.owner.username}")
+
+        track_input = reaction_config.get("track_uri")
+        position_ms = reaction_config.get("position_ms", 0)
+
+        if not track_input:
+            raise ValueError("Track URI/URL is required for spotify_play_track")
+
+        # Convert URL to URI if needed
+        if track_input.startswith("https://open.spotify.com"):
+            # Extract track ID from URL
+            # URL format: https://open.spotify.com/track/{track_id} or https://open.spotify.com/intl-{locale}/track/{track_id}
+            import re
+
+            match = re.search(r"/track/([a-zA-Z0-9]+)", track_input)
+            if match:
+                track_id = match.group(1)
+                track_uri = f"spotify:track:{track_id}"
+            else:
+                raise ValueError(f"Invalid Spotify URL format: {track_input}")
+        else:
+            # Assume it's already a URI
+            track_uri = track_input
+
+        try:
+            result = play_track(access_token, track_uri, position_ms)
+
+            logger.info(f"[REACTION SPOTIFY] Started playing track: {track_uri}")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION SPOTIFY] Failed to play track: {e}")
+            raise ValueError(f"Spotify play_track failed: {str(e)}") from e
+
+    elif reaction_name == "spotify_pause_playback":
+        # Pause current playback
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.spotify_helper import pause_playback
+
+        access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+        if not access_token:
+            raise ValueError(f"No valid Spotify token for user {area.owner.username}")
+
+        try:
+            result = pause_playback(access_token)
+
+            logger.info("[REACTION SPOTIFY] Paused playback")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION SPOTIFY] Failed to pause playback: {e}")
+            raise ValueError(f"Spotify pause_playback failed: {str(e)}") from e
+
+    elif reaction_name == "spotify_resume_playback":
+        # Resume current playback
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.spotify_helper import resume_playback
+
+        access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+        if not access_token:
+            raise ValueError(f"No valid Spotify token for user {area.owner.username}")
+
+        try:
+            result = resume_playback(access_token)
+
+            logger.info("[REACTION SPOTIFY] Resumed playback")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION SPOTIFY] Failed to resume playback: {e}")
+            raise ValueError(f"Spotify resume_playback failed: {str(e)}") from e
+
+    elif reaction_name == "spotify_skip_next":
+        # Skip to next track
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.spotify_helper import skip_to_next
+
+        access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+        if not access_token:
+            raise ValueError(f"No valid Spotify token for user {area.owner.username}")
+
+        try:
+            result = skip_to_next(access_token)
+
+            logger.info("[REACTION SPOTIFY] Skipped to next track")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION SPOTIFY] Failed to skip next: {e}")
+            raise ValueError(f"Spotify skip_next failed: {str(e)}") from e
+
+    elif reaction_name == "spotify_skip_previous":
+        # Skip to previous track
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.spotify_helper import skip_to_previous
+
+        access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+        if not access_token:
+            raise ValueError(f"No valid Spotify token for user {area.owner.username}")
+
+        try:
+            result = skip_to_previous(access_token)
+
+            logger.info("[REACTION SPOTIFY] Skipped to previous track")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION SPOTIFY] Failed to skip previous: {e}")
+            raise ValueError(f"Spotify skip_previous failed: {str(e)}") from e
+
+    elif reaction_name == "spotify_set_volume":
+        # Set playback volume
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.spotify_helper import set_volume
+
+        access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+        if not access_token:
+            raise ValueError(f"No valid Spotify token for user {area.owner.username}")
+
+        volume_percent = reaction_config.get("volume_percent", 50)
+
+        try:
+            result = set_volume(access_token, volume_percent)
+
+            logger.info(f"[REACTION SPOTIFY] Set volume to {volume_percent}%")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION SPOTIFY] Failed to set volume: {e}")
+            raise ValueError(f"Spotify set_volume failed: {str(e)}") from e
+
+    elif reaction_name == "spotify_create_playlist":
+        # Create a new playlist
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.spotify_helper import create_playlist
+
+        access_token = OAuthManager.get_valid_token(area.owner, "spotify")
+        if not access_token:
+            raise ValueError(f"No valid Spotify token for user {area.owner.username}")
+
+        name = reaction_config.get("name")
+        description = reaction_config.get("description", "")
+        public = reaction_config.get("public", False)
+
+        if not name:
+            raise ValueError("Playlist name is required for spotify_create_playlist")
+
+        try:
+            result = create_playlist(access_token, name, description, public)
+
+            logger.info(f"[REACTION SPOTIFY] Created playlist: {name}")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION SPOTIFY] Failed to create playlist: {e}")
+            raise ValueError(f"Spotify create_playlist failed: {str(e)}") from e
+
     else:
         # Unknown reaction - log and continue
         logger.warning(
