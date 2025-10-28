@@ -14,6 +14,8 @@ This module provides Django REST Framework ViewSets for:
 - Area CRUD operations with proper permissions and filtering
 """
 
+import logging
+import re
 import time
 import uuid
 from typing import Any, Type
@@ -25,8 +27,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from django.db.models import Q, QuerySet
-from django.http import JsonResponse
-from django.http import StreamingHttpResponse, HttpResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
+from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
@@ -36,6 +38,10 @@ try:
 except ImportError:
     # Fallback if django-filter is not installed
     DjangoFilterBackend = None
+
+import requests
+
+from django.views.decorators.http import require_http_methods
 
 from users.permissions import IsAuthenticatedAndVerified
 
@@ -51,8 +57,8 @@ from .serializers import (
     ReactionSerializer,
     ServiceSerializer,
 )
-import requests
-from django.views.decorators.http import require_http_methods
+
+logger = logging.getLogger(__name__)
 
 
 class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
@@ -325,7 +331,9 @@ def about_json_view(request):
         "actions", "reactions"
     )
 
-    serializer = AboutServiceSerializer(services, many=True, context={"request": request})
+    serializer = AboutServiceSerializer(
+        services, many=True, context={"request": request}
+    )
 
     about_data = {
         "client": {"host": request.get_host()},
@@ -340,9 +348,7 @@ def about_json_view(request):
 
 @require_http_methods(["GET"])
 def logo_proxy_view(request, service: str):
-    """Proxy and return the logo image for a given service.
-
-    """
+    """Proxy and return the logo image for a given service."""
     try:
         svc = Service.objects.get(name__iexact=service)
     except Service.DoesNotExist:
@@ -355,13 +361,16 @@ def logo_proxy_view(request, service: str):
 
     direct_url = logo_val
     try:
-        import re
         parsed = requests.utils.urlparse(logo_val)
         netloc = parsed.netloc or "en.wikipedia.org"
         fragment = parsed.fragment or ""
         path = parsed.path or ""
 
-        m = re.search(r"File:([^/#?]+)", fragment) or re.search(r"/wiki/File:([^/#?]+)", path) or re.search(r"File:([^/#?]+)", logo_val)
+        m = (
+            re.search(r"File:([^/#?]+)", fragment)
+            or re.search(r"/wiki/File:([^/#?]+)", path)
+            or re.search(r"File:([^/#?]+)", logo_val)
+        )
         if m:
             filename = requests.utils.requote_uri(m.group(1))
             api_url = (
@@ -380,22 +389,21 @@ def logo_proxy_view(request, service: str):
         direct_url = logo_val
 
     try:
-        from django.shortcuts import redirect
-
         parsed = requests.utils.urlparse(direct_url)
         host = parsed.netloc or ""
         if host.endswith("upload.wikimedia.org") or direct_url.startswith("https://"):
             return redirect(direct_url)
-    except Exception:
-        pass
-
+    except Exception as e:
+        logger.debug("Failed to parse URL for redirect: %s", e)
     try:
         resp = requests.get(direct_url, stream=True, timeout=10)
         if not resp.ok:
             return HttpResponse(status=502)
 
         content_type = resp.headers.get("Content-Type", "application/octet-stream")
-        stream = StreamingHttpResponse(resp.iter_content(chunk_size=8192), content_type=content_type)
+        stream = StreamingHttpResponse(
+            resp.iter_content(chunk_size=8192), content_type=content_type
+        )
         stream["Cache-Control"] = "public, max-age=3600"
         return stream
     except requests.RequestException:
