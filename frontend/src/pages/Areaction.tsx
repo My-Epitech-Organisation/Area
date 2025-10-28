@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useActions, useReactions, useCreateArea, useAreas, useUpdateArea, useDeleteArea } from '../hooks/useApi';
 import { findActionByName, findReactionByName, generateAreaName } from '../utils/areaHelpers';
 import { DynamicConfigForm } from '../components/DynamicConfigForm';
+import { API_BASE, getStoredUser } from '../utils/helper';
 import type { Area } from '../types/api';
 import EmailVerificationBanner from '../components/EmailVerificationBanner';
 import type { User } from '../types';
