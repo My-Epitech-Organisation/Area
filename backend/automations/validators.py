@@ -768,45 +768,6 @@ REACTION_SCHEMAS = {
         "required": ["volume_percent"],
         "additionalProperties": False,
     },
-    "spotify_add_to_playlist": {
-        "type": "object",
-        "properties": {
-            "playlist_id": {
-                "type": "string",
-                "description": "ID of the playlist to add the track to",
-                "pattern": "^[a-zA-Z0-9]+$",
-            },
-            "track_uri": {
-                "type": "string",
-                "description": "URI of track to add (leave empty to add current track)",
-                "pattern": "^(spotify:track:[a-zA-Z0-9]+|https://open\\.spotify\\.com(/intl-[a-z]+)?/track/[a-zA-Z0-9]+)?$",
-            },
-        },
-        "required": ["playlist_id"],
-        "additionalProperties": False,
-    },
-    "spotify_like_track": {
-        "type": "object",
-        "properties": {
-            "track_uri": {
-                "type": "string",
-                "description": "URI of track to like (leave empty to like current track)",
-                "pattern": "^(spotify:track:[a-zA-Z0-9]+|https://open\\.spotify\\.com(/intl-[a-z]+)?/track/[a-zA-Z0-9]+)?$",
-            },
-        },
-        "additionalProperties": False,
-    },
-    "spotify_unlike_track": {
-        "type": "object",
-        "properties": {
-            "track_uri": {
-                "type": "string",
-                "description": "URI of track to unlike (leave empty to unlike current track)",
-                "pattern": "^(spotify:track:[a-zA-Z0-9]+|https://open\\.spotify\\.com(/intl-[a-z]+)?/track/[a-zA-Z0-9]+)?$",
-            },
-        },
-        "additionalProperties": False,
-    },
     "spotify_create_playlist": {
         "type": "object",
         "properties": {
