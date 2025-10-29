@@ -130,9 +130,9 @@ describe('Navbar Component', () => {
 
       expect(hamburgerButton).toBeInTheDocument();
 
-      const dashboardLink = screen.getAllByText('Dashboard').find(el =>
-        el.classList.contains('text-lg')
-      );
+      const dashboardLink = screen
+        .getAllByText('Dashboard')
+        .find((el) => el.classList.contains('text-lg'));
 
       if (dashboardLink) {
         fireEvent.click(dashboardLink);
