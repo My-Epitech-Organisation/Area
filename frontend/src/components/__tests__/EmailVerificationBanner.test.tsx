@@ -19,9 +19,7 @@ describe('EmailVerificationBanner Component', () => {
 
   describe('Rendering and Visibility', () => {
     it('should not render when user is null', () => {
-      const { container } = render(
-        <EmailVerificationBanner user={null} />
-      );
+      const { container } = render(<EmailVerificationBanner user={null} />);
 
       expect(container.firstChild).toBeNull();
     });
@@ -32,9 +30,7 @@ describe('EmailVerificationBanner Component', () => {
         email_verified: true,
       };
 
-      const { container } = render(
-        <EmailVerificationBanner user={user} />
-      );
+      const { container } = render(<EmailVerificationBanner user={user} />);
 
       expect(container.firstChild).toBeNull();
     });
@@ -45,9 +41,7 @@ describe('EmailVerificationBanner Component', () => {
         email_verified: false,
       };
 
-      render(
-        <EmailVerificationBanner user={user} />
-      );
+      render(<EmailVerificationBanner user={user} />);
 
       expect(screen.getByText(/your account is not verified yet/i)).toBeInTheDocument();
     });
@@ -57,9 +51,7 @@ describe('EmailVerificationBanner Component', () => {
         email: 'test@example.com',
       };
 
-      render(
-        <EmailVerificationBanner user={user} />
-      );
+      render(<EmailVerificationBanner user={user} />);
 
       expect(screen.getByText(/your account is not verified yet/i)).toBeInTheDocument();
     });
@@ -72,9 +64,7 @@ describe('EmailVerificationBanner Component', () => {
         email_verified: false,
       };
 
-      render(
-        <EmailVerificationBanner user={user} />
-      );
+      render(<EmailVerificationBanner user={user} />);
 
       expect(screen.getByText(/resend verification email/i)).toBeInTheDocument();
     });
@@ -92,12 +82,7 @@ describe('EmailVerificationBanner Component', () => {
         json: async () => ({}),
       } as Response);
 
-      render(
-        <EmailVerificationBanner
-          user={user}
-          onVerificationSent={mockOnVerificationSent}
-        />
-      );
+      render(<EmailVerificationBanner user={user} onVerificationSent={mockOnVerificationSent} />);
 
       const resendButton = screen.getByRole('button', { name: /resend|verification/i });
       fireEvent.click(resendButton);
@@ -127,9 +112,7 @@ describe('EmailVerificationBanner Component', () => {
 
       localStorage.removeItem('access');
 
-      render(
-        <EmailVerificationBanner user={user} />
-      );
+      render(<EmailVerificationBanner user={user} />);
 
       const resendButton = screen.getByRole('button', { name: /resend|verification/i });
       fireEvent.click(resendButton);
@@ -154,9 +137,7 @@ describe('EmailVerificationBanner Component', () => {
         json: async () => ({ detail: 'Rate limit exceeded' }),
       } as Response);
 
-      render(
-        <EmailVerificationBanner user={user} />
-      );
+      render(<EmailVerificationBanner user={user} />);
 
       const resendButton = screen.getByRole('button', { name: /resend|verification/i });
       fireEvent.click(resendButton);
@@ -179,9 +160,7 @@ describe('EmailVerificationBanner Component', () => {
         json: async () => ({ message: 'Email service unavailable' }),
       } as Response);
 
-      render(
-        <EmailVerificationBanner user={user} />
-      );
+      render(<EmailVerificationBanner user={user} />);
 
       const resendButton = screen.getByRole('button', { name: /resend|verification/i });
       fireEvent.click(resendButton);
@@ -204,9 +183,7 @@ describe('EmailVerificationBanner Component', () => {
         json: async () => ({}),
       } as Response);
 
-      render(
-        <EmailVerificationBanner user={user} />
-      );
+      render(<EmailVerificationBanner user={user} />);
 
       const resendButton = screen.getByRole('button', { name: /resend|verification/i });
       fireEvent.click(resendButton);
@@ -226,9 +203,7 @@ describe('EmailVerificationBanner Component', () => {
 
       vi.mocked(globalThis.fetch).mockRejectedValueOnce(new Error('Network error'));
 
-      render(
-        <EmailVerificationBanner user={user} />
-      );
+      render(<EmailVerificationBanner user={user} />);
 
       const resendButton = screen.getByRole('button', { name: /resend|verification/i });
       fireEvent.click(resendButton);
@@ -253,9 +228,7 @@ describe('EmailVerificationBanner Component', () => {
 
       vi.mocked(globalThis.fetch).mockReturnValueOnce(promise);
 
-      render(
-        <EmailVerificationBanner user={user} />
-      );
+      render(<EmailVerificationBanner user={user} />);
 
       const resendButton = screen.getByRole('button', { name: /resend|verification/i });
 
@@ -290,9 +263,7 @@ describe('EmailVerificationBanner Component', () => {
         json: async () => ({}),
       } as Response);
 
-      render(
-        <EmailVerificationBanner user={user} />
-      );
+      render(<EmailVerificationBanner user={user} />);
 
       const resendButton = screen.getByRole('button', { name: /resend|verification/i });
       fireEvent.click(resendButton);
@@ -312,9 +283,7 @@ describe('EmailVerificationBanner Component', () => {
         email_verified: false,
       };
 
-      const { container } = render(
-        <EmailVerificationBanner user={user} />
-      );
+      const { container } = render(<EmailVerificationBanner user={user} />);
 
       const banner = container.firstChild as HTMLElement;
       expect(banner).toHaveClass('mb-6');
@@ -327,9 +296,7 @@ describe('EmailVerificationBanner Component', () => {
         email_verified: false,
       };
 
-      render(
-        <EmailVerificationBanner user={user} />
-      );
+      render(<EmailVerificationBanner user={user} />);
 
       expect(screen.getByText(/john\.doe@example\.com/i)).toBeInTheDocument();
     });
