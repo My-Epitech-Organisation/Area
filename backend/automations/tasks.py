@@ -375,16 +375,16 @@ def check_github_actions(self):
     """
     from django.conf import settings
     from .models import GitHubAppInstallation
-    
+
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
     webhook_configured = bool(webhook_secrets.get("github"))
-    
+
     if not webhook_configured:
         logger.warning(
             "GitHub webhook secret not configured. "
             "Polling ALL users (no webhook validation possible)."
         )
-    
+
     logger.info("Starting GitHub actions check (smart polling mode)")
 
     triggered_count = 0
@@ -415,7 +415,7 @@ def check_github_actions(self):
                     is_active=True
                 ).values_list('user_id', flat=True)
             )
-            
+
             if users_with_app:
                 logger.info(
                     f"Found {len(users_with_app)} users with GitHub App installed "
@@ -424,10 +424,10 @@ def check_github_actions(self):
 
         # Filter areas: only poll for users without GitHub App
         areas_needing_polling = [
-            area for area in github_areas 
+            area for area in github_areas
             if area.owner_id not in users_with_app
         ]
-        
+
         webhook_users_count = len(github_areas) - len(areas_needing_polling)
 
         if not areas_needing_polling:
@@ -442,7 +442,7 @@ def check_github_actions(self):
                 "polling_users": 0,
                 "message": "All GitHub users have webhooks configured"
             }
-        
+
         logger.info(
             f"Polling for {len(areas_needing_polling)} areas from "
             f"{len(set(a.owner_id for a in areas_needing_polling))} users without GitHub App. "
