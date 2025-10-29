@@ -223,9 +223,7 @@ describe('Dashboard Page', () => {
       vi.mocked(getAccessToken).mockReturnValue('test-token');
       vi.mocked(fetchUserData).mockResolvedValue(mockUser);
 
-      const mockServices = [
-        { id: 1, name: 'Gmail', description: 'Email' },
-      ];
+      const mockServices = [{ id: 1, name: 'Gmail', description: 'Email' }];
 
       vi.mocked(globalThis.fetch)
         .mockResolvedValueOnce({
@@ -561,9 +559,7 @@ describe('Dashboard Page', () => {
     });
 
     it('should ignore expired connected services', async () => {
-      const mockServices = [
-        { id: 1, name: 'Gmail', description: 'Email' },
-      ];
+      const mockServices = [{ id: 1, name: 'Gmail', description: 'Email' }];
 
       const mockConnectedServices = [
         {
@@ -688,7 +684,12 @@ describe('Dashboard Page', () => {
     it('should handle services with logo URLs', async () => {
       const mockServices = [
         { id: 1, name: 'Gmail', logo: '//logo.clearbit.com/gmail.com', description: 'Email' },
-        { id: 2, name: 'Spotify', logo: 'https://logo.clearbit.com/spotify.com', description: 'Music' },
+        {
+          id: 2,
+          name: 'Spotify',
+          logo: 'https://logo.clearbit.com/spotify.com',
+          description: 'Music',
+        },
       ];
 
       vi.mocked(getStoredUser).mockReturnValue({
@@ -721,9 +722,7 @@ describe('Dashboard Page', () => {
     });
 
     it('should handle services without logos', async () => {
-      const mockServices = [
-        { id: 1, name: 'CustomService', description: 'Custom service' },
-      ];
+      const mockServices = [{ id: 1, name: 'CustomService', description: 'Custom service' }];
 
       vi.mocked(getStoredUser).mockReturnValue({
         id: 1,
@@ -795,9 +794,30 @@ describe('Dashboard Page', () => {
 
     it('should fetch areas and services on mount', async () => {
       const mockAreas = [
-        { id: 1, name: 'Area 1', action_service: 'github', reaction_service: 'slack', is_active: true, user: 1 },
-        { id: 2, name: 'Area 2', action_service: 'google', reaction_service: 'slack', is_active: true, user: 1 },
-        { id: 3, name: 'Area 3', action_service: 'github', reaction_service: 'email', is_active: false, user: 1 },
+        {
+          id: 1,
+          name: 'Area 1',
+          action_service: 'github',
+          reaction_service: 'slack',
+          is_active: true,
+          user: 1,
+        },
+        {
+          id: 2,
+          name: 'Area 2',
+          action_service: 'google',
+          reaction_service: 'slack',
+          is_active: true,
+          user: 1,
+        },
+        {
+          id: 3,
+          name: 'Area 3',
+          action_service: 'github',
+          reaction_service: 'email',
+          is_active: false,
+          user: 1,
+        },
       ];
 
       vi.mocked(getStoredUser).mockReturnValue(mockUser);
@@ -850,4 +870,3 @@ describe('Dashboard Page', () => {
     });
   });
 });
-
