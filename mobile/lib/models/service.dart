@@ -5,6 +5,7 @@ class Service {
   final int id;
   final String name;
   final bool requiresOAuth;
+  final String? logo;
   final List<ServiceAction> actions;
   final List<ServiceReaction> reactions;
 
@@ -12,6 +13,7 @@ class Service {
     required this.id,
     required this.name,
     required this.requiresOAuth,
+    this.logo,
     required this.actions,
     required this.reactions,
   });
@@ -21,6 +23,7 @@ class Service {
       id: json['id'] as int? ?? 0,
       name: (json['name'] as String?)?.trim() ?? '',
       requiresOAuth: (json['requires_oauth'] as bool?) ?? false,
+      logo: (json['logo'] as String?),
       actions:
           (json['actions'] as List<dynamic>?)
               ?.map(
@@ -45,6 +48,7 @@ class Service {
       'id': id,
       'name': name,
       'requires_oauth': requiresOAuth,
+      'logo': logo,
       'actions': actions.map((action) => action.toJson()).toList(),
       'reactions': reactions.map((reaction) => reaction.toJson()).toList(),
     };
