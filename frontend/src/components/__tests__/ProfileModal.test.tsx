@@ -13,27 +13,19 @@ describe('ProfileModal Component', () => {
   describe('Rendering and Visibility', () => {
     it('should not render when isOpen is false', () => {
       const { container } = render(
-        <ProfileModal
-          isOpen={false}
-          onClose={mockOnClose}
-          onConfirm={mockOnConfirm}
-        />
+        <ProfileModal isOpen={false} onClose={mockOnClose} onConfirm={mockOnConfirm} />
       );
 
       expect(container.firstChild).toBeNull();
     });
 
     it('should render when isOpen is true', () => {
-      render(
-        <ProfileModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onConfirm={mockOnConfirm}
-        />
-      );
+      render(<ProfileModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
       expect(screen.getByText('Confirm Action')).toBeInTheDocument();
-      expect(screen.getByText('Please enter your current password to confirm changes')).toBeInTheDocument();
+      expect(
+        screen.getByText('Please enter your current password to confirm changes')
+      ).toBeInTheDocument();
     });
 
     it('should render with custom title and message', () => {
@@ -48,19 +40,15 @@ describe('ProfileModal Component', () => {
       );
 
       expect(screen.getByText('Delete Account')).toBeInTheDocument();
-      expect(screen.getByText('Enter password to delete your account permanently')).toBeInTheDocument();
+      expect(
+        screen.getByText('Enter password to delete your account permanently')
+      ).toBeInTheDocument();
     });
   });
 
   describe('Form Interaction', () => {
     it('should render password input field', () => {
-      render(
-        <ProfileModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onConfirm={mockOnConfirm}
-        />
-      );
+      render(<ProfileModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
       const passwordInput = screen.getByLabelText('Current Password');
       expect(passwordInput).toBeInTheDocument();
@@ -68,13 +56,7 @@ describe('ProfileModal Component', () => {
     });
 
     it('should update password value on input change', () => {
-      render(
-        <ProfileModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onConfirm={mockOnConfirm}
-        />
-      );
+      render(<ProfileModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
       const passwordInput = screen.getByLabelText('Current Password') as HTMLInputElement;
       fireEvent.change(passwordInput, { target: { value: 'mypassword123' } });
@@ -83,13 +65,7 @@ describe('ProfileModal Component', () => {
     });
 
     it('should have password input with placeholder', () => {
-      render(
-        <ProfileModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onConfirm={mockOnConfirm}
-        />
-      );
+      render(<ProfileModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
       const passwordInput = screen.getByPlaceholderText('Enter your current password');
       expect(passwordInput).toBeInTheDocument();
@@ -98,13 +74,7 @@ describe('ProfileModal Component', () => {
 
   describe('Form Submission', () => {
     it('should call onConfirm with password when form is submitted', () => {
-      render(
-        <ProfileModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onConfirm={mockOnConfirm}
-        />
-      );
+      render(<ProfileModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
       const passwordInput = screen.getByLabelText('Current Password');
       const confirmButton = screen.getByRole('button', { name: /confirm/i });
@@ -117,13 +87,7 @@ describe('ProfileModal Component', () => {
     });
 
     it('should not call onConfirm if password is empty', () => {
-      render(
-        <ProfileModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onConfirm={mockOnConfirm}
-        />
-      );
+      render(<ProfileModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
       const confirmButton = screen.getByRole('button', { name: /confirm/i });
       fireEvent.click(confirmButton);
@@ -132,13 +96,7 @@ describe('ProfileModal Component', () => {
     });
 
     it('should clear password after submission', () => {
-      render(
-        <ProfileModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onConfirm={mockOnConfirm}
-        />
-      );
+      render(<ProfileModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
       const passwordInput = screen.getByLabelText('Current Password') as HTMLInputElement;
       const confirmButton = screen.getByRole('button', { name: /confirm/i });
@@ -152,13 +110,7 @@ describe('ProfileModal Component', () => {
 
   describe('Cancel Functionality', () => {
     it('should call onClose when cancel button is clicked', () => {
-      render(
-        <ProfileModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onConfirm={mockOnConfirm}
-        />
-      );
+      render(<ProfileModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
       const cancelButton = screen.getByRole('button', { name: /cancel/i });
       fireEvent.click(cancelButton);
@@ -167,13 +119,7 @@ describe('ProfileModal Component', () => {
     });
 
     it('should clear password when cancel is clicked', () => {
-      render(
-        <ProfileModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onConfirm={mockOnConfirm}
-        />
-      );
+      render(<ProfileModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
       const passwordInput = screen.getByLabelText('Current Password') as HTMLInputElement;
       const cancelButton = screen.getByRole('button', { name: /cancel/i });
@@ -189,76 +135,45 @@ describe('ProfileModal Component', () => {
   describe('Focus Management', () => {
     it('should focus password input when modal opens', async () => {
       const { rerender } = render(
-        <ProfileModal
-          isOpen={false}
-          onClose={mockOnClose}
-          onConfirm={mockOnConfirm}
-        />
+        <ProfileModal isOpen={false} onClose={mockOnClose} onConfirm={mockOnConfirm} />
       );
 
-      rerender(
-        <ProfileModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onConfirm={mockOnConfirm}
-        />
-      );
+      rerender(<ProfileModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
-      await waitFor(() => {
-        const passwordInput = screen.getByLabelText('Current Password');
-        expect(document.activeElement).toBe(passwordInput);
-      }, { timeout: 200 });
+      await waitFor(
+        () => {
+          const passwordInput = screen.getByLabelText('Current Password');
+          expect(document.activeElement).toBe(passwordInput);
+        },
+        { timeout: 200 }
+      );
     });
   });
 
   describe('Accessibility and Structure', () => {
     it('should have proper form structure', () => {
-      render(
-        <ProfileModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onConfirm={mockOnConfirm}
-        />
-      );
+      render(<ProfileModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
       const form = screen.getByLabelText('Current Password').closest('form');
       expect(form).toBeInTheDocument();
     });
 
     it('should have required attribute on password input', () => {
-      render(
-        <ProfileModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onConfirm={mockOnConfirm}
-        />
-      );
+      render(<ProfileModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
       const passwordInput = screen.getByLabelText('Current Password');
       expect(passwordInput).toHaveAttribute('required');
     });
 
     it('should render both action buttons', () => {
-      render(
-        <ProfileModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onConfirm={mockOnConfirm}
-        />
-      );
+      render(<ProfileModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
       expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
     });
 
     it('should stop propagation when clicking modal content', () => {
-      render(
-        <ProfileModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onConfirm={mockOnConfirm}
-        />
-      );
+      render(<ProfileModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
       const modalContent = screen.getByText('Confirm Action').closest('div');
       const stopPropagationSpy = vi.fn();
