@@ -161,9 +161,12 @@ describe('Signup Page', () => {
 
       fireEvent.click(submitButton);
 
-      await waitFor(() => {
-        expect(globalThis.fetch).toHaveBeenCalled();
-      }, { timeout: 500 });
+      await waitFor(
+        () => {
+          expect(globalThis.fetch).toHaveBeenCalled();
+        },
+        { timeout: 500 }
+      );
     });
 
     it('should handle network errors', async () => {
@@ -188,9 +191,12 @@ describe('Signup Page', () => {
 
       fireEvent.click(submitButton);
 
-      await waitFor(() => {
-        expect(globalThis.fetch).toHaveBeenCalled();
-      }, { timeout: 500 });
+      await waitFor(
+        () => {
+          expect(globalThis.fetch).toHaveBeenCalled();
+        },
+        { timeout: 500 }
+      );
     });
   });
 
