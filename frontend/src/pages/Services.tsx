@@ -4,7 +4,6 @@ import { API_BASE, getStoredUser, fetchUserData } from '../utils/helper';
 import type { ServiceModel } from '../types/services';
 import type { User } from '../types';
 import EmailVerificationBanner from '../components/EmailVerificationBanner';
-import GitHubAppBanner from '../components/GitHubAppBanner';
 
 type AboutService = {
   id: number | string;
@@ -457,7 +456,6 @@ const Services: React.FC = () => {
       </header>
 
       {user && <EmailVerificationBanner user={user} onVerificationSent={handleRefreshUserData} />}
-      {user && <GitHubAppBanner user={user} />}
 
       <main className="w-full max-w-6xl mt-12">
         <div className="flex items-center justify-end gap-4 mb-4">
