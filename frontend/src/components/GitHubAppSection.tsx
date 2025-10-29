@@ -247,6 +247,23 @@ const GitHubAppSection: React.FC<GitHubAppSectionProps> = ({ user, isOAuthConnec
                 </ul>
               </div>
 
+              {/* Polling Fallback Warning */}
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mt-3">
+                <div className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="text-sm text-yellow-300 font-medium">
+                      Currently using polling mode
+                    </p>
+                    <p className="text-xs text-yellow-400 mt-1">
+                      Events are checked every 5 minutes. Install the app for instant real-time notifications.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <button
                 onClick={handleInstall}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-medium transition-all shadow-lg hover:shadow-xl"
