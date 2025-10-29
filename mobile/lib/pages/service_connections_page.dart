@@ -321,6 +321,13 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
                   height: 24,
                   placeholderBuilder: (context) =>
                       const CircularProgressIndicator(strokeWidth: 1),
+                  errorBuilder: (context, error, stackTrace) => Icon(
+                    ServiceIcons.getServiceIcon(service.name),
+                    color: requiresOAuth
+                        ? (isConnected ? Colors.green : Colors.blue)
+                        : Colors.green,
+                    size: 20,
+                  ),
                   colorFilter: _getLogoColorFilter(requiresOAuth, isConnected),
                 )
               : Icon(
