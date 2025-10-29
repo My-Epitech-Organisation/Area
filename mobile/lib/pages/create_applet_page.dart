@@ -26,7 +26,8 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
   int? _selectedActionId;
   int? _selectedReactionId;
 
-  Map<String, dynamic> _actionConfig = {};
+  // Configuration for the trigger action (not the reaction action)
+  Map<String, dynamic> _triggerActionConfig = {};
   Map<String, dynamic> _reactionConfig = {};
 
   bool Function()? _validateConfigForm;
@@ -153,7 +154,7 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
                       _selectedActionId = context
                           .read<ServiceCatalogProvider>()
                           .getActionId(value!);
-                      _actionConfig = {};
+                      _triggerActionConfig = {};
                     });
                   },
                 ),
@@ -203,11 +204,11 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
                         .read<ServiceCatalogProvider>()
                         .getReaction(_selectedActionReaction!)
                         ?.configSchema,
-                    actionConfig: _actionConfig,
+                    actionConfig: _triggerActionConfig,
                     reactionConfig: _reactionConfig,
                     onActionConfigChanged: (config) {
                       setState(() {
-                        _actionConfig = config;
+                        _triggerActionConfig = config;
                       });
                     },
                     onReactionConfigChanged: (config) {
@@ -228,7 +229,7 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
                 AutomationPreviewCard(
                   triggerServiceName: _selectedTriggerService,
                   triggerActionName: _selectedTriggerAction,
-                  actionConfig: _actionConfig,
+                  actionConfig: _triggerActionConfig,
                   reactionServiceName: _selectedActionService,
                   reactionActionName: _selectedActionReaction,
                   reactionConfig: _reactionConfig,
@@ -308,7 +309,7 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
 
     if (!_validateConfigSchema(
       schema: action?.configSchema,
-      config: _actionConfig,
+      config: _triggerActionConfig,
     )) {
       return;
     }
@@ -325,7 +326,9 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
             : 'Created from mobile app',
         actionId: _selectedActionId!,
         reactionId: _selectedReactionId!,
-        actionConfig: _actionConfig.isNotEmpty ? _actionConfig : {},
+        actionConfig: _triggerActionConfig.isNotEmpty
+            ? _triggerActionConfig
+            : {},
         reactionConfig: _reactionConfig.isNotEmpty ? _reactionConfig : {},
       );
 
@@ -351,7 +354,7 @@ class _CreateAppletPageState extends State<CreateAppletPage> {
           _selectedActionReaction = null;
           _selectedActionId = null;
           _selectedReactionId = null;
-          _actionConfig = {};
+          _triggerActionConfig = {};
           _reactionConfig = {};
         });
         _formKey.currentState?.reset();
