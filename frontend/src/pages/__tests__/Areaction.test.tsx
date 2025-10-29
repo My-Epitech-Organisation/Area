@@ -706,9 +706,7 @@ describe('Areaction Page', () => {
     });
 
     it('should handle fetch services error', async () => {
-      (globalThis.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(
-        new Error('Network error')
-      );
+      (globalThis.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
 
       render(
         <MemoryRouter>
