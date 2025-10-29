@@ -39,6 +39,11 @@ class ServiceCard extends StatelessWidget {
                           color: Theme.of(context).primaryColor,
                           size: 24,
                         ),
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                          ServiceIcons.getServiceIcon(service.name),
+                          color: Theme.of(context).primaryColor,
+                          size: 24,
+                        ),
                       )
                     : Icon(
                         ServiceIcons.getServiceIcon(service.name),
