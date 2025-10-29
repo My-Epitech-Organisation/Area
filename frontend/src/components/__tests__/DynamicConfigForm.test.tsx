@@ -8,11 +8,7 @@ describe('DynamicConfigForm Component', () => {
   describe('Rendering', () => {
     it('should return null when schema is undefined', () => {
       const { container } = render(
-        <DynamicConfigForm
-          schema={undefined as any}
-          values={{}}
-          onChange={mockOnChange}
-        />
+        <DynamicConfigForm schema={undefined as any} values={{}} onChange={mockOnChange} />
       );
 
       expect(container.firstChild).toBeNull();
@@ -41,13 +37,7 @@ describe('DynamicConfigForm Component', () => {
         },
       };
 
-      render(
-        <DynamicConfigForm
-          schema={schema}
-          values={{}}
-          onChange={mockOnChange}
-        />
-      );
+      render(<DynamicConfigForm schema={schema} values={{}} onChange={mockOnChange} />);
 
       expect(screen.getByLabelText(/testfield/i)).toBeInTheDocument();
     });
@@ -85,13 +75,7 @@ describe('DynamicConfigForm Component', () => {
         },
       };
 
-      render(
-        <DynamicConfigForm
-          schema={schema}
-          values={{}}
-          onChange={mockOnChange}
-        />
-      );
+      render(<DynamicConfigForm schema={schema} values={{}} onChange={mockOnChange} />);
 
       const input = screen.getByLabelText(/username/i) as HTMLInputElement;
       expect(input).toBeInTheDocument();
@@ -108,13 +92,7 @@ describe('DynamicConfigForm Component', () => {
         },
       };
 
-      render(
-        <DynamicConfigForm
-          schema={schema}
-          values={{}}
-          onChange={mockOnChange}
-        />
-      );
+      render(<DynamicConfigForm schema={schema} values={{}} onChange={mockOnChange} />);
 
       const input = screen.getByLabelText(/email/i);
       fireEvent.change(input, { target: { value: 'test@example.com' } });
@@ -133,13 +111,7 @@ describe('DynamicConfigForm Component', () => {
         required: ['name'],
       };
 
-      render(
-        <DynamicConfigForm
-          schema={schema}
-          values={{}}
-          onChange={mockOnChange}
-        />
-      );
+      render(<DynamicConfigForm schema={schema} values={{}} onChange={mockOnChange} />);
 
       expect(screen.getByText('*')).toBeInTheDocument();
     });
@@ -157,13 +129,7 @@ describe('DynamicConfigForm Component', () => {
         },
       };
 
-      render(
-        <DynamicConfigForm
-          schema={schema}
-          values={{}}
-          onChange={mockOnChange}
-        />
-      );
+      render(<DynamicConfigForm schema={schema} values={{}} onChange={mockOnChange} />);
 
       const input = screen.getByLabelText(/age/i) as HTMLInputElement;
       expect(input).toBeInTheDocument();
@@ -180,13 +146,7 @@ describe('DynamicConfigForm Component', () => {
         },
       };
 
-      render(
-        <DynamicConfigForm
-          schema={schema}
-          values={{}}
-          onChange={mockOnChange}
-        />
-      );
+      render(<DynamicConfigForm schema={schema} values={{}} onChange={mockOnChange} />);
 
       const input = screen.getByLabelText(/count/i);
       fireEvent.change(input, { target: { value: '42' } });
@@ -204,13 +164,7 @@ describe('DynamicConfigForm Component', () => {
         },
       };
 
-      render(
-        <DynamicConfigForm
-          schema={schema}
-          values={{}}
-          onChange={mockOnChange}
-        />
-      );
+      render(<DynamicConfigForm schema={schema} values={{}} onChange={mockOnChange} />);
 
       const input = screen.getByLabelText(/quantity/i);
       expect(input).toBeInTheDocument();
@@ -228,13 +182,7 @@ describe('DynamicConfigForm Component', () => {
         },
       };
 
-      render(
-        <DynamicConfigForm
-          schema={schema}
-          values={{}}
-          onChange={mockOnChange}
-        />
-      );
+      render(<DynamicConfigForm schema={schema} values={{}} onChange={mockOnChange} />);
 
       const input = screen.getByLabelText(/rating/i) as HTMLInputElement;
       expect(input).toHaveAttribute('min', '1');
@@ -254,13 +202,7 @@ describe('DynamicConfigForm Component', () => {
         },
       };
 
-      render(
-        <DynamicConfigForm
-          schema={schema}
-          values={{}}
-          onChange={mockOnChange}
-        />
-      );
+      render(<DynamicConfigForm schema={schema} values={{}} onChange={mockOnChange} />);
 
       const checkbox = screen.getByRole('checkbox', { name: /isactive/i });
       expect(checkbox).toBeInTheDocument();
@@ -276,13 +218,7 @@ describe('DynamicConfigForm Component', () => {
         },
       };
 
-      render(
-        <DynamicConfigForm
-          schema={schema}
-          values={{}}
-          onChange={mockOnChange}
-        />
-      );
+      render(<DynamicConfigForm schema={schema} values={{}} onChange={mockOnChange} />);
 
       const checkbox = screen.getByRole('checkbox');
       fireEvent.click(checkbox);
@@ -301,13 +237,7 @@ describe('DynamicConfigForm Component', () => {
         },
       };
 
-      render(
-        <DynamicConfigForm
-          schema={schema}
-          values={{}}
-          onChange={mockOnChange}
-        />
-      );
+      render(<DynamicConfigForm schema={schema} values={{}} onChange={mockOnChange} />);
 
       const checkbox = screen.getByRole('checkbox') as HTMLInputElement;
       expect(checkbox.checked).toBe(true);
@@ -326,13 +256,7 @@ describe('DynamicConfigForm Component', () => {
         },
       };
 
-      render(
-        <DynamicConfigForm
-          schema={schema}
-          values={{}}
-          onChange={mockOnChange}
-        />
-      );
+      render(<DynamicConfigForm schema={schema} values={{}} onChange={mockOnChange} />);
 
       const input = screen.getByLabelText(/username/i) as HTMLInputElement;
       expect(input.value).toBe('defaultuser');
@@ -349,13 +273,7 @@ describe('DynamicConfigForm Component', () => {
         },
       };
 
-      render(
-        <DynamicConfigForm
-          schema={schema}
-          values={{}}
-          onChange={mockOnChange}
-        />
-      );
+      render(<DynamicConfigForm schema={schema} values={{}} onChange={mockOnChange} />);
 
       const input = screen.getByLabelText(/port/i) as HTMLInputElement;
       expect(input.value).toBe('8080');
@@ -396,13 +314,7 @@ describe('DynamicConfigForm Component', () => {
         },
       };
 
-      render(
-        <DynamicConfigForm
-          schema={schema}
-          values={{}}
-          onChange={mockOnChange}
-        />
-      );
+      render(<DynamicConfigForm schema={schema} values={{}} onChange={mockOnChange} />);
 
       expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/age/i)).toBeInTheDocument();
@@ -418,13 +330,7 @@ describe('DynamicConfigForm Component', () => {
         },
       };
 
-      render(
-        <DynamicConfigForm
-          schema={schema}
-          values={{}}
-          onChange={mockOnChange}
-        />
-      );
+      render(<DynamicConfigForm schema={schema} values={{}} onChange={mockOnChange} />);
 
       const input1 = screen.getByLabelText(/field1/i);
       const input2 = screen.getByLabelText(/field2/i);
@@ -449,13 +355,7 @@ describe('DynamicConfigForm Component', () => {
         },
       };
 
-      render(
-        <DynamicConfigForm
-          schema={schema}
-          values={{}}
-          onChange={mockOnChange}
-        />
-      );
+      render(<DynamicConfigForm schema={schema} values={{}} onChange={mockOnChange} />);
 
       expect(screen.getByText('Enter your API key')).toBeInTheDocument();
     });
@@ -471,11 +371,7 @@ describe('DynamicConfigForm Component', () => {
       };
 
       const { container } = render(
-        <DynamicConfigForm
-          schema={schema}
-          values={{}}
-          onChange={mockOnChange}
-        />
+        <DynamicConfigForm schema={schema} values={{}} onChange={mockOnChange} />
       );
 
       expect(container).toBeInTheDocument();
