@@ -53,3 +53,12 @@ notpush/*
 # Build outputs
 dist/
 build/
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+coverage.json
+*.lcov
+coverage-combined/
+.nyc_output/
