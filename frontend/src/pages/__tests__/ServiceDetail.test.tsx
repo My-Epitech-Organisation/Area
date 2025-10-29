@@ -79,9 +79,7 @@ describe('ServiceDetail Page', () => {
   describe('Loading State', () => {
     it('should show loading state initially', () => {
       (globalThis.fetch as ReturnType<typeof vi.fn>).mockImplementation(
-        () =>
-          new Promise(() => {
-          })
+        () => new Promise(() => {})
       );
 
       render(
@@ -169,9 +167,7 @@ describe('ServiceDetail Page', () => {
         { name: 'push_event', description: 'Triggered when code is pushed' },
         { name: 'pr_opened', description: 'Triggered when PR is opened' },
       ],
-      reactions: [
-        { name: 'create_issue', description: 'Creates a new issue' },
-      ],
+      reactions: [{ name: 'create_issue', description: 'Creates a new issue' }],
     };
 
     beforeEach(() => {
