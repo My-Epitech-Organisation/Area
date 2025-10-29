@@ -24,9 +24,7 @@ describe('Debug Page', () => {
   describe('Loading State', () => {
     it('should show loading state initially', () => {
       (globalThis.fetch as ReturnType<typeof vi.fn>).mockImplementation(
-        () =>
-          new Promise(() => {
-          })
+        () => new Promise(() => {})
       );
 
       render(
@@ -186,13 +184,9 @@ describe('Debug Page', () => {
   });
 
   describe('Triggering Actions', () => {
-    const mockDebugAreas = [
-      { id: 1, name: 'Test Debug Area', status: 'active', action: 5 },
-    ];
+    const mockDebugAreas = [{ id: 1, name: 'Test Debug Area', status: 'active', action: 5 }];
 
-    const mockActions = [
-      { id: 5, name: 'debug_manual_trigger', service: 'system' },
-    ];
+    const mockActions = [{ id: 5, name: 'debug_manual_trigger', service: 'system' }];
 
     beforeEach(() => {
       (globalThis.fetch as ReturnType<typeof vi.fn>)
@@ -284,13 +278,9 @@ describe('Debug Page', () => {
   });
 
   describe('Execution Log', () => {
-    const mockDebugAreas = [
-      { id: 1, name: 'Test Debug Area', status: 'active', action: 5 },
-    ];
+    const mockDebugAreas = [{ id: 1, name: 'Test Debug Area', status: 'active', action: 5 }];
 
-    const mockActions = [
-      { id: 5, name: 'debug_manual_trigger', service: 'system' },
-    ];
+    const mockActions = [{ id: 5, name: 'debug_manual_trigger', service: 'system' }];
 
     beforeEach(() => {
       (globalThis.fetch as ReturnType<typeof vi.fn>)
@@ -433,9 +423,7 @@ describe('Debug Page', () => {
       { id: 2, name: 'Debug Area 2', status: 'active', action: 5 },
     ];
 
-    const mockActions = [
-      { id: 5, name: 'debug_manual_trigger', service: 'system' },
-    ];
+    const mockActions = [{ id: 5, name: 'debug_manual_trigger', service: 'system' }];
 
     beforeEach(() => {
       (globalThis.fetch as ReturnType<typeof vi.fn>)
