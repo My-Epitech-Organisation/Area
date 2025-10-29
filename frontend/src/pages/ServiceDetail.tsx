@@ -3,7 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import { useConnectedServices, useInitiateOAuth, useDisconnectService } from '../hooks/useOAuth';
 import { useNotifications } from '../hooks/useNotifications';
 import Notification from '../components/Notification';
-import { API_BASE } from '../utils/helper';
+import GitHubAppBanner from '../components/GitHubAppBanner';
+import { API_BASE, getStoredUser, fetchUserData } from '../utils/helper';
+import type { User } from '../types';
 
 type ServiceAction = {
   name: string;
@@ -27,9 +29,30 @@ const ServiceDetail: React.FC = () => {
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   const isInternalService = (serviceName: string) => {
     return ['timer', 'debug', 'email', 'webhook', 'weather'].includes(serviceName.toLowerCase());
+  };
+
+  // Load user data
+  useEffect(() => {
+    const storedUser = getStoredUser();
+    if (storedUser) {
+      setUser(storedUser);
+    }
+  }, []);
+
+  const handleRefreshUserData = async () => {
+    try {
+      const updatedUser = await fetchUserData();
+      if (updatedUser) {
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+    } catch (err) {
+      console.error('Error refreshing user data:', err);
+    }
   };
 
   // OAuth hooks
@@ -190,6 +213,11 @@ const ServiceDetail: React.FC = () => {
           onClose={() => removeNotification(notification.id)}
         />
       ))}
+
+      {/* GitHub App Banner - Show only on GitHub service page */}
+      {user && service && service.name.toLowerCase() === 'github' && (
+        <GitHubAppBanner user={user} />
+      )}
 
       <div className="max-w-6xl mx-auto pt-20">
         <Link
