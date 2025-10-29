@@ -246,16 +246,16 @@ class GitHubAppInstallationAdmin(admin.ModelAdmin):
         "installation_id",
         "is_active",
         "repository_count",
-        "created_at",
+        "installed_at",
     )
-    list_filter = ("account_type", "is_active", "created_at")
+    list_filter = ("account_type", "is_active", "installed_at")
     search_fields = (
         "user__username",
         "user__email",
         "account_login",
         "installation_id",
     )
-    readonly_fields = ("installation_id", "created_at", "updated_at", "repository_count")
+    readonly_fields = ("installation_id", "installed_at", "updated_at", "repository_count")
     list_per_page = 25
 
     fieldsets = (
@@ -272,7 +272,7 @@ class GitHubAppInstallationAdmin(admin.ModelAdmin):
             },
         ),
         ("Repositories", {"fields": ("repositories", "repository_count")}),
-        ("Timestamps", {"fields": ("created_at", "updated_at")}),
+    ("Timestamps", {"fields": ("installed_at", "updated_at")}),
     )
 
     def repository_count(self, obj):
