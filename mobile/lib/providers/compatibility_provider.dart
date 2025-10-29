@@ -80,6 +80,13 @@ class CompatibilityProvider extends ChangeNotifier {
     String actionName,
     List<String> allReactions,
   ) {
+    if (!_isLoaded) {
+      debugPrint(
+        '[CompatibilityProvider] Rules not loaded yet, returning all reactions for $actionName',
+      );
+      return allReactions;
+    }
+
     final compatible = _rules[actionName] ?? [];
 
     // If "*" is in the rules, return all reactions
@@ -95,6 +102,13 @@ class CompatibilityProvider extends ChangeNotifier {
 
   /// Check if a reaction is compatible with an action
   bool isCompatible(String actionName, String reactionName) {
+    if (!_isLoaded) {
+      debugPrint(
+        '[CompatibilityProvider] Rules not loaded yet, allowing compatibility for $actionName → $reactionName',
+      );
+      return true;
+    }
+
     final compatible = _rules[actionName] ?? [];
     if (compatible.contains("*")) return true;
     return compatible.contains(reactionName);
