@@ -208,10 +208,7 @@ describe('helper', () => {
       const result = await fetchUserData();
 
       expect(result).toBeNull();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to fetch user data:',
-        'Unauthorized'
-      );
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch user data:', 'Unauthorized');
 
       consoleSpy.mockRestore();
     });
@@ -226,10 +223,7 @@ describe('helper', () => {
       const result = await fetchUserData();
 
       expect(result).toBeNull();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Error fetching user profile:',
-        expect.any(Error)
-      );
+      expect(consoleSpy).toHaveBeenCalledWith('Error fetching user profile:', expect.any(Error));
 
       consoleSpy.mockRestore();
     });
