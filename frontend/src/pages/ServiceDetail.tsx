@@ -3,8 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { useConnectedServices, useInitiateOAuth, useDisconnectService } from '../hooks/useOAuth';
 import { useNotifications } from '../hooks/useNotifications';
 import Notification from '../components/Notification';
-import GitHubAppBanner from '../components/GitHubAppBanner';
-import { API_BASE, getStoredUser, fetchUserData } from '../utils/helper';
+import GitHubAppSection from '../components/GitHubAppSection';
+import { API_BASE, getStoredUser } from '../utils/helper';
 import type { User } from '../types';
 
 type ServiceAction = {
@@ -42,18 +42,6 @@ const ServiceDetail: React.FC = () => {
       setUser(storedUser);
     }
   }, []);
-
-  const handleRefreshUserData = async () => {
-    try {
-      const updatedUser = await fetchUserData();
-      if (updatedUser) {
-        setUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-      }
-    } catch (err) {
-      console.error('Error refreshing user data:', err);
-    }
-  };
 
   // OAuth hooks
   const {
@@ -214,11 +202,6 @@ const ServiceDetail: React.FC = () => {
         />
       ))}
 
-      {/* GitHub App Banner - Show only on GitHub service page */}
-      {user && service && service.name.toLowerCase() === 'github' && (
-        <GitHubAppBanner user={user} />
-      )}
-
       <div className="max-w-6xl mx-auto pt-20">
         <Link
           to="/services"
@@ -330,6 +313,11 @@ const ServiceDetail: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {/* GitHub App Section - Show only for GitHub service */}
+              {service.name.toLowerCase() === 'github' && (
+                <GitHubAppSection user={user} isOAuthConnected={isConnected} />
+              )}
 
               <div className="mt-8 grid gap-8 md:grid-cols-2">
                 <div>
