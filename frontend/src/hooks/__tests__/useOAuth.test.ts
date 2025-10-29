@@ -25,9 +25,7 @@ describe('useOAuth', () => {
   describe('useConnectedServices', () => {
     it('should initialize with loading state', () => {
       const mockFetch = (globalThis as any).fetch as any;
-      mockFetch.mockImplementation(
-        () => new Promise(() => {})
-      );
+      mockFetch.mockImplementation(() => new Promise(() => {}));
 
       localStorage.setItem('access', 'test-token');
 
@@ -245,16 +243,13 @@ describe('useOAuth', () => {
       });
 
       expect(success).toBe(true);
-      expect(mockFetch).toHaveBeenCalledWith(
-        `${API_BASE}/auth/services/google/disconnect/`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: 'Bearer test-token',
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      expect(mockFetch).toHaveBeenCalledWith(`${API_BASE}/auth/services/google/disconnect/`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: 'Bearer test-token',
+          'Content-Type': 'application/json',
+        },
+      });
     });
 
     it('should handle disconnect error', async () => {
