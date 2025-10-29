@@ -53,6 +53,7 @@ notpush/*
 # Build outputs
 dist/
 build/
+frontend/html/
 
 # Coverage reports
 coverage/
@@ -73,3 +74,7 @@ frontend/Services
 frontend/should
 frontend/vitest
 frontend/frontend@*
+
+# Vitest UI and generated files
+html.meta.json.gz
+*.meta.json.gz
