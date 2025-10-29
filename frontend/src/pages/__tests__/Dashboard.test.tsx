@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, waitFor, screen, fireEvent } from '@testing-library/react';
-import { BrowserRouter, useNavigate } from 'react-router-dom';
+import { render, waitFor } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 import Dashboard from '../Dashboard';
 
 vi.mock('react-router-dom', async () => {
