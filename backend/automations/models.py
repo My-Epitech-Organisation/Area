@@ -280,9 +280,21 @@ class WebhookSubscription(models.Model):
     """
     Track active webhook subscriptions for users.
 
-    This model tracks which webhooks are active for which users,
-    especially useful for services like Twitch EventSub that require
-    explicit subscription management.
+    ⚠️ SERVICE-SPECIFIC USAGE:
+
+    - **Twitch EventSub**: REQUIRED - Twitch mandates explicit subscription management via API
+    - **Slack**: OPTIONAL - Useful for tracking active event subscriptions
+    - **GitHub**: NOT USED - Use GitHubAppInstallation instead (GitHub App handles webhooks automatically)
+
+    This model is designed for services that require explicit webhook subscription
+    management. For GitHub, the GitHubAppInstallation model provides automatic
+    webhook configuration through the GitHub App.
+
+    Key Features:
+    - Track external subscription IDs (e.g., Twitch EventSub subscription ID)
+    - Monitor subscription status and health
+    - Store per-subscription configuration
+    - Track event statistics (count, last received)
     """
 
     class Status(models.TextChoices):
@@ -383,9 +395,29 @@ class GitHubAppInstallation(models.Model):
     """
     Track GitHub App installations per user.
 
-    When a user installs the AREA GitHub App on their account/org,
-    this model stores the installation details to enable automatic
-    webhook configuration for their repositories.
+    ℹ️ GITHUB-SPECIFIC WEBHOOK MANAGEMENT:
+
+    This model replaces the need for WebhookSubscription for GitHub services.
+    When a user installs the AREA GitHub App on their account/organization,
+    GitHub automatically configures webhooks for all selected repositories.
+
+    Benefits vs manual webhook configuration:
+    - ✅ No manual webhook setup required per repository
+    - ✅ Automatic webhook configuration and signature validation
+    - ✅ Centralized permission management via GitHub App
+    - ✅ Tracks which repositories user has granted access to
+    - ✅ Automatic updates when user adds/removes repositories
+
+    Flow:
+    1. User installs GitHub App via frontend banner
+    2. GitHub sends installation webhook to our backend
+    3. process_github_app_installation() creates/updates this record
+    4. All repository webhooks are automatically configured by GitHub
+    5. Webhook events arrive at /webhooks/github/ with automatic validation
+
+    Related:
+    - See github_app_views.py for installation API endpoints
+    - See webhooks.py process_github_app_installation() for webhook handling
     """
 
     class AccountType(models.TextChoices):
