@@ -527,8 +527,8 @@ class AboutServiceSerializer(serializers.ModelSerializer):
 
         # Services that map to OAuth tokens
         service_oauth_map = {
-            'gmail': 'google',
-            'google_calendar': 'google',
+            "gmail": "google",
+            "google_calendar": "google",
         }
 
         mapped_oauth = service_oauth_map.get(obj.name)
