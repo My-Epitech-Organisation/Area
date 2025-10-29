@@ -71,10 +71,10 @@ const GitHubAppSection: React.FC<GitHubAppSectionProps> = ({ user, isOAuthConnec
   const handleInstall = () => {
     const githubAppName = import.meta.env.VITE_GITHUB_APP_NAME || 'area-automation';
     const installUrl = `https://github.com/apps/${githubAppName}/installations/new`;
-    
+
     // Store current URL for redirect after installation
     sessionStorage.setItem('github_app_redirect', window.location.pathname);
-    
+
     window.location.href = installUrl;
   };
 
