@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import '../services/http_client_service.dart';
+import '../config/api_config.dart';
 
 /// Provider for managing action-reaction compatibility rules
 /// Loads rules dynamically from the backend on first use and caches them
@@ -42,7 +43,9 @@ class CompatibilityProvider extends ChangeNotifier {
 
     try {
       debugPrint('[CompatibilityProvider] Fetching rules from backend...');
-      final response = await _httpClient.get('/api/compatibility-rules/');
+      final response = await _httpClient.get(
+        '${ApiConfig.baseUrl}/api/compatibility-rules/',
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
