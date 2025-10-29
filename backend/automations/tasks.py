@@ -355,50 +355,42 @@ def check_timer_actions(self):
 )
 def check_github_actions(self):
     """
-    Check GitHub-based actions (DEPRECATED - USE WEBHOOKS).
+    Check GitHub-based actions with smart webhook fallback.
 
-    ⚠️ WARNING: This polling task is DEPRECATED and should not be used in production.
-    GitHub provides webhooks for real-time event notifications which are:
-    - Instant (no 5-minute delay)
-    - More reliable (no missed events)
-    - More efficient (no API calls for polling)
+    This task implements intelligent per-user polling:
+    - Users WITH GitHub App installed: Skip (use real-time webhooks)
+    - Users WITHOUT GitHub App: Use polling as fallback (5-minute intervals)
+
+    This approach allows mixed deployments where some users benefit from
+    instant webhook notifications while others use polling until they
+    install the GitHub App.
 
     To enable webhooks:
     1. Configure WEBHOOK_SECRETS['github'] in settings
-    2. Set up GitHub webhook at: https://github.com/<owner>/<repo>/settings/hooks
-    3. Point webhook to: https://your-domain.com/webhooks/github/
-    4. Select events: issues, pull_request, push, etc.
-
-    This task is kept for backward compatibility and testing only.
-    It should be disabled in production by removing it from Celery Beat schedule.
+    2. User installs GitHub App from frontend
+    3. GitHub App automatically configures webhooks for user's repos
 
     Returns:
         dict: Statistics about processed GitHub events
     """
-    logger.warning(
-        "GitHub polling is DEPRECATED. Please use webhooks for production. "
-        "See documentation: docs/WEBHOOKS.md"
-    )
-
-    # Return early if webhooks are configured (detect by checking settings)
     from django.conf import settings
+    from .models import GitHubAppInstallation
+    
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
-    if webhook_secrets.get("github"):
-        logger.info(
-            "GitHub webhook is configured. Skipping polling task. "
-            "Remove this task from Celery Beat schedule."
+    webhook_configured = bool(webhook_secrets.get("github"))
+    
+    if not webhook_configured:
+        logger.warning(
+            "GitHub webhook secret not configured. "
+            "Polling ALL users (no webhook validation possible)."
         )
-        return {
-            "status": "skipped",
-            "reason": "webhooks_enabled",
-            "message": "GitHub webhooks are configured. Polling is disabled.",
-        }
-
-    logger.info("Starting GitHub actions check (polling mode - DEPRECATED)")
+    
+    logger.info("Starting GitHub actions check (smart polling mode)")
 
     triggered_count = 0
     skipped_count = 0
     no_token_count = 0
+    webhook_users_count = 0
 
     try:
         from users.oauth.manager import OAuthManager
@@ -406,9 +398,58 @@ def check_github_actions(self):
         # Get all active areas with GitHub actions
         github_areas = get_active_areas(["github_new_issue", "github_new_pr"])
 
+        if not github_areas:
+            logger.info("No active GitHub areas found")
+            return {
+                "status": "no_areas",
+                "checked": 0
+            }
+
         logger.debug(f"Found {len(github_areas)} active GitHub areas")
 
-        for area in github_areas:
+        # Get set of user IDs with active GitHub App installation
+        users_with_app = set()
+        if webhook_configured:
+            users_with_app = set(
+                GitHubAppInstallation.objects.filter(
+                    is_active=True
+                ).values_list('user_id', flat=True)
+            )
+            
+            if users_with_app:
+                logger.info(
+                    f"Found {len(users_with_app)} users with GitHub App installed "
+                    f"(will use webhooks, skip polling)"
+                )
+
+        # Filter areas: only poll for users without GitHub App
+        areas_needing_polling = [
+            area for area in github_areas 
+            if area.owner_id not in users_with_app
+        ]
+        
+        webhook_users_count = len(github_areas) - len(areas_needing_polling)
+
+        if not areas_needing_polling:
+            logger.info(
+                "All users have GitHub App installed. "
+                "No polling needed (all using webhooks)."
+            )
+            return {
+                "status": "skipped",
+                "reason": "all_users_have_webhooks",
+                "webhook_users": webhook_users_count,
+                "polling_users": 0,
+                "message": "All GitHub users have webhooks configured"
+            }
+        
+        logger.info(
+            f"Polling for {len(areas_needing_polling)} areas from "
+            f"{len(set(a.owner_id for a in areas_needing_polling))} users without GitHub App. "
+            f"({webhook_users_count} areas using webhooks)"
+        )
+
+        for area in areas_needing_polling:
             try:
                 # Get valid OAuth2 token for the user
                 access_token = OAuthManager.get_valid_token(area.owner, "github")
@@ -586,7 +627,7 @@ def check_github_actions(self):
         logger.info(
             f"GitHub polling check completed. "
             f"Triggered: {triggered_count}, Skipped: {skipped_count}, "
-            f"No token: {no_token_count}"
+            f"No token: {no_token_count}, Webhook users: {webhook_users_count}"
         )
 
         return {
@@ -594,8 +635,10 @@ def check_github_actions(self):
             "triggered": triggered_count,
             "skipped": skipped_count,
             "no_token": no_token_count,
-            "checked_areas": len(github_areas),
-            "note": "GitHub webhooks preferred over polling",
+            "webhook_users": webhook_users_count,
+            "polling_users": len(set(a.owner_id for a in areas_needing_polling)),
+            "checked_areas": len(areas_needing_polling),
+            "note": "Smart polling: users with GitHub App use webhooks, others use polling",
         }
 
     except Exception as exc:
