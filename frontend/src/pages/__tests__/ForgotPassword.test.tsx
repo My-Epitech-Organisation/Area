@@ -110,7 +110,7 @@ describe('ForgotPassword Page', () => {
     it('should show loading state during submission', async () => {
       globalThis.fetch = vi.fn(
         () =>
-          new Promise((resolve) =>
+          new Promise<Response>((resolve) =>
             setTimeout(
               () =>
                 resolve({
