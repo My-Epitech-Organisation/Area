@@ -26,7 +26,9 @@ describe('OAuthCallback Page', () => {
   describe('Success Scenarios', () => {
     it('should show success message when OAuth connection succeeds', () => {
       render(
-        <MemoryRouter initialEntries={['/oauth/callback/github?success=true&service=GitHub&created=true']}>
+        <MemoryRouter
+          initialEntries={['/oauth/callback/github?success=true&service=GitHub&created=true']}
+        >
           <OAuthCallback />
         </MemoryRouter>
       );
@@ -38,7 +40,9 @@ describe('OAuthCallback Page', () => {
 
     it('should show reconnected message when OAuth updates existing connection', () => {
       render(
-        <MemoryRouter initialEntries={['/oauth/callback/google?success=true&service=Google&created=false']}>
+        <MemoryRouter
+          initialEntries={['/oauth/callback/google?success=true&service=Google&created=false']}
+        >
           <OAuthCallback />
         </MemoryRouter>
       );
@@ -49,7 +53,9 @@ describe('OAuthCallback Page', () => {
 
     it('should redirect to services page after 2 seconds on success', () => {
       render(
-        <MemoryRouter initialEntries={['/oauth/callback/github?success=true&service=GitHub&created=true']}>
+        <MemoryRouter
+          initialEntries={['/oauth/callback/github?success=true&service=GitHub&created=true']}
+        >
           <OAuthCallback />
         </MemoryRouter>
       );
@@ -63,7 +69,9 @@ describe('OAuthCallback Page', () => {
 
     it('should display success icon on successful connection', () => {
       render(
-        <MemoryRouter initialEntries={['/oauth/callback/github?success=true&service=GitHub&created=true']}>
+        <MemoryRouter
+          initialEntries={['/oauth/callback/github?success=true&service=GitHub&created=true']}
+        >
           <OAuthCallback />
         </MemoryRouter>
       );
@@ -77,7 +85,11 @@ describe('OAuthCallback Page', () => {
   describe('Error Scenarios', () => {
     it('should show error message when OAuth fails with error parameter', () => {
       render(
-        <MemoryRouter initialEntries={['/oauth/callback/github?error=access_denied&message=User%20denied%20access']}>
+        <MemoryRouter
+          initialEntries={[
+            '/oauth/callback/github?error=access_denied&message=User%20denied%20access',
+          ]}
+        >
           <OAuthCallback />
         </MemoryRouter>
       );
@@ -120,7 +132,9 @@ describe('OAuthCallback Page', () => {
       );
 
       expect(screen.getByText(/connection failed/i)).toBeInTheDocument();
-      expect(screen.getByText(/invalid oauth callback.*missing required parameters/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/invalid oauth callback.*missing required parameters/i)
+      ).toBeInTheDocument();
     });
 
     it('should handle unexpected authentication state', () => {
@@ -151,7 +165,9 @@ describe('OAuthCallback Page', () => {
   describe('Processing State', () => {
     it('should render component without crashing', () => {
       render(
-        <MemoryRouter initialEntries={['/oauth/callback/github?success=true&service=GitHub&created=true']}>
+        <MemoryRouter
+          initialEntries={['/oauth/callback/github?success=true&service=GitHub&created=true']}
+        >
           <OAuthCallback />
         </MemoryRouter>
       );
@@ -163,7 +179,9 @@ describe('OAuthCallback Page', () => {
   describe('Different OAuth Providers', () => {
     it('should handle GitHub OAuth callback', () => {
       render(
-        <MemoryRouter initialEntries={['/oauth/callback/github?success=true&service=GitHub&created=true']}>
+        <MemoryRouter
+          initialEntries={['/oauth/callback/github?success=true&service=GitHub&created=true']}
+        >
           <OAuthCallback />
         </MemoryRouter>
       );
@@ -173,7 +191,9 @@ describe('OAuthCallback Page', () => {
 
     it('should handle Google OAuth callback', () => {
       render(
-        <MemoryRouter initialEntries={['/oauth/callback/google?success=true&service=Google&created=true']}>
+        <MemoryRouter
+          initialEntries={['/oauth/callback/google?success=true&service=Google&created=true']}
+        >
           <OAuthCallback />
         </MemoryRouter>
       );
@@ -183,7 +203,9 @@ describe('OAuthCallback Page', () => {
 
     it('should handle Gmail OAuth callback', () => {
       render(
-        <MemoryRouter initialEntries={['/oauth/callback/gmail?success=true&service=Gmail&created=false']}>
+        <MemoryRouter
+          initialEntries={['/oauth/callback/gmail?success=true&service=Gmail&created=false']}
+        >
           <OAuthCallback />
         </MemoryRouter>
       );
@@ -196,7 +218,11 @@ describe('OAuthCallback Page', () => {
   describe('URL Encoding', () => {
     it('should decode URL-encoded error messages', () => {
       render(
-        <MemoryRouter initialEntries={['/oauth/callback/github?error=invalid&message=Invalid%20OAuth%20state%20parameter']}>
+        <MemoryRouter
+          initialEntries={[
+            '/oauth/callback/github?error=invalid&message=Invalid%20OAuth%20state%20parameter',
+          ]}
+        >
           <OAuthCallback />
         </MemoryRouter>
       );
@@ -206,7 +232,11 @@ describe('OAuthCallback Page', () => {
 
     it('should handle special characters in error messages', () => {
       render(
-        <MemoryRouter initialEntries={['/oauth/callback/github?error=error&message=Connection%20timeout%20%3A%20retry%20later']}>
+        <MemoryRouter
+          initialEntries={[
+            '/oauth/callback/github?error=error&message=Connection%20timeout%20%3A%20retry%20later',
+          ]}
+        >
           <OAuthCallback />
         </MemoryRouter>
       );
