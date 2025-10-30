@@ -35,6 +35,25 @@ from .models import TwitchEventSubSubscription
 logger = logging.getLogger(__name__)
 
 
+def get_twitch_client_id() -> str:
+    """
+    Get Twitch Client ID from OAUTH2_PROVIDERS configuration.
+
+    Returns:
+        Twitch Client ID
+
+    Raises:
+        ValueError: If Twitch is not configured
+    """
+    twitch_config = settings.OAUTH2_PROVIDERS.get("twitch", {})
+    client_id = twitch_config.get("client_id")
+
+    if not client_id:
+        raise ValueError("Twitch Client ID not configured in OAUTH2_PROVIDERS")
+
+    return client_id
+
+
 def get_twitch_access_token(user) -> Optional[str]:
     """
     Get valid Twitch access token for user.
@@ -60,11 +79,12 @@ def get_twitch_user_id(access_token: str) -> Optional[dict]:
         Dict with 'id' and 'login' keys, or None on error
     """
     try:
+        client_id = get_twitch_client_id()
         response = requests.get(
             "https://api.twitch.tv/helix/users",
             headers={
                 "Authorization": f"Bearer {access_token}",
-                "Client-Id": settings.TWITCH_CLIENT_ID,
+                "Client-Id": client_id,
             },
             timeout=10
         )
@@ -113,11 +133,12 @@ def create_eventsub_subscription(
     }
 
     try:
+        client_id = get_twitch_client_id()
         response = requests.post(
             "https://api.twitch.tv/helix/eventsub/subscriptions",
             headers={
                 "Authorization": f"Bearer {access_token}",
-                "Client-Id": settings.TWITCH_CLIENT_ID,
+                "Client-Id": client_id,
                 "Content-Type": "application/json"
             },
             json=payload,
@@ -144,11 +165,12 @@ def delete_eventsub_subscription(access_token: str, subscription_id: str) -> boo
         True if successful, False otherwise
     """
     try:
+        client_id = get_twitch_client_id()
         response = requests.delete(
             f"https://api.twitch.tv/helix/eventsub/subscriptions?id={subscription_id}",
             headers={
                 "Authorization": f"Bearer {access_token}",
-                "Client-Id": settings.TWITCH_CLIENT_ID,
+                "Client-Id": client_id,
             },
             timeout=10
         )
