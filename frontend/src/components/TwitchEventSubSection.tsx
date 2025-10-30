@@ -121,38 +121,6 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({ user, isO
     }
   };
 
-  const handleEnableAll = async () => {
-    setSubscribing(true);
-    setError(null);
-
-    let successCount = 0;
-    let failCount = 0;
-
-    for (const type of SUBSCRIPTION_TYPES) {
-      const success = await handleSubscribeType(type.value);
-      if (success) {
-        successCount++;
-      } else {
-        failCount++;
-      }
-      // Small delay between requests to avoid rate limiting
-      await new Promise((resolve) => setTimeout(resolve, 300));
-    }
-
-    setSubscribing(false);
-
-    // Refresh status to show new subscriptions
-    await checkEventSubStatus();
-
-    if (failCount === 0) {
-      setError(null);
-    } else if (successCount > 0) {
-      setError(
-        `Enabled ${successCount} events successfully. ${failCount} failed (may already exist).`
-      );
-    }
-  };
-
   const handleEnableInactive = async (inactiveTypes: string[]) => {
     setSubscribing(true);
     setError(null);
@@ -205,11 +173,6 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({ user, isO
       console.error('Error deleting subscription:', err);
       setError('Connection error');
     }
-  };
-
-  const formatSubscriptionType = (type: string): string => {
-    const found = SUBSCRIPTION_TYPES.find((t) => t.value === type);
-    return found ? found.label : type;
   };
 
   if (!user) return null;
