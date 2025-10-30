@@ -58,7 +58,7 @@ const GitHubAppCallback: React.FC = () => {
         }
 
         // Link installation to user account
-        const response = await fetch(`${API_BASE}/automations/api/github-app/link-installation/`, {
+        const response = await fetch(`${API_BASE}/api/github-app/link-installation/`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
