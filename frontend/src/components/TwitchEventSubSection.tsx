@@ -25,8 +25,9 @@ interface TwitchSubscription {
 }
 
 interface TwitchEventSubStatus {
+  has_subscriptions: boolean;
   subscriptions: TwitchSubscription[];
-  webhook_configured: boolean;
+  webhook_configured?: boolean;
 }
 
 const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({
@@ -146,8 +147,11 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({
 
   if (!user) return null;
 
+  // Use has_subscriptions from API (considers both EventSub + OAuth polling)
+  const hasActiveSubscriptions = status?.has_subscriptions || false;
+
+  // Count active EventSub subscriptions for display
   const activeCount = status?.subscriptions.filter((s) => s.status === 'enabled').length || 0;
-  const hasActiveSubscriptions = activeCount > 0;
 
   return (
     <div className="mt-6 pt-6 border-t border-white/10">
