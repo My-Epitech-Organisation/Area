@@ -1086,23 +1086,20 @@ def check_twitch_actions(self):
         dict: Summary of polling results
     """
     logger.warning(
-        "Twitch polling is DEPRECATED. Use EventSub webhooks for production. "
-        "See: https://dev.twitch.tv/docs/eventsub"
+        "Twitch polling is DEPRECATED for most events. Use EventSub webhooks for production. "
+        "Exception: channel.follow polling remains active as EventSub may not be available."
     )
 
-    # Return early if webhooks are configured
+    # Check webhook configuration
     from django.conf import settings
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
-    if webhook_secrets.get("twitch"):
+    webhooks_enabled = bool(webhook_secrets.get("twitch"))
+
+    if webhooks_enabled:
         logger.info(
-            "Twitch webhook is configured. Skipping polling task. "
-            "Remove this task from Celery Beat schedule."
+            "Twitch EventSub webhooks are configured. "
+            "Polling will only check for new followers (EventSub fallback)."
         )
-        return {
-            "status": "skipped",
-            "reason": "webhooks_enabled",
-            "message": "Twitch EventSub webhooks are configured. Polling is disabled.",
-        }
 
     from django.conf import settings
 
@@ -1115,18 +1112,27 @@ def check_twitch_actions(self):
         get_user_info,
     )
 
-    logger.info("Checking Twitch actions (polling mode - DEPRECATED)...")
+    logger.info(
+        f"Checking Twitch actions (polling mode - "
+        f"{'follower-only fallback' if webhooks_enabled else 'full polling'})"
+    )
 
     try:
-        # Get all active Areas with Twitch actions
-        twitch_areas = get_active_areas(
-            [
+        # Determine which actions to check based on webhook status
+        if webhooks_enabled:
+            # Only check followers when webhooks are active (EventSub doesn't support it)
+            action_types = ["twitch_new_follower"]
+        else:
+            # Check all actions if webhooks not configured
+            action_types = [
                 "twitch_stream_online",
                 "twitch_stream_offline",
                 "twitch_new_follower",
                 "twitch_channel_update",
             ]
-        )
+
+        # Get all active Areas with Twitch actions
+        twitch_areas = get_active_areas(action_types)
 
         if not twitch_areas:
             logger.info("No active Twitch areas found")
