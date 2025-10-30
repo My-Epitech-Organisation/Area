@@ -186,11 +186,15 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({
 
   if (!user) return null;
 
-  // Use has_subscriptions from API (considers both EventSub + OAuth polling)
-  const hasActiveSubscriptions = status?.has_subscriptions || false;
-
   // Count active EventSub subscriptions for display
   const activeCount = status?.subscriptions.filter((s) => s.status === 'enabled').length || 0;
+
+  // Total subscriptions (regardless of status)
+  const totalSubscriptions = status?.subscriptions.length || 0;
+
+  // Consider webhooks "enabled" only if there are actual subscriptions in the database
+  // Even if has_subscriptions=true (OAuth connected), if no subscriptions exist, show "Enable" button
+  const hasActiveSubscriptions = totalSubscriptions > 0;
 
   return (
     <div className="mt-6 pt-6 border-t border-white/10">
