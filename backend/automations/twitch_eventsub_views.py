@@ -54,6 +54,55 @@ def get_twitch_client_id() -> str:
     return client_id
 
 
+def get_backend_webhook_url() -> str:
+    """
+    Get the backend webhook URL dynamically.
+
+    Returns:
+        Backend base URL (e.g., https://areaction.app or http://localhost:8080)
+    """
+    # First try BACKEND_URL if defined
+    backend_url = getattr(settings, "BACKEND_URL", None)
+    if backend_url:
+        return backend_url
+
+    # Otherwise, construct from ALLOWED_HOSTS
+    allowed_hosts = getattr(settings, "ALLOWED_HOSTS", [])
+    if allowed_hosts:
+        # Filter out localhost/internal hosts for production
+        public_hosts = [h for h in allowed_hosts if h not in ["localhost", "127.0.0.1", "0.0.0.0", "*"]]
+        if public_hosts:
+            # Use first public host with https in production
+            protocol = "https" if not settings.DEBUG else "http"
+            return f"{protocol}://{public_hosts[0]}"
+
+    # Fallback to localhost for dev
+    return "http://localhost:8080"
+
+
+def get_twitch_webhook_secret() -> str:
+    """
+    Get Twitch webhook secret from WEBHOOK_SECRETS configuration.
+
+    Returns:
+        Twitch webhook secret
+
+    Raises:
+        ValueError: If Twitch webhook secret is not configured
+    """
+    webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
+    secret = webhook_secrets.get("twitch")
+
+    if not secret:
+        raise ValueError(
+            "Twitch webhook secret not configured in WEBHOOK_SECRETS. "
+            "Set the WEBHOOK_SECRETS environment variable with: "
+            '{"twitch": "your_secret_here"}'
+        )
+
+    return secret
+
+
 def get_twitch_access_token(user) -> Optional[str]:
     """
     Get valid Twitch access token for user.
@@ -119,7 +168,9 @@ def create_eventsub_subscription(
     Returns:
         Subscription data dict or None on error
     """
-    webhook_url = f"{settings.BACKEND_URL}/webhooks/twitch/"
+    backend_url = get_backend_webhook_url()
+    webhook_url = f"{backend_url}/webhooks/twitch/"
+    webhook_secret = get_twitch_webhook_secret()
 
     payload = {
         "type": subscription_type,
@@ -128,7 +179,7 @@ def create_eventsub_subscription(
         "transport": {
             "method": "webhook",
             "callback": webhook_url,
-            "secret": settings.TWITCH_WEBHOOK_SECRET
+            "secret": webhook_secret
         }
     }
 
