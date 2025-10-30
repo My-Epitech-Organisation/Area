@@ -18,32 +18,25 @@ interface TwitchEventSubSectionProps {
 
 interface TwitchSubscription {
   id: number;
-  subscription_id: string;
-  subscription_type: string;
+  subscription_id: string | null;
+  type: string;
   status: string;
   broadcaster_login: string;
-  broadcaster_user_id: string;
-  created_at: string;
 }
 
 interface TwitchEventSubStatus {
-  has_subscriptions: boolean;
   subscriptions: TwitchSubscription[];
+  webhook_configured: boolean;
 }
 
-const SUBSCRIPTION_TYPES = [
-  { value: 'stream.online', label: 'Stream Online', description: 'When stream goes live' },
-  { value: 'stream.offline', label: 'Stream Offline', description: 'When stream ends' },
-  { value: 'channel.follow', label: 'New Follower', description: 'When someone follows' },
-  { value: 'channel.subscribe', label: 'New Subscriber', description: 'When someone subscribes' },
-  { value: 'channel.update', label: 'Channel Update', description: 'When channel info changes' },
-];
-
-const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({ user, isOAuthConnected }) => {
+const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({
+  user,
+  isOAuthConnected,
+}) => {
   const [status, setStatus] = useState<TwitchEventSubStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [subscribing, setSubscribing] = useState(false);
+  const [enabling, setEnabling] = useState(false);
 
   useEffect(() => {
     if (!user || !isOAuthConnected) {
@@ -85,97 +78,76 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({ user, isO
     }
   };
 
-  const handleSubscribeType = async (subscriptionType: string) => {
+  const handleEnableEvents = async () => {
+    setEnabling(true);
     setError(null);
-
-    try {
-      const token = localStorage.getItem('access');
-      if (!token) {
-        setError('Not authenticated');
-        return false;
-      }
-
-      const response = await fetch(`${API_BASE}/api/twitch-eventsub/subscribe/`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          subscription_type: subscriptionType,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        return true;
-      } else {
-        setError(data.error || 'Failed to create subscription');
-        return false;
-      }
-    } catch (err) {
-      console.error('Error creating subscription:', err);
-      setError('Connection error');
-      return false;
-    }
-  };
-
-  const handleEnableInactive = async (inactiveTypes: string[]) => {
-    setSubscribing(true);
-    setError(null);
-
-    let successCount = 0;
-    let failCount = 0;
-
-    for (const type of inactiveTypes) {
-      const success = await handleSubscribeType(type);
-      if (success) successCount++;
-      else failCount++;
-      await new Promise((resolve) => setTimeout(resolve, 300));
-    }
-
-    setSubscribing(false);
-    await checkEventSubStatus();
-
-    if (failCount === 0) setError(null);
-    else if (successCount > 0)
-      setError(`Enabled ${successCount} events successfully. ${failCount} failed (may already exist).`);
-  };
-
-  const handleUnsubscribe = async (subscriptionId: number) => {
-    if (!window.confirm('Are you sure you want to delete this webhook subscription?')) {
-      return;
-    }
 
     try {
       const token = localStorage.getItem('access');
       if (!token) return;
 
-      const response = await fetch(
-        `${API_BASE}/api/twitch-eventsub/unsubscribe/${subscriptionId}/`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      // Subscribe to all available event types
+      // Note: channel.follow will automatically use polling fallback if EventSub not available
+      const subscriptionTypes = [
+        'stream.online',
+        'stream.offline',
+        'channel.update',
+        'channel.subscribe',
+        'channel.follow',
+      ];
 
-      if (response.ok) {
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const type of subscriptionTypes) {
+        try {
+          const response = await fetch(`${API_BASE}/api/twitch-eventsub/subscribe/`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              subscription_type: type,
+            }),
+          });
+
+          if (response.ok) {
+            successCount++;
+          } else {
+            failCount++;
+            const errorData = await response.json();
+            console.error(`Failed to enable ${type}:`, errorData);
+          }
+        } catch (err) {
+          failCount++;
+          console.error(`Error enabling ${type}:`, err);
+        }
+
+        // Small delay between requests
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+
+      if (successCount > 0) {
         // Refresh status
         await checkEventSubStatus();
-      } else {
-        const data = await response.json();
-        setError(data.error || 'Failed to delete subscription');
+      }
+
+      if (failCount > 0) {
+        setError(`Some events could not be enabled (${failCount} failed)`);
       }
     } catch (err) {
-      console.error('Error deleting subscription:', err);
-      setError('Connection error');
+      console.error('Error enabling Twitch events:', err);
+      setError('Failed to enable events');
+    } finally {
+      setEnabling(false);
     }
   };
 
   if (!user) return null;
+
+  const activeCount = status?.subscriptions.filter((s) => s.status === 'enabled').length || 0;
+  const hasActiveSubscriptions = activeCount > 0;
 
   return (
     <div className="mt-6 pt-6 border-t border-white/10">
@@ -200,21 +172,21 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({ user, isO
         {/* Content */}
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-lg font-semibold text-white">Real-time EventSub Webhooks</h3>
+            <h3 className="text-lg font-semibold text-white">Real-time Webhooks</h3>
             <span className="px-2 py-0.5 text-xs font-medium bg-purple-500/20 text-purple-300 rounded-full">
               Recommended
             </span>
           </div>
 
           <p className="text-sm text-gray-300 mb-3">
-            Enable EventSub to receive instant Twitch event notifications without polling delays
+            Enable Twitch EventSub webhooks to receive instant event notifications
           </p>
 
           {/* Status & Action based on state */}
           {!isOAuthConnected ? (
             <div className="bg-gray-500/10 border border-gray-500/30 rounded-lg p-3">
               <p className="text-sm text-gray-400">
-                ⚠️ Complete OAuth connection first to enable EventSub webhooks
+                ⚠️ Complete OAuth connection first to enable webhooks
               </p>
             </div>
           ) : loading ? (
@@ -232,82 +204,31 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({ user, isO
                 Retry
               </button>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {/* If there are any existing subscriptions show full list (allow enabling others). */}
-              {status?.subscriptions && (
-                <div className="bg-gradient-to-br from-gray-800/0 to-gray-800/0 rounded-lg p-0">
-                  <div className="space-y-2">
-                    {(() => {
-                      const existingTypes = status.subscriptions.map((s) => s.subscription_type);
-                      const inactiveTypes = SUBSCRIPTION_TYPES.filter((t) => !existingTypes.includes(t.value)).map((t) => t.value);
-
-                      return (
-                        <>
-                          {SUBSCRIPTION_TYPES.map((t) => {
-                            const found = status.subscriptions.find((s) => s.subscription_type === t.value);
-                            return (
-                              <div key={t.value} className="flex items-center justify-between bg-black/20 rounded p-3">
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium text-white">{t.label}</p>
-                                  <p className="text-xs text-gray-400 mt-0.5">{t.description}</p>
-                                  {found && found.broadcaster_login && (
-                                    <p className="text-xs text-gray-400 mt-0.5">Channel: {found.broadcaster_login}</p>
-                                  )}
-                                  <p className="text-xs text-gray-500 mt-0.5">Status: {found ? found.status : 'inactive'}</p>
-                                </div>
-                                {found ? (
-                                  <button
-                                    onClick={() => handleUnsubscribe(found.id)}
-                                    className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded text-xs font-medium transition-colors border border-red-500/30"
-                                  >
-                                    Remove
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={() => handleSubscribeType(t.value)}
-                                    disabled={subscribing}
-                                    className="px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-200 rounded text-xs font-medium transition-colors border border-purple-500/20"
-                                  >
-                                    Enable
-                                  </button>
-                                )}
-                              </div>
-                            );
-                          })}
-
-                          {/* If two or more inactive types, show a single button to enable all inactive */}
-                          {inactiveTypes.length >= 2 && (
-                            <div className="mt-3">
-                              <button
-                                onClick={() => handleEnableInactive(inactiveTypes)}
-                                disabled={subscribing}
-                                className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-                              >
-                                {subscribing ? (
-                                  <>
-                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                    Enabling Events...
-                                  </>
-                                ) : (
-                                  <>
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                    </svg>
-                                    Enable all inactive events ({inactiveTypes.length})
-                                  </>
-                                )}
-                              </button>
-                            </div>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </div>
+          ) : hasActiveSubscriptions ? (
+            // Active subscriptions state
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 bg-green-500/20 text-green-300 px-3 py-1.5 rounded-lg border border-green-500/30">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span className="text-sm font-medium">
+                    {activeCount} {activeCount === 1 ? 'Event' : 'Events'} Active
+                  </span>
                 </div>
-              )}
 
-              {/* Info */}
+                <button
+                  onClick={checkEventSubStatus}
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-colors border border-white/20"
+                >
+                  Refresh Status
+                </button>
+              </div>
+
               <div className="mt-3 pt-3 border-t border-white/5">
                 <p className="text-xs text-gray-500 flex items-center gap-1.5">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -317,9 +238,75 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({ user, isO
                       clipRule="evenodd"
                     />
                   </svg>
-                  EventSub webhooks provide real-time event notifications (&lt;1s latency)
+                  Webhooks deliver real-time notifications. Follower events use polling as backup.
                 </p>
               </div>
+            </div>
+          ) : (
+            // Not enabled state
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 bg-yellow-500/20 text-yellow-300 px-3 py-1.5 rounded-lg border border-yellow-500/30">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span className="text-sm font-medium">Not Enabled</span>
+                </div>
+              </div>
+
+              {/* Polling Fallback Warning */}
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <svg
+                    className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="text-sm text-yellow-300 font-medium">
+                      Currently using polling mode
+                    </p>
+                    <p className="text-xs text-yellow-400 mt-1">
+                      Events are checked every 5 minutes. Enable webhooks for instant real-time
+                      notifications.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={handleEnableEvents}
+                disabled={enabling}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-medium transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {enabling ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Enabling Events...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Enable Twitch Events
+                  </>
+                )}
+              </button>
             </div>
           )}
         </div>
