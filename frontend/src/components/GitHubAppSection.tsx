@@ -45,7 +45,7 @@ const GitHubAppSection: React.FC<GitHubAppSectionProps> = ({ user, isOAuthConnec
         return;
       }
 
-      const response = await fetch(`${API_BASE}/automations/api/github-app/status/`, {
+      const response = await fetch(`${API_BASE}/api/github-app/status/`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
