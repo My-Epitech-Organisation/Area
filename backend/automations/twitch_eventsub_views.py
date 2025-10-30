@@ -297,11 +297,12 @@ def twitch_eventsub_subscribe(request: Request) -> Response:
     else:
         # If broadcaster_user_id provided, fetch their username
         try:
+            client_id = get_twitch_client_id()
             response = requests.get(
                 f"https://api.twitch.tv/helix/users?id={broadcaster_user_id}",
                 headers={
                     "Authorization": f"Bearer {access_token}",
-                    "Client-Id": settings.TWITCH_CLIENT_ID,
+                    "Client-Id": client_id,
                 },
                 timeout=10
             )
