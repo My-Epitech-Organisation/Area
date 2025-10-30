@@ -77,6 +77,7 @@ urlpatterns = [
     # GitHub App endpoints
     path("api/github-app/status/", github_app_views.github_app_status, name="github-app-status"),
     path("api/github-app/link-installation/", github_app_views.github_app_link_installation, name="github-app-link"),
+    path("api/github-app/refresh/", github_app_views.github_app_refresh_installation, name="github-app-refresh"),
     path("api/github-app/repositories/", github_app_views.github_app_repositories, name="github-app-repos"),
     # Debug endpoints
     path(
