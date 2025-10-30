@@ -20,11 +20,6 @@ interface GitHubAppStatus {
   installed: boolean;
   installations?: Array<{
     id: number;
-    account: string;
-    type: string;
-    repositories_count: number;
-    repositories: string[];
-    installed_at: string;
   }>;
   install_url?: string;
 }
@@ -94,43 +89,6 @@ const GitHubAppSection: React.FC<GitHubAppSectionProps> = ({ user, isOAuthConnec
     }
   };
 
-  const handleRefresh = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('access');
-      if (!token) return;
-
-      // Call the refresh endpoint
-      const response = await fetch(`${API_BASE}/api/github-app/refresh/`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({}), // Refresh all installations
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          // Reload status after refresh
-          await checkGitHubAppStatus();
-          setError(null);
-        } else {
-          setError('Failed to refresh installation data');
-        }
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        setError(errorData.error || 'Failed to refresh installation data');
-      }
-    } catch (err) {
-      console.error('Error refreshing GitHub App installation:', err);
-      setError('Connection error while refreshing');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (!user) return null;
 
   return (
@@ -193,7 +151,7 @@ const GitHubAppSection: React.FC<GitHubAppSectionProps> = ({ user, isOAuthConnec
           ) : status?.installed ? (
             // Installed state
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 bg-green-500/20 text-green-300 px-3 py-1.5 rounded-lg border border-green-500/30">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path
@@ -204,40 +162,12 @@ const GitHubAppSection: React.FC<GitHubAppSectionProps> = ({ user, isOAuthConnec
                   </svg>
                   <span className="text-sm font-medium">Installed</span>
                 </div>
-              </div>
-
-              <div className="bg-white/5 rounded-lg p-3 space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400">Account:</span>
-                  <span className="text-white font-medium">
-                    {status.installations && status.installations.length > 0
-                      ? status.installations[0].account
-                      : 'Unknown'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400">Repositories:</span>
-                  <span className="text-white font-medium">
-                    {status.installations && status.installations.length > 0
-                      ? status.installations[0].repositories_count
-                      : 0}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
+                
                 <button
                   onClick={handleManage}
                   className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-colors border border-white/20"
                 >
                   Manage Installation
-                </button>
-                <button
-                  onClick={handleRefresh}
-                  disabled={loading}
-                  className="px-4 py-2 text-gray-400 hover:text-white text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Refreshing...' : 'Refresh Status'}
                 </button>
               </div>
 
@@ -270,40 +200,8 @@ const GitHubAppSection: React.FC<GitHubAppSectionProps> = ({ user, isOAuthConnec
                 </div>
               </div>
 
-              <div className="bg-white/5 rounded-lg p-3">
-                <p className="text-sm text-gray-300 mb-3">
-                  Benefits of installing the GitHub App:
-                </p>
-                <ul className="space-y-2 text-sm text-gray-400">
-                  <li className="flex items-start gap-2">
-                    <svg className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span>Real-time push, pull request, and issue events</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <svg className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span>No polling delays (instant notifications)</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <svg className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span>Automatic webhook configuration</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <svg className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span>Better performance and reliability</span>
-                  </li>
-                </ul>
-              </div>
-
               {/* Polling Fallback Warning */}
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mt-3">
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
                 <div className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
