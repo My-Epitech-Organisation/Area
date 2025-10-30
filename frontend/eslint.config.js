@@ -26,7 +26,10 @@ export default [
       '.git/**',
       '*.log',
       '*.lock',
-      '*.md'
+      '*.md',
+      'coverage/**',
+      'html/**',
+      '*.meta.json.gz'
     ]
   },
   js.configs.recommended,
@@ -69,6 +72,15 @@ export default [
       react: {
         version: 'detect'
       }
+    }
+  },
+  // Règles relaxées pour les fichiers de test
+  {
+    files: ['**/__tests__/**/*.{ts,tsx}', '**/*.test.{ts,tsx}', '**/setupTests.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-console': 'off'
     }
   },
   prettierConfig
