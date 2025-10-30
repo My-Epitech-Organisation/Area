@@ -93,7 +93,7 @@ const GitHubAppCallback: React.FC = () => {
           const errorData = await response.json().catch(() => ({}));
           setStatus('error');
           setMessage(
-            errorData.message || errorData.detail || 'Failed to link GitHub App installation'
+            errorData.error || errorData.message || errorData.detail || 'Failed to link GitHub App installation'
           );
           redirectAfterDelay(3000);
         }
