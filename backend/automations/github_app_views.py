@@ -108,18 +108,26 @@ def github_app_link_installation(request):
     ).first()
 
     if not installation:
-        # Installation webhook hasn't been received yet
-        # This can happen if user is very fast or webhook is delayed
+        # Installation webhook hasn't been received yet, or GitHub is very slow
+        # Create a placeholder installation that will be updated by webhook
         logger.warning(
-            f"Installation {installation_id} not found for user {request.user.username}. "
-            "User may have installed before webhook was received."
+            f"Installation {installation_id} not found in database. "
+            f"Creating placeholder for user {request.user.username}."
         )
-        return Response(
-            {
-                "error": "Installation not found. Please wait a moment and try again.",
-                "installation_id": installation_id
-            },
-            status=status.HTTP_404_NOT_FOUND
+        
+        # We'll create it now and let the webhook update it with repo details
+        installation = GitHubAppInstallation.objects.create(
+            installation_id=installation_id,
+            user=request.user,
+            account_login="",  # Will be filled by webhook
+            account_type="",   # Will be filled by webhook
+            repositories=[],   # Will be filled by webhook
+            is_active=True,
+        )
+        
+        logger.info(
+            f"Created placeholder installation {installation_id} "
+            f"for user {request.user.username}"
         )
 
     # Link installation to user if not already linked
@@ -134,9 +142,9 @@ def github_app_link_installation(request):
     return Response({
         "success": True,
         "installation_id": installation_id,
-        "account": installation.account_login,
-        "repositories": installation.repositories,
-        "repositories_count": len(installation.repositories)
+        "account_login": installation.account_login or "GitHub Account",
+        "repository_count": len(installation.repositories),
+        "pending_webhook": not installation.account_login,  # True if webhook hasn't arrived yet
     })
 
 

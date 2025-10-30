@@ -73,9 +73,16 @@ const GitHubAppCallback: React.FC = () => {
           const data = await response.json();
           setStatus('success');
           const action = setupAction === 'update' ? 'updated' : 'installed';
-          setMessage(
-            `Successfully ${action} GitHub App for ${data.account_login} (${data.repository_count} repositories)`
-          );
+          
+          if (data.pending_webhook) {
+            setMessage(
+              `GitHub App ${action}! Syncing repository details...`
+            );
+          } else {
+            setMessage(
+              `Successfully ${action} GitHub App for ${data.account_login} (${data.repository_count} repositories)`
+            );
+          }
 
           // Clear the banner dismissal flag so it can check status again
           sessionStorage.removeItem('github_app_banner_dismissed');
