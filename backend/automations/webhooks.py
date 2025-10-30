@@ -783,10 +783,10 @@ def webhook_receiver(request: Request, service: str) -> Response:
         if result.get("status") == "challenge" and "challenge" in result:
             # Twitch requires plain text response with just the challenge string
             if service == "twitch":
-                return HttpResponse(
+                return Response(
                     result["challenge"],
-                    content_type="text/plain",
-                    status=200
+                    status=status.HTTP_200_OK,
+                    headers={"Content-Type": "text/plain"},
                 )
             # Slack expects JSON response
             return Response(
