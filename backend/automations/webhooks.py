@@ -34,6 +34,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from django.conf import settings
+from django.http import HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
@@ -780,6 +781,14 @@ def webhook_receiver(request: Request, service: str) -> Response:
 
         # Handle challenge responses (Twitch and Slack)
         if result.get("status") == "challenge" and "challenge" in result:
+            # Twitch requires plain text response with just the challenge string
+            if service == "twitch":
+                return HttpResponse(
+                    result["challenge"],
+                    content_type="text/plain",
+                    status=200
+                )
+            # Slack expects JSON response
             return Response(
                 {"challenge": result["challenge"]},
                 status=status.HTTP_200_OK
