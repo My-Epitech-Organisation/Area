@@ -47,6 +47,9 @@ except ImportError:
 # Import GitHub App views
 from . import github_app_views
 
+# Import Twitch EventSub views
+from . import twitch_eventsub_views
+
 app_name = "automations"
 
 urlpatterns = [
@@ -78,6 +81,10 @@ urlpatterns = [
     path("api/github-app/status/", github_app_views.github_app_status, name="github-app-status"),
     path("api/github-app/link-installation/", github_app_views.github_app_link_installation, name="github-app-link"),
     path("api/github-app/repositories/", github_app_views.github_app_repositories, name="github-app-repos"),
+    # Twitch EventSub endpoints
+    path("api/twitch-eventsub/status/", twitch_eventsub_views.twitch_eventsub_status, name="twitch-eventsub-status"),
+    path("api/twitch-eventsub/subscribe/", twitch_eventsub_views.twitch_eventsub_subscribe, name="twitch-eventsub-subscribe"),
+    path("api/twitch-eventsub/unsubscribe/<int:subscription_id>/", twitch_eventsub_views.twitch_eventsub_unsubscribe, name="twitch-eventsub-unsubscribe"),
     # Debug endpoints
     path(
         "api/debug/trigger/<int:area_id>/",
