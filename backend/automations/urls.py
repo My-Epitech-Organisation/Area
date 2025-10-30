@@ -85,6 +85,7 @@ urlpatterns = [
     path("api/twitch-eventsub/status/", twitch_eventsub_views.twitch_eventsub_status, name="twitch-eventsub-status"),
     path("api/twitch-eventsub/subscribe/", twitch_eventsub_views.twitch_eventsub_subscribe, name="twitch-eventsub-subscribe"),
     path("api/twitch-eventsub/unsubscribe/<int:subscription_id>/", twitch_eventsub_views.twitch_eventsub_unsubscribe, name="twitch-eventsub-unsubscribe"),
+    path("api/twitch-eventsub/delete-all/", twitch_eventsub_views.twitch_eventsub_delete_all, name="twitch-eventsub-delete-all"),
     # Debug endpoints
     path(
         "api/debug/trigger/<int:area_id>/",
