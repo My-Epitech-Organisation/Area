@@ -153,6 +153,28 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({ user, isO
     }
   };
 
+  const handleEnableInactive = async (inactiveTypes: string[]) => {
+    setSubscribing(true);
+    setError(null);
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const type of inactiveTypes) {
+      const success = await handleSubscribeType(type);
+      if (success) successCount++;
+      else failCount++;
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+
+    setSubscribing(false);
+    await checkEventSubStatus();
+
+    if (failCount === 0) setError(null);
+    else if (successCount > 0)
+      setError(`Enabled ${successCount} events successfully. ${failCount} failed (may already exist).`);
+  };
+
   const handleUnsubscribe = async (subscriptionId: number) => {
     if (!window.confirm('Are you sure you want to delete this webhook subscription?')) {
       return;
@@ -249,111 +271,75 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({ user, isO
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Active Subscriptions */}
-              {status?.has_subscriptions && status.subscriptions.length > 0 && (
-                <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span className="text-sm font-semibold text-green-300">
-                      Active Subscriptions ({status.subscriptions.length})
-                    </span>
-                  </div>
-
+              {/* If there are any existing subscriptions show full list (allow enabling others). */}
+              {status?.subscriptions && (
+                <div className="bg-gradient-to-br from-gray-800/0 to-gray-800/0 rounded-lg p-0">
                   <div className="space-y-2">
-                    {status.subscriptions.map((sub) => (
-                      <div
-                        key={sub.id}
-                        className="flex items-center justify-between bg-black/20 rounded p-3"
-                      >
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-white">
-                            {formatSubscriptionType(sub.subscription_type)}
-                          </p>
-                          {sub.broadcaster_login && (
-                            <p className="text-xs text-gray-400 mt-0.5">
-                              Channel: {sub.broadcaster_login}
-                            </p>
+                    {(() => {
+                      const existingTypes = status.subscriptions.map((s) => s.subscription_type);
+                      const inactiveTypes = SUBSCRIPTION_TYPES.filter((t) => !existingTypes.includes(t.value)).map((t) => t.value);
+
+                      return (
+                        <>
+                          {SUBSCRIPTION_TYPES.map((t) => {
+                            const found = status.subscriptions.find((s) => s.subscription_type === t.value);
+                            return (
+                              <div key={t.value} className="flex items-center justify-between bg-black/20 rounded p-3">
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-white">{t.label}</p>
+                                  <p className="text-xs text-gray-400 mt-0.5">{t.description}</p>
+                                  {found && found.broadcaster_login && (
+                                    <p className="text-xs text-gray-400 mt-0.5">Channel: {found.broadcaster_login}</p>
+                                  )}
+                                  <p className="text-xs text-gray-500 mt-0.5">Status: {found ? found.status : 'inactive'}</p>
+                                </div>
+                                {found ? (
+                                  <button
+                                    onClick={() => handleUnsubscribe(found.id)}
+                                    className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded text-xs font-medium transition-colors border border-red-500/30"
+                                  >
+                                    Remove
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleSubscribeType(t.value)}
+                                    disabled={subscribing}
+                                    className="px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-200 rounded text-xs font-medium transition-colors border border-purple-500/20"
+                                  >
+                                    Enable
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+
+                          {/* If two or more inactive types, show a single button to enable all inactive */}
+                          {inactiveTypes.length >= 2 && (
+                            <div className="mt-3">
+                              <button
+                                onClick={() => handleEnableInactive(inactiveTypes)}
+                                disabled={subscribing}
+                                className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                              >
+                                {subscribing ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                    Enabling Events...
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    Enable all inactive events ({inactiveTypes.length})
+                                  </>
+                                )}
+                              </button>
+                            </div>
                           )}
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            Status: {sub.status}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => handleUnsubscribe(sub.id)}
-                          className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded text-xs font-medium transition-colors border border-red-500/30"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Enable All Events */}
-              {!status?.has_subscriptions && (
-                <div className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/30 rounded-lg p-4">
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-sm font-semibold text-white mb-1">
-                        Enable Real-time Notifications
-                      </h4>
-                      <p className="text-xs text-gray-400">
-                        This will enable webhooks for all Twitch events: Stream Online/Offline, New Followers, Subscribers, and Channel Updates
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleEnableAll}
-                    disabled={subscribing}
-                    className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-                  >
-                    {subscribing ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        Enabling Events...
-                      </>
-                    ) : (
-                      <>
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 10V3L4 14h7v7l9-11h-7z"
-                          />
-                        </svg>
-                        Enable All Twitch Events
-                      </>
-                    )}
-                  </button>
-
-                  <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fillRule="evenodd"
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    You can manage individual events after enabling
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               )}
