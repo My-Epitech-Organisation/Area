@@ -44,7 +44,6 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({ user, isO
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [subscribing, setSubscribing] = useState(false);
-  const [selectedType, setSelectedType] = useState<string>('stream.online');
 
   useEffect(() => {
     if (!user || !isOAuthConnected) {
@@ -86,18 +85,14 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({ user, isO
     }
   };
 
-  const handleSubscribe = async () => {
-    if (!selectedType) return;
-
-    setSubscribing(true);
+  const handleSubscribeType = async (subscriptionType: string) => {
     setError(null);
 
     try {
       const token = localStorage.getItem('access');
       if (!token) {
         setError('Not authenticated');
-        setSubscribing(false);
-        return;
+        return false;
       }
 
       const response = await fetch(`${API_BASE}/api/twitch-eventsub/subscribe/`, {
@@ -107,23 +102,54 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({ user, isO
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          subscription_type: selectedType,
+          subscription_type: subscriptionType,
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Refresh status
-        await checkEventSubStatus();
+        return true;
       } else {
         setError(data.error || 'Failed to create subscription');
+        return false;
       }
     } catch (err) {
       console.error('Error creating subscription:', err);
       setError('Connection error');
-    } finally {
-      setSubscribing(false);
+      return false;
+    }
+  };
+
+  const handleEnableAll = async () => {
+    setSubscribing(true);
+    setError(null);
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const type of SUBSCRIPTION_TYPES) {
+      const success = await handleSubscribeType(type.value);
+      if (success) {
+        successCount++;
+      } else {
+        failCount++;
+      }
+      // Small delay between requests to avoid rate limiting
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+
+    setSubscribing(false);
+
+    // Refresh status to show new subscriptions
+    await checkEventSubStatus();
+
+    if (failCount === 0) {
+      setError(null);
+    } else if (successCount > 0) {
+      setError(
+        `Enabled ${successCount} events successfully. ${failCount} failed (may already exist).`
+      );
     }
   };
 
@@ -270,43 +296,39 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({ user, isO
                 </div>
               )}
 
-              {/* Add New Subscription */}
-              <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-white mb-3">
-                  Add EventSub Subscription
-                </h4>
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm text-gray-300 mb-2">Event Type</label>
-                    <select
-                      value={selectedType}
-                      onChange={(e) => setSelectedType(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-900/50 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      disabled={subscribing}
-                    >
-                      {SUBSCRIPTION_TYPES.map((type) => (
-                        <option key={type.value} value={type.value}>
-                          {type.label} - {type.description}
-                        </option>
-                      ))}
-                    </select>
+              {/* Enable All Events */}
+              {!status?.has_subscriptions && (
+                <div className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/30 rounded-lg p-4">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                      <svg className="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-white mb-1">
+                        Enable Real-time Notifications
+                      </h4>
+                      <p className="text-xs text-gray-400">
+                        This will enable webhooks for all Twitch events: Stream Online/Offline, New Followers, Subscribers, and Channel Updates
+                      </p>
+                    </div>
                   </div>
 
                   <button
-                    onClick={handleSubscribe}
-                    disabled={subscribing || !selectedType}
-                    className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                    onClick={handleEnableAll}
+                    disabled={subscribing}
+                    className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                   >
                     {subscribing ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Creating Subscription...
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        Enabling Events...
                       </>
                     ) : (
                       <>
                         <svg
-                          className="w-4 h-4"
+                          className="w-5 h-5"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -315,15 +337,26 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({ user, isO
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth={2}
-                            d="M12 4v16m8-8H4"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"
                           />
                         </svg>
-                        Create Subscription
+                        Enable All Twitch Events
                       </>
                     )}
                   </button>
+
+                  <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    You can manage individual events after enabling
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Info */}
               <div className="mt-3 pt-3 border-t border-white/5">
