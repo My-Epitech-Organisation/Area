@@ -41,6 +41,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/auth/callback/:provider" element={<OAuthCallback />} />
         <Route path="/auth/github-app/callback" element={<GitHubAppCallback />} />
+        <Route path="/setup/github-app" element={<GitHubAppCallback />} />
         <Route index element={<Homepage />} />
       </Routes>
     </BrowserRouter>
