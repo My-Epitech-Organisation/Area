@@ -336,8 +336,47 @@ def match_webhook_to_areas(
     # Get all active areas for these actions
     areas = get_active_areas(action_names)
 
-    # TODO: Add filtering based on action_config
-    # e.g., only trigger for specific repositories, branches, labels, etc.
+    # Filter areas based on service-specific criteria
+    if service_name == "twitch":
+        # Extract broadcaster info from event
+        broadcaster_login = None
+        broadcaster_user_id = None
+        
+        # For Twitch EventSub, data is nested in "event" key
+        event = event_data.get("event", {})
+        if not event:
+            event = event_data  # Fallback if event is at root
+            
+        # Get broadcaster info
+        broadcaster_login = event.get("broadcaster_user_login")
+        broadcaster_user_id = event.get("broadcaster_user_id")
+        
+        if broadcaster_login or broadcaster_user_id:
+            # Filter areas to match only those configured for this broadcaster
+            filtered_areas = []
+            for area in areas:
+                action_config = area.action_config or {}
+                config_login = action_config.get("broadcaster_login", "").lower()
+                config_user_id = action_config.get("broadcaster_user_id", "")
+                
+                # Match by login or user_id
+                if config_login and broadcaster_login:
+                    if config_login == broadcaster_login.lower():
+                        filtered_areas.append(area)
+                elif config_user_id and broadcaster_user_id:
+                    if config_user_id == broadcaster_user_id:
+                        filtered_areas.append(area)
+                elif not config_login and not config_user_id:
+                    # If no broadcaster specified, match all (legacy support)
+                    filtered_areas.append(area)
+                    
+            areas = filtered_areas
+            logger.debug(
+                f"Filtered {len(areas)} Twitch areas for broadcaster "
+                f"{broadcaster_login or broadcaster_user_id}"
+            )
+
+    # TODO: Add filtering for other services (GitHub repos, Slack channels, etc.)
 
     return list(areas)
 
