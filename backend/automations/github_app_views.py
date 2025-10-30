@@ -8,6 +8,7 @@ These views handle:
 """
 
 import logging
+import requests
 
 from django.conf import settings
 from rest_framework import status
@@ -66,6 +67,71 @@ def github_app_status(request):
     })
 
 
+def fetch_installation_details(installation_id: int, user_access_token: str | None = None):
+    """
+    Fetch installation details from GitHub API.
+    
+    Args:
+        installation_id: GitHub App installation ID
+        user_access_token: Optional user's GitHub OAuth token
+        
+    Returns:
+        dict with account_login, account_type, and repositories list
+        or None if fetch fails
+    """
+    from users.models import ServiceToken
+    
+    try:
+        # Get user's GitHub token for API access
+        if not user_access_token:
+            logger.error("No GitHub access token provided")
+            return None
+            
+        headers = {
+            "Authorization": f"Bearer {user_access_token}",
+            "Accept": "application/vnd.github.v3+json",
+        }
+        
+        # Fetch installation details
+        response = requests.get(
+            f"https://api.github.com/user/installations/{installation_id}",
+            headers=headers,
+            timeout=10
+        )
+        
+        if response.status_code != 200:
+            logger.error(
+                f"Failed to fetch installation {installation_id}: "
+                f"{response.status_code} {response.text}"
+            )
+            return None
+            
+        data = response.json()
+        account = data.get("account", {})
+        
+        # Fetch repositories for this installation
+        repos_response = requests.get(
+            f"https://api.github.com/user/installations/{installation_id}/repositories",
+            headers=headers,
+            timeout=10
+        )
+        
+        repositories = []
+        if repos_response.status_code == 200:
+            repos_data = repos_response.json()
+            repositories = [repo["full_name"] for repo in repos_data.get("repositories", [])]
+        
+        return {
+            "account_login": account.get("login", ""),
+            "account_type": account.get("type", "User"),
+            "repositories": repositories,
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching installation details: {e}")
+        return None
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def github_app_link_installation(request):
@@ -107,44 +173,63 @@ def github_app_link_installation(request):
         installation_id=installation_id
     ).first()
 
+    # Get user's GitHub OAuth token to fetch installation details
+    from users.models import ServiceToken
+    github_token = ServiceToken.objects.filter(
+        user=request.user,
+        service_name="github"
+    ).first()
+    
+    if not github_token:
+        return Response(
+            {"error": "GitHub OAuth connection required. Please connect your GitHub account first."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Fetch installation details from GitHub API
+    details = fetch_installation_details(installation_id, github_token.access_token)
+    
+    if not details:
+        return Response(
+            {"error": "Failed to fetch installation details from GitHub. Please try again."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
     if not installation:
-        # Installation webhook hasn't been received yet, or GitHub is very slow
-        # Create a placeholder installation that will be updated by webhook
-        logger.warning(
-            f"Installation {installation_id} not found in database. "
-            f"Creating placeholder for user {request.user.username}."
+        # Create new installation with details from GitHub API
+        logger.info(
+            f"Creating installation {installation_id} for user {request.user.username} "
+            f"with {len(details['repositories'])} repositories"
         )
         
-        # We'll create it now and let the webhook update it with repo details
         installation = GitHubAppInstallation.objects.create(
             installation_id=installation_id,
             user=request.user,
-            account_login="",  # Will be filled by webhook
-            account_type="",   # Will be filled by webhook
-            repositories=[],   # Will be filled by webhook
+            account_login=details["account_login"],
+            account_type=details["account_type"],
+            repositories=details["repositories"],
             is_active=True,
         )
+    else:
+        # Update existing installation with fresh data from GitHub API
+        installation.user = request.user
+        installation.account_login = details["account_login"]
+        installation.account_type = details["account_type"]
+        installation.repositories = details["repositories"]
+        installation.is_active = True
+        installation.save()
         
         logger.info(
-            f"Created placeholder installation {installation_id} "
-            f"for user {request.user.username}"
-        )
-
-    # Link installation to user if not already linked
-    if installation.user != request.user:
-        installation.user = request.user
-        installation.save()
-        logger.info(
-            f"Linked GitHub App installation {installation_id} "
-            f"to user {request.user.username}"
+            f"Updated installation {installation_id} for user {request.user.username} "
+            f"with {len(details['repositories'])} repositories"
         )
 
     return Response({
         "success": True,
         "installation_id": installation_id,
-        "account_login": installation.account_login or "GitHub Account",
+        "account_login": installation.account_login,
         "repository_count": len(installation.repositories),
-        "pending_webhook": not installation.account_login,  # True if webhook hasn't arrived yet
+        "pending_webhook": False,
     })
 
 
