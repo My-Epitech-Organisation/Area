@@ -103,6 +103,72 @@ def get_twitch_webhook_secret() -> str:
     return secret
 
 
+# Cache for App Access Token (server-to-server authentication)
+_app_access_token_cache = {
+    "token": None,
+    "expires_at": None
+}
+
+
+def get_twitch_app_access_token() -> str:
+    """
+    Get Twitch App Access Token for server-to-server authentication.
+    Required for EventSub subscriptions (different from user OAuth token).
+
+    Uses Client Credentials flow and caches the token until expiration.
+
+    Returns:
+        App Access Token
+
+    Raises:
+        ValueError: If credentials are not configured or request fails
+    """
+    from datetime import datetime, timedelta
+
+    # Check if cached token is still valid (with 5 min buffer)
+    if _app_access_token_cache["token"] and _app_access_token_cache["expires_at"]:
+        if datetime.now() < _app_access_token_cache["expires_at"] - timedelta(minutes=5):
+            return _app_access_token_cache["token"]
+
+    # Get credentials
+    client_id = get_twitch_client_id()
+
+    # Get client secret from OAUTH2_PROVIDERS
+    twitch_config = settings.OAUTH2_PROVIDERS.get("twitch", {})
+    client_secret = twitch_config.get("client_secret")
+
+    if not client_secret:
+        raise ValueError("Twitch Client Secret not configured in OAUTH2_PROVIDERS")
+
+    # Request App Access Token using Client Credentials flow
+    try:
+        response = requests.post(
+            "https://id.twitch.tv/oauth2/token",
+            params={
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "grant_type": "client_credentials"
+            },
+            timeout=10
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        # Cache the token
+        _app_access_token_cache["token"] = data["access_token"]
+        _app_access_token_cache["expires_at"] = datetime.now() + timedelta(seconds=data["expires_in"])
+
+        logger.info("Successfully obtained Twitch App Access Token")
+        return data["access_token"]
+
+    except requests.RequestException as e:
+        error_msg = f"Failed to obtain Twitch App Access Token: {e}"
+        if hasattr(e, "response") and e.response is not None:
+            error_msg += f" - Response: {e.response.text}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+
+
 def get_twitch_access_token(user) -> Optional[str]:
     """
     Get valid Twitch access token for user.
@@ -153,15 +219,13 @@ def get_twitch_user_id(access_token: str) -> Optional[dict]:
 
 
 def create_eventsub_subscription(
-    access_token: str,
     subscription_type: str,
     condition: dict
 ) -> Optional[dict]:
     """
-    Create a Twitch EventSub subscription.
+    Create a Twitch EventSub subscription using App Access Token.
 
     Args:
-        access_token: User's Twitch OAuth token
         subscription_type: EventSub subscription type (e.g., 'stream.online')
         condition: Condition parameters (e.g., {'broadcaster_user_id': '12345'})
 
@@ -184,11 +248,14 @@ def create_eventsub_subscription(
     }
 
     try:
+        # Get App Access Token (required for EventSub subscriptions)
+        app_token = get_twitch_app_access_token()
         client_id = get_twitch_client_id()
+
         response = requests.post(
             "https://api.twitch.tv/helix/eventsub/subscriptions",
             headers={
-                "Authorization": f"Bearer {access_token}",
+                "Authorization": f"Bearer {app_token}",
                 "Client-Id": client_id,
                 "Content-Type": "application/json"
             },
@@ -208,19 +275,22 @@ def create_eventsub_subscription(
         return None
 
 
-def delete_eventsub_subscription(access_token: str, subscription_id: str) -> bool:
+def delete_eventsub_subscription(subscription_id: str) -> bool:
     """
-    Delete a Twitch EventSub subscription.
+    Delete a Twitch EventSub subscription using App Access Token.
 
     Returns:
         True if successful, False otherwise
     """
     try:
+        # Get App Access Token (required for EventSub operations)
+        app_token = get_twitch_app_access_token()
         client_id = get_twitch_client_id()
+
         response = requests.delete(
             f"https://api.twitch.tv/helix/eventsub/subscriptions?id={subscription_id}",
             headers={
-                "Authorization": f"Bearer {access_token}",
+                "Authorization": f"Bearer {app_token}",
                 "Client-Id": client_id,
             },
             timeout=10
@@ -395,9 +465,8 @@ def twitch_eventsub_subscribe(request: Request) -> Response:
     if subscription_type == "channel.follow":
         condition["moderator_user_id"] = broadcaster_user_id
 
-    # Create EventSub subscription via Twitch API
+    # Create EventSub subscription via Twitch API (uses App Access Token internally)
     subscription_data = create_eventsub_subscription(
-        access_token,
         subscription_type,
         condition
     )
@@ -483,14 +552,16 @@ def twitch_eventsub_unsubscribe(request: Request, subscription_id: int) -> Respo
 
     # Get user's Twitch access token
     access_token = get_twitch_access_token(request.user)
+    # Note: We still need user's access_token to verify they own this subscription
+    # but the API call itself uses App Access Token internally
     if not access_token:
         return Response(
             {"error": "Twitch account not connected"},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Delete from Twitch API
-    success = delete_eventsub_subscription(access_token, subscription.subscription_id)
+    # Delete from Twitch API (uses App Access Token internally)
+    success = delete_eventsub_subscription(subscription.subscription_id)
 
     # Delete from database even if API call failed (cleanup)
     subscription.delete()
