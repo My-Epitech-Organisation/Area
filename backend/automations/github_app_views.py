@@ -259,6 +259,92 @@ def github_app_link_installation(request):
         "repository_count": len(installation.repositories),
         "pending_webhook": len(installation.repositories) == 0,
     })
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def github_app_refresh_installation(request):
+    """
+    Force refresh installation details from GitHub API.
+
+    Request body:
+        {
+            "installation_id": int (optional - refreshes all if not provided)
+        }
+
+    Returns:
+        {
+            "success": bool,
+            "updated": int,
+            "installations": [...]
+        }
+    """
+    from users.models import ServiceToken
+
+    installation_id = request.data.get("installation_id")
+
+    # Get user's GitHub OAuth token
+    github_token = ServiceToken.objects.filter(
+        user=request.user,
+        service_name="github"
+    ).first()
+
+    if not github_token:
+        return Response(
+            {"error": "GitHub OAuth connection required to refresh installation data."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Get installations to refresh
+    if installation_id:
+        installations = GitHubAppInstallation.objects.filter(
+            user=request.user,
+            installation_id=installation_id,
+            is_active=True
+        )
+    else:
+        installations = GitHubAppInstallation.objects.filter(
+            user=request.user,
+            is_active=True
+        )
+
+    updated_count = 0
+    results = []
+
+    for inst in installations:
+        details = fetch_installation_details(inst.installation_id, github_token.access_token)
+        if details:
+            inst.account_login = details["account_login"]
+            inst.account_type = details["account_type"]
+            inst.repositories = details["repositories"]
+            inst.save()
+            updated_count += 1
+
+            results.append({
+                "installation_id": inst.installation_id,
+                "account_login": inst.account_login,
+                "repository_count": len(inst.repositories),
+                "status": "updated"
+            })
+
+            logger.info(
+                f"Refreshed installation {inst.installation_id}: "
+                f"{len(details['repositories'])} repositories"
+            )
+        else:
+            results.append({
+                "installation_id": inst.installation_id,
+                "status": "failed",
+                "error": "Could not fetch data from GitHub API"
+            })
+
+    return Response({
+        "success": updated_count > 0,
+        "updated": updated_count,
+        "installations": results
+    })
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def github_app_repositories(request):
