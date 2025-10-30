@@ -636,3 +636,68 @@ def twitch_eventsub_unsubscribe(request: Request, subscription_id: int) -> Respo
             {"message": "Subscription deleted from database, but Twitch API deletion failed"},
             status=status.HTTP_200_OK
         )
+
+
+@extend_schema(
+    summary="Delete all Twitch EventSub subscriptions",
+    description="Delete all EventSub subscriptions for the authenticated user",
+    responses={
+        200: OpenApiResponse(description="All subscriptions deleted"),
+        400: OpenApiResponse(description="Twitch not connected"),
+    }
+)
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def twitch_eventsub_delete_all(request: Request) -> Response:
+    """
+    Delete all Twitch EventSub subscriptions for the authenticated user.
+    Useful for resetting webhook configuration.
+    """
+    # Get user's Twitch access token to verify connection
+    access_token = get_twitch_access_token(request.user)
+    if not access_token:
+        return Response(
+            {"error": "Twitch account not connected"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Get all user's subscriptions
+    subscriptions = TwitchEventSubSubscription.objects.filter(user=request.user)
+    total_count = subscriptions.count()
+
+    if total_count == 0:
+        return Response(
+            {"message": "No subscriptions to delete", "deleted_count": 0},
+            status=status.HTTP_200_OK
+        )
+
+    deleted_count = 0
+    failed_count = 0
+
+    # Delete each subscription from Twitch API and database
+    for subscription in subscriptions:
+        if subscription.subscription_id:
+            # Delete from Twitch API (uses App Access Token internally)
+            success = delete_eventsub_subscription(subscription.subscription_id)
+            if success:
+                deleted_count += 1
+            else:
+                failed_count += 1
+        
+        # Delete from database regardless of API result (cleanup)
+        subscription.delete()
+
+    logger.info(
+        f"Deleted all Twitch EventSub subscriptions for {request.user.username}: "
+        f"{deleted_count} succeeded, {failed_count} failed (total: {total_count})"
+    )
+
+    return Response(
+        {
+            "message": f"Deleted {total_count} subscription(s)",
+            "deleted_count": total_count,
+            "api_success": deleted_count,
+            "api_failed": failed_count
+        },
+        status=status.HTTP_200_OK
+    )
