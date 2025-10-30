@@ -12,6 +12,7 @@ const Debug: React.FC = () => {
   const [triggering, setTriggering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [debugActionId, setDebugActionId] = useState<number | null>(null); // Track debug_manual_trigger action ID
 
   // Auto-refresh executions every 3 seconds
   useEffect(() => {
@@ -33,7 +34,7 @@ const Debug: React.FC = () => {
     return () => clearInterval(interval);
   }, [selectedAreaId]);
 
-  // Fetch all areas with debug action
+  // Fetch all areas with debug action or debug reaction
   useEffect(() => {
     const fetchDebugAreas = async () => {
       setLoading(true);
@@ -60,14 +61,25 @@ const Debug: React.FC = () => {
         const data = await response.json();
         const areas: Area[] = data.results || data;
 
-        // Fetch actions to filter debug areas
-        const actionsResponse = await fetch(`${API_BASE}/api/actions/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        // Fetch actions and reactions to filter debug areas
+        const [actionsResponse, reactionsResponse] = await Promise.all([
+          fetch(`${API_BASE}/api/actions/`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }),
+          fetch(`${API_BASE}/api/reactions/`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }),
+        ]);
 
+        let filtered: Area[] = [];
+
+        // Filter by debug action (manual trigger)
         if (actionsResponse.ok) {
           const actionsData = await actionsResponse.json();
           const actions = actionsData.results || actionsData;
@@ -77,13 +89,37 @@ const Debug: React.FC = () => {
           );
 
           if (debugAction) {
-            const filtered = areas.filter((area) => area.action === debugAction.id);
-            setDebugAreas(filtered);
-
-            if (filtered.length > 0 && !selectedAreaId) {
-              setSelectedAreaId(filtered[0].id);
-            }
+            setDebugActionId(debugAction.id); // Store the debug action ID
+            filtered = areas.filter((area) => area.action === debugAction.id);
           }
+        }
+
+        // Also filter by debug reaction (log execution)
+        if (reactionsResponse.ok) {
+          const reactionsData = await reactionsResponse.json();
+          const reactions = reactionsData.results || reactionsData;
+
+          const debugReaction = reactions.find(
+            (r: { name: string }) => r.name === 'debug_log_execution'
+          );
+
+          if (debugReaction) {
+            const areasWithDebugReaction = areas.filter(
+              (area) => area.reaction === debugReaction.id
+            );
+            // Merge both lists, avoiding duplicates
+            areasWithDebugReaction.forEach((area) => {
+              if (!filtered.find((a) => a.id === area.id)) {
+                filtered.push(area);
+              }
+            });
+          }
+        }
+
+        setDebugAreas(filtered);
+
+        if (filtered.length > 0 && !selectedAreaId) {
+          setSelectedAreaId(filtered[0].id);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load debug areas');
@@ -175,12 +211,30 @@ const Debug: React.FC = () => {
           </svg>
           <h2 className="text-2xl font-bold text-white mb-4">No Debug Areas Found</h2>
           <p className="text-gray-300 mb-6">
-            Create an automation with the{' '}
-            <span className="font-mono bg-indigo-500/20 px-2 py-1 rounded text-indigo-300">
-              debug_manual_trigger
-            </span>{' '}
-            action to use this debug console.
+            Create an automation with either:
           </p>
+          <ul className="text-left text-gray-300 mb-6 space-y-2 max-w-md mx-auto">
+            <li className="flex items-start gap-2">
+              <span className="text-indigo-400">•</span>
+              <span>
+                The{' '}
+                <span className="font-mono bg-indigo-500/20 px-2 py-1 rounded text-indigo-300">
+                  debug_manual_trigger
+                </span>{' '}
+                action for manual testing
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-indigo-400">•</span>
+              <span>
+                The{' '}
+                <span className="font-mono bg-indigo-500/20 px-2 py-1 rounded text-indigo-300">
+                  debug_log_execution
+                </span>{' '}
+                reaction to log webhook events
+              </span>
+            </li>
+          </ul>
           <a
             href="/Areaction"
             className="inline-block px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
@@ -247,16 +301,24 @@ const Debug: React.FC = () => {
                       {area.status}
                     </span>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleTrigger(area.id);
-                    }}
-                    disabled={triggering || area.status !== 'active'}
-                    className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition font-medium"
-                  >
-                    {triggering ? 'Triggering...' : '⚡ Trigger Now'}
-                  </button>
+
+                  {/* Show "Trigger Now" button only for debug_manual_trigger action */}
+                  {area.action === debugActionId ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTrigger(area.id);
+                      }}
+                      disabled={triggering || area.status !== 'active'}
+                      className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition font-medium"
+                    >
+                      {triggering ? 'Triggering...' : '⚡ Trigger Now'}
+                    </button>
+                  ) : (
+                    <div className="text-sm text-gray-400 italic">
+                      Triggered by external events (webhooks)
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
