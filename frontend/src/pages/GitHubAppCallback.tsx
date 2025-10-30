@@ -73,7 +73,7 @@ const GitHubAppCallback: React.FC = () => {
           const data = await response.json();
           setStatus('success');
           const action = setupAction === 'update' ? 'updated' : 'installed';
-          
+
           if (data.pending_webhook) {
             setMessage(
               `GitHub App ${action}! Syncing repository details...`
