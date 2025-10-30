@@ -53,3 +53,28 @@ notpush/*
 # Build outputs
 dist/
 build/
+frontend/html/
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+coverage.json
+*.lcov
+coverage-combined/
+.nyc_output/
+.vitest/
+coverage-final.json
+
+# Test artifacts
+frontend/Basic
+frontend/Dashboard
+frontend/Rendering
+frontend/Services
+frontend/should
+frontend/vitest
+frontend/frontend@*
+
+# Vitest UI and generated files
+html.meta.json.gz
+*.meta.json.gz

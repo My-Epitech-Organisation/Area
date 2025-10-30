@@ -6,3 +6,6 @@ build
 *.log
 *.lock
 *.md
+coverage
+html
+*.meta.json.gz
