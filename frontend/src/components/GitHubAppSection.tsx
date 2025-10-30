@@ -18,9 +18,15 @@ interface GitHubAppSectionProps {
 
 interface GitHubAppStatus {
   installed: boolean;
-  installation_id?: number;
-  account_login?: string;
-  repository_count?: number;
+  installations?: Array<{
+    id: number;
+    account: string;
+    type: string;
+    repositories_count: number;
+    repositories: string[];
+    installed_at: string;
+  }>;
+  install_url?: string;
 }
 
 const GitHubAppSection: React.FC<GitHubAppSectionProps> = ({ user, isOAuthConnected }) => {
@@ -79,8 +85,11 @@ const GitHubAppSection: React.FC<GitHubAppSectionProps> = ({ user, isOAuthConnec
   };
 
   const handleManage = () => {
-    if (status?.account_login) {
-      const manageUrl = `https://github.com/settings/installations`;
+    if (status?.installations && status.installations.length > 0) {
+      const installationId = status.installations[0].id;
+      const githubAppName = import.meta.env.VITE_GITHUB_APP_NAME || 'area-automation';
+      // Direct link to manage this specific installation
+      const manageUrl = `https://github.com/apps/${githubAppName}/installations/${installationId}`;
       window.open(manageUrl, '_blank');
     }
   };
@@ -200,11 +209,19 @@ const GitHubAppSection: React.FC<GitHubAppSectionProps> = ({ user, isOAuthConnec
               <div className="bg-white/5 rounded-lg p-3 space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-400">Account:</span>
-                  <span className="text-white font-medium">{status.account_login}</span>
+                  <span className="text-white font-medium">
+                    {status.installations && status.installations.length > 0
+                      ? status.installations[0].account
+                      : 'Unknown'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-400">Repositories:</span>
-                  <span className="text-white font-medium">{status.repository_count || 0}</span>
+                  <span className="text-white font-medium">
+                    {status.installations && status.installations.length > 0
+                      ? status.installations[0].repositories_count
+                      : 0}
+                  </span>
                 </div>
               </div>
 
