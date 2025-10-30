@@ -360,8 +360,23 @@ def twitch_eventsub_status(request: Request) -> Response:
         "created_at"
     )
 
+    # Check if user has a valid Twitch OAuth connection
+    # If yes, they have at least polling active (for follows), so we consider it "enabled"
+    has_oauth = False
+    try:
+        from users.oauth.manager import OAuthManager
+        token_data = OAuthManager.get_valid_token(request.user, "twitch")
+        has_oauth = token_data is not None
+    except Exception:
+        pass
+
+    # User has subscriptions if:
+    # 1. They have active EventSub subscriptions in DB, OR
+    # 2. They have OAuth connected (polling fallback is active)
+    has_subscriptions = subscriptions.exists() or has_oauth
+
     return Response({
-        "has_subscriptions": subscriptions.exists(),
+        "has_subscriptions": has_subscriptions,
         "subscriptions": list(subscriptions)
     })
 
