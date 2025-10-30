@@ -38,6 +38,8 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [enabling, setEnabling] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (!user || !isOAuthConnected) {
@@ -145,6 +147,43 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({
     }
   };
 
+  const handleDeleteAll = async () => {
+    if (!showDeleteConfirm) {
+      setShowDeleteConfirm(true);
+      return;
+    }
+
+    setDeleting(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem('access');
+      if (!token) return;
+
+      const response = await fetch(`${API_BASE}/api/twitch-eventsub/delete-all/`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        // Refresh status after deletion
+        await checkEventSubStatus();
+        setShowDeleteConfirm(false);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to delete webhooks');
+      }
+    } catch (err) {
+      console.error('Error deleting Twitch webhooks:', err);
+      setError('Failed to delete webhooks');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (!user) return null;
 
   // Use has_subscriptions from API (considers both EventSub + OAuth polling)
@@ -226,10 +265,24 @@ const TwitchEventSubSection: React.FC<TwitchEventSubSectionProps> = ({
                 </div>
 
                 <button
-                  onClick={checkEventSubStatus}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-colors border border-white/20"
+                  onClick={handleDeleteAll}
+                  disabled={deleting}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                    showDeleteConfirm
+                      ? 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/30'
+                      : 'bg-white/10 hover:bg-white/20 text-white border-white/20'
+                  }`}
                 >
-                  Refresh Status
+                  {deleting ? (
+                    <span className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                      Deleting...
+                    </span>
+                  ) : showDeleteConfirm ? (
+                    'Click again to confirm'
+                  ) : (
+                    'Delete All Webhooks'
+                  )}
                 </button>
               </div>
 
