@@ -85,6 +85,43 @@ const GitHubAppSection: React.FC<GitHubAppSectionProps> = ({ user, isOAuthConnec
     }
   };
 
+  const handleRefresh = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('access');
+      if (!token) return;
+
+      // Call the refresh endpoint
+      const response = await fetch(`${API_BASE}/api/github-app/refresh/`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}), // Refresh all installations
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // Reload status after refresh
+          await checkGitHubAppStatus();
+          setError(null);
+        } else {
+          setError('Failed to refresh installation data');
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.error || 'Failed to refresh installation data');
+      }
+    } catch (err) {
+      console.error('Error refreshing GitHub App installation:', err);
+      setError('Connection error while refreshing');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -179,10 +216,11 @@ const GitHubAppSection: React.FC<GitHubAppSectionProps> = ({ user, isOAuthConnec
                   Manage Installation
                 </button>
                 <button
-                  onClick={checkGitHubAppStatus}
-                  className="px-4 py-2 text-gray-400 hover:text-white text-sm transition-colors"
+                  onClick={handleRefresh}
+                  disabled={loading}
+                  className="px-4 py-2 text-gray-400 hover:text-white text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Refresh Status
+                  {loading ? 'Refreshing...' : 'Refresh Status'}
                 </button>
               </div>
 
