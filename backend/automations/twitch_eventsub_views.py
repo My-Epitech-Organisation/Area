@@ -221,7 +221,7 @@ def get_twitch_user_id(access_token: str) -> Optional[dict]:
 def create_eventsub_subscription(
     subscription_type: str,
     condition: dict
-) -> Optional[dict]:
+) -> dict:
     """
     Create a Twitch EventSub subscription using App Access Token.
 
@@ -230,7 +230,10 @@ def create_eventsub_subscription(
         condition: Condition parameters (e.g., {'broadcaster_user_id': '12345'})
 
     Returns:
-        Subscription data dict or None on error
+        Dict with 'status' key:
+        - {'status': 'success', 'data': subscription_data} on success
+        - {'status': 'not_available', 'message': '...'} if subscription type not available (410)
+        - {'status': 'error', 'message': '...'} on other errors
     """
     backend_url = get_backend_webhook_url()
     webhook_url = f"{backend_url}/webhooks/twitch/"
@@ -266,13 +269,28 @@ def create_eventsub_subscription(
         data = response.json()
 
         if data.get("data"):
-            return data["data"][0]
-        return None
+            return {"status": "success", "data": data["data"][0]}
+        return {"status": "error", "message": "No data returned from Twitch API"}
+
+    except requests.exceptions.HTTPError as e:
+        # Handle 410 Gone - subscription type not available
+        if e.response.status_code == 410:
+            error_data = e.response.json() if e.response.text else {}
+            message = error_data.get("message", "Subscription type not available via EventSub")
+            logger.warning(f"Twitch EventSub type '{subscription_type}' not available (410): {message}")
+            return {
+                "status": "not_available",
+                "message": message,
+                "fallback": "polling"  # Indicates polling fallback will be used
+            }
+        # Other HTTP errors
+        logger.error(f"Failed to create EventSub subscription: {e}")
+        logger.error(f"Response: {e.response.text}")
+        return {"status": "error", "message": str(e)}
+
     except Exception as e:
         logger.error(f"Failed to create EventSub subscription: {e}")
-        if hasattr(e, 'response'):
-            logger.error(f"Response: {e.response.text}")
-        return None
+        return {"status": "error", "message": str(e)}
 
 
 def delete_eventsub_subscription(subscription_id: str) -> bool:
@@ -466,16 +484,39 @@ def twitch_eventsub_subscribe(request: Request) -> Response:
         condition["moderator_user_id"] = broadcaster_user_id
 
     # Create EventSub subscription via Twitch API (uses App Access Token internally)
-    subscription_data = create_eventsub_subscription(
+    subscription_result = create_eventsub_subscription(
         subscription_type,
         condition
     )
 
-    if not subscription_data:
+    # Handle not available (410) - use polling fallback (no DB record needed)
+    if subscription_result["status"] == "not_available":
+        logger.info(
+            f"Twitch EventSub type '{subscription_type}' not available for user {request.user.username}, "
+            f"polling fallback active by default"
+        )
         return Response(
-            {"error": "Failed to create EventSub subscription with Twitch API"},
+            {
+                "message": "Event monitoring active via polling",
+                "subscription": {
+                    "type": subscription_type,
+                    "status": "polling_active",
+                    "broadcaster_login": broadcaster_login,
+                    "method": "polling"
+                }
+            },
+            status=status.HTTP_200_OK
+        )
+
+    # Handle error
+    if subscription_result["status"] == "error":
+        return Response(
+            {"error": f"Failed to create EventSub subscription: {subscription_result.get('message', 'Unknown error')}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+    # Success - extract subscription data
+    subscription_data = subscription_result["data"]
 
     # Save to database
     with transaction.atomic():
