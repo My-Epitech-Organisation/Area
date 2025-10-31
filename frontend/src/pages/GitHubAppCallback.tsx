@@ -75,9 +75,7 @@ const GitHubAppCallback: React.FC = () => {
           const action = setupAction === 'update' ? 'updated' : 'installed';
 
           if (data.pending_webhook) {
-            setMessage(
-              `GitHub App ${action}! Syncing repository details...`
-            );
+            setMessage(`GitHub App ${action}! Syncing repository details...`);
           } else {
             setMessage(
               `Successfully ${action} GitHub App for ${data.account_login} (${data.repository_count} repositories)`
@@ -93,7 +91,10 @@ const GitHubAppCallback: React.FC = () => {
           const errorData = await response.json().catch(() => ({}));
           setStatus('error');
           setMessage(
-            errorData.error || errorData.message || errorData.detail || 'Failed to link GitHub App installation'
+            errorData.error ||
+              errorData.message ||
+              errorData.detail ||
+              'Failed to link GitHub App installation'
           );
           redirectAfterDelay(3000);
         }
@@ -175,7 +176,10 @@ const GitHubAppCallback: React.FC = () => {
           {/* Progress Indicator */}
           {status === 'processing' && (
             <div className="w-full bg-gray-200 rounded-full h-2 mb-4 overflow-hidden">
-              <div className="bg-purple-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+              <div
+                className="bg-purple-600 h-2 rounded-full animate-pulse"
+                style={{ width: '60%' }}
+              ></div>
             </div>
           )}
 

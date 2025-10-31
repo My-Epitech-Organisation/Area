@@ -210,9 +210,7 @@ const Debug: React.FC = () => {
             />
           </svg>
           <h2 className="text-2xl font-bold text-white mb-4">No Debug Areas Found</h2>
-          <p className="text-gray-300 mb-6">
-            Create an automation with either:
-          </p>
+          <p className="text-gray-300 mb-6">Create an automation with either:</p>
           <ul className="text-left text-gray-300 mb-6 space-y-2 max-w-md mx-auto">
             <li className="flex items-start gap-2">
               <span className="text-indigo-400">•</span>
