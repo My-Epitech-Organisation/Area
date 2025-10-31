@@ -1612,8 +1612,6 @@ def check_notion_actions(self):
 
                 # Handle different action types
                 if action_name == "notion_page_created":
-                    # Query for recently created pages
-                    # Use search API to find pages created since last check
                     search_payload = {
                         "query": "",
                         "filter": {
@@ -1622,14 +1620,11 @@ def check_notion_actions(self):
                         },
                         "sort": {
                             "direction": "descending",
-                            "timestamp": "created_time"
+                            "timestamp": "last_edited_time"
                         }
                     }
 
-                    # Add time filter if we have a last_checked_at
                     if state.last_checked_at:
-                        # Notion API doesn't support direct time filtering in search
-                        # We'll filter results after fetching
                         pass
 
                     logger.debug(f"Searching for new pages in Notion workspace")
@@ -1645,19 +1640,36 @@ def check_notion_actions(self):
                         search_results = response.json()
                         pages = search_results.get("results", [])
 
-                        # Filter pages created since last check
                         new_pages = []
+                        if not state.last_checked_at:
+                            logger.info(
+                                f"Area {area.id}: First check for notion_page_created, "
+                                f"initializing last_checked_at without processing existing pages"
+                            )
+                            state.last_checked_at = timezone.now()
+                            state.save()
+                            continue
+                        
                         for page in pages:
                             created_time = page.get("created_time")
-                            if created_time:
+                            last_edited_time = page.get("last_edited_time")
+                            
+                            if created_time and last_edited_time:
                                 page_created = datetime.fromisoformat(
                                     created_time.replace('Z', '+00:00')
                                 )
+                                page_edited = datetime.fromisoformat(
+                                    last_edited_time.replace('Z', '+00:00')
+                                )
 
-                                if state.last_checked_at and page_created <= state.last_checked_at:
-                                    break  # Pages are sorted by creation time desc
-
-                                new_pages.append(page)
+                                time_diff = abs((page_edited - page_created).total_seconds())
+                                is_newly_created = time_diff < 5
+                                
+                                if page_created <= state.last_checked_at:
+                                    continue
+                                
+                                if is_newly_created:
+                                    new_pages.append(page)
 
                         logger.info(
                             f"Area {area.id}: Found {len(new_pages)} new pages"
@@ -1732,6 +1744,16 @@ def check_notion_actions(self):
                         search_results = response.json()
                         pages = search_results.get("results", [])
 
+                        # IMPORTANT: If this is the first check, initialize and skip
+                        if not state.last_checked_at:
+                            logger.info(
+                                f"Area {area.id}: First check for notion_page_updated, "
+                                f"initializing last_checked_at without processing existing pages"
+                            )
+                            state.last_checked_at = timezone.now()
+                            state.save()
+                            continue
+
                         # Filter pages updated since last check
                         updated_pages = []
                         for page in pages:
@@ -1741,7 +1763,7 @@ def check_notion_actions(self):
                                     last_edited.replace('Z', '+00:00')
                                 )
 
-                                if state.last_checked_at and page_updated <= state.last_checked_at:
+                                if page_updated <= state.last_checked_at:
                                     break
 
                                 # Skip pages that were just created (already handled above)
@@ -1865,6 +1887,17 @@ def check_notion_actions(self):
                         logger.info(
                             f"Area {area.id}: Found {len(items)} new database items"
                         )
+                        
+                        # IMPORTANT: If this is the first check, initialize and skip
+                        if not state.last_checked_at:
+                            logger.info(
+                                f"Area {area.id}: First check for notion_database_item_added, "
+                                f"initializing last_checked_at without processing existing items"
+                            )
+                            state.last_checked_at = timezone.now()
+                            state.save()
+                            continue
+                        
                         current_check_time = timezone.now()
                         state.last_checked_at = current_check_time
                         state.save()
