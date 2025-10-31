@@ -9,8 +9,8 @@ Usage:
 
 import logging
 
-from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
+from django.core.management.base import BaseCommand
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,9 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("=" * 70))
         self.stdout.write(
-            self.style.SUCCESS(f"  Webhook Manager: {service.upper()} - {action.upper()}")
+            self.style.SUCCESS(
+                f"  Webhook Manager: {service.upper()} - {action.upper()}"
+            )
         )
         self.stdout.write(self.style.SUCCESS("=" * 70))
         self.stdout.write("")
@@ -87,9 +89,7 @@ class Command(BaseCommand):
                 elif action == "cleanup":
                     self._cleanup_webhooks(svc)
             except Exception as e:
-                self.stdout.write(
-                    self.style.ERROR(f"✗ Error processing {svc}: {e}")
-                )
+                self.stdout.write(self.style.ERROR(f"✗ Error processing {svc}: {e}"))
                 if options.get("verbosity", 1) > 1:
                     logger.exception(f"Error in webhook management for {svc}")
             self.stdout.write("")
@@ -118,7 +118,9 @@ class Command(BaseCommand):
             self.stdout.write("")
             self.stdout.write("  4. Content type: application/json")
             self.stdout.write("")
-            self.stdout.write("  5. Secret: (copy from settings.WEBHOOK_SECRETS['github'])")
+            self.stdout.write(
+                "  5. Secret: (copy from settings.WEBHOOK_SECRETS['github'])"
+            )
             self.stdout.write("")
             self.stdout.write("  6. Select events:")
             self.stdout.write("     ☑ Issues")
@@ -139,19 +141,19 @@ class Command(BaseCommand):
             self.stdout.write("")
             self.stdout.write("  3. Create EventSub subscriptions:")
             self.stdout.write(
-                f"     POST https://api.twitch.tv/helix/eventsub/subscriptions"
+                "     POST https://api.twitch.tv/helix/eventsub/subscriptions"
             )
             self.stdout.write("     Body:")
             self.stdout.write("     {")
-            self.stdout.write("       \"type\": \"stream.online\",")
-            self.stdout.write("       \"version\": \"1\",")
+            self.stdout.write('       "type": "stream.online",')
+            self.stdout.write('       "version": "1",')
             self.stdout.write(
-                "       \"condition\": { \"broadcaster_user_id\": \"<user_id>\" },"
+                '       "condition": { "broadcaster_user_id": "<user_id>" },'
             )
-            self.stdout.write("       \"transport\": {")
-            self.stdout.write("         \"method\": \"webhook\",")
-            self.stdout.write(f"         \"callback\": \"{full_webhook_url}\",")
-            self.stdout.write("         \"secret\": \"<your_webhook_secret>\"")
+            self.stdout.write('       "transport": {')
+            self.stdout.write('         "method": "webhook",')
+            self.stdout.write(f'         "callback": "{full_webhook_url}",')
+            self.stdout.write('         "secret": "<your_webhook_secret>"')
             self.stdout.write("       }")
             self.stdout.write("     }")
             self.stdout.write("")
@@ -185,9 +187,7 @@ class Command(BaseCommand):
             self.stdout.write("")
             self.stdout.write("  7. Save Changes and Reinstall App")
             self.stdout.write("")
-            self.stdout.write(
-                "  📚 Docs: https://api.slack.com/events-api"
-            )
+            self.stdout.write("  📚 Docs: https://api.slack.com/events-api")
 
     def _verify_webhook(self, service: str):
         """Verify webhook configuration."""
@@ -220,9 +220,7 @@ class Command(BaseCommand):
                 )
             else:
                 self.stdout.write(
-                    self.style.WARNING(
-                        f"  ⚠️  No active Areas using {service} actions"
-                    )
+                    self.style.WARNING(f"  ⚠️  No active Areas using {service} actions")
                 )
         except Service.DoesNotExist:
             self.stdout.write(
@@ -243,61 +241,37 @@ class Command(BaseCommand):
                 self.stdout.write(f"  No active Areas for {service}")
                 return
 
-            self.stdout.write(
-                f"  📋 Active Areas using {service} ({areas.count()}):"
-            )
+            self.stdout.write(f"  📋 Active Areas using {service} ({areas.count()}):")
             self.stdout.write("")
 
             for area in areas:
-                self.stdout.write(
-                    f"    • {area.name} ({area.owner.username})"
-                )
-                self.stdout.write(
-                    f"      Action: {area.action.name}"
-                )
+                self.stdout.write(f"    • {area.name} ({area.owner.username})")
+                self.stdout.write(f"      Action: {area.action.name}")
                 if area.action_config:
-                    self.stdout.write(
-                        f"      Config: {area.action_config}"
-                    )
+                    self.stdout.write(f"      Config: {area.action_config}")
                 self.stdout.write("")
 
         except Service.DoesNotExist:
-            self.stdout.write(
-                self.style.ERROR(f"  ✗ Service '{service}' not found")
-            )
+            self.stdout.write(self.style.ERROR(f"  ✗ Service '{service}' not found"))
 
     def _cleanup_webhooks(self, service: str):
         """Cleanup webhook configuration."""
-        self.stdout.write(
-            self.style.WARNING(
-                f"  ⚠️  Cleanup for {service} webhooks:"
-            )
-        )
+        self.stdout.write(self.style.WARNING(f"  ⚠️  Cleanup for {service} webhooks:"))
         self.stdout.write("")
         self.stdout.write("  This would:")
         self.stdout.write(
             f"  • Remove {service} webhook subscriptions from external service"
         )
-        self.stdout.write(
-            f"  • Optionally disable polling for {service} actions"
-        )
+        self.stdout.write(f"  • Optionally disable polling for {service} actions")
         self.stdout.write("")
-        self.stdout.write(
-            self.style.WARNING("  ⚠️  Manual cleanup required:")
-        )
+        self.stdout.write(self.style.WARNING("  ⚠️  Manual cleanup required:"))
 
         if service == "github":
-            self.stdout.write(
-                "  - Remove webhook from GitHub repository settings"
-            )
+            self.stdout.write("  - Remove webhook from GitHub repository settings")
         elif service == "twitch":
-            self.stdout.write(
-                "  - Delete EventSub subscriptions via Twitch API"
-            )
+            self.stdout.write("  - Delete EventSub subscriptions via Twitch API")
             self.stdout.write(
                 "    DELETE https://api.twitch.tv/helix/eventsub/subscriptions?id=<subscription_id>"
             )
         elif service == "slack":
-            self.stdout.write(
-                "  - Disable Event Subscriptions in Slack App settings"
-            )
+            self.stdout.write("  - Disable Event Subscriptions in Slack App settings")

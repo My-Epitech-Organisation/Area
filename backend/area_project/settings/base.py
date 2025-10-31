@@ -318,7 +318,9 @@ try:
         WEBHOOK_SECRETS = {}
     else:
         # Log configured webhooks (without showing secrets)
-        configured = [service for service in WEBHOOK_SECRETS.keys() if WEBHOOK_SECRETS[service]]
+        configured = [
+            service for service in WEBHOOK_SECRETS.keys() if WEBHOOK_SECRETS[service]
+        ]
         if configured:
             print(f"✅ Webhook secrets configured for: {', '.join(configured)}")
 except json.JSONDecodeError as e:
