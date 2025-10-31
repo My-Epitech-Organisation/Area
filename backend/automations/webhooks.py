@@ -127,18 +127,17 @@ def validate_twitch_signature(payload_body: bytes, headers: dict, secret: str) -
         digestmod=hashlib.sha256,
     ).hexdigest()
 
-    # DEBUG logging
-    logger.debug(f"Twitch signature validation:")
-    logger.debug(f"  Message ID: {message_id}")
-    logger.debug(f"  Timestamp: {message_timestamp}")
-    logger.debug(f"  Payload length: {len(payload_body)} bytes")
-    logger.debug(f"  Payload (first 200 chars): {payload_body[:200]}")
-    logger.debug(f"  Expected signature: {expected_signature}")
-    logger.debug(f"  Computed signature: {computed_signature}")
-    logger.debug(f"  Match: {hmac.compare_digest(computed_signature, expected_signature)}")
+    # DEBUG logging (using INFO level for production visibility)
+    is_valid = hmac.compare_digest(computed_signature, expected_signature)
+    logger.info(f"Twitch signature validation: {'PASS' if is_valid else 'FAIL'}")
+    logger.info(f"  Message ID: {message_id}")
+    logger.info(f"  Timestamp: {message_timestamp}")
+    logger.info(f"  Payload length: {len(payload_body)} bytes")
+    logger.info(f"  Expected: {expected_signature}")
+    logger.info(f"  Computed: {computed_signature}")
 
     # Constant-time comparison to prevent timing attacks
-    return hmac.compare_digest(computed_signature, expected_signature)
+    return is_valid
 
 
 def validate_slack_signature(payload_body: bytes, headers: dict, secret: str) -> bool:
