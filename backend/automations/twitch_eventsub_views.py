@@ -683,7 +683,7 @@ def twitch_eventsub_delete_all(request: Request) -> Response:
                 deleted_count += 1
             else:
                 failed_count += 1
-        
+
         # Delete from database regardless of API result (cleanup)
         subscription.delete()
 
@@ -701,3 +701,108 @@ def twitch_eventsub_delete_all(request: Request) -> Response:
         },
         status=status.HTTP_200_OK
     )
+
+
+@extend_schema(
+    summary="Sync Twitch EventSub subscriptions",
+    description="Force sync subscription statuses from Twitch API",
+    responses={
+        200: OpenApiResponse(description="Subscriptions synced"),
+        400: OpenApiResponse(description="Twitch not connected"),
+    }
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def twitch_eventsub_sync(request: Request) -> Response:
+    """
+    Force sync Twitch EventSub subscription statuses from Twitch API.
+
+    This is useful when subscriptions are stuck in 'verification_pending' state.
+    """
+    # Get user's Twitch access token to verify connection
+    access_token = get_twitch_access_token(request.user)
+    if not access_token:
+        return Response(
+            {"error": "Twitch account not connected"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Get all user's subscriptions
+    user_subscriptions = TwitchEventSubSubscription.objects.filter(user=request.user)
+
+    if not user_subscriptions.exists():
+        return Response(
+            {"message": "No subscriptions to sync"},
+            status=status.HTTP_200_OK
+        )
+
+    try:
+        # Get App Access Token
+        app_token = get_twitch_app_access_token()
+        client_id = get_twitch_client_id()
+
+        # Fetch all subscriptions from Twitch API
+        response = requests.get(
+            "https://api.twitch.tv/helix/eventsub/subscriptions",
+            headers={
+                "Authorization": f"Bearer {app_token}",
+                "Client-Id": client_id,
+            },
+            timeout=10
+        )
+        response.raise_for_status()
+        api_data = response.json()
+
+        # Build lookup dict
+        api_subscriptions = {sub["id"]: sub for sub in api_data.get("data", [])}
+
+        updated_count = 0
+        not_found_count = 0
+
+        for db_sub in user_subscriptions:
+            if db_sub.subscription_id in api_subscriptions:
+                api_sub = api_subscriptions[db_sub.subscription_id]
+                api_status = api_sub["status"]
+
+                # Map Twitch status to our model
+                status_mapping = {
+                    "enabled": TwitchEventSubSubscription.Status.ENABLED,
+                    "webhook_callback_verification_pending":
+                        TwitchEventSubSubscription.Status.WEBHOOK_CALLBACK_VERIFICATION_PENDING,
+                    "webhook_callback_verification_failed":
+                        TwitchEventSubSubscription.Status.WEBHOOK_CALLBACK_VERIFICATION_FAILED,
+                    "notification_failures_exceeded":
+                        TwitchEventSubSubscription.Status.NOTIFICATION_FAILURES_EXCEEDED,
+                    "authorization_revoked":
+                        TwitchEventSubSubscription.Status.AUTHORIZATION_REVOKED,
+                }
+
+                new_status = status_mapping.get(api_status, db_sub.status)
+
+                if db_sub.status != new_status:
+                    logger.info(
+                        f"Syncing Twitch subscription {db_sub.subscription_id}: "
+                        f"{db_sub.status} → {new_status}"
+                    )
+                    db_sub.status = new_status
+                    db_sub.save(update_fields=["status", "updated_at"])
+                    updated_count += 1
+            else:
+                not_found_count += 1
+
+        return Response(
+            {
+                "message": "Subscriptions synced successfully",
+                "updated": updated_count,
+                "not_found": not_found_count,
+                "total": user_subscriptions.count()
+            },
+            status=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        logger.error(f"Error syncing Twitch subscriptions: {e}")
+        return Response(
+            {"error": f"Failed to sync subscriptions: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
