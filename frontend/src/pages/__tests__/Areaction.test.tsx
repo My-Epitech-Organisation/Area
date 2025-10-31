@@ -733,4 +733,478 @@ describe('Areaction Page', () => {
       });
     });
   });
+
+  describe('Toggle Area Activation', () => {
+    it('should toggle area from active to paused', async () => {
+      const updateAreaMock = vi.fn().mockResolvedValue({});
+      vi.mocked(useApiHooks.useUpdateArea).mockReturnValue({
+        updateArea: updateAreaMock,
+        loading: false,
+        error: null,
+      });
+
+      const mockAreas = [
+        {
+          id: 1,
+          name: 'Test Area',
+          owner: 1,
+          action: 1,
+          reaction: 1,
+          action_service: 'github',
+          reaction_service: 'slack',
+          action_config: {},
+          reaction_config: {},
+          is_active: true,
+          status: 'active' as const,
+          created_at: '2025-01-01',
+          updated_at: '2025-01-01',
+        },
+      ];
+
+      vi.mocked(useApiHooks.useAreas).mockReturnValue({
+        data: mockAreas,
+        loading: false,
+        error: null,
+        refetch: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const mockActions = [
+        {
+          id: 1,
+          name: 'test_action',
+          service: 1,
+          service_name: 'github',
+          description: 'Test action',
+          config_fields: [],
+        },
+      ];
+
+      const mockReactions = [
+        {
+          id: 1,
+          name: 'test_reaction',
+          service: 1,
+          service_name: 'slack',
+          description: 'Test reaction',
+          config_fields: [],
+        },
+      ];
+
+      vi.mocked(useApiHooks.useActions).mockReturnValue({
+        data: mockActions,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      vi.mocked(useApiHooks.useReactions).mockReturnValue({
+        data: mockReactions,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter>
+          <Areaction />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/Test Area/i)).toBeInTheDocument();
+      });
+
+      const toggleButtons = screen.getAllByRole('button');
+      const toggleButton = toggleButtons.find(
+        (btn) => btn.getAttribute('title') === 'Deactivate'
+      );
+
+      expect(toggleButton).toBeInTheDocument();
+    });
+
+    it('should toggle area from paused to active', async () => {
+      const updateAreaMock = vi.fn().mockResolvedValue({});
+      vi.mocked(useApiHooks.useUpdateArea).mockReturnValue({
+        updateArea: updateAreaMock,
+        loading: false,
+        error: null,
+      });
+
+      const mockAreas = [
+        {
+          id: 1,
+          name: 'Paused Area',
+          owner: 1,
+          action: 1,
+          reaction: 1,
+          action_service: 'github',
+          reaction_service: 'slack',
+          action_config: {},
+          reaction_config: {},
+          is_active: false,
+          status: 'paused' as const,
+          created_at: '2025-01-01',
+          updated_at: '2025-01-01',
+        },
+      ];
+
+      vi.mocked(useApiHooks.useAreas).mockReturnValue({
+        data: mockAreas,
+        loading: false,
+        error: null,
+        refetch: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const mockActions = [
+        {
+          id: 1,
+          name: 'test_action',
+          service: 1,
+          service_name: 'github',
+          description: 'Test action',
+          config_fields: [],
+        },
+      ];
+
+      const mockReactions = [
+        {
+          id: 1,
+          name: 'test_reaction',
+          service: 1,
+          service_name: 'slack',
+          description: 'Test reaction',
+          config_fields: [],
+        },
+      ];
+
+      vi.mocked(useApiHooks.useActions).mockReturnValue({
+        data: mockActions,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      vi.mocked(useApiHooks.useReactions).mockReturnValue({
+        data: mockReactions,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter>
+          <Areaction />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/Paused Area/i)).toBeInTheDocument();
+      });
+
+      // Find toggle button with Activate title
+      const toggleButtons = screen.getAllByRole('button');
+      const toggleButton = toggleButtons.find((btn) => btn.getAttribute('title') === 'Activate');
+
+      expect(toggleButton).toBeInTheDocument();
+    });
+
+    it('should handle toggle error', async () => {
+      const updateAreaMock = vi.fn().mockRejectedValue(new Error('Toggle failed'));
+      vi.mocked(useApiHooks.useUpdateArea).mockReturnValue({
+        updateArea: updateAreaMock,
+        loading: false,
+        error: null,
+      });
+
+      const mockAreas = [
+        {
+          id: 1,
+          name: 'Test Area',
+          owner: 1,
+          action: 1,
+          reaction: 1,
+          action_service: 'github',
+          reaction_service: 'slack',
+          action_config: {},
+          reaction_config: {},
+          is_active: true,
+          status: 'active' as const,
+          created_at: '2025-01-01',
+          updated_at: '2025-01-01',
+        },
+      ];
+
+      vi.mocked(useApiHooks.useAreas).mockReturnValue({
+        data: mockAreas,
+        loading: false,
+        error: null,
+        refetch: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const mockActions = [
+        {
+          id: 1,
+          name: 'test_action',
+          service: 1,
+          service_name: 'github',
+          description: 'Test action',
+          config_fields: [],
+        },
+      ];
+
+      const mockReactions = [
+        {
+          id: 1,
+          name: 'test_reaction',
+          service: 1,
+          service_name: 'slack',
+          description: 'Test reaction',
+          config_fields: [],
+        },
+      ];
+
+      vi.mocked(useApiHooks.useActions).mockReturnValue({
+        data: mockActions,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      vi.mocked(useApiHooks.useReactions).mockReturnValue({
+        data: mockReactions,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter>
+          <Areaction />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/Test Area/i)).toBeInTheDocument();
+      });
+    });
+
+    it('should display correct status badge for active area', async () => {
+      const mockAreas = [
+        {
+          id: 1,
+          name: 'Active Area',
+          owner: 1,
+          action: 1,
+          reaction: 1,
+          action_service: 'github',
+          reaction_service: 'slack',
+          action_config: {},
+          reaction_config: {},
+          is_active: true,
+          status: 'active' as const,
+          created_at: '2025-01-01',
+          updated_at: '2025-01-01',
+        },
+      ];
+
+      vi.mocked(useApiHooks.useAreas).mockReturnValue({
+        data: mockAreas,
+        loading: false,
+        error: null,
+        refetch: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const mockActions = [
+        {
+          id: 1,
+          name: 'test_action',
+          service: 1,
+          service_name: 'github',
+          description: 'Test action',
+          config_fields: [],
+        },
+      ];
+
+      const mockReactions = [
+        {
+          id: 1,
+          name: 'test_reaction',
+          service: 1,
+          service_name: 'slack',
+          description: 'Test reaction',
+          config_fields: [],
+        },
+      ];
+
+      vi.mocked(useApiHooks.useActions).mockReturnValue({
+        data: mockActions,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      vi.mocked(useApiHooks.useReactions).mockReturnValue({
+        data: mockReactions,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter>
+          <Areaction />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Active')).toBeInTheDocument();
+      });
+    });
+
+    it('should display correct status badge for paused area', async () => {
+      const mockAreas = [
+        {
+          id: 1,
+          name: 'Paused Area',
+          owner: 1,
+          action: 1,
+          reaction: 1,
+          action_service: 'github',
+          reaction_service: 'slack',
+          action_config: {},
+          reaction_config: {},
+          is_active: false,
+          status: 'paused' as const,
+          created_at: '2025-01-01',
+          updated_at: '2025-01-01',
+        },
+      ];
+
+      vi.mocked(useApiHooks.useAreas).mockReturnValue({
+        data: mockAreas,
+        loading: false,
+        error: null,
+        refetch: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const mockActions = [
+        {
+          id: 1,
+          name: 'test_action',
+          service: 1,
+          service_name: 'github',
+          description: 'Test action',
+          config_fields: [],
+        },
+      ];
+
+      const mockReactions = [
+        {
+          id: 1,
+          name: 'test_reaction',
+          service: 1,
+          service_name: 'slack',
+          description: 'Test reaction',
+          config_fields: [],
+        },
+      ];
+
+      vi.mocked(useApiHooks.useActions).mockReturnValue({
+        data: mockActions,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      vi.mocked(useApiHooks.useReactions).mockReturnValue({
+        data: mockReactions,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter>
+          <Areaction />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Paused')).toBeInTheDocument();
+      });
+    });
+
+    it('should display correct status badge for disabled area', async () => {
+      const mockAreas = [
+        {
+          id: 1,
+          name: 'Disabled Area',
+          owner: 1,
+          action: 1,
+          reaction: 1,
+          action_service: 'github',
+          reaction_service: 'slack',
+          action_config: {},
+          reaction_config: {},
+          is_active: false,
+          status: 'disabled' as const,
+          created_at: '2025-01-01',
+          updated_at: '2025-01-01',
+        },
+      ];
+
+      vi.mocked(useApiHooks.useAreas).mockReturnValue({
+        data: mockAreas,
+        loading: false,
+        error: null,
+        refetch: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const mockActions = [
+        {
+          id: 1,
+          name: 'test_action',
+          service: 1,
+          service_name: 'github',
+          description: 'Test action',
+          config_fields: [],
+        },
+      ];
+
+      const mockReactions = [
+        {
+          id: 1,
+          name: 'test_reaction',
+          service: 1,
+          service_name: 'slack',
+          description: 'Test reaction',
+          config_fields: [],
+        },
+      ];
+
+      vi.mocked(useApiHooks.useActions).mockReturnValue({
+        data: mockActions,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      vi.mocked(useApiHooks.useReactions).mockReturnValue({
+        data: mockReactions,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter>
+          <Areaction />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Disabled')).toBeInTheDocument();
+      });
+    });
+  });
 });
