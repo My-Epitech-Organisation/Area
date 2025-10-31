@@ -390,7 +390,9 @@ const Areaction: React.FC = () => {
         status: newStatus,
       });
 
-      setMessage(`Automation ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
+      setMessage(
+        `Automation ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`
+      );
       setMessageType('success');
       refetchAreas();
 
