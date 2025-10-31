@@ -14,6 +14,7 @@ from django.conf import settings
 from users.permissions import IsAuthenticatedAndVerified
 
 from .models import Service, WebhookSubscription
+from .webhook_constants import SUPPORTED_WEBHOOK_EVENTS
 from .webhook_serializers import (
     WebhookStatusSerializer,
     WebhookSubscriptionListSerializer,
@@ -100,18 +101,8 @@ class WebhookManagementViewSet(viewsets.ReadOnlyModelViewSet):
             status=WebhookSubscription.Status.ACTIVE,
         ).count()
 
-        # Define supported events by service
-        supported_events_map = {
-            "github": ["issues", "pull_request", "push", "issue_comment", "star"],
-            "twitch": [
-                "stream.online",
-                "stream.offline",
-                "channel.follow",
-                "channel.subscribe",
-                "channel.update",
-            ],
-            "slack": ["message", "app_mention", "member_joined_channel"],
-        }
+        # Use centralized event definitions
+        supported_events_map = SUPPORTED_WEBHOOK_EVENTS
 
         # Determine recommendation
         if webhook_configured:
