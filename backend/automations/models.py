@@ -274,3 +274,215 @@ class ActionState(models.Model):
 
     def __str__(self):
         return f"State for Area #{self.area.id} ({self.area.action.name})"
+
+
+class WebhookSubscription(models.Model):
+    """
+    Track active webhook subscriptions for users.
+
+    ⚠️ SERVICE-SPECIFIC USAGE:
+
+    - **Twitch EventSub**: REQUIRED - Twitch mandates explicit subscription management via API
+    - **Slack**: OPTIONAL - Useful for tracking active event subscriptions
+    - **GitHub**: NOT USED - Use GitHubAppInstallation instead (GitHub App handles webhooks automatically)
+
+    This model is designed for services that require explicit webhook subscription
+    management. For GitHub, the GitHubAppInstallation model provides automatic
+    webhook configuration through the GitHub App.
+
+    Key Features:
+    - Track external subscription IDs (e.g., Twitch EventSub subscription ID)
+    - Monitor subscription status and health
+    - Store per-subscription configuration
+    - Track event statistics (count, last received)
+    """
+
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Active"
+        PENDING = "pending", "Pending Verification"
+        FAILED = "failed", "Failed"
+        REVOKED = "revoked", "Revoked"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="webhook_subscriptions",
+    )
+    service = models.ForeignKey(
+        Service,
+        on_delete=models.CASCADE,
+        related_name="webhook_subscriptions",
+    )
+
+    # External subscription ID (for Twitch EventSub, etc.)
+    external_subscription_id = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="External service's subscription ID (e.g., Twitch EventSub ID)",
+    )
+
+    # Event type being monitored
+    event_type = models.CharField(
+        max_length=100,
+        help_text="Type of event (e.g., 'stream.online', 'issues', 'message')",
+    )
+
+    # Configuration for the webhook
+    config = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Webhook configuration (e.g., repository, channel, broadcaster_id)",
+    )
+
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    last_event_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp of the last received webhook event",
+    )
+    event_count = models.IntegerField(
+        default=0,
+        help_text="Total number of events received",
+    )
+
+    class Meta:
+        verbose_name = "Webhook Subscription"
+        verbose_name_plural = "Webhook Subscriptions"
+        indexes = [
+            models.Index(fields=["user", "service", "status"]),
+            models.Index(fields=["external_subscription_id"]),
+            models.Index(fields=["status", "updated_at"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "service", "event_type", "external_subscription_id"],
+                name="unique_user_webhook_subscription",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.service.name}:{self.event_type} for {self.user.username}"
+
+    def mark_active(self):
+        """Mark webhook as active."""
+        self.status = self.Status.ACTIVE
+        self.save(update_fields=["status", "updated_at"])
+
+    def mark_revoked(self):
+        """Mark webhook as revoked."""
+        self.status = self.Status.REVOKED
+        self.save(update_fields=["status", "updated_at"])
+
+    def record_event(self):
+        """Record that an event was received."""
+        from django.utils import timezone
+
+        self.last_event_at = timezone.now()
+        self.event_count += 1
+        self.save(update_fields=["last_event_at", "event_count", "updated_at"])
+
+
+class GitHubAppInstallation(models.Model):
+    """
+    Track GitHub App installations per user.
+
+    ℹ️ GITHUB-SPECIFIC WEBHOOK MANAGEMENT:
+
+    This model replaces the need for WebhookSubscription for GitHub services.
+    When a user installs the AREA GitHub App on their account/organization,
+    GitHub automatically configures webhooks for all selected repositories.
+
+    Benefits vs manual webhook configuration:
+    - ✅ No manual webhook setup required per repository
+    - ✅ Automatic webhook configuration and signature validation
+    - ✅ Centralized permission management via GitHub App
+    - ✅ Tracks which repositories user has granted access to
+    - ✅ Automatic updates when user adds/removes repositories
+
+    Flow:
+    1. User installs GitHub App via frontend banner
+    2. GitHub sends installation webhook to our backend
+    3. process_github_app_installation() creates/updates this record
+    4. All repository webhooks are automatically configured by GitHub
+    5. Webhook events arrive at /webhooks/github/ with automatic validation
+
+    Related:
+    - See github_app_views.py for installation API endpoints
+    - See webhooks.py process_github_app_installation() for webhook handling
+    """
+
+    class AccountType(models.TextChoices):
+        USER = "User", "User"
+        ORGANIZATION = "Organization", "Organization"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="github_app_installations",
+        help_text="AREA user who installed the app",
+    )
+
+    installation_id = models.BigIntegerField(
+        unique=True, help_text="GitHub App installation ID"
+    )
+
+    account_login = models.CharField(
+        max_length=255, help_text="GitHub username or organization name"
+    )
+
+    account_type = models.CharField(
+        max_length=20, choices=AccountType.choices, default=AccountType.USER
+    )
+
+    # Repositories where app is installed (JSON list of full names)
+    repositories = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of repo full names (e.g., ['owner/repo1', 'owner/repo2'])",
+    )
+
+    is_active = models.BooleanField(
+        default=True, help_text="False if user uninstalled the app"
+    )
+
+    installed_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "github_app_installations"
+        indexes = [
+            models.Index(fields=["user", "installation_id"]),
+            models.Index(fields=["installation_id"]),
+            models.Index(fields=["account_login"]),
+        ]
+
+    def __str__(self):
+        return f"{self.account_login} (installation {self.installation_id})"
+
+    def has_repository(self, repo_full_name: str) -> bool:
+        """Check if app is installed on a specific repository."""
+        return repo_full_name in self.repositories
+
+    def add_repositories(self, repo_names: list[str]):
+        """Add repositories to the installation."""
+        self.repositories = list(set(self.repositories + repo_names))
+        self.save(update_fields=["repositories", "updated_at"])
+
+    def remove_repositories(self, repo_names: list[str]):
+        """Remove repositories from the installation."""
+        self.repositories = [r for r in self.repositories if r not in repo_names]
+        self.save(update_fields=["repositories", "updated_at"])
+
+    def deactivate(self):
+        """Mark installation as inactive (uninstalled)."""
+        self.is_active = False
+        self.save(update_fields=["is_active", "updated_at"])

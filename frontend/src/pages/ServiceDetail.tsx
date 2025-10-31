@@ -3,7 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import { useConnectedServices, useInitiateOAuth, useDisconnectService } from '../hooks/useOAuth';
 import { useNotifications } from '../hooks/useNotifications';
 import Notification from '../components/Notification';
-import { API_BASE } from '../utils/helper';
+import GitHubAppSection from '../components/GitHubAppSection';
+import { API_BASE, getStoredUser } from '../utils/helper';
+import type { User } from '../types';
 
 type ServiceAction = {
   name: string;
@@ -27,10 +29,19 @@ const ServiceDetail: React.FC = () => {
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   const isInternalService = (serviceName: string) => {
     return ['timer', 'debug', 'email', 'webhook', 'weather'].includes(serviceName.toLowerCase());
   };
+
+  // Load user data
+  useEffect(() => {
+    const storedUser = getStoredUser();
+    if (storedUser) {
+      setUser(storedUser);
+    }
+  }, []);
 
   // OAuth hooks
   const {
@@ -302,6 +313,11 @@ const ServiceDetail: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {/* GitHub App Section - Show only for GitHub service */}
+              {service.name.toLowerCase() === 'github' && (
+                <GitHubAppSection user={user} isOAuthConnected={isConnected} />
+              )}
 
               <div className="mt-8 grid gap-8 md:grid-cols-2">
                 <div>
