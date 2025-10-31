@@ -43,8 +43,6 @@ def get_beat_schedule():
       - Polling tasks are automatically disabled if webhooks are configured
       - Falls back to polling if webhooks not configured
     """
-    # Import here to avoid circular imports
-
     environment = getattr(settings, "ENVIRONMENT", "local")
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
 
