@@ -17,6 +17,7 @@ Structure:
 """
 
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -49,7 +50,8 @@ if not IS_DOCKER:
         if env_path.exists():
             load_dotenv(env_path)
         else:
-            print(f"Warning: .env file not found")
+            # Use stderr instead of print for early-stage warnings
+            sys.stderr.write("Warning: .env file not found\n")
 
 # Create logs directory
 if not IS_DOCKER:
@@ -587,7 +589,8 @@ try:
                 logger["handlers"].append("file")
         LOGGING["root"]["handlers"].append("file")
 except Exception as e:
-    print(f"Warning: Could not setup file logging: {e}")
+    # Use stderr for logging setup errors (can't use logging here as it's not configured yet)
+    sys.stderr.write(f"Warning: Could not setup file logging: {e}\n")
 
 # =============================================================================
 # INTERNATIONALIZATION
