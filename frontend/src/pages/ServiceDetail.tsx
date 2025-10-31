@@ -142,6 +142,7 @@ const ServiceDetail: React.FC = () => {
     'twitch',
     'slack',
     'spotify',
+    'notion',
   ];
   const requiresOAuth = service && oauthProviders.includes(service.name.toLowerCase());
 
