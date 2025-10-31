@@ -341,16 +341,16 @@ def match_webhook_to_areas(
         # Extract broadcaster info from event
         broadcaster_login = None
         broadcaster_user_id = None
-        
+
         # For Twitch EventSub, data is nested in "event" key
         event = event_data.get("event", {})
         if not event:
             event = event_data  # Fallback if event is at root
-            
+
         # Get broadcaster info
         broadcaster_login = event.get("broadcaster_user_login")
         broadcaster_user_id = event.get("broadcaster_user_id")
-        
+
         if broadcaster_login or broadcaster_user_id:
             # Filter areas to match only those configured for this broadcaster
             filtered_areas = []
@@ -358,7 +358,7 @@ def match_webhook_to_areas(
                 action_config = area.action_config or {}
                 config_login = action_config.get("broadcaster_login", "").lower()
                 config_user_id = action_config.get("broadcaster_user_id", "")
-                
+
                 # Match by login or user_id
                 if config_login and broadcaster_login:
                     if config_login == broadcaster_login.lower():
@@ -369,7 +369,7 @@ def match_webhook_to_areas(
                 elif not config_login and not config_user_id:
                     # If no broadcaster specified, match all (legacy support)
                     filtered_areas.append(area)
-                    
+
             areas = filtered_areas
             logger.debug(
                 f"Filtered {len(areas)} Twitch areas for broadcaster "
@@ -576,7 +576,23 @@ def process_webhook_event(
         # Challenge verification (webhook subscription confirmation)
         if message_type == "webhook_callback_verification":
             challenge = event_data.get("challenge")
-            logger.info("Twitch EventSub challenge received")
+            subscription = event_data.get("subscription", {})
+            subscription_id = subscription.get("id")
+
+            logger.info(f"Twitch EventSub challenge received for subscription {subscription_id}")
+
+            # Update subscription status to enabled in database
+            if subscription_id:
+                from .models import TwitchEventSubSubscription
+                try:
+                    sub = TwitchEventSubSubscription.objects.get(subscription_id=subscription_id)
+                    if sub.status != TwitchEventSubSubscription.Status.ENABLED:
+                        sub.status = TwitchEventSubSubscription.Status.ENABLED
+                        sub.save(update_fields=["status", "updated_at"])
+                        logger.info(f"Updated Twitch subscription {subscription_id} to ENABLED")
+                except TwitchEventSubSubscription.DoesNotExist:
+                    logger.warning(f"Twitch subscription {subscription_id} not found in database")
+
             return {
                 "status": "challenge",
                 "challenge": challenge,
@@ -585,15 +601,47 @@ def process_webhook_event(
         # Revocation notification (subscription cancelled)
         elif message_type == "revocation":
             subscription = event_data.get("subscription", {})
-            logger.warning(f"Twitch EventSub revoked: {subscription.get('type')}")
+            subscription_id = subscription.get("id")
+            subscription_type = subscription.get("type")
+
+            logger.warning(f"Twitch EventSub revoked: {subscription_type} (ID: {subscription_id})")
+
+            # Update subscription status in database
+            if subscription_id:
+                from .models import TwitchEventSubSubscription
+                try:
+                    sub = TwitchEventSubSubscription.objects.get(subscription_id=subscription_id)
+                    sub.mark_revoked()
+                    logger.info(f"Marked Twitch subscription {subscription_id} as REVOKED")
+                except TwitchEventSubSubscription.DoesNotExist:
+                    logger.warning(f"Twitch subscription {subscription_id} not found in database")
+
             return {
                 "status": "revoked",
-                "subscription_type": subscription.get("type"),
+                "subscription_type": subscription_type,
             }
 
         # Extract actual event type from Twitch payload
         if "subscription" in event_data:
             event_type = event_data["subscription"]["type"]
+            subscription_id = event_data["subscription"].get("id")
+
+            # Auto-update subscription status to ENABLED on first notification
+            # (in case challenge was validated but status wasn't updated)
+            if subscription_id and message_type == "notification":
+                from .models import TwitchEventSubSubscription
+                try:
+                    sub = TwitchEventSubSubscription.objects.get(subscription_id=subscription_id)
+                    if sub.status == TwitchEventSubSubscription.Status.WEBHOOK_CALLBACK_VERIFICATION_PENDING:
+                        sub.status = TwitchEventSubSubscription.Status.ENABLED
+                        sub.save(update_fields=["status", "updated_at"])
+                        logger.info(
+                            f"Auto-updated Twitch subscription {subscription_id} to ENABLED "
+                            f"(received first notification)"
+                        )
+                except TwitchEventSubSubscription.DoesNotExist:
+                    logger.debug(f"Twitch subscription {subscription_id} not found in database")
+
 
     # Extract Slack event type from nested event object
     if service_name == "slack" and "event" in event_data:
@@ -709,6 +757,14 @@ def webhook_receiver(request: Request, service: str) -> Response:
         JSON response with processing results
     """
     logger.info(f"Received webhook for service: {service}")
+
+    # Log Twitch-specific headers for debugging
+    if service == "twitch":
+        message_type = request.headers.get("Twitch-Eventsub-Message-Type")
+        message_id = request.headers.get("Twitch-Eventsub-Message-Id")
+        logger.info(
+            f"Twitch webhook details: type={message_type}, id={message_id}"
+        )
 
     # Check if service exists
     try:
