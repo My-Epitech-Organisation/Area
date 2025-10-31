@@ -131,12 +131,19 @@ def github_app_link_installation(request):
                 f"Linked installation {installation_id} to user {request.user.username}"
             )
 
-    return Response(
-        {
-            "success": True,
-            "installation_id": installation_id,
-        }
-    )
+    # Prepare response data with frontend-expected fields
+    response_data = {
+        "success": True,
+        "installation_id": installation_id,
+        "account_login": installation.account_login or "",
+        "repository_count": len(installation.repositories),
+    }
+
+    # If installation is new and hasn't been populated by webhook yet
+    if not installation.account_login or not installation.repositories:
+        response_data["pending_webhook"] = True
+
+    return Response(response_data)
 
 
 @api_view(["GET"])
