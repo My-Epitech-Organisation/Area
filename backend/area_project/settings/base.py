@@ -319,7 +319,9 @@ webhook_secrets_raw = os.getenv("WEBHOOK_SECRETS", "{}")
 try:
     WEBHOOK_SECRETS = json.loads(webhook_secrets_raw)
     if not isinstance(WEBHOOK_SECRETS, dict):
-        logger.warning("WEBHOOK_SECRETS is not a valid JSON dictionary, using empty dict")
+        logger.warning(
+            "WEBHOOK_SECRETS is not a valid JSON dictionary, using empty dict"
+        )
         WEBHOOK_SECRETS = {}
     else:
         # Log configured webhooks (without showing secrets)
