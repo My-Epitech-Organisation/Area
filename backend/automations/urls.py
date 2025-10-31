@@ -26,7 +26,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from django.urls import include, path
 
-from . import views
+from . import github_app_views, views
 from .webhooks import webhook_receiver
 
 # Create router and register viewsets
@@ -46,9 +46,6 @@ try:
     )
 except ImportError:
     pass  # webhook_views may not be available yet
-
-# Import GitHub App views
-from . import github_app_views
 
 app_name = "automations"
 

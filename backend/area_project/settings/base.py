@@ -319,7 +319,7 @@ try:
     else:
         # Log configured webhooks (without showing secrets)
         configured = [
-            service for service in WEBHOOK_SECRETS.keys() if WEBHOOK_SECRETS[service]
+            service for service in WEBHOOK_SECRETS if WEBHOOK_SECRETS[service]
         ]
         if configured:
             print(f"✅ Webhook secrets configured for: {', '.join(configured)}")

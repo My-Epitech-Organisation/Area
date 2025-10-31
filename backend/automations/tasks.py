@@ -442,7 +442,7 @@ def check_github_actions(self):
 
         logger.info(
             f"Polling for {len(areas_needing_polling)} areas from "
-            f"{len(set(a.owner_id for a in areas_needing_polling))} users without GitHub App. "
+            f"{len({a.owner_id for a in areas_needing_polling})} users without GitHub App. "
             f"({webhook_users_count} areas using webhooks)"
         )
 
@@ -633,7 +633,7 @@ def check_github_actions(self):
             "skipped": skipped_count,
             "no_token": no_token_count,
             "webhook_users": webhook_users_count,
-            "polling_users": len(set(a.owner_id for a in areas_needing_polling)),
+            "polling_users": len({a.owner_id for a in areas_needing_polling}),
             "checked_areas": len(areas_needing_polling),
             "note": "Smart polling: users with GitHub App use webhooks, others use polling",
         }
