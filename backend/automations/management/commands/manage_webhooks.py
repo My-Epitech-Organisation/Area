@@ -60,10 +60,7 @@ class Command(BaseCommand):
         # Check webhook secrets configuration
         webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
 
-        if service == "all":
-            services = ["github", "twitch", "slack"]
-        else:
-            services = [service]
+        services = ["github", "twitch", "slack"] if service == "all" else [service]
 
         for svc in services:
             if svc not in webhook_secrets or not webhook_secrets[svc]:

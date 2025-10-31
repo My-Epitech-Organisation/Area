@@ -121,13 +121,7 @@ class WebhookManagementViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             recommendation = f"⚠️ Configure webhooks for {service_name} for real-time events. Currently using polling."
 
-        # Check if polling is enabled (by checking Celery Beat schedule)
-        polling_tasks = {
-            "github": "automations.check_github_actions",
-            "twitch": "automations.check_twitch_actions",
-            "slack": "automations.check_slack_actions",
-        }
-
+        # Check if polling is enabled
         polling_enabled = not webhook_configured  # Simplified check
 
         webhook_url = getattr(settings, "BACKEND_URL", "http://localhost:8080")
