@@ -85,20 +85,19 @@ def validate_webhook_signature(
     service_name: str, payload_body: bytes, headers: dict, secret: str
 ) -> bool:
     """
-       Validate webhook signature for any service.
+    Validate webhook signature for any service.
 
-       Dispatches to service-specific validation functions.
+    Dispatches to service-specific validation functions.
 
-       Args:
-           service_name: Name of the service (github, gmail, etc.)
-           payload_body: Raw request body as bytes
-           headers: Request headers dict
-           secret: Webhook secret for the service
+    Args:
+        service_name: Name of the service (github, gmail, etc.)
+        payload_body: Raw request body as bytes
+        headers: Request headers dict
+        secret: Webhook secret for the service
 
-       Returns:
-           True if signature is valid, False otherwise
-    d for: {service_name}")
-       return False"""
+    Returns:
+        True if signature is valid, False otherwise
+    """
     if service_name == "github":
         signature_header = headers.get("X-Hub-Signature-256", "")
         return validate_github_signature(payload_body, signature_header, secret)
