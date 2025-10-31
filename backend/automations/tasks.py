@@ -1663,6 +1663,10 @@ def check_notion_actions(self):
                             f"Area {area.id}: Found {len(new_pages)} new pages"
                         )
 
+                        current_check_time = timezone.now()
+                        state.last_checked_at = current_check_time
+                        state.save()
+
                         # Create executions for new pages
                         for page in new_pages:
                             page_id = page["id"]
@@ -1670,7 +1674,7 @@ def check_notion_actions(self):
                             page_url = page.get("url", "")
                             created_time = page["created_time"]
 
-                            event_id = f"notion_page_created_{page_id}"
+                            event_id = f"notion_page_created_{area.id}_{page_id}"
 
                             trigger_data = {
                                 "service": "notion",
@@ -1693,10 +1697,6 @@ def check_notion_actions(self):
                                 )
                                 execute_reaction_task.delay(execution.pk)
                                 triggered_count += 1
-
-                        # Update last_checked_at
-                        state.last_checked_at = timezone.now()
-                        state.save()
 
                     else:
                         logger.error(
@@ -1759,6 +1759,10 @@ def check_notion_actions(self):
                             f"Area {area.id}: Found {len(updated_pages)} updated pages"
                         )
 
+                        current_check_time = timezone.now()
+                        state.last_checked_at = current_check_time
+                        state.save()
+
                         # Create executions for updated pages
                         for page in updated_pages:
                             page_id = page["id"]
@@ -1766,7 +1770,7 @@ def check_notion_actions(self):
                             page_url = page.get("url", "")
                             last_edited = page["last_edited_time"]
 
-                            event_id = f"notion_page_updated_{page_id}_{last_edited}"
+                            event_id = f"notion_page_updated_{area.id}_{page_id}_{last_edited}"
 
                             trigger_data = {
                                 "service": "notion",
@@ -1789,10 +1793,6 @@ def check_notion_actions(self):
                                 )
                                 execute_reaction_task.delay(execution.pk)
                                 triggered_count += 1
-
-                        # Update last_checked_at
-                        state.last_checked_at = timezone.now()
-                        state.save()
 
                     else:
                         logger.error(
@@ -1865,6 +1865,9 @@ def check_notion_actions(self):
                         logger.info(
                             f"Area {area.id}: Found {len(items)} new database items"
                         )
+                        current_check_time = timezone.now()
+                        state.last_checked_at = current_check_time
+                        state.save()
 
                         # Create executions for new items
                         for item in items:
@@ -1873,7 +1876,7 @@ def check_notion_actions(self):
                             item_url = item.get("url", "")
                             created_time = item["created_time"]
 
-                            event_id = f"notion_db_item_{database_id}_{item_id}"
+                            event_id = f"notion_db_item_{area.id}_{item_id}"
 
                             trigger_data = {
                                 "service": "notion",
@@ -1897,10 +1900,6 @@ def check_notion_actions(self):
                                 )
                                 execute_reaction_task.delay(execution.pk)
                                 triggered_count += 1
-
-                        # Update last_checked_at
-                        state.last_checked_at = timezone.now()
-                        state.save()
 
                     elif response.status_code == 404:
                         logger.error(
