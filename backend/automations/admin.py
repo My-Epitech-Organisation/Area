@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Action, Area, Execution, Reaction, Service, WebhookSubscription, GitHubAppInstallation, TwitchEventSubSubscription
+from .models import Action, Area, Execution, Reaction, Service, WebhookSubscription, GitHubAppInstallation
 
 
 @admin.register(Service)
@@ -284,60 +284,4 @@ class GitHubAppInstallationAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         """GitHub App installations are managed via webhooks."""
         return False
-
-
-@admin.register(TwitchEventSubSubscription)
-class TwitchEventSubSubscriptionAdmin(admin.ModelAdmin):
-    """Admin configuration for TwitchEventSubSubscription model."""
-
-    list_display = (
-        "id",
-        "user",
-        "subscription_type",
-        "broadcaster_login",
-        "status",
-        "subscription_id",
-        "cost",
-        "created_at",
-    )
-    list_filter = ("subscription_type", "status", "created_at")
-    search_fields = (
-        "user__username",
-        "user__email",
-        "broadcaster_login",
-        "broadcaster_user_id",
-        "subscription_id",
-    )
-    readonly_fields = ("subscription_id", "created_at", "updated_at", "cost")
-    list_per_page = 25
-
-    fieldsets = (
-        (
-            "Subscription Information",
-            {
-                "fields": (
-                    "user",
-                    "subscription_id",
-                    "subscription_type",
-                    "status",
-                )
-            },
-        ),
-        (
-            "Broadcaster Information",
-            {
-                "fields": (
-                    "broadcaster_login",
-                    "broadcaster_user_id",
-                )
-            },
-        ),
-        ("Configuration", {"fields": ("condition", "cost")}),
-        ("Timestamps", {"fields": ("created_at", "updated_at")}),
-    )
-
-    def has_add_permission(self, request):
-        """Twitch EventSub subscriptions are managed via API."""
-        return False
-
 

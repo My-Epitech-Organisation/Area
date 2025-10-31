@@ -1062,20 +1062,9 @@ def _build_gmail_query(area: Area) -> str:
 )
 def check_twitch_actions(self):
     """
-    Poll Twitch for stream status changes and other events (DEPRECATED - USE WEBHOOKS).
+    Poll Twitch for stream status changes and other events.
 
-    ⚠️ WARNING: This polling task is DEPRECATED. Twitch EventSub webhooks provide:
-    - Real-time notifications (< 1 second vs 5 minutes)
-    - Better reliability (no missed events)
-    - Lower API usage (no polling overhead)
-
-    To enable webhooks:
-    1. Configure WEBHOOK_SECRETS['twitch'] in settings
-    2. Create EventSub subscriptions via Twitch API or management command
-    3. Point webhook to: https://your-domain.com/webhooks/twitch/
-    4. Subscribe to: stream.online, stream.offline, channel.follow, channel.subscribe
-
-    Supported actions (when polling is enabled):
+    Supported actions:
     - twitch_stream_online: Stream goes live
     - twitch_stream_offline: Stream goes offline
     - twitch_new_follower: New follower
@@ -1085,22 +1074,6 @@ def check_twitch_actions(self):
     Returns:
         dict: Summary of polling results
     """
-    logger.warning(
-        "Twitch polling is DEPRECATED for most events. Use EventSub webhooks for production. "
-        "Exception: channel.follow polling remains active as EventSub may not be available."
-    )
-
-    # Check webhook configuration
-    from django.conf import settings
-    webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
-    webhooks_enabled = bool(webhook_secrets.get("twitch"))
-
-    if webhooks_enabled:
-        logger.info(
-            "Twitch EventSub webhooks are configured. "
-            "Polling will only check for new followers (EventSub fallback)."
-        )
-
     from django.conf import settings
 
     from users.oauth.manager import OAuthManager
@@ -1112,24 +1085,16 @@ def check_twitch_actions(self):
         get_user_info,
     )
 
-    logger.info(
-        f"Checking Twitch actions (polling mode - "
-        f"{'follower-only fallback' if webhooks_enabled else 'full polling'})"
-    )
+    logger.info("Checking Twitch actions (polling mode)")
 
     try:
-        # Determine which actions to check based on webhook status
-        if webhooks_enabled:
-            # Only check followers when webhooks are active (EventSub doesn't support it)
-            action_types = ["twitch_new_follower"]
-        else:
-            # Check all actions if webhooks not configured
-            action_types = [
-                "twitch_stream_online",
-                "twitch_stream_offline",
-                "twitch_new_follower",
-                "twitch_channel_update",
-            ]
+        # Check all Twitch actions
+        action_types = [
+            "twitch_stream_online",
+            "twitch_stream_offline",
+            "twitch_new_follower",
+            "twitch_channel_update",
+        ]
 
         # Get all active Areas with Twitch actions
         twitch_areas = get_active_areas(action_types)
