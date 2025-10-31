@@ -4,7 +4,6 @@ import { useConnectedServices, useInitiateOAuth, useDisconnectService } from '..
 import { useNotifications } from '../hooks/useNotifications';
 import Notification from '../components/Notification';
 import GitHubAppSection from '../components/GitHubAppSection';
-import TwitchEventSubSection from '../components/TwitchEventSubSection';
 import { API_BASE, getStoredUser } from '../utils/helper';
 import type { User } from '../types';
 
@@ -318,11 +317,6 @@ const ServiceDetail: React.FC = () => {
               {/* GitHub App Section - Show only for GitHub service */}
               {service.name.toLowerCase() === 'github' && (
                 <GitHubAppSection user={user} isOAuthConnected={isConnected} />
-              )}
-
-              {/* Twitch EventSub Section - Show only for Twitch service */}
-              {service.name.toLowerCase() === 'twitch' && (
-                <TwitchEventSubSection user={user} isOAuthConnected={isConnected} />
               )}
 
               <div className="mt-8 grid gap-8 md:grid-cols-2">
