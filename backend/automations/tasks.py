@@ -1803,14 +1803,30 @@ def check_notion_actions(self):
 
                 elif action_name == "notion_database_item_added":
                     # Check specific database for new items
-                    database_id = action_config.get("database_id")
+                    database_input = action_config.get("database_id")
 
-                    if not database_id:
+                    if not database_input:
                         logger.warning(
                             f"Area {area.id}: No database_id configured for {action_name}"
                         )
                         skipped_count += 1
                         continue
+
+                    # Extract UUID from URL or name
+                    from .helpers.notion_helper import extract_notion_uuid, find_notion_database_by_name
+
+                    database_id = extract_notion_uuid(database_input)
+
+                    # If UUID extraction failed, treat input as database name and search for it
+                    if not database_id:
+                        logger.info(f"[ACTION NOTION] Searching for database by name: {database_input}")
+                        database_id = find_notion_database_by_name(access_token, database_input)
+                        if not database_id:
+                            logger.error(
+                                f"Area {area.id}: Could not find database '{database_input}' in Notion workspace"
+                            )
+                            skipped_count += 1
+                            continue
 
                     # Query database for items
                     query_payload = {

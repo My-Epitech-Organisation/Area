@@ -360,8 +360,8 @@ ACTION_SCHEMAS = {
         "properties": {
             "database_id": {
                 "type": "string",
-                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
-                "description": "Notion database ID (UUID format)",
+                "pattern": "^(https://www\\.notion\\.so/.*[a-f0-9]{32}(\\?.*)?|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}|[a-f0-9]{32}|.+)$",
+                "description": "Notion database name, ID (UUID format), or full Notion database URL",
             },
         },
         "required": ["database_id"],
