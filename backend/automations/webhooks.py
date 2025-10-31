@@ -133,6 +133,7 @@ def validate_twitch_signature(payload_body: bytes, headers: dict, secret: str) -
     logger.info(f"  Message ID: {message_id}")
     logger.info(f"  Timestamp: {message_timestamp}")
     logger.info(f"  Payload length: {len(payload_body)} bytes")
+    logger.info(f"  Payload received: {payload_body[:300].decode('utf-8', errors='replace')}")
     logger.info(f"  Expected: {expected_signature}")
     logger.info(f"  Computed: {computed_signature}")
 
