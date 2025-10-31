@@ -1030,10 +1030,10 @@ class Command(BaseCommand):
                         "config_schema": {
                             "database_id": {
                                 "type": "string",
-                                "label": "Database ID",
-                                "description": "Notion database ID to monitor",
+                                "label": "Database Name or ID",
+                                "description": "Database name (e.g., 'AREA Tasks'), ID (UUID), or full Notion database URL",
                                 "required": True,
-                                "placeholder": "12345678-1234-1234-1234-123456789012",
+                                "placeholder": "AREA Tasks or 12345678-1234-1234-1234-123456789012",
                             },
                         },
                     },
