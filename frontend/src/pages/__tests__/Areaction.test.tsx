@@ -815,9 +815,7 @@ describe('Areaction Page', () => {
       });
 
       const toggleButtons = screen.getAllByRole('button');
-      const toggleButton = toggleButtons.find(
-        (btn) => btn.getAttribute('title') === 'Deactivate'
-      );
+      const toggleButton = toggleButtons.find((btn) => btn.getAttribute('title') === 'Deactivate');
 
       expect(toggleButton).toBeInTheDocument();
     });
