@@ -34,12 +34,11 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from django.conf import settings
-from django.http import HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import Area, Service
-from .tasks import create_execution_safe, get_active_areas
+from .tasks import create_execution_safe, execute_reaction, get_active_areas
 
 logger = logging.getLogger(__name__)
 
@@ -127,73 +126,6 @@ def validate_twitch_signature(payload_body: bytes, headers: dict, secret: str) -
         digestmod=hashlib.sha256,
     ).hexdigest()
 
-    # DEBUG logging (using INFO level for production visibility)
-    is_valid = hmac.compare_digest(computed_signature, expected_signature)
-    logger.info(f"Twitch signature validation: {'PASS' if is_valid else 'FAIL'}")
-    logger.info(f"  Message ID: {message_id} (len={len(message_id)})")
-    logger.info(f"  Timestamp: {message_timestamp} (len={len(message_timestamp)})")
-    logger.info(f"  Payload length: {len(payload_body)} bytes")
-    logger.info(f"  Message total length: {len(message)} bytes")
-    logger.info(f"  Payload received: {payload_body.decode('utf-8', errors='replace')}")
-    logger.info(f"  Expected: {expected_signature}")
-    logger.info(f"  Computed: {computed_signature}")
-
-    # Constant-time comparison to prevent timing attacks
-    return is_valid
-
-
-def validate_slack_signature(payload_body: bytes, headers: dict, secret: str) -> bool:
-    """
-    Validate Slack Events API webhook signature.
-
-    Slack sends signature in headers:
-    - X-Slack-Request-Timestamp
-    - X-Slack-Signature (format: "v0=<signature>")
-
-    Args:
-        payload_body: Raw request body as bytes
-        headers: Request headers dict
-        secret: Slack signing secret
-
-    Returns:
-        True if signature is valid, False otherwise
-    """
-    timestamp = headers.get("X-Slack-Request-Timestamp")
-    signature_header = headers.get("X-Slack-Signature")
-
-    if not all([timestamp, signature_header]):
-        logger.warning("Slack webhook: Missing required headers")
-        return False
-
-    if not signature_header.startswith("v0="):
-        logger.warning(f"Slack webhook: Invalid signature format: {signature_header}")
-        return False
-
-    # Check timestamp to prevent replay attacks (within 5 minutes)
-    try:
-        request_timestamp = int(timestamp)
-        current_timestamp = int(timezone.now().timestamp())
-        if abs(current_timestamp - request_timestamp) > 60 * 5:
-            logger.warning("Slack webhook: Request timestamp too old")
-            return False
-    except (ValueError, TypeError):
-        logger.warning(f"Slack webhook: Invalid timestamp: {timestamp}")
-        return False
-
-    # Extract signature from header
-    expected_signature = signature_header.split("=", 1)[1]
-
-    # Construct signing basestring
-    # Format: v0:<timestamp>:<body>
-    sig_basestring = f"v0:{timestamp}:".encode("utf-8") + payload_body
-
-    # Compute HMAC-SHA256
-    computed_signature = hmac.new(
-        key=secret.encode("utf-8"),
-        msg=sig_basestring,
-        digestmod=hashlib.sha256,
-    ).hexdigest()
-
     # Constant-time comparison to prevent timing attacks
     return hmac.compare_digest(computed_signature, expected_signature)
 
@@ -220,8 +152,6 @@ def validate_webhook_signature(
         return validate_github_signature(payload_body, signature_header, secret)
     elif service_name == "twitch":
         return validate_twitch_signature(payload_body, headers, secret)
-    elif service_name == "slack":
-        return validate_slack_signature(payload_body, headers, secret)
     elif service_name == "gmail":
         return True
     # Unknown service, reject validation
@@ -229,7 +159,7 @@ def validate_webhook_signature(
 
 
 def extract_event_id(
-    service_name: str, event_data: dict, headers: Optional[dict] = None
+    service_name: str, event_data: dict, headers: dict = None
 ) -> Optional[str]:
     """
     Extract unique event ID from webhook payload.
@@ -270,17 +200,6 @@ def extract_event_id(
         if subscription.get("id") and event:
             return f"twitch_{subscription['type']}_{subscription['id']}"
 
-    elif service_name == "slack":
-        # Slack provides event ID in payload
-        event_id = event_data.get("event_id")
-        if event_id:
-            return f"slack_event_{event_id}"
-
-        # For message events, use channel + timestamp
-        event = event_data.get("event", {})
-        if event.get("channel") and event.get("ts"):
-            return f"slack_{event['channel']}_{event['ts']}"
-
     elif service_name == "gmail":
         # Gmail Pub/Sub provides message ID
         message_id = event_data.get("message", {}).get("messageId")
@@ -311,14 +230,14 @@ def match_webhook_to_areas(
     action_name_map = {
         "github": {
             "push": "github_push",
-            "pull_request": "github_new_pr",
-            "issues": "github_new_issue",
+            "pull_request": "github_pull_request",
+            "issues": "github_issue",
             "issue_comment": "github_issue_comment",
             "star": "github_star",
         },
         "gmail": {
-            "message": "gmail_new_email",
-            "email_received": "gmail_new_email",
+            "message": "gmail_received",
+            "email_received": "gmail_received",
         },
         "twitch": {
             "stream.online": "twitch_stream_online",
@@ -326,11 +245,6 @@ def match_webhook_to_areas(
             "channel.follow": "twitch_new_follower",
             "channel.subscribe": "twitch_new_subscriber",
             "channel.update": "twitch_channel_update",
-        },
-        "slack": {
-            "message": "slack_new_message",
-            "app_mention": "slack_user_mention",
-            "member_joined_channel": "slack_channel_join",
         },
     }
 
@@ -347,203 +261,10 @@ def match_webhook_to_areas(
     # Get all active areas for these actions
     areas = get_active_areas(action_names)
 
-    # Filter areas based on service-specific criteria
-    if service_name == "twitch":
-        # Extract broadcaster info from event
-        broadcaster_login = None
-        broadcaster_user_id = None
-
-        # For Twitch EventSub, data is nested in "event" key
-        event = event_data.get("event", {})
-        if not event:
-            event = event_data  # Fallback if event is at root
-
-        # Get broadcaster info
-        broadcaster_login = event.get("broadcaster_user_login")
-        broadcaster_user_id = event.get("broadcaster_user_id")
-
-        if broadcaster_login or broadcaster_user_id:
-            # Filter areas to match only those configured for this broadcaster
-            filtered_areas = []
-            for area in areas:
-                action_config = area.action_config or {}
-                config_login = action_config.get("broadcaster_login", "").lower()
-                config_user_id = action_config.get("broadcaster_user_id", "")
-
-                # Match by login or user_id
-                if config_login and broadcaster_login:
-                    if config_login == broadcaster_login.lower():
-                        filtered_areas.append(area)
-                elif config_user_id and broadcaster_user_id:
-                    if config_user_id == broadcaster_user_id:
-                        filtered_areas.append(area)
-                elif not config_login and not config_user_id:
-                    # If no broadcaster specified, match all (legacy support)
-                    filtered_areas.append(area)
-
-            areas = filtered_areas
-            logger.debug(
-                f"Filtered {len(areas)} Twitch areas for broadcaster "
-                f"{broadcaster_login or broadcaster_user_id}"
-            )
-
-    # TODO: Add filtering for other services (GitHub repos, Slack channels, etc.)
+    # TODO: Add filtering based on action_config
+    # e.g., only trigger for specific repositories, branches, labels, etc.
 
     return list(areas)
-
-
-def process_github_app_installation(event_type: str, action: str, event_data: dict) -> dict:
-    """
-    Process GitHub App installation events.
-
-    Events handled:
-    - installation.created → User installs the app
-    - installation.deleted → User uninstalls the app
-    - installation_repositories.added → Repos added to installation
-    - installation_repositories.removed → Repos removed from installation
-
-    Args:
-        event_type: "installation" or "installation_repositories"
-        action: "created", "deleted", "added", "removed"
-        event_data: GitHub webhook payload
-
-    Returns:
-        Processing result
-    """
-    from .models import GitHubAppInstallation
-    from users.models import User
-
-    installation = event_data.get("installation", {})
-    installation_id = installation.get("id")
-    account = installation.get("account", {})
-    account_login = account.get("login")
-    account_type = account.get("type")  # "User" or "Organization"
-
-    if not installation_id:
-        logger.error("GitHub App event missing installation.id")
-        return {"status": "error", "message": "Missing installation ID"}
-
-    logger.info(
-        f"Processing GitHub App {event_type}.{action} "
-        f"for installation {installation_id} ({account_login})"
-    )
-
-    if event_type == "installation":
-        if action == "created":
-            # User installed the app
-            repositories = [
-                repo["full_name"]
-                for repo in event_data.get("repositories", [])
-            ]
-
-            # Try to find user by GitHub username
-            # Note: This requires the user to have connected via OAuth first
-            user = User.objects.filter(
-                tokens__service__name="github",
-                tokens__external_user_id=account.get("id")
-            ).first()
-
-            if not user:
-                # Create installation without user link
-                # User will link it when they log in via OAuth
-                logger.warning(
-                    f"No AREA user found for GitHub account {account_login}. "
-                    "Installation will be linked when user logs in."
-                )
-
-            GitHubAppInstallation.objects.update_or_create(
-                installation_id=installation_id,
-                defaults={
-                    "user": user,
-                    "account_login": account_login,
-                    "account_type": account_type,
-                    "repositories": repositories,
-                    "is_active": True,
-                }
-            )
-
-            logger.info(
-                f"GitHub App installed: {installation_id} "
-                f"with {len(repositories)} repositories"
-            )
-
-            return {
-                "status": "success",
-                "action": "created",
-                "installation_id": installation_id,
-                "repositories_count": len(repositories)
-            }
-
-        elif action == "deleted":
-            # User uninstalled the app
-            installation_obj = GitHubAppInstallation.objects.filter(
-                installation_id=installation_id
-            ).first()
-
-            if installation_obj:
-                installation_obj.deactivate()
-                logger.info(f"GitHub App uninstalled: {installation_id}")
-
-            return {
-                "status": "success",
-                "action": "deleted",
-                "installation_id": installation_id
-            }
-
-    elif event_type == "installation_repositories":
-        installation_obj = GitHubAppInstallation.objects.filter(
-            installation_id=installation_id
-        ).first()
-
-        if not installation_obj:
-            logger.warning(
-                f"Installation {installation_id} not found for repositories event"
-            )
-            return {
-                "status": "error",
-                "message": "Installation not found"
-            }
-
-        if action == "added":
-            added_repos = [
-                repo["full_name"]
-                for repo in event_data.get("repositories_added", [])
-            ]
-            installation_obj.add_repositories(added_repos)
-            logger.info(
-                f"Added {len(added_repos)} repositories to "
-                f"installation {installation_id}"
-            )
-
-            return {
-                "status": "success",
-                "action": "added",
-                "installation_id": installation_id,
-                "repositories_added": len(added_repos)
-            }
-
-        elif action == "removed":
-            removed_repos = [
-                repo["full_name"]
-                for repo in event_data.get("repositories_removed", [])
-            ]
-            installation_obj.remove_repositories(removed_repos)
-            logger.info(
-                f"Removed {len(removed_repos)} repositories from "
-                f"installation {installation_id}"
-            )
-
-            return {
-                "status": "success",
-                "action": "removed",
-                "installation_id": installation_id,
-                "repositories_removed": len(removed_repos)
-            }
-
-    return {
-        "status": "ignored",
-        "message": f"Unsupported event: {event_type}.{action}"
-    }
 
 
 def process_webhook_event(
@@ -556,11 +277,10 @@ def process_webhook_event(
     Process a validated webhook event.
 
     Steps:
-    1. Handle service-specific challenges/verification
-    2. Extract unique event ID
-    3. Match event to active Areas
-    4. Create executions for matched Areas
-    5. Queue reactions
+    1. Extract unique event ID
+    2. Match event to active Areas
+    3. Create executions for matched Areas
+    4. Queue reactions
 
     Args:
         service_name: Name of the service
@@ -571,13 +291,13 @@ def process_webhook_event(
     Returns:
         Processing result with statistics
     """
-    # Handle Slack URL verification challenge
-    if service_name == "slack" and event_type == "url_verification":
-        challenge = event_data.get("challenge")
-        logger.info("Slack URL verification challenge received")
+    # Extract event ID for idempotency
+    external_event_id = extract_event_id(service_name, event_data, headers)
+    if not external_event_id:
+        logger.error(f"Could not extract event ID for {service_name}/{event_type}")
         return {
-            "status": "challenge",
-            "challenge": challenge,
+            "status": "error",
+            "message": "Could not extract event ID",
         }
 
     # Handle Twitch EventSub challenge verification
@@ -587,23 +307,7 @@ def process_webhook_event(
         # Challenge verification (webhook subscription confirmation)
         if message_type == "webhook_callback_verification":
             challenge = event_data.get("challenge")
-            subscription = event_data.get("subscription", {})
-            subscription_id = subscription.get("id")
-
-            logger.info(f"Twitch EventSub challenge received for subscription {subscription_id}")
-
-            # Update subscription status to enabled in database
-            if subscription_id:
-                from .models import TwitchEventSubSubscription
-                try:
-                    sub = TwitchEventSubSubscription.objects.get(subscription_id=subscription_id)
-                    if sub.status != TwitchEventSubSubscription.Status.ENABLED:
-                        sub.status = TwitchEventSubSubscription.Status.ENABLED
-                        sub.save(update_fields=["status", "updated_at"])
-                        logger.info(f"Updated Twitch subscription {subscription_id} to ENABLED")
-                except TwitchEventSubSubscription.DoesNotExist:
-                    logger.warning(f"Twitch subscription {subscription_id} not found in database")
-
+            logger.info("Twitch EventSub challenge received")
             return {
                 "status": "challenge",
                 "challenge": challenge,
@@ -612,61 +316,15 @@ def process_webhook_event(
         # Revocation notification (subscription cancelled)
         elif message_type == "revocation":
             subscription = event_data.get("subscription", {})
-            subscription_id = subscription.get("id")
-            subscription_type = subscription.get("type")
-
-            logger.warning(f"Twitch EventSub revoked: {subscription_type} (ID: {subscription_id})")
-
-            # Update subscription status in database
-            if subscription_id:
-                from .models import TwitchEventSubSubscription
-                try:
-                    sub = TwitchEventSubSubscription.objects.get(subscription_id=subscription_id)
-                    sub.mark_revoked()
-                    logger.info(f"Marked Twitch subscription {subscription_id} as REVOKED")
-                except TwitchEventSubSubscription.DoesNotExist:
-                    logger.warning(f"Twitch subscription {subscription_id} not found in database")
-
+            logger.warning(f"Twitch EventSub revoked: {subscription.get('type')}")
             return {
                 "status": "revoked",
-                "subscription_type": subscription_type,
+                "subscription_type": subscription.get("type"),
             }
 
         # Extract actual event type from Twitch payload
         if "subscription" in event_data:
             event_type = event_data["subscription"]["type"]
-            subscription_id = event_data["subscription"].get("id")
-
-            # Auto-update subscription status to ENABLED on first notification
-            # (in case challenge was validated but status wasn't updated)
-            if subscription_id and message_type == "notification":
-                from .models import TwitchEventSubSubscription
-                try:
-                    sub = TwitchEventSubSubscription.objects.get(subscription_id=subscription_id)
-                    if sub.status == TwitchEventSubSubscription.Status.WEBHOOK_CALLBACK_VERIFICATION_PENDING:
-                        sub.status = TwitchEventSubSubscription.Status.ENABLED
-                        sub.save(update_fields=["status", "updated_at"])
-                        logger.info(
-                            f"Auto-updated Twitch subscription {subscription_id} to ENABLED "
-                            f"(received first notification)"
-                        )
-                except TwitchEventSubSubscription.DoesNotExist:
-                    logger.debug(f"Twitch subscription {subscription_id} not found in database")
-
-
-    # Extract Slack event type from nested event object
-    if service_name == "slack" and "event" in event_data:
-        slack_event = event_data["event"]
-        event_type = slack_event.get("type", event_type)
-
-    # Extract event ID for idempotency
-    external_event_id = extract_event_id(service_name, event_data, headers)
-    if not external_event_id:
-        logger.error(f"Could not extract event ID for {service_name}/{event_type}")
-        return {
-            "status": "error",
-            "message": "Could not extract event ID",
-        }
 
     # Match to areas
     matched_areas = match_webhook_to_areas(service_name, event_type, event_data)
@@ -712,9 +370,7 @@ def process_webhook_event(
 
             if created and execution:
                 # Queue reaction execution
-                from .tasks import execute_reaction_task
-
-                execute_reaction_task.delay(execution.pk)
+                execute_reaction.delay(execution.pk)
                 executions_created += 1
                 logger.info(
                     f"Webhook {service_name}/{event_type} triggered area '{area.name}' "
@@ -768,14 +424,6 @@ def webhook_receiver(request: Request, service: str) -> Response:
         JSON response with processing results
     """
     logger.info(f"Received webhook for service: {service}")
-
-    # Log Twitch-specific headers for debugging
-    if service == "twitch":
-        message_type = request.headers.get("Twitch-Eventsub-Message-Type")
-        message_id = request.headers.get("Twitch-Eventsub-Message-Id")
-        logger.info(
-            f"Twitch webhook details: type={message_type}, id={message_id}"
-        )
 
     # Check if service exists
     try:
@@ -834,41 +482,6 @@ def webhook_receiver(request: Request, service: str) -> Response:
     # Extract event type
     if service == "github":
         event_type = request.headers.get("X-GitHub-Event", "unknown")
-
-        # Handle GitHub App installation events
-        if event_type in ["installation", "installation_repositories"]:
-            action = event_data.get("action", "unknown")
-            logger.info(
-                f"Processing GitHub App {event_type}.{action} event"
-            )
-
-            try:
-                result = process_github_app_installation(
-                    event_type=event_type,
-                    action=action,
-                    event_data=event_data
-                )
-                return Response(result, status=status.HTTP_200_OK)
-            except Exception as e:
-                logger.error(
-                    f"Error processing GitHub App installation: {e}",
-                    exc_info=True
-                )
-                return Response(
-                    {"error": "Internal server error"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
-
-    elif service == "twitch":
-        # Twitch sends message type in header
-        event_type = request.headers.get("Twitch-Eventsub-Message-Type", "notification")
-    elif service == "slack":
-        # Slack sends event type in payload
-        event_type = event_data.get("type", "event_callback")
-        # For event_callback, also get nested event type
-        if event_type == "event_callback" and "event" in event_data:
-            slack_event_type = event_data["event"].get("type", "unknown")
-            logger.info(f"Slack event_callback with nested event: {slack_event_type}")
     elif service == "gmail":
         event_type = event_data.get("eventType", "message")
     else:
@@ -884,21 +497,6 @@ def webhook_receiver(request: Request, service: str) -> Response:
             event_data=event_data,
             headers=headers_dict,
         )
-
-        # Handle challenge responses (Twitch and Slack)
-        if result.get("status") == "challenge" and "challenge" in result:
-            # Twitch requires plain text response with just the challenge string
-            if service == "twitch":
-                return Response(
-                    result["challenge"],
-                    status=status.HTTP_200_OK,
-                    headers={"Content-Type": "text/plain"},
-                )
-            # Slack expects JSON response
-            return Response(
-                {"challenge": result["challenge"]},
-                status=status.HTTP_200_OK
-            )
 
         return Response(result, status=status.HTTP_200_OK)
 
