@@ -5,7 +5,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("automations", "0009_add_twitch_eventsub"),
+        ("automations", "0008_twitcheventsubsubscription"),
     ]
 
     operations = [
