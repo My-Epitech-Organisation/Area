@@ -308,13 +308,16 @@ OPENWEATHER_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY")
 # Parse webhook secrets from JSON environment variable
 # Format: WEBHOOK_SECRETS='{"github":"secret1","twitch":"secret2","slack":"secret3"}'
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 WEBHOOK_SECRETS = {}
 webhook_secrets_raw = os.getenv("WEBHOOK_SECRETS", "{}")
 try:
     WEBHOOK_SECRETS = json.loads(webhook_secrets_raw)
     if not isinstance(WEBHOOK_SECRETS, dict):
-        print(f"⚠️  WEBHOOK_SECRETS is not a valid JSON dictionary, using empty dict")
+        logger.warning("WEBHOOK_SECRETS is not a valid JSON dictionary, using empty dict")
         WEBHOOK_SECRETS = {}
     else:
         # Log configured webhooks (without showing secrets)
@@ -322,10 +325,10 @@ try:
             service for service in WEBHOOK_SECRETS if WEBHOOK_SECRETS[service]
         ]
         if configured:
-            print(f"✅ Webhook secrets configured for: {', '.join(configured)}")
+            logger.info(f"Webhook secrets configured for: {', '.join(configured)}")
 except json.JSONDecodeError as e:
-    print(f"⚠️  Failed to parse WEBHOOK_SECRETS JSON: {e}")
-    print(f"   Raw value: {webhook_secrets_raw[:50]}...")
+    logger.error(f"Failed to parse WEBHOOK_SECRETS JSON: {e}")
+    logger.debug(f"Raw value: {webhook_secrets_raw[:50]}...")
     WEBHOOK_SECRETS = {}
 
 # Security Settings (base - extended per environment)
