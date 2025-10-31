@@ -364,7 +364,7 @@ class WebhookSubscription(models.Model):
         ]
         constraints = [
             models.UniqueConstraint(
-                fields=["user", "service", "event_type", "config"],
+                fields=["user", "service", "event_type", "external_subscription_id"],
                 name="unique_user_webhook_subscription",
             )
         ]
