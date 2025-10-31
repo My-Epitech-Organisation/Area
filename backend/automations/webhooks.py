@@ -39,6 +39,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import Area, Service
 from .tasks import create_execution_safe, execute_reaction, get_active_areas
+from .webhook_constants import WEBHOOK_EVENT_TO_ACTION
 
 logger = logging.getLogger(__name__)
 
@@ -162,24 +163,10 @@ def match_webhook_to_areas(
     Returns:
         List of Area objects that match this event
     """
-    # Map event types to action names
-    action_name_map = {
-        "github": {
-            "push": "github_push",
-            "pull_request": "github_pull_request",
-            "issues": "github_issue",
-            "issue_comment": "github_issue_comment",
-            "star": "github_star",
-        },
-        "gmail": {
-            "message": "gmail_received",
-            "email_received": "gmail_received",
-        },
-    }
-
+    # Use centralized event-to-action mapping
     action_names = []
-    if service_name in action_name_map:
-        action_map = action_name_map[service_name]
+    if service_name in WEBHOOK_EVENT_TO_ACTION:
+        action_map = WEBHOOK_EVENT_TO_ACTION[service_name]
         if event_type in action_map:
             action_names.append(action_map[event_type])
 
