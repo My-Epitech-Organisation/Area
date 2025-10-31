@@ -289,6 +289,18 @@ OAUTH2_PROVIDERS = {
         ],
         "requires_refresh": True,
     },
+    "notion": {
+        "client_id": os.getenv("NOTION_CLIENT_ID", ""),
+        "client_secret": os.getenv("NOTION_CLIENT_SECRET", ""),
+        "redirect_uri": os.getenv(
+            "NOTION_REDIRECT_URI", "http://localhost:8080/auth/oauth/notion/callback/"
+        ),
+        "authorization_endpoint": "https://api.notion.com/v1/oauth/authorize",
+        "token_endpoint": "https://api.notion.com/v1/oauth/token",
+        "userinfo_endpoint": "https://api.notion.com/v1/users/me",
+        "scopes": [],  # Notion doesn't use scopes in the same way
+        "requires_refresh": True,
+    },
 }
 
 # OAuth2 state expiry time (seconds)
@@ -429,6 +441,14 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 120.0,  # Every 120 seconds (2 minutes)
         "options": {
             "expires": 115,  # Task expires after 115s to avoid overlap
+        },
+    },
+    # Check Notion actions every 5 minutes
+    "check-notion-actions": {
+        "task": "automations.check_notion_actions",
+        "schedule": 300.0,  # Every 300 seconds (5 minutes)
+        "options": {
+            "expires": 290,  # Task expires after 290s to avoid overlap
         },
     },
 }
