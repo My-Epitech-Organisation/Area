@@ -47,6 +47,10 @@ app.conf.beat_schedule = {
         "task": "automations.check_slack_actions",
         "schedule": 120.0,  # Every 2 minutes (Slack polling - webhooks preferred)
     },
+    "check-notion-actions": {
+        "task": "automations.check_notion_actions",
+        "schedule": 300.0,  # Every 5 minutes (Notion polling - webhooks preferred)
+    },
     "collect-execution-metrics": {
         "task": "automations.collect_execution_metrics",
         "schedule": crontab(minute=0),  # Every hour
