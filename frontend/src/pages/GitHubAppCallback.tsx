@@ -5,7 +5,7 @@
  ** GitHubAppCallback
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { API_BASE } from '../utils/helper';
 
@@ -33,6 +33,18 @@ const GitHubAppCallback: React.FC = () => {
 
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [message, setMessage] = useState('Linking GitHub App installation...');
+
+  const redirectAfterDelay = useCallback(
+    (delay: number) => {
+      setTimeout(() => {
+        // Try to redirect back to where the user came from
+        const redirectPath = sessionStorage.getItem('github_app_redirect') || '/services';
+        sessionStorage.removeItem('github_app_redirect');
+        navigate(redirectPath);
+      }, delay);
+    },
+    [navigate]
+  );
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -107,16 +119,7 @@ const GitHubAppCallback: React.FC = () => {
     };
 
     handleCallback();
-  }, [searchParams, navigate]);
-
-  const redirectAfterDelay = (delay: number) => {
-    setTimeout(() => {
-      // Try to redirect back to where the user came from
-      const redirectPath = sessionStorage.getItem('github_app_redirect') || '/services';
-      sessionStorage.removeItem('github_app_redirect');
-      navigate(redirectPath);
-    }, delay);
-  };
+  }, [searchParams, navigate, redirectAfterDelay]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-indigo-100">
