@@ -127,6 +127,16 @@ def validate_twitch_signature(payload_body: bytes, headers: dict, secret: str) -
         digestmod=hashlib.sha256,
     ).hexdigest()
 
+    # DEBUG logging
+    logger.debug(f"Twitch signature validation:")
+    logger.debug(f"  Message ID: {message_id}")
+    logger.debug(f"  Timestamp: {message_timestamp}")
+    logger.debug(f"  Payload length: {len(payload_body)} bytes")
+    logger.debug(f"  Payload (first 200 chars): {payload_body[:200]}")
+    logger.debug(f"  Expected signature: {expected_signature}")
+    logger.debug(f"  Computed signature: {computed_signature}")
+    logger.debug(f"  Match: {hmac.compare_digest(computed_signature, expected_signature)}")
+
     # Constant-time comparison to prevent timing attacks
     return hmac.compare_digest(computed_signature, expected_signature)
 
