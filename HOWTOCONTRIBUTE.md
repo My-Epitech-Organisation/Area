@@ -206,7 +206,7 @@ GITHUB_REDIRECT_URI=http://localhost:8080/auth/oauth/github/callback/
 
 # Webhook Secrets (JSON dictionary format)
 # Generate with: openssl rand -base64 32
-WEBHOOK_SECRETS='{"github":"dev_secret_github_123","twitch":"dev_secret_twitch_123","slack":"dev_secret_slack_123","gmail":"dev_secret_gmail_123"}'
+WEBHOOK_SECRETS='{"github":"dev_secret_github_123","slack":"dev_secret_slack_123","gmail":"dev_secret_gmail_123"}'
 
 # Email (for send_email reaction)
 EMAIL_HOST=smtp.gmail.com
