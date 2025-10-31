@@ -29,6 +29,7 @@ app.autodiscover_tasks()
 # CELERY BEAT SCHEDULE - Periodic Tasks
 # =============================================================================
 
+
 def get_beat_schedule():
     """
     Generate Celery Beat schedule based on environment.
@@ -43,7 +44,6 @@ def get_beat_schedule():
       - Falls back to polling if webhooks not configured
     """
     # Import here to avoid circular imports
-    from django.conf import settings
 
     environment = getattr(settings, "ENVIRONMENT", "local")
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
@@ -77,21 +77,25 @@ def get_beat_schedule():
 
     # DEV MODE: Always enable polling for easier debugging
     if is_dev:
-        schedule.update({
-            "check-github-actions": {
-                "task": "automations.check_github_actions",
-                "schedule": 300.0,  # Every 5 minutes
-            },
-            "check-twitch-actions": {
-                "task": "automations.check_twitch_actions",
-                "schedule": 60.0,  # Every minute
-            },
-            "check-slack-actions": {
-                "task": "automations.check_slack_actions",
-                "schedule": 120.0,  # Every 2 minutes
-            },
-        })
-        print(f"🔧 [CELERY BEAT] DEV MODE ({environment}): Polling enabled for GitHub, Twitch, Slack")
+        schedule.update(
+            {
+                "check-github-actions": {
+                    "task": "automations.check_github_actions",
+                    "schedule": 300.0,  # Every 5 minutes
+                },
+                "check-twitch-actions": {
+                    "task": "automations.check_twitch_actions",
+                    "schedule": 60.0,  # Every minute
+                },
+                "check-slack-actions": {
+                    "task": "automations.check_slack_actions",
+                    "schedule": 120.0,  # Every 2 minutes
+                },
+            }
+        )
+        print(
+            f"🔧 [CELERY BEAT] DEV MODE ({environment}): Polling enabled for GitHub, Twitch, Slack"
+        )
 
     # PROD MODE: Only enable polling if webhooks are NOT configured
     else:
@@ -100,7 +104,9 @@ def get_beat_schedule():
                 "task": "automations.check_github_actions",
                 "schedule": 300.0,  # Every 5 minutes
             }
-            print("⚠️  [CELERY BEAT] PROD: GitHub polling enabled (webhook not configured)")
+            print(
+                "⚠️  [CELERY BEAT] PROD: GitHub polling enabled (webhook not configured)"
+            )
         else:
             print("✅ [CELERY BEAT] PROD: GitHub webhooks active, polling disabled")
 
@@ -109,7 +115,9 @@ def get_beat_schedule():
                 "task": "automations.check_twitch_actions",
                 "schedule": 60.0,  # Every minute
             }
-            print("⚠️  [CELERY BEAT] PROD: Twitch polling enabled (webhook not configured)")
+            print(
+                "⚠️  [CELERY BEAT] PROD: Twitch polling enabled (webhook not configured)"
+            )
         else:
             print("✅ [CELERY BEAT] PROD: Twitch webhooks active, polling disabled")
 
@@ -118,7 +126,9 @@ def get_beat_schedule():
                 "task": "automations.check_slack_actions",
                 "schedule": 120.0,  # Every 2 minutes
             }
-            print("⚠️  [CELERY BEAT] PROD: Slack polling enabled (webhook not configured)")
+            print(
+                "⚠️  [CELERY BEAT] PROD: Slack polling enabled (webhook not configured)"
+            )
         else:
             print("✅ [CELERY BEAT] PROD: Slack webhooks active, polling disabled")
 

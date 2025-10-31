@@ -1,6 +1,14 @@
 from django.contrib import admin
 
-from .models import Action, Area, Execution, Reaction, Service, WebhookSubscription, GitHubAppInstallation
+from .models import (
+    Action,
+    Area,
+    Execution,
+    GitHubAppInstallation,
+    Reaction,
+    Service,
+    WebhookSubscription,
+)
 
 
 @admin.register(Service)
@@ -255,7 +263,12 @@ class GitHubAppInstallationAdmin(admin.ModelAdmin):
         "account_login",
         "installation_id",
     )
-    readonly_fields = ("installation_id", "installed_at", "updated_at", "repository_count")
+    readonly_fields = (
+        "installation_id",
+        "installed_at",
+        "updated_at",
+        "repository_count",
+    )
     list_per_page = 25
 
     fieldsets = (
@@ -272,7 +285,7 @@ class GitHubAppInstallationAdmin(admin.ModelAdmin):
             },
         ),
         ("Repositories", {"fields": ("repositories", "repository_count")}),
-    ("Timestamps", {"fields": ("installed_at", "updated_at")}),
+        ("Timestamps", {"fields": ("installed_at", "updated_at")}),
     )
 
     def repository_count(self, obj):
@@ -284,4 +297,3 @@ class GitHubAppInstallationAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         """GitHub App installations are managed via webhooks."""
         return False
-

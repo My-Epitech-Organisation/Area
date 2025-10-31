@@ -9,11 +9,12 @@ These views handle:
 
 import logging
 
-from django.conf import settings
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from django.conf import settings
 
 from .models import GitHubAppInstallation
 
@@ -42,28 +43,29 @@ def github_app_status(request):
         }
     """
     installations = GitHubAppInstallation.objects.filter(
-        user=request.user,
-        is_active=True
+        user=request.user, is_active=True
     )
 
     has_installation = installations.exists()
     app_name = getattr(settings, "GITHUB_APP_NAME", "area-automation")
 
-    return Response({
-        "installed": has_installation,
-        "installations": [
-            {
-                "id": inst.installation_id,
-                "account": inst.account_login,
-                "type": inst.account_type,
-                "repositories_count": len(inst.repositories),
-                "repositories": inst.repositories,
-                "installed_at": inst.installed_at.isoformat(),
-            }
-            for inst in installations
-        ],
-        "install_url": f"https://github.com/apps/{app_name}/installations/new"
-    })
+    return Response(
+        {
+            "installed": has_installation,
+            "installations": [
+                {
+                    "id": inst.installation_id,
+                    "account": inst.account_login,
+                    "type": inst.account_type,
+                    "repositories_count": len(inst.repositories),
+                    "repositories": inst.repositories,
+                    "installed_at": inst.installed_at.isoformat(),
+                }
+                for inst in installations
+            ],
+            "install_url": f"https://github.com/apps/{app_name}/installations/new",
+        }
+    )
 
 
 @api_view(["POST"])
@@ -90,8 +92,7 @@ def github_app_link_installation(request):
 
     if not installation_id:
         return Response(
-            {"error": "installation_id required"},
-            status=status.HTTP_400_BAD_REQUEST
+            {"error": "installation_id required"}, status=status.HTTP_400_BAD_REQUEST
         )
 
     try:
@@ -99,7 +100,7 @@ def github_app_link_installation(request):
     except (ValueError, TypeError):
         return Response(
             {"error": "installation_id must be an integer"},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     # Check if installation exists
@@ -126,12 +127,16 @@ def github_app_link_installation(request):
         if installation.user != request.user:
             installation.user = request.user
             installation.save()
-            logger.info(f"Linked installation {installation_id} to user {request.user.username}")
+            logger.info(
+                f"Linked installation {installation_id} to user {request.user.username}"
+            )
 
-    return Response({
-        "success": True,
-        "installation_id": installation_id,
-    })
+    return Response(
+        {
+            "success": True,
+            "installation_id": installation_id,
+        }
+    )
 
 
 @api_view(["GET"])
@@ -152,21 +157,19 @@ def github_app_repositories(request):
         }
     """
     installations = GitHubAppInstallation.objects.filter(
-        user=request.user,
-        is_active=True
+        user=request.user, is_active=True
     )
 
     repositories = []
     for inst in installations:
         for repo in inst.repositories:
-            repositories.append({
-                "full_name": repo,
-                "installation_id": inst.installation_id,
-                "account": inst.account_login,
-                "account_type": inst.account_type
-            })
+            repositories.append(
+                {
+                    "full_name": repo,
+                    "installation_id": inst.installation_id,
+                    "account": inst.account_login,
+                    "account_type": inst.account_type,
+                }
+            )
 
-    return Response({
-        "repositories": repositories,
-        "total_count": len(repositories)
-    })
+    return Response({"repositories": repositories, "total_count": len(repositories)})

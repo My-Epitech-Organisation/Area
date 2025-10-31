@@ -374,6 +374,7 @@ def check_github_actions(self):
         dict: Statistics about processed GitHub events
     """
     from django.conf import settings
+
     from .models import GitHubAppInstallation
 
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
@@ -400,10 +401,7 @@ def check_github_actions(self):
 
         if not github_areas:
             logger.info("No active GitHub areas found")
-            return {
-                "status": "no_areas",
-                "checked": 0
-            }
+            return {"status": "no_areas", "checked": 0}
 
         logger.debug(f"Found {len(github_areas)} active GitHub areas")
 
@@ -411,9 +409,9 @@ def check_github_actions(self):
         users_with_app = set()
         if webhook_configured:
             users_with_app = set(
-                GitHubAppInstallation.objects.filter(
-                    is_active=True
-                ).values_list('user_id', flat=True)
+                GitHubAppInstallation.objects.filter(is_active=True).values_list(
+                    "user_id", flat=True
+                )
             )
 
             if users_with_app:
@@ -424,8 +422,7 @@ def check_github_actions(self):
 
         # Filter areas: only poll for users without GitHub App
         areas_needing_polling = [
-            area for area in github_areas
-            if area.owner_id not in users_with_app
+            area for area in github_areas if area.owner_id not in users_with_app
         ]
 
         webhook_users_count = len(github_areas) - len(areas_needing_polling)
@@ -440,7 +437,7 @@ def check_github_actions(self):
                 "reason": "all_users_have_webhooks",
                 "webhook_users": webhook_users_count,
                 "polling_users": 0,
-                "message": "All GitHub users have webhooks configured"
+                "message": "All GitHub users have webhooks configured",
             }
 
         logger.info(
@@ -1398,6 +1395,7 @@ def check_slack_actions(self):
 
     # Return early if webhooks are configured
     from django.conf import settings
+
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
     if webhook_secrets.get("slack"):
         logger.info(

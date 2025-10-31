@@ -428,35 +428,30 @@ class GitHubAppInstallation(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="github_app_installations",
-        help_text="AREA user who installed the app"
+        help_text="AREA user who installed the app",
     )
 
     installation_id = models.BigIntegerField(
-        unique=True,
-        help_text="GitHub App installation ID"
+        unique=True, help_text="GitHub App installation ID"
     )
 
     account_login = models.CharField(
-        max_length=255,
-        help_text="GitHub username or organization name"
+        max_length=255, help_text="GitHub username or organization name"
     )
 
     account_type = models.CharField(
-        max_length=20,
-        choices=AccountType.choices,
-        default=AccountType.USER
+        max_length=20, choices=AccountType.choices, default=AccountType.USER
     )
 
     # Repositories where app is installed (JSON list of full names)
     repositories = models.JSONField(
         default=list,
         blank=True,
-        help_text="List of repo full names (e.g., ['owner/repo1', 'owner/repo2'])"
+        help_text="List of repo full names (e.g., ['owner/repo1', 'owner/repo2'])",
     )
 
     is_active = models.BooleanField(
-        default=True,
-        help_text="False if user uninstalled the app"
+        default=True, help_text="False if user uninstalled the app"
     )
 
     installed_at = models.DateTimeField(auto_now_add=True)
@@ -491,5 +486,3 @@ class GitHubAppInstallation(models.Model):
         """Mark installation as inactive (uninstalled)."""
         self.is_active = False
         self.save(update_fields=["is_active", "updated_at"])
-
-

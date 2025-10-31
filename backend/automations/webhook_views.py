@@ -38,9 +38,9 @@ class WebhookManagementViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         """Return webhook subscriptions for the current user."""
-        return WebhookSubscription.objects.filter(user=self.request.user).select_related(
-            "service", "user"
-        )
+        return WebhookSubscription.objects.filter(
+            user=self.request.user
+        ).select_related("service", "user")
 
     @extend_schema(
         responses={200: WebhookSubscriptionListSerializer(many=True)},
@@ -115,7 +115,9 @@ class WebhookManagementViewSet(viewsets.ReadOnlyModelViewSet):
 
         # Determine recommendation
         if webhook_configured:
-            recommendation = f"✅ Webhooks enabled for {service_name}. Real-time events active."
+            recommendation = (
+                f"✅ Webhooks enabled for {service_name}. Real-time events active."
+            )
         else:
             recommendation = f"⚠️ Configure webhooks for {service_name} for real-time events. Currently using polling."
 
