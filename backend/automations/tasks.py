@@ -1741,11 +1741,11 @@ def check_notion_actions(self):
                             state.last_checked_at = timezone.now()
                             state.save()
                             continue
-                        
+
                         for page in pages:
                             created_time = page.get("created_time")
                             last_edited_time = page.get("last_edited_time")
-                            
+
                             if created_time and last_edited_time:
                                 page_created = datetime.fromisoformat(
                                     created_time.replace('Z', '+00:00')
@@ -1756,10 +1756,10 @@ def check_notion_actions(self):
 
                                 time_diff = abs((page_edited - page_created).total_seconds())
                                 is_newly_created = time_diff < 5
-                                
+
                                 if page_created <= state.last_checked_at:
                                     continue
-                                
+
                                 if is_newly_created:
                                     new_pages.append(page)
 
@@ -1979,7 +1979,7 @@ def check_notion_actions(self):
                         logger.info(
                             f"Area {area.id}: Found {len(items)} new database items"
                         )
-                        
+
                         # IMPORTANT: If this is the first check, initialize and skip
                         if not state.last_checked_at:
                             logger.info(
@@ -1989,7 +1989,7 @@ def check_notion_actions(self):
                             state.last_checked_at = timezone.now()
                             state.save()
                             continue
-                        
+
                         current_check_time = timezone.now()
                         state.last_checked_at = current_check_time
                         state.save()
@@ -2965,9 +2965,9 @@ def _execute_reaction_logic(
 
         # Get page UUID - either from URL or by searching by name
         from .helpers.notion_helper import extract_notion_uuid
-        
+
         page_uuid = extract_notion_uuid(page_input)
-        
+
         # If UUID extraction failed, treat input as page name and search for it
         if not page_uuid:
             logger.info(f"[REACTION NOTION] Searching for page by name: {page_input}")
@@ -3094,9 +3094,9 @@ def _execute_reaction_logic(
 
         # Get database UUID - either from URL or by searching by name
         from .helpers.notion_helper import extract_notion_uuid
-        
+
         database_uuid = extract_notion_uuid(database_input)
-        
+
         # If UUID extraction failed, treat input as database name and search for it
         if not database_uuid:
             logger.info(f"[REACTION NOTION] Searching for database by name: {database_input}")
