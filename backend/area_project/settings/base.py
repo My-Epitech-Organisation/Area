@@ -17,6 +17,7 @@ Structure:
 """
 
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -49,7 +50,8 @@ if not IS_DOCKER:
         if env_path.exists():
             load_dotenv(env_path)
         else:
-            print(f"Warning: .env file not found")
+            # Use stderr instead of print for early-stage warnings
+            sys.stderr.write("Warning: .env file not found\n")
 
 # Create logs directory
 if not IS_DOCKER:
@@ -313,6 +315,38 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 # External API Keys
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY")
 
+# =============================================================================
+# WEBHOOK SECRETS CONFIGURATION
+# =============================================================================
+
+# Parse webhook secrets from JSON environment variable
+# Format: WEBHOOK_SECRETS='{"github":"secret1","twitch":"secret2","slack":"secret3"}'
+import json
+import logging
+
+logger = logging.getLogger(__name__)
+
+WEBHOOK_SECRETS = {}
+webhook_secrets_raw = os.getenv("WEBHOOK_SECRETS", "{}")
+try:
+    WEBHOOK_SECRETS = json.loads(webhook_secrets_raw)
+    if not isinstance(WEBHOOK_SECRETS, dict):
+        logger.warning(
+            "WEBHOOK_SECRETS is not a valid JSON dictionary, using empty dict"
+        )
+        WEBHOOK_SECRETS = {}
+    else:
+        # Log configured webhooks (without showing secrets)
+        configured = [
+            service for service in WEBHOOK_SECRETS if WEBHOOK_SECRETS[service]
+        ]
+        if configured:
+            logger.info(f"Webhook secrets configured for: {', '.join(configured)}")
+except json.JSONDecodeError as e:
+    logger.error(f"Failed to parse WEBHOOK_SECRETS JSON: {e}")
+    logger.debug(f"Raw value: {webhook_secrets_raw[:50]}...")
+    WEBHOOK_SECRETS = {}
+
 # Security Settings (base - extended per environment)
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -361,7 +395,10 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ],
-    "DEFAULT_THROTTLE_RATES": {"anon": "100/day", "user": "1000/day"},
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "500/day",  # ~20/hour for anonymous users
+        "user": "10000/day",  # ~7/minute for authenticated users (24h average)
+    },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
@@ -574,7 +611,8 @@ try:
                 logger["handlers"].append("file")
         LOGGING["root"]["handlers"].append("file")
 except Exception as e:
-    print(f"Warning: Could not setup file logging: {e}")
+    # Use stderr for logging setup errors (can't use logging here as it's not configured yet)
+    sys.stderr.write(f"Warning: Could not setup file logging: {e}\n")
 
 # =============================================================================
 # INTERNATIONALIZATION
