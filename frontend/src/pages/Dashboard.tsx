@@ -202,7 +202,7 @@ const Dashboard: React.FC = () => {
     };
 
     const loadUserData = async () => {
-      if (accessToken && !storedUser) {
+      if (accessToken) {
         try {
           const userToStore = await fetchUserData();
           if (userToStore) {
@@ -241,6 +241,7 @@ const Dashboard: React.FC = () => {
                       username:
                         userDetailData.username || username || `User ${userId.substring(0, 6)}`,
                       email: userDetailData.email,
+                      email_verified: userDetailData.email_verified || false,
                       id: userId,
                     };
                     localStorage.setItem('user', JSON.stringify(userFromDetail));
@@ -298,7 +299,8 @@ const Dashboard: React.FC = () => {
             }
           }
         }
-      } else {
+      } else if (storedUser) {
+        // Use stored user temporarily while we fetch fresh data
         setUser(storedUser);
       }
     };
@@ -306,6 +308,7 @@ const Dashboard: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // Always fetch fresh user data to ensure email_verified is up-to-date
         await loadUserData();
         const servicesResponse = await fetch(`${API_BASE}/about.json`);
         if (!servicesResponse.ok) {
