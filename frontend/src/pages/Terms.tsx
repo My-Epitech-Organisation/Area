@@ -13,24 +13,20 @@ const Terms: React.FC = () => {
         </p>
 
         <section className="mb-8">
-          <h2 className="text-3xl font-semibold text-theme-primary mb-4">
-            1. Acceptance of Terms
-          </h2>
+          <h2 className="text-3xl font-semibold text-theme-primary mb-4">1. Acceptance of Terms</h2>
           <p className="text-lg text-theme-secondary leading-relaxed">
             By accessing or using AREA (&quot;the Service&quot;), you agree to be bound by these
             Terms of Use. If you do not agree to these terms, please do not use our service.
           </p>
           <p className="text-lg text-theme-secondary leading-relaxed mt-4">
             These terms constitute a legally binding agreement between you and AREA. By creating an
-            account, you represent that you are at least 13 years old and have the legal capacity
-            to enter into this agreement.
+            account, you represent that you are at least 13 years old and have the legal capacity to
+            enter into this agreement.
           </p>
         </section>
 
         <section className="mb-8">
-          <h2 className="text-3xl font-semibold text-theme-primary mb-4">
-            2. Service Description
-          </h2>
+          <h2 className="text-3xl font-semibold text-theme-primary mb-4">2. Service Description</h2>
           <p className="text-lg text-theme-secondary leading-relaxed">
             AREA is an automation platform that enables users to create workflows
             (&quot;areactions&quot;) by connecting various third-party services including but not
@@ -60,15 +56,9 @@ const Terms: React.FC = () => {
           <ul className="list-disc list-inside text-lg text-theme-secondary leading-relaxed mt-4 space-y-2">
             <li>Provide accurate and complete registration information</li>
             <li>Maintain the security of your account credentials</li>
-            <li>
-              Comply with all applicable laws and regulations when using the Service
-            </li>
-            <li>
-              Respect the terms of service of all third-party services you connect to AREA
-            </li>
-            <li>
-              Not use the Service for illegal activities, spam, harassment, or abuse
-            </li>
+            <li>Comply with all applicable laws and regulations when using the Service</li>
+            <li>Respect the terms of service of all third-party services you connect to AREA</li>
+            <li>Not use the Service for illegal activities, spam, harassment, or abuse</li>
             <li>Not attempt to gain unauthorized access to other users&apos; accounts or data</li>
             <li>Not overload our systems with excessive API requests or automations</li>
           </ul>
@@ -87,8 +77,8 @@ const Terms: React.FC = () => {
               authorize
             </li>
             <li>
-              You remain responsible for your use of those third-party services and must comply
-              with their respective terms
+              You remain responsible for your use of those third-party services and must comply with
+              their respective terms
             </li>
             <li>
               AREA is not responsible for changes, outages, or discontinuation of third-party
@@ -128,16 +118,12 @@ const Terms: React.FC = () => {
           <ul className="list-disc list-inside text-lg text-theme-secondary leading-relaxed mt-4 space-y-2">
             <li>We may impose rate limits on automation execution</li>
             <li>Excessive usage may result in throttling or temporary suspension</li>
-            <li>
-              We reserve the right to modify usage limits at any time with reasonable notice
-            </li>
+            <li>We reserve the right to modify usage limits at any time with reasonable notice</li>
           </ul>
         </section>
 
         <section className="mb-8">
-          <h2 className="text-3xl font-semibold text-theme-primary mb-4">
-            7. Data and Privacy
-          </h2>
+          <h2 className="text-3xl font-semibold text-theme-primary mb-4">7. Data and Privacy</h2>
           <p className="text-lg text-theme-secondary leading-relaxed">
             Your privacy is important to us. Please review our{' '}
             <Link to="/privacy" className="text-theme-accent hover:underline">
@@ -177,9 +163,7 @@ const Terms: React.FC = () => {
             <li>
               AREA is provided &quot;as is&quot; without warranties of any kind, express or implied
             </li>
-            <li>
-              We are not liable for any indirect, incidental, or consequential damages
-            </li>
+            <li>We are not liable for any indirect, incidental, or consequential damages</li>
             <li>
               We are not responsible for data loss, failed automations, or issues caused by
               third-party services
@@ -216,9 +200,7 @@ const Terms: React.FC = () => {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-3xl font-semibold text-theme-primary mb-4">
-            11. Changes to Terms
-          </h2>
+          <h2 className="text-3xl font-semibold text-theme-primary mb-4">11. Changes to Terms</h2>
           <p className="text-lg text-theme-secondary leading-relaxed">
             We may modify these Terms at any time. We will notify users of significant changes via:
           </p>
