@@ -114,10 +114,19 @@ const Areaction: React.FC = () => {
 
   // Load user data on mount
   useEffect(() => {
-    const storedUser = getStoredUser();
-    if (storedUser) {
-      setUser(storedUser);
-    }
+    const loadUserData = async () => {
+      const storedUser = getStoredUser();
+      if (storedUser) {
+        // Show stored user temporarily
+        setUser(storedUser);
+      }
+      // Always fetch fresh data to ensure email_verified is up-to-date
+      const freshUser = await fetchUserData();
+      if (freshUser) {
+        setUser(freshUser);
+      }
+    };
+    loadUserData();
   }, []);
 
   const handleRefreshUserData = async () => {
