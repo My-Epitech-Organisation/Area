@@ -1009,6 +1009,119 @@ class Command(BaseCommand):
                     },
                 ],
             },
+            {
+                "name": "notion",
+                "description": "Notion workspace and document management integration",
+                "status": Service.Status.ACTIVE,
+                "actions": [
+                    {
+                        "name": "notion_page_created",
+                        "description": "Triggered when a new page is created in a workspace",
+                        "config_schema": {},
+                    },
+                    {
+                        "name": "notion_page_updated",
+                        "description": "Triggered when a page is updated in a workspace",
+                        "config_schema": {},
+                    },
+                    {
+                        "name": "notion_database_item_added",
+                        "description": "Triggered when a new item is added to a database",
+                        "config_schema": {
+                            "database_id": {
+                                "type": "string",
+                                "label": "Database Name or ID",
+                                "description": "Database name (e.g., 'AREA Tasks'), ID (UUID), or full Notion database URL",
+                                "required": True,
+                                "placeholder": "AREA Tasks or 12345678-1234-1234-1234-123456789012",
+                            },
+                        },
+                    },
+                ],
+                "reactions": [
+                    {
+                        "name": "notion_create_page",
+                        "description": "Create a new page in a Notion workspace",
+                        "config_schema": {
+                            "parent_id": {
+                                "type": "string",
+                                "label": "Parent Page/Database ID (Optional)",
+                                "description": "ID of the parent page or database (UUID or full Notion URL). If not provided, page will be created in workspace root.",
+                                "required": False,
+                                "placeholder": "https://www.notion.so/MyPage-12345678-1234-1234-1234-123456789012 or 12345678-1234-1234-1234-123456789012",
+                            },
+                            "title": {
+                                "type": "string",
+                                "label": "Page Title",
+                                "description": "Title of the new page",
+                                "required": True,
+                                "placeholder": "New Page Title",
+                            },
+                            "content": {
+                                "type": "text",
+                                "label": "Page Content",
+                                "description": "Initial content for the page (optional)",
+                                "required": False,
+                                "placeholder": "Page content here...",
+                            },
+                        },
+                    },
+                    {
+                        "name": "notion_update_page",
+                        "description": "Update an existing Notion page",
+                        "config_schema": {
+                            "page_id": {
+                                "type": "string",
+                                "label": "Page",
+                                "description": "Name of the page or full Notion page URL",
+                                "required": True,
+                                "placeholder": "My Page or https://www.notion.so/MyPage-12345678",
+                            },
+                            "title": {
+                                "type": "string",
+                                "label": "New Title",
+                                "description": "New title for the page (optional)",
+                                "required": False,
+                                "placeholder": "Updated Page Title",
+                            },
+                            "content": {
+                                "type": "text",
+                                "label": "New Content",
+                                "description": "New content to append (optional)",
+                                "required": False,
+                                "placeholder": "Additional content...",
+                            },
+                        },
+                    },
+                    {
+                        "name": "notion_create_database_item",
+                        "description": "Add a new item to a Notion database",
+                        "config_schema": {
+                            "database_id": {
+                                "type": "string",
+                                "label": "Database",
+                                "description": "Name of the database or full Notion database URL",
+                                "required": True,
+                                "placeholder": "My Tasks Database or https://www.notion.so/MyDatabase-12345678-1234-1234-1234-123456789012",
+                            },
+                            "item_name": {
+                                "type": "string",
+                                "label": "Item Name",
+                                "description": "Name/title of the new database item",
+                                "required": True,
+                                "placeholder": "New Task",
+                            },
+                            "properties": {
+                                "type": "text",
+                                "label": "Additional Properties",
+                                "description": "Additional database properties as JSON object (optional)",
+                                "required": False,
+                                "placeholder": '{"Status": {"select": {"name": "To Do"}}, "Priority": {"select": {"name": "High"}}}',
+                            },
+                        },
+                    },
+                ],
+            },
         ]
 
         # Create services

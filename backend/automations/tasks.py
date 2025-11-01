@@ -16,6 +16,7 @@ from typing import Optional
 import requests
 from celery import shared_task
 
+from django.conf import settings
 from django.db import IntegrityError, OperationalError
 from django.utils import timezone
 
@@ -1621,6 +1622,463 @@ def check_slack_actions(self):
 
 
 @shared_task(
+    name="automations.check_notion_actions",
+    bind=True,
+    max_retries=3,
+    autoretry_for=RECOVERABLE_EXCEPTIONS,
+)
+def check_notion_actions(self):
+    """
+    Poll Notion for new page updates, page creations, and database item changes.
+
+    Checks all active Areas with Notion actions and triggers executions
+    when new events are detected.
+
+    Note: This task skips polling if Notion webhooks are configured.
+    Webhooks provide real-time updates and are more efficient than polling.
+
+    To enable webhooks:
+    1. Configure WEBHOOK_SECRETS['notion'] in settings
+    2. Set up webhook in Notion app pointing to /webhooks/notion/
+
+    Supported actions:
+    - notion_page_created: New page created in workspace
+    - notion_page_updated: Existing page updated
+    - notion_database_item_added: New item added to database
+
+    Returns:
+        dict: Summary of polling results
+    """
+    # Local imports to avoid circular dependencies
+    from .helpers.notion_helper import (
+        extract_database_item_title,
+        extract_page_title,
+        find_notion_database_by_name,
+    )
+
+    # Check if Notion webhooks are configured
+    webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
+    if webhook_secrets.get("notion"):
+        logger.info(
+            "⚡ Notion webhooks configured - skipping polling (real-time webhooks active)"
+        )
+        return {
+            "status": "skipped",
+            "reason": "webhooks_configured",
+            "message": "Polling disabled - using real-time webhooks instead",
+        }
+
+    logger.info("Checking Notion actions (polling mode)...")
+
+    try:
+        # Get all active Areas with Notion actions
+        notion_areas = get_active_areas(
+            [
+                "notion_page_created",
+                "notion_page_updated",
+                "notion_database_item_added",
+            ]
+        )
+
+        if not notion_areas:
+            logger.info("No active Notion areas found")
+            return {"status": "no_areas", "checked": 0}
+
+        triggered_count = 0
+        skipped_count = 0
+        no_token_count = 0
+
+        for area in notion_areas:
+            try:
+                # Get valid Notion token
+                from users.oauth.manager import OAuthManager
+
+                access_token = OAuthManager.get_valid_token(area.owner, "notion")
+
+                if not access_token:
+                    logger.warning(
+                        f"No valid Notion token for user {area.owner.username}, "
+                        f"area '{area.name}'"
+                    )
+                    no_token_count += 1
+                    continue
+
+                action_name = area.action.name
+                action_config = area.action_config
+
+                # Get or create ActionState for tracking
+                from .models import ActionState
+
+                state, _ = ActionState.objects.get_or_create(area=area)
+
+                # Prepare API request headers
+                headers = {
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json",
+                    "Notion-Version": "2022-06-28",
+                }
+
+                # Handle different action types
+                if action_name == "notion_page_created":
+                    search_payload = {
+                        "query": "",
+                        "filter": {"property": "object", "value": "page"},
+                        "sort": {
+                            "direction": "descending",
+                            "timestamp": "last_edited_time",
+                        },
+                    }
+
+                    if state.last_checked_at:
+                        pass
+
+                    logger.debug("Searching for new pages in Notion workspace")
+
+                    response = requests.post(
+                        "https://api.notion.com/v1/search",
+                        json=search_payload,
+                        headers=headers,
+                        timeout=10,
+                    )
+
+                    if response.status_code == 200:
+                        search_results = response.json()
+                        pages = search_results.get("results", [])
+
+                        new_pages = []
+                        if not state.last_checked_at:
+                            logger.info(
+                                f"Area {area.id}: First check for notion_page_created, "
+                                f"initializing last_checked_at without processing existing pages"
+                            )
+                            state.last_checked_at = timezone.now()
+                            state.save()
+                            continue
+
+                        for page in pages:
+                            created_time = page.get("created_time")
+                            last_edited_time = page.get("last_edited_time")
+
+                            if created_time and last_edited_time:
+                                page_created = datetime.fromisoformat(
+                                    created_time.replace("Z", "+00:00")
+                                )
+                                page_edited = datetime.fromisoformat(
+                                    last_edited_time.replace("Z", "+00:00")
+                                )
+
+                                time_diff = abs(
+                                    (page_edited - page_created).total_seconds()
+                                )
+                                is_newly_created = time_diff < 5
+
+                                if page_created <= state.last_checked_at:
+                                    continue
+
+                                if is_newly_created:
+                                    new_pages.append(page)
+
+                        logger.info(f"Area {area.id}: Found {len(new_pages)} new pages")
+
+                        current_check_time = timezone.now()
+                        state.last_checked_at = current_check_time
+                        state.save()
+
+                        # Create executions for new pages
+                        for page in new_pages:
+                            page_id = page["id"]
+                            page_title = extract_page_title(page)
+                            page_url = page.get("url", "")
+                            created_time = page["created_time"]
+
+                            event_id = f"notion_page_created_{area.id}_{page_id}"
+
+                            trigger_data = {
+                                "service": "notion",
+                                "action": action_name,
+                                "page_id": page_id,
+                                "page_title": page_title,
+                                "page_url": page_url,
+                                "created_time": created_time,
+                            }
+
+                            execution, created = create_execution_safe(
+                                area=area,
+                                external_event_id=event_id,
+                                trigger_data=trigger_data,
+                            )
+
+                            if created and execution:
+                                logger.info(
+                                    f"✅ Created execution for new page: {page_title}"
+                                )
+                                execute_reaction_task.delay(execution.pk)
+                                triggered_count += 1
+
+                    else:
+                        logger.error(
+                            f"Area {area.id}: Notion search API error {response.status_code}: "
+                            f"{response.text}"
+                        )
+                        skipped_count += 1
+
+                elif action_name == "notion_page_updated":
+                    # Query for recently updated pages
+                    search_payload = {
+                        "query": "",
+                        "filter": {"property": "object", "value": "page"},
+                        "sort": {
+                            "direction": "descending",
+                            "timestamp": "last_edited_time",
+                        },
+                    }
+
+                    logger.debug("Searching for updated pages in Notion workspace")
+
+                    response = requests.post(
+                        "https://api.notion.com/v1/search",
+                        json=search_payload,
+                        headers=headers,
+                        timeout=10,
+                    )
+
+                    if response.status_code == 200:
+                        search_results = response.json()
+                        pages = search_results.get("results", [])
+
+                        # IMPORTANT: If this is the first check, initialize and skip
+                        if not state.last_checked_at:
+                            logger.info(
+                                f"Area {area.id}: First check for notion_page_updated, "
+                                f"initializing last_checked_at without processing existing pages"
+                            )
+                            state.last_checked_at = timezone.now()
+                            state.save()
+                            continue
+
+                        # Filter pages updated since last check
+                        updated_pages = []
+                        for page in pages:
+                            last_edited = page.get("last_edited_time")
+                            if last_edited:
+                                page_updated = datetime.fromisoformat(
+                                    last_edited.replace("Z", "+00:00")
+                                )
+
+                                if page_updated <= state.last_checked_at:
+                                    break
+
+                                # Skip pages that were just created (already handled above)
+                                created_time = page.get("created_time")
+                                if created_time:
+                                    page_created = datetime.fromisoformat(
+                                        created_time.replace("Z", "+00:00")
+                                    )
+                                    if page_created == page_updated:
+                                        continue  # Skip newly created pages
+
+                                updated_pages.append(page)
+
+                        logger.info(
+                            f"Area {area.id}: Found {len(updated_pages)} updated pages"
+                        )
+
+                        current_check_time = timezone.now()
+                        state.last_checked_at = current_check_time
+                        state.save()
+
+                        # Create executions for updated pages
+                        for page in updated_pages:
+                            page_id = page["id"]
+                            page_title = extract_page_title(page)
+                            page_url = page.get("url", "")
+                            last_edited = page["last_edited_time"]
+
+                            event_id = (
+                                f"notion_page_updated_{area.id}_{page_id}_{last_edited}"
+                            )
+
+                            trigger_data = {
+                                "service": "notion",
+                                "action": action_name,
+                                "page_id": page_id,
+                                "page_title": page_title,
+                                "page_url": page_url,
+                                "last_edited_time": last_edited,
+                            }
+
+                            execution, created = create_execution_safe(
+                                area=area,
+                                external_event_id=event_id,
+                                trigger_data=trigger_data,
+                            )
+
+                            if created and execution:
+                                logger.info(
+                                    f"✅ Created execution for updated page: {page_title}"
+                                )
+                                execute_reaction_task.delay(execution.pk)
+                                triggered_count += 1
+
+                    else:
+                        logger.error(
+                            f"Area {area.id}: Notion search API error {response.status_code}: "
+                            f"{response.text}"
+                        )
+                        skipped_count += 1
+
+                elif action_name == "notion_database_item_added":
+                    # Check specific database for new items
+                    database_input = action_config.get("database_id")
+
+                    if not database_input:
+                        logger.warning(
+                            f"Area {area.id}: No database_id configured for {action_name}"
+                        )
+                        skipped_count += 1
+                        continue
+
+                    # Extract UUID from URL or name
+                    from .helpers.notion_helper import (
+                        extract_notion_uuid,
+                        find_notion_database_by_name,
+                    )
+
+                    database_id = extract_notion_uuid(database_input)
+
+                    # If UUID extraction failed, treat input as database name and search for it
+                    if not database_id:
+                        logger.info(
+                            f"[ACTION NOTION] Searching for database by name: {database_input}"
+                        )
+                        database_id = find_notion_database_by_name(
+                            access_token, database_input
+                        )
+                        if not database_id:
+                            logger.error(
+                                f"Area {area.id}: Could not find database '{database_input}' in Notion workspace"
+                            )
+                            skipped_count += 1
+                            continue
+
+                    # Query database for items
+                    query_payload = {
+                        "sorts": [
+                            {"direction": "descending", "timestamp": "created_time"}
+                        ]
+                    }
+
+                    # Add filter for items created since last check
+                    if state.last_checked_at:
+                        query_payload["filter"] = {
+                            "timestamp": "created_time",
+                            "created_time": {
+                                "after": state.last_checked_at.isoformat()
+                            },
+                        }
+
+                    api_url = f"https://api.notion.com/v1/databases/{database_id}/query"
+
+                    logger.debug(f"Querying Notion database {database_id}")
+
+                    response = requests.post(
+                        api_url, json=query_payload, headers=headers, timeout=10
+                    )
+
+                    if response.status_code == 200:
+                        query_results = response.json()
+                        items = query_results.get("results", [])
+
+                        logger.info(
+                            f"Area {area.id}: Found {len(items)} new database items"
+                        )
+
+                        # IMPORTANT: If this is the first check, initialize and skip
+                        if not state.last_checked_at:
+                            logger.info(
+                                f"Area {area.id}: First check for notion_database_item_added, "
+                                f"initializing last_checked_at without processing existing items"
+                            )
+                            state.last_checked_at = timezone.now()
+                            state.save()
+                            continue
+
+                        current_check_time = timezone.now()
+                        state.last_checked_at = current_check_time
+                        state.save()
+
+                        # Create executions for new items
+                        for item in items:
+                            item_id = item["id"]
+                            item_title = extract_database_item_title(item)
+                            item_url = item.get("url", "")
+                            created_time = item["created_time"]
+
+                            event_id = f"notion_db_item_{area.id}_{item_id}"
+
+                            trigger_data = {
+                                "service": "notion",
+                                "action": action_name,
+                                "database_id": database_id,
+                                "item_id": item_id,
+                                "item_title": item_title,
+                                "item_url": item_url,
+                                "created_time": created_time,
+                            }
+
+                            execution, created = create_execution_safe(
+                                area=area,
+                                external_event_id=event_id,
+                                trigger_data=trigger_data,
+                            )
+
+                            if created and execution:
+                                logger.info(
+                                    f"✅ Created execution for new database item: {item_title}"
+                                )
+                                execute_reaction_task.delay(execution.pk)
+                                triggered_count += 1
+
+                    elif response.status_code == 404:
+                        logger.error(
+                            f"Area {area.id}: Database {database_id} not found or no access"
+                        )
+                        skipped_count += 1
+
+                    else:
+                        logger.error(
+                            f"Area {area.id}: Notion database query error {response.status_code}: "
+                            f"{response.text}"
+                        )
+                        skipped_count += 1
+
+            except Exception as e:
+                logger.error(
+                    f"Error checking Notion for area '{area.name}': {e}", exc_info=True
+                )
+                skipped_count += 1
+                continue
+
+        logger.info(
+            f"Notion check complete: {triggered_count} triggered, "
+            f"{skipped_count} skipped, {no_token_count} no token"
+        )
+
+        return {
+            "status": "success",
+            "triggered": triggered_count,
+            "skipped": skipped_count,
+            "no_token": no_token_count,
+            "checked_areas": len(notion_areas),
+            "note": "Notion uses polling every 5 minutes",
+        }
+
+    except Exception as exc:
+        logger.error(f"Error in check_notion_actions: {exc}", exc_info=True)
+        raise self.retry(exc=exc, countdown=300) from None
+
+
+@shared_task(
     name="automations.execute_reaction_task",
     bind=True,
     max_retries=3,
@@ -2399,6 +2857,291 @@ def _execute_reaction_logic(
         except requests.exceptions.RequestException as e:
             logger.error(f"[REACTION WEBHOOK] Failed: {e}")
             raise Exception(f"Webhook POST failed: {e}") from e
+
+    # ==================== Notion Reactions ====================
+    elif reaction_name == "notion_create_page":
+        # Create a new page in Notion
+        from users.oauth.manager import OAuthManager
+
+        access_token = OAuthManager.get_valid_token(area.owner, "notion")
+        if not access_token:
+            raise ValueError(f"No valid Notion token for user {area.owner.username}")
+
+        parent_page_id = reaction_config.get("parent_id")
+        title = reaction_config.get("title", "New Page")
+        content = reaction_config.get("content", "")
+
+        # Extract UUID from parent_id if it's a URL
+        from .helpers.notion_helper import extract_notion_uuid
+
+        parent_uuid = extract_notion_uuid(parent_page_id) if parent_page_id else None
+
+        # Prepare page creation payload
+        if parent_uuid:
+            # Create page under specified parent
+            payload = {
+                "parent": {"page_id": parent_uuid},
+                "properties": {"title": {"title": [{"text": {"content": title}}]}},
+            }
+        else:
+            # Create page in workspace root
+            payload = {
+                "parent": {"workspace": True},
+                "properties": {"title": {"title": [{"text": {"content": title}}]}},
+            }
+
+        # Add content if provided
+        if content:
+            payload["children"] = [
+                {
+                    "object": "block",
+                    "type": "paragraph",
+                    "paragraph": {"rich_text": [{"text": {"content": content}}]},
+                }
+            ]
+
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+            "Notion-Version": "2022-06-28",
+        }
+
+        try:
+            response = requests.post(
+                "https://api.notion.com/v1/pages",
+                json=payload,
+                headers=headers,
+                timeout=10,
+            )
+
+            if response.status_code == 200:
+                page_data = response.json()
+                page_id = page_data["id"]
+                page_url = page_data.get("url", "")
+
+                logger.info(f"[REACTION NOTION] Created page: {title} ({page_url})")
+                return {
+                    "success": True,
+                    "page_id": page_id,
+                    "page_url": page_url,
+                    "title": title,
+                }
+            else:
+                error_msg = (
+                    f"Notion API error: {response.status_code} - {response.text}"
+                )
+                logger.error(f"[REACTION NOTION] {error_msg}")
+                raise ValueError(error_msg)
+
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"Notion create_page failed: {str(e)}") from e
+
+    elif reaction_name == "notion_update_page":
+        # Update an existing page in Notion
+        from users.oauth.manager import OAuthManager
+
+        access_token = OAuthManager.get_valid_token(area.owner, "notion")
+        if not access_token:
+            raise ValueError(f"No valid Notion token for user {area.owner.username}")
+
+        page_input = reaction_config.get("page_id")
+        title = reaction_config.get("title")
+        content = reaction_config.get("content")
+
+        if not page_input:
+            raise ValueError("page_id is required for notion_update_page")
+
+        # Get page UUID - either from URL or by searching by name
+        from .helpers.notion_helper import extract_notion_uuid, find_notion_page_by_name
+
+        page_uuid = extract_notion_uuid(page_input)
+
+        # If UUID extraction failed, treat input as page name and search for it
+        if not page_uuid:
+            logger.info(f"[REACTION NOTION] Searching for page by name: {page_input}")
+            page_uuid = find_notion_page_by_name(access_token, page_input)
+            if not page_uuid:
+                raise ValueError(
+                    f"Could not find page '{page_input}' in your Notion workspace. Make sure the name is exact and the page is accessible."
+                )
+
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+            "Notion-Version": "2022-06-28",
+        }
+
+        # Update page properties if title provided
+        if title:
+            properties_payload = {
+                "properties": {"title": {"title": [{"text": {"content": title}}]}}
+            }
+
+            try:
+                response = requests.patch(
+                    f"https://api.notion.com/v1/pages/{page_uuid}",
+                    json=properties_payload,
+                    headers=headers,
+                    timeout=10,
+                )
+
+                if response.status_code != 200:
+                    logger.warning(
+                        f"Failed to update page title: {response.status_code} - {response.text}"
+                    )
+
+            except requests.exceptions.RequestException as e:
+                logger.warning(f"Failed to update page title: {str(e)}")
+
+        # Append content if provided
+        if content:
+            content_payload = {
+                "children": [
+                    {
+                        "object": "block",
+                        "type": "paragraph",
+                        "paragraph": {"rich_text": [{"text": {"content": content}}]},
+                    }
+                ]
+            }
+
+            try:
+                response = requests.patch(
+                    f"https://api.notion.com/v1/blocks/{page_uuid}/children",
+                    json=content_payload,
+                    headers=headers,
+                    timeout=10,
+                )
+
+                if response.status_code != 200:
+                    error_msg = f"Failed to append content: {response.status_code} - {response.text}"
+                    logger.error(f"[REACTION NOTION] {error_msg}")
+                    raise ValueError(error_msg)
+
+            except requests.exceptions.RequestException as e:
+                raise ValueError(f"Notion update_page content failed: {str(e)}") from e
+
+        logger.info(f"[REACTION NOTION] Updated page: {page_uuid}")
+        return {
+            "success": True,
+            "page_id": page_uuid,
+            "title": title,
+            "content_appended": bool(content),
+        }
+
+    elif reaction_name == "notion_create_database_item":
+        # Create a new item in a Notion database
+        from users.oauth.manager import OAuthManager
+
+        access_token = OAuthManager.get_valid_token(area.owner, "notion")
+        if not access_token:
+            raise ValueError(f"No valid Notion token for user {area.owner.username}")
+
+        database_input = reaction_config.get("database_id")
+        item_name = reaction_config.get("item_name", "New Item")
+        properties = reaction_config.get("properties", {})
+
+        if not database_input:
+            raise ValueError("database_id is required for notion_create_database_item")
+
+        if not item_name:
+            raise ValueError("item_name is required for notion_create_database_item")
+
+        # Ensure properties is a dictionary
+        if properties is None:
+            properties = {}
+        elif isinstance(properties, str):
+            # Parse JSON string to object
+            import json
+
+            if properties.strip():  # Only parse non-empty strings
+                try:
+                    properties = json.loads(properties)
+                except json.JSONDecodeError as e:
+                    raise ValueError(
+                        f"Invalid JSON format for properties: {properties}"
+                    ) from e
+            else:
+                properties = {}
+        elif not isinstance(properties, dict):
+            # If it's not a string, dict, or None, convert to empty dict
+            properties = {}
+
+        # Get database UUID - either from URL or by searching by name
+        from .helpers.notion_helper import (
+            extract_notion_uuid,
+            find_notion_database_by_name,
+        )
+
+        database_uuid = extract_notion_uuid(database_input)
+
+        # If UUID extraction failed, treat input as database name and search for it
+        if not database_uuid:
+            logger.info(
+                f"[REACTION NOTION] Searching for database by name: {database_input}"
+            )
+            database_uuid = find_notion_database_by_name(access_token, database_input)
+            if not database_uuid:
+                raise ValueError(
+                    f"Could not find database '{database_input}' in your Notion workspace. Make sure the name is exact and the database is accessible."
+                )
+
+        # Prepare database item creation payload
+        payload = {
+            "parent": {"database_id": database_uuid},
+            "properties": {"Name": {"title": [{"text": {"content": item_name}}]}},
+        }
+
+        # Add additional properties if provided
+        for prop_name, prop_value in properties.items():
+            if prop_name != "Name":  # Name is already handled
+                # Handle different property types
+                if isinstance(prop_value, str):
+                    payload["properties"][prop_name] = {
+                        "rich_text": [{"text": {"content": prop_value}}]
+                    }
+                elif isinstance(prop_value, bool):
+                    payload["properties"][prop_name] = {"checkbox": prop_value}
+                # Add more property types as needed
+
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+            "Notion-Version": "2022-06-28",
+        }
+
+        try:
+            response = requests.post(
+                "https://api.notion.com/v1/pages",
+                json=payload,
+                headers=headers,
+                timeout=10,
+            )
+
+            if response.status_code == 200:
+                item_data = response.json()
+                item_id = item_data["id"]
+                item_url = item_data.get("url", "")
+
+                logger.info(
+                    f"[REACTION NOTION] Created database item: {item_name} ({item_url})"
+                )
+                return {
+                    "success": True,
+                    "item_id": item_id,
+                    "item_url": item_url,
+                    "item_name": item_name,
+                    "database_id": database_uuid,
+                }
+            else:
+                error_msg = (
+                    f"Notion API error: {response.status_code} - {response.text}"
+                )
+                logger.error(f"[REACTION NOTION] {error_msg}")
+                raise ValueError(error_msg)
+
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"Notion create_database_item failed: {str(e)}") from e
 
     # ==================== Debug Reactions ====================
     elif reaction_name == "debug_log_execution":

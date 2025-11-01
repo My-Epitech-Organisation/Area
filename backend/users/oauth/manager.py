@@ -15,6 +15,7 @@ from users.models import ServiceToken
 from .exceptions import InvalidProviderError, TokenRefreshError
 from .github import GitHubOAuthProvider
 from .google import GoogleOAuthProvider
+from .notion import NotionOAuthProvider
 from .slack import SlackOAuthProvider
 from .spotify import SpotifyOAuthProvider
 from .twitch import TwitchOAuthProvider
@@ -65,6 +66,7 @@ class OAuthManager:
     _provider_classes = {
         "google": GoogleOAuthProvider,
         "github": GitHubOAuthProvider,
+        "notion": NotionOAuthProvider,
         "slack": SlackOAuthProvider,
         "spotify": SpotifyOAuthProvider,
         "twitch": TwitchOAuthProvider,
