@@ -16,6 +16,7 @@ SUPPORTED_WEBHOOK_EVENTS = {
     ],
     "slack": ["message", "app_mention", "member_joined_channel"],
     "gmail": ["message", "email_received"],
+    "notion": ["page", "database"],
 }
 
 # Mapping of webhook event types to internal action names
@@ -42,5 +43,9 @@ WEBHOOK_EVENT_TO_ACTION = {
     "gmail": {
         "message": "gmail_received",
         "email_received": "gmail_received",
+    },
+    "notion": {
+        "page": "notion_page_updated",
+        "database": "notion_database_item_added",
     },
 }
