@@ -1,11 +1,13 @@
 import React from 'react';
 import type { JSONSchema, JSONSchemaProperty } from '../types/api';
+import NotionPageSelector from './NotionPageSelector';
 
 interface DynamicConfigFormProps {
   schema: JSONSchema;
   values: Record<string, unknown>;
   onChange: (values: Record<string, unknown>) => void;
   title?: string;
+  serviceName?: string; // Add serviceName to detect Notion
 }
 
 /**
@@ -20,6 +22,7 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
   values,
   onChange,
   title,
+  serviceName,
 }) => {
   if (!schema || !schema.properties || Object.keys(schema.properties).length === 0) {
     return null;
@@ -34,6 +37,23 @@ export const DynamicConfigForm: React.FC<DynamicConfigFormProps> = ({
 
   const renderField = (fieldName: string, property: JSONSchemaProperty) => {
     const isRequired = schema.required?.includes(fieldName) || false;
+
+    // 🆕 NOTION PAGE SELECTOR: For Notion service, use NotionPageSelector for database_id/page_id fields
+    if (serviceName?.toLowerCase() === 'notion' && (fieldName === 'database_id' || fieldName === 'page_id')) {
+      const filterType = fieldName === 'database_id' ? 'database' : (fieldName === 'page_id' ? 'page' : 'all');
+      
+      return (
+        <NotionPageSelector
+          key={fieldName}
+          value={typeof values[fieldName] === 'string' ? (values[fieldName] as string) : ''}
+          onChange={(pageId, _pageType, _title) => handleFieldChange(fieldName, pageId)}
+          filterType={filterType}
+          label={property.label || formatFieldName(fieldName)}
+          placeholder={property.placeholder || `Select a Notion ${filterType}`}
+          required={isRequired}
+        />
+      );
+    }
 
     // Render based on type
     switch (property.type) {
