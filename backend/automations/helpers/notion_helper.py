@@ -63,7 +63,9 @@ def extract_notion_uuid(identifier: str) -> Optional[str]:
     return None
 
 
-def find_notion_database_by_name(access_token: str, database_name: str) -> Optional[str]:
+def find_notion_database_by_name(
+    access_token: str, database_name: str
+) -> Optional[str]:
     """
     Search for a Notion database by name in the user's workspace.
 
@@ -83,14 +85,8 @@ def find_notion_database_by_name(access_token: str, database_name: str) -> Optio
     # Search for databases in the workspace
     search_payload = {
         "query": database_name,
-        "filter": {
-            "property": "object",
-            "value": "database"
-        },
-        "sort": {
-            "direction": "descending",
-            "timestamp": "last_edited_time"
-        }
+        "filter": {"property": "object", "value": "database"},
+        "sort": {"direction": "descending", "timestamp": "last_edited_time"},
     }
 
     try:
@@ -98,7 +94,7 @@ def find_notion_database_by_name(access_token: str, database_name: str) -> Optio
             "https://api.notion.com/v1/search",
             json=search_payload,
             headers=headers,
-            timeout=10
+            timeout=10,
         )
 
         if response.status_code == 200:
@@ -109,20 +105,28 @@ def find_notion_database_by_name(access_token: str, database_name: str) -> Optio
             for db in databases:
                 db_title = extract_database_title(db)
                 if db_title and db_title.lower() == database_name.lower():
-                    logger.info(f"[REACTION NOTION] Found database '{db_title}' with ID: {db['id']}")
+                    logger.info(
+                        f"[REACTION NOTION] Found database '{db_title}' with ID: {db['id']}"
+                    )
                     return db["id"]
 
             # If no exact match, return the first partial match
             if databases:
                 db_title = extract_database_title(databases[0])
-                logger.info(f"[REACTION NOTION] Using partial match '{db_title}' for search '{database_name}'")
+                logger.info(
+                    f"[REACTION NOTION] Using partial match '{db_title}' for search '{database_name}'"
+                )
                 return databases[0]["id"]
 
-            logger.warning(f"[REACTION NOTION] No database found with name: {database_name}")
+            logger.warning(
+                f"[REACTION NOTION] No database found with name: {database_name}"
+            )
             return None
 
         else:
-            logger.error(f"[REACTION NOTION] Search API error: {response.status_code} - {response.text}")
+            logger.error(
+                f"[REACTION NOTION] Search API error: {response.status_code} - {response.text}"
+            )
             return None
 
     except requests.exceptions.RequestException as e:
@@ -169,14 +173,8 @@ def find_notion_page_by_name(access_token: str, page_name: str) -> Optional[str]
     # Search for pages in the workspace
     search_payload = {
         "query": page_name,
-        "filter": {
-            "property": "object",
-            "value": "page"
-        },
-        "sort": {
-            "direction": "descending",
-            "timestamp": "last_edited_time"
-        }
+        "filter": {"property": "object", "value": "page"},
+        "sort": {"direction": "descending", "timestamp": "last_edited_time"},
     }
 
     try:
@@ -184,7 +182,7 @@ def find_notion_page_by_name(access_token: str, page_name: str) -> Optional[str]
             "https://api.notion.com/v1/search",
             json=search_payload,
             headers=headers,
-            timeout=10
+            timeout=10,
         )
 
         if response.status_code == 200:
@@ -195,20 +193,26 @@ def find_notion_page_by_name(access_token: str, page_name: str) -> Optional[str]
             for page in pages:
                 page_title = extract_page_title(page)
                 if page_title and page_title.lower() == page_name.lower():
-                    logger.info(f"[REACTION NOTION] Found page '{page_title}' with ID: {page['id']}")
+                    logger.info(
+                        f"[REACTION NOTION] Found page '{page_title}' with ID: {page['id']}"
+                    )
                     return page["id"]
 
             # If no exact match, return the first partial match
             if pages:
                 page_title = extract_page_title(pages[0])
-                logger.info(f"[REACTION NOTION] Using partial match '{page_title}' for search '{page_name}'")
+                logger.info(
+                    f"[REACTION NOTION] Using partial match '{page_title}' for search '{page_name}'"
+                )
                 return pages[0]["id"]
 
             logger.warning(f"[REACTION NOTION] No page found with name: {page_name}")
             return None
 
         else:
-            logger.error(f"[REACTION NOTION] Search API error: {response.status_code} - {response.text}")
+            logger.error(
+                f"[REACTION NOTION] Search API error: {response.status_code} - {response.text}"
+            )
             return None
 
     except requests.exceptions.RequestException as e:
