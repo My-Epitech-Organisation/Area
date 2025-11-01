@@ -27,9 +27,7 @@ const Login: React.FC = () => {
 
     // Check if redirected due to session expiration
     if (reason === 'session_expired') {
-      setSessionExpiredMessage(
-        'Your session has expired. Please log in again to continue.'
-      );
+      setSessionExpiredMessage('Your session has expired. Please log in again to continue.');
       setShowVerificationAlert(true);
       // Clear URL parameters after reading them
       setTimeout(() => {
