@@ -194,9 +194,6 @@ class AreaSerializer(serializers.ModelSerializer):
     reaction_service = serializers.CharField(
         source="reaction.service.name", read_only=True
     )
-    
-    # Webhook status for Notion areas
-    webhook_status = serializers.SerializerMethodField()
 
     class Meta:
         model = Area
@@ -217,7 +214,6 @@ class AreaSerializer(serializers.ModelSerializer):
             "reaction_service",
             "owner",
             "owner_username",
-            "webhook_status",
         ]
         read_only_fields = [
             "id",
@@ -230,38 +226,7 @@ class AreaSerializer(serializers.ModelSerializer):
             "action_service",
             "reaction_name",
             "reaction_service",
-            "webhook_status",
         ]
-    
-    def get_webhook_status(self, obj):
-        """
-        Get webhook status for Notion areas.
-        
-        Returns:
-            dict: Webhook status info or None if not a Notion area
-        """
-        if obj.action.service.name.lower() != 'notion':
-            return None
-        
-        from .models import NotionWebhookSubscription
-        
-        webhook = NotionWebhookSubscription.objects.filter(
-            area=obj,
-            status=NotionWebhookSubscription.Status.ACTIVE
-        ).first()
-        
-        if webhook:
-            return {
-                "has_webhook": True,
-                "status": "active",
-                "event_count": webhook.event_count,
-            }
-        else:
-            return {
-                "has_webhook": False,
-                "status": "polling",
-                "event_count": 0,
-            }
 
     def validate_action_config(self, value):
         """Validate that action_config matches the action's schema."""

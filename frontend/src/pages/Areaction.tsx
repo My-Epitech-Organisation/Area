@@ -13,7 +13,6 @@ import { DynamicConfigForm } from '../components/DynamicConfigForm';
 import { API_BASE, getStoredUser, fetchUserData } from '../utils/helper';
 import type { Area } from '../types/api';
 import EmailVerificationBanner from '../components/EmailVerificationBanner';
-import NotionWebhookStatus from '../components/NotionWebhookStatus';
 import type { User } from '../types';
 
 type ServiceAction = {
@@ -1046,12 +1045,6 @@ const Areaction: React.FC = () => {
                               >
                                 {area.status.charAt(0).toUpperCase() + area.status.slice(1)}
                               </span>
-                              
-                              {/* Show webhook status for Notion areas */}
-                              {area.action_service?.toLowerCase() === 'notion' && (
-                                <NotionWebhookStatus areaId={area.id} />
-                              )}
-                              
                               <button
                                 onClick={() => handleToggleActive(area)}
                                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
