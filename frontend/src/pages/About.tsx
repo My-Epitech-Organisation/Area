@@ -200,8 +200,8 @@ const About: React.FC = () => {
           <h2 className="text-3xl font-semibold text-theme-primary mb-4">Get in Touch</h2>
           <p className="text-lg text-theme-secondary leading-relaxed">
             Have questions, suggestions, or just want to chat about AREA? Reach out to us at{' '}
-            <a href="mailto:area@contact.com" className="text-theme-link text-theme-link-hover">
-              area@contact.com
+            <a href="mailto:area@areaction.app" className="text-theme-link text-theme-link-hover">
+              area@areaction.app
             </a>
             .
           </p>
