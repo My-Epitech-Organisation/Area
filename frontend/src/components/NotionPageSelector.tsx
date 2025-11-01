@@ -5,7 +5,7 @@
  ** NotionPageSelector - GitHub App-like page/database selector
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { API_BASE } from '../utils/helper';
 
 interface NotionPage {
@@ -47,11 +47,7 @@ const NotionPageSelector: React.FC<NotionPageSelectorProps> = ({
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    fetchPages();
-  }, [filterType]);
-
-  const fetchPages = async () => {
+  const fetchPages = useCallback(async () => {
     try {
       const token = localStorage.getItem('access');
       if (!token) {
@@ -87,7 +83,11 @@ const NotionPageSelector: React.FC<NotionPageSelectorProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterType]);
+
+  useEffect(() => {
+    fetchPages();
+  }, [fetchPages]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
