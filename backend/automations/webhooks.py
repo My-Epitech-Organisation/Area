@@ -464,34 +464,23 @@ def webhook_receiver(request: Request, service: str) -> Response:
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # DEBUG: Log event data for Notion to understand what we receive
-    if service == "notion":
-        logger.info(f"🔍 Notion webhook event_data keys: {list(event_data.keys())}")
-        logger.info(f"🔍 Notion webhook type field: {event_data.get('type')}")
-        logger.info(f"🔍 Notion webhook full payload: {json.dumps(event_data, indent=2)[:500]}")
-
     # ===================================================================
     # NOTION WEBHOOK VERIFICATION CHALLENGE
     # ===================================================================
     # Notion sends a verification request when setting up webhooks
+    # Format: {"verification_token": "secret_xxx..."}
     # We must respond with the token to prove we control this endpoint
     # This happens BEFORE signature validation (no signature on verification)
     # ===================================================================
-    if service == "notion" and event_data.get("type") == "url_verification":
-        verification_token = event_data.get("token")
-        if verification_token:
-            logger.info(f"✅ Notion webhook verification - Token: {verification_token}")
-            logger.info(f"📋 COPY THIS TOKEN TO NOTION: {verification_token}")
-            return Response(
-                {"token": verification_token},
-                status=status.HTTP_200_OK,
-            )
-        else:
-            logger.warning("Notion verification request missing token")
-            return Response(
-                {"error": "Verification token missing"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+    if service == "notion" and "verification_token" in event_data:
+        verification_token = event_data.get("verification_token")
+        logger.info(f"✅ Notion webhook verification received")
+        logger.info(f"📋 COPY THIS TOKEN TO NOTION: {verification_token}")
+        return Response(
+            {"verification_token": verification_token},
+            status=status.HTTP_200_OK,
+        )
+
 
     # Get webhook secret from settings
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
