@@ -674,7 +674,12 @@ def check_gmail_actions(self):
     try:
         # Get all active Areas with Gmail actions
         gmail_areas = get_active_areas(
-            ["gmail_new_email", "gmail_new_from_sender", "gmail_new_with_label", "gmail_new_with_subject"]
+            [
+                "gmail_new_email",
+                "gmail_new_from_sender",
+                "gmail_new_with_label",
+                "gmail_new_with_subject",
+            ]
         )
 
         if not gmail_areas:
