@@ -22,8 +22,8 @@ const Privacy: React.FC = () => {
             Notion, GitHub, Gmail, Slack, Spotify, Twitch, and others on your behalf.
           </p>
           <p className="text-lg text-theme-secondary leading-relaxed mt-4">
-            We also collect basic account information (email address, username) to create and
-            manage your AREA account.
+            We also collect basic account information (email address, username) to create and manage
+            your AREA account.
           </p>
         </section>
 
@@ -48,9 +48,7 @@ const Privacy: React.FC = () => {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-3xl font-semibold text-theme-primary mb-4">
-            3. Data Security
-          </h2>
+          <h2 className="text-3xl font-semibold text-theme-primary mb-4">3. Data Security</h2>
           <p className="text-lg text-theme-secondary leading-relaxed">
             Your OAuth tokens and sensitive information are encrypted and stored securely in our
             database. We use industry-standard security practices including:
@@ -64,9 +62,7 @@ const Privacy: React.FC = () => {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-3xl font-semibold text-theme-primary mb-4">
-            4. Data Sharing
-          </h2>
+          <h2 className="text-3xl font-semibold text-theme-primary mb-4">4. Data Sharing</h2>
           <p className="text-lg text-theme-secondary leading-relaxed">
             We do not share your personal data with third parties except:
           </p>
@@ -82,9 +78,7 @@ const Privacy: React.FC = () => {
 
         <section className="mb-8">
           <h2 className="text-3xl font-semibold text-theme-primary mb-4">5. Your Rights</h2>
-          <p className="text-lg text-theme-secondary leading-relaxed">
-            You have the right to:
-          </p>
+          <p className="text-lg text-theme-secondary leading-relaxed">You have the right to:</p>
           <ul className="list-disc list-inside text-lg text-theme-secondary leading-relaxed mt-4 space-y-2">
             <li>Access your personal data</li>
             <li>Disconnect any connected service at any time</li>
