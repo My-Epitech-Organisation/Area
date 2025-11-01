@@ -42,12 +42,12 @@ class AppletProvider extends ChangeNotifier {
   }
 
   void _enrichApplets() {
-    debugPrint('📊 Applets loaded: ${_applets.length} applets');
+    debugPrint('[APPLETS] 📊 Loaded: ${_applets.length} applets');
     for (final applet in _applets) {
       if (applet.action.name.contains('Unknown') ||
           applet.action.service.name.contains('Unknown')) {
         debugPrint(
-          '⚠️ Applet "${applet.name}" has unknown action/service data - needs enrichment',
+          '[APPLETS]     ⚠️  Unknown action/service - needs enrichment',
         );
       }
     }
