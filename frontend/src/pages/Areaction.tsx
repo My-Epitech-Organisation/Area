@@ -11,6 +11,7 @@ import {
 import { findActionByName, findReactionByName, generateAreaName } from '../utils/areaHelpers';
 import { DynamicConfigForm } from '../components/DynamicConfigForm';
 import { API_BASE, getStoredUser, fetchUserData } from '../utils/helper';
+import { useAuthCheck } from '../hooks/useAuthCheck';
 import type { Area } from '../types/api';
 import EmailVerificationBanner from '../components/EmailVerificationBanner';
 import type { User } from '../types';
@@ -39,6 +40,9 @@ const Areaction: React.FC = () => {
   const preselectedService = queryParams.get('service');
   const preselectedAction = queryParams.get('action');
   const preselectedReaction = queryParams.get('reaction');
+
+  // Verify authentication status on page load
+  useAuthCheck();
 
   // User state for email verification
   const [user, setUser] = useState<User | null>(null);
