@@ -22,9 +22,9 @@ void main() async {
 
   try {
     AppConfig.validateEnvironment();
-    AppConfig.debugPrint('Environment validation passed');
+    debugPrint('✅ Environment validation passed');
   } catch (e) {
-    AppConfig.debugPrint('Environment validation failed: $e');
+    debugPrint('❌ Environment validation failed: $e');
     if (AppConfig.isProduction) {
       rethrow;
     }
