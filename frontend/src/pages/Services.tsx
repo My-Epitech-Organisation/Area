@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { API_BASE, getStoredUser, fetchUserData } from '../utils/helper';
+import { useAuthCheck } from '../hooks/useAuthCheck';
 import type { ServiceModel } from '../types/services';
 import type { User } from '../types';
 import EmailVerificationBanner from '../components/EmailVerificationBanner';
@@ -14,6 +15,9 @@ type AboutService = {
 };
 
 const Services: React.FC = () => {
+  // Verify authentication status on page load
+  useAuthCheck();
+
   const isInternalService = (serviceName: string) => {
     return ['timer', 'debug', 'email', 'webhook', 'weather'].includes(serviceName.toLowerCase());
   };
