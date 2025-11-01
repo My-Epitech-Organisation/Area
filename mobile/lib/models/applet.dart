@@ -56,16 +56,34 @@ class ActionData {
     // Handle both formats: full object or just ID
     if (json is Map<String, dynamic>) {
       try {
+        ServiceData serviceData;
+        if (json['service'] != null) {
+          serviceData = ServiceData.fromJson(json['service']);
+        } else if (json['service_id'] != null || json['service_name'] != null) {
+          serviceData = ServiceData(
+            id: json['service_id'] ?? 0,
+            name: json['service_name'] ?? 'Unknown Service',
+            description: 'Service loaded from backend',
+            status: 'active',
+          );
+        } else {
+          serviceData = ServiceData(
+            id: 0,
+            name: 'Unknown Service',
+            description: 'Service loaded from backend',
+            status: 'active',
+          );
+        }
+
         return ActionData(
           id: json['id'],
           name: json['name'] ?? 'Unknown Action',
           description: json['description'] ?? 'Action loaded from backend',
-          service: ServiceData.fromJson(json['service']),
+          service: serviceData,
         );
-      } catch (e, stackTrace) {
-        debugPrint('❌ ERROR parsing ActionData Map: $e');
-        debugPrint('📊 Action JSON: $json');
-        debugPrint('📚 Stack trace: $stackTrace');
+      } catch (e) {
+        debugPrint('[APPLETS] ❌ Parse error: $e');
+        debugPrint('[APPLETS] Action JSON: $json');
         rethrow;
       }
     } else if (json is int) {
@@ -83,7 +101,7 @@ class ActionData {
       );
     } else {
       debugPrint(
-        '❌ ERROR: Invalid action data format: $json (type: ${json.runtimeType})',
+        '[APPLETS] ❌ Invalid action format: $json (type: ${json.runtimeType})',
       );
       throw FormatException('Invalid action data format: $json');
     }
@@ -116,16 +134,34 @@ class ReactionData {
     // Handle both formats: full object or just ID
     if (json is Map<String, dynamic>) {
       try {
+        ServiceData serviceData;
+        if (json['service'] != null) {
+          serviceData = ServiceData.fromJson(json['service']);
+        } else if (json['service_id'] != null || json['service_name'] != null) {
+          serviceData = ServiceData(
+            id: json['service_id'] ?? 0,
+            name: json['service_name'] ?? 'Unknown Service',
+            description: 'Service loaded from backend',
+            status: 'active',
+          );
+        } else {
+          serviceData = ServiceData(
+            id: 0,
+            name: 'Unknown Service',
+            description: 'Service loaded from backend',
+            status: 'active',
+          );
+        }
+
         return ReactionData(
           id: json['id'],
           name: json['name'] ?? 'Unknown Reaction',
           description: json['description'] ?? 'Reaction loaded from backend',
-          service: ServiceData.fromJson(json['service']),
+          service: serviceData,
         );
-      } catch (e, stackTrace) {
-        debugPrint('❌ ERROR parsing ReactionData Map: $e');
-        debugPrint('📊 Reaction JSON: $json');
-        debugPrint('📚 Stack trace: $stackTrace');
+      } catch (e) {
+        debugPrint('[APPLETS] ❌ Parse error: $e');
+        debugPrint('[APPLETS] Reaction JSON: $json');
         rethrow;
       }
     } else if (json is int) {
@@ -183,11 +219,14 @@ class Applet {
   // Factory to create from JSON (backend format)
   factory Applet.fromJson(Map<String, dynamic> json) {
     try {
+      final actionData = json['action_detail'] ?? json['action'];
+      final reactionData = json['reaction_detail'] ?? json['reaction'];
+
       return Applet(
         id: json['id'],
         name: json['name'] ?? '',
-        action: ActionData.fromJson(json['action']),
-        reaction: ReactionData.fromJson(json['reaction']),
+        action: ActionData.fromJson(actionData),
+        reaction: ReactionData.fromJson(reactionData),
         actionConfig: json['action_config'] ?? {},
         reactionConfig: json['reaction_config'] ?? {},
         status: json['status'] ?? 'active',
@@ -196,8 +235,8 @@ class Applet {
         ),
       );
     } catch (e, stackTrace) {
-      debugPrint('❌ ERROR in Applet.fromJson: $e');
-      debugPrint('📊 JSON data: $json');
+      debugPrint('[APPLETS] ❌ Parse error: $e');
+      debugPrint('[APPLETS] JSON: $json');
       debugPrint('📚 Stack trace: $stackTrace');
       rethrow;
     }
