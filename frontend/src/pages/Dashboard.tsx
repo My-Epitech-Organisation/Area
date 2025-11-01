@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useConnectedServices } from '../hooks/useOAuth';
+import { useAuthCheck } from '../hooks/useAuthCheck';
 import type { Service, User } from '../types';
 import { getStoredUser, getAccessToken, fetchUserData, API_BASE } from '../utils/helper';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
@@ -88,6 +89,9 @@ const Dashboard: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [activeServices, setActiveServices] = useState<string[]>([]);
   const { services: connectedServices, loading: connectedLoading } = useConnectedServices();
+
+  // Verify authentication status on page load
+  useAuthCheck();
 
   const normalizeServiceName = (name: string | null | undefined): string => {
     return (name || '')
