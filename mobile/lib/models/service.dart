@@ -1,5 +1,3 @@
-import '../config/service_provider_config.dart';
-
 /// Model representing a service from the about.json endpoint
 class Service {
   final int id;
@@ -58,9 +56,7 @@ class Service {
   String get displayName {
     if (name.isEmpty) return 'Unknown Service';
 
-    String mappedName = ServiceProviderConfig.mapServiceName(name);
-
-    return mappedName
+    return name
         .split('_')
         .map((word) {
           if (word.isEmpty) return '';
