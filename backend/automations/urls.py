@@ -26,7 +26,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from django.urls import include, path
 
-from . import github_app_views, notion_webhook_views, views
+from . import github_app_views, notion_pages_views, notion_webhook_views, views
 from .webhooks import webhook_receiver
 
 # Create router and register viewsets
@@ -110,6 +110,17 @@ urlpatterns = [
         "api/notion-webhooks/list/",
         notion_webhook_views.notion_webhook_list,
         name="notion-webhook-list",
+    ),
+    # Notion Pages endpoints (for GitHub App-like UX)
+    path(
+        "api/notion-pages/",
+        notion_pages_views.notion_pages_list,
+        name="notion-pages-list",
+    ),
+    path(
+        "api/notion-pages/refresh/",
+        notion_pages_views.notion_pages_refresh,
+        name="notion-pages-refresh",
     ),
     # Debug endpoints
     path(
