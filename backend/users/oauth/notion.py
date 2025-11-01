@@ -194,7 +194,9 @@ class NotionOAuthProvider(BaseOAuthProvider):
         Returns:
             bool: Always False as Notion doesn't support revocation
         """
-        logger.warning("Notion doesn't support token revocation - tokens expire naturally")
+        logger.warning(
+            "Notion doesn't support token revocation - tokens expire naturally"
+        )
         return False
 
     def _get_basic_auth(self) -> str:
@@ -205,5 +207,6 @@ class NotionOAuthProvider(BaseOAuthProvider):
             str: Base64 encoded credentials
         """
         import base64
+
         credentials = f"{self.client_id}:{self.client_secret}"
         return base64.b64encode(credentials.encode()).decode()
