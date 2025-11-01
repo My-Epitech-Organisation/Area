@@ -5,6 +5,7 @@ from .models import (
     Area,
     Execution,
     GitHubAppInstallation,
+    NotionPage,
     NotionWebhookSubscription,
     Reaction,
     Service,
@@ -298,6 +299,70 @@ class GitHubAppInstallationAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         """GitHub App installations are managed via webhooks."""
         return False
+
+
+@admin.register(NotionPage)
+class NotionPageAdmin(admin.ModelAdmin):
+    """Admin configuration for NotionPage model."""
+
+    list_display = (
+        "id",
+        "user",
+        "title",
+        "page_type",
+        "workspace_id",
+        "is_accessible",
+        "updated_at",
+    )
+    list_filter = ("page_type", "is_accessible", "created_at")
+    search_fields = (
+        "user__username",
+        "user__email",
+        "title",
+        "page_id",
+        "workspace_id",
+    )
+    readonly_fields = ("created_at", "updated_at")
+    list_per_page = 50
+
+    fieldsets = (
+        (
+            "Page Information",
+            {
+                "fields": (
+                    "user",
+                    "page_id",
+                    "page_type",
+                    "title",
+                    "workspace_id",
+                )
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": (
+                    "icon",
+                    "parent",
+                    "url",
+                )
+            },
+        ),
+        (
+            "Status",
+            {
+                "fields": (
+                    "is_accessible",
+                    "created_at",
+                    "updated_at",
+                )
+            },
+        ),
+    )
+
+    def get_queryset(self, request):
+        """Optimize query with select_related."""
+        return super().get_queryset(request).select_related("user")
 
 
 @admin.register(NotionWebhookSubscription)
