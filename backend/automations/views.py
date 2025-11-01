@@ -220,43 +220,8 @@ class AreaViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """
         Set the owner to the current user when creating an Area.
-        Also auto-create Notion webhooks if applicable.
         """
-        area = serializer.save(owner=self.request.user)
-
-        # 🆕 AUTO-CREATE NOTION WEBHOOK (GitHub App-like UX)
-        if area.action.service.name.lower() == "notion":
-            from .notion_webhook_helpers import auto_create_notion_webhook_for_area
-
-            success, webhook, error = auto_create_notion_webhook_for_area(area)
-            if success and webhook:
-                logger.info(
-                    f"✅ Auto-created Notion webhook for Area #{area.id} "
-                    f"(webhook_id: {webhook.webhook_id})"
-                )
-            elif error:
-                logger.warning(
-                    f"⚠️ Could not auto-create webhook for Area #{area.id}: {error}"
-                )
-
-        return area
-
-    def perform_destroy(self, instance):
-        """
-        Handle Area deletion and cleanup associated Notion webhooks.
-        """
-        # 🆕 AUTO-DELETE NOTION WEBHOOK if no other Areas use it
-        if instance.action.service.name.lower() == "notion":
-            from .notion_webhook_helpers import delete_notion_webhook_for_area
-
-            deleted = delete_notion_webhook_for_area(instance)
-            if deleted:
-                logger.info(
-                    f"✅ Auto-deleted Notion webhook for deleted Area #{instance.id}"
-                )
-
-        # Proceed with deletion
-        instance.delete()
+        serializer.save(owner=self.request.user)
 
     @action(detail=True, methods=["post"])
     def toggle_status(self, request, pk=None):
