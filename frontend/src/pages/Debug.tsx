@@ -248,7 +248,7 @@ const Debug: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 pt-24 pb-12 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Debug Console</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">Test and debug console</h1>
           <p className="text-gray-300">
             Manually trigger actions and monitor executions in real-time
           </p>
