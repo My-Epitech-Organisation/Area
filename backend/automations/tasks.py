@@ -1642,17 +1642,34 @@ def check_notion_actions(self):
     Checks all active Areas with Notion actions and triggers executions
     when new events are detected.
 
+    Note: This task skips polling if Notion webhooks are configured.
+    Webhooks provide real-time updates and are more efficient than polling.
+
+    To enable webhooks:
+    1. Configure WEBHOOK_SECRETS['notion'] in settings
+    2. Set up webhook in Notion app pointing to /webhooks/notion/
+
     Supported actions:
     - notion_page_created: New page created in workspace
     - notion_page_updated: Existing page updated
     - notion_database_item_added: New item added to database
 
-    Note: Notion uses polling for event detection.
-
     Returns:
         dict: Summary of polling results
     """
-    logger.info("Checking Notion actions...")
+    # Check if Notion webhooks are configured
+    webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
+    if webhook_secrets.get("notion"):
+        logger.info(
+            "⚡ Notion webhooks configured - skipping polling (real-time webhooks active)"
+        )
+        return {
+            "status": "skipped",
+            "reason": "webhooks_configured",
+            "message": "Polling disabled - using real-time webhooks instead",
+        }
+
+    logger.info("Checking Notion actions (polling mode)...")
 
     try:
         # Get all active Areas with Notion actions
