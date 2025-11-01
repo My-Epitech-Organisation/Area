@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useConnectedServices, useInitiateOAuth, useDisconnectService } from '../hooks/useOAuth';
 import { useNotifications } from '../hooks/useNotifications';
+import { useAuthCheck } from '../hooks/useAuthCheck';
 import Notification from '../components/Notification';
 import GitHubAppSection from '../components/GitHubAppSection';
 import { API_BASE, getStoredUser } from '../utils/helper';
@@ -30,6 +31,9 @@ const ServiceDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+
+  // Verify authentication status on page load
+  useAuthCheck();
 
   const isInternalService = (serviceName: string) => {
     return ['timer', 'debug', 'email', 'webhook', 'weather'].includes(serviceName.toLowerCase());
