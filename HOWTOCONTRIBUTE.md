@@ -407,7 +407,6 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "github_issue",
-        "teams_message",
         "log_message",
         "webhook_post",
         "calendar_create_event",
