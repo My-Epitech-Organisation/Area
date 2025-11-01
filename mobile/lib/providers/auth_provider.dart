@@ -105,7 +105,7 @@ class AuthProvider extends ChangeNotifier {
 
       if (data != null) {
         _isAuthenticated = true;
-        _userEmail = data['email'];
+        _userEmail = data['email'] ?? data['user']?['email'];
         _setLoading(false);
         return true;
       }
