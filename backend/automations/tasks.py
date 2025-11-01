@@ -1654,7 +1654,6 @@ def check_notion_actions(self):
         extract_database_item_title,
         extract_page_title,
         find_notion_database_by_name,
-        find_notion_page_by_name,
     )
 
     # Check if Notion webhooks are configured
@@ -2953,7 +2952,7 @@ def _execute_reaction_logic(
             raise ValueError("page_id is required for notion_update_page")
 
         # Get page UUID - either from URL or by searching by name
-        from .helpers.notion_helper import extract_notion_uuid
+        from .helpers.notion_helper import extract_notion_uuid, find_notion_page_by_name
 
         page_uuid = extract_notion_uuid(page_input)
 
@@ -3069,7 +3068,10 @@ def _execute_reaction_logic(
             properties = {}
 
         # Get database UUID - either from URL or by searching by name
-        from .helpers.notion_helper import extract_notion_uuid
+        from .helpers.notion_helper import (
+            extract_notion_uuid,
+            find_notion_database_by_name,
+        )
 
         database_uuid = extract_notion_uuid(database_input)
 
