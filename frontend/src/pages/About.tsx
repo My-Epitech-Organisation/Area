@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import nolanPapa from '../assets/nolan_papa.jpg';
 import paulAntoineSalmon from '../assets/paul_antoine_salmon.jpg';
 import maelPerrigaud from '../assets/mael_perrigaud.png';
@@ -204,6 +205,24 @@ const About: React.FC = () => {
             </a>
             .
           </p>
+        </section>
+        <section className="mb-12">
+          <h2 className="text-3xl font-semibold text-theme-primary mb-4">Legal</h2>
+          <div className="flex flex-wrap gap-6 justify-center">
+            <Link
+              to="/privacy"
+              className="text-lg text-theme-accent hover:text-theme-primary transition-colors font-medium"
+            >
+              Privacy Policy
+            </Link>
+            <span className="text-theme-muted">•</span>
+            <Link
+              to="/terms"
+              className="text-lg text-theme-accent hover:text-theme-primary transition-colors font-medium"
+            >
+              Terms of Use
+            </Link>
+          </div>
         </section>
       </main>
     </div>
