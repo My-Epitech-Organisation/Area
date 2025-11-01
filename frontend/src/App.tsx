@@ -20,6 +20,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import OAuthCallback from './pages/OAuthCallback';
 import GitHubAppCallback from './pages/GitHubAppCallback';
 import Debug from './pages/Debug';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 import Navbar from './components/Navbar';
 
 function App() {
@@ -32,6 +34,8 @@ function App() {
         <Route path="/services/:serviceId" element={<ServiceDetail />} />
         <Route path="/Areaction" element={<Areaction />} />
         <Route path="/about" element={<About />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/debug" element={<Debug />} />
         <Route path="/login" element={<Login />} />
