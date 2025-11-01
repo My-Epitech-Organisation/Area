@@ -5,6 +5,7 @@ import { useNotifications } from '../hooks/useNotifications';
 import { useAuthCheck } from '../hooks/useAuthCheck';
 import Notification from '../components/Notification';
 import GitHubAppSection from '../components/GitHubAppSection';
+import NotionWebhookSection from '../components/NotionWebhookSection';
 import { API_BASE, getStoredUser } from '../utils/helper';
 import type { User } from '../types';
 
@@ -329,6 +330,11 @@ const ServiceDetail: React.FC = () => {
               {/* GitHub App Section - Show only for GitHub service */}
               {service.name.toLowerCase() === 'github' && (
                 <GitHubAppSection user={user} isOAuthConnected={isConnected} />
+              )}
+
+              {/* Notion Webhook Section - Show only for Notion service */}
+              {service.name.toLowerCase() === 'notion' && (
+                <NotionWebhookSection isOAuthConnected={isConnected} />
               )}
 
               <div className="mt-8 grid gap-8 md:grid-cols-2">
