@@ -39,6 +39,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import Area, Service
 from .tasks import create_execution_safe, execute_reaction, get_active_areas
+from .webhook_constants import WEBHOOK_EVENT_TO_ACTION
 
 logger = logging.getLogger(__name__)
 
@@ -184,13 +185,12 @@ def validate_webhook_signature(
     if service_name == "github":
         signature_header = headers.get("X-Hub-Signature-256", "")
         return validate_github_signature(payload_body, signature_header, secret)
-    elif service_name == "twitch":
-        return validate_twitch_signature(payload_body, headers, secret)
     elif service_name == "gmail":
         return True
     elif service_name == "notion":
         return validate_notion_signature(payload_body, headers, secret)
     # Unknown service, reject validation
+    logger.warning(f"Webhook signature validation not supported for: {service_name}")
     return False
 
 
@@ -221,20 +221,6 @@ def extract_event_id(
             return f"github_pr_{event_data['pull_request']['id']}"
         if "issue" in event_data:
             return f"github_issue_{event_data['issue']['id']}"
-
-    elif service_name == "twitch":
-        # Twitch EventSub provides message ID in headers
-        if headers:
-            message_id = headers.get("Twitch-Eventsub-Message-Id")
-            if message_id:
-                return f"twitch_eventsub_{message_id}"
-
-        # Fallback: use event data
-        subscription = event_data.get("subscription", {})
-        event = event_data.get("event", {})
-
-        if subscription.get("id") and event:
-            return f"twitch_{subscription['type']}_{subscription['id']}"
 
     elif service_name == "gmail":
         # Gmail Pub/Sub provides message ID
@@ -269,42 +255,17 @@ def match_webhook_to_areas(
     Find all active Areas that should trigger for this webhook event.
 
     Args:
-        service_name: Name of the service (github, gmail, twitch)
+        service_name: Name of the service (github, gmail)
         event_type: Type of event (push, pull_request, email_received, etc.)
         event_data: Full webhook payload
 
     Returns:
         List of Area objects that match this event
     """
-    # Map event types to action names
-    action_name_map = {
-        "github": {
-            "push": "github_push",
-            "pull_request": "github_pull_request",
-            "issues": "github_issue",
-            "issue_comment": "github_issue_comment",
-            "star": "github_star",
-        },
-        "gmail": {
-            "message": "gmail_received",
-            "email_received": "gmail_received",
-        },
-        "twitch": {
-            "stream.online": "twitch_stream_online",
-            "stream.offline": "twitch_stream_offline",
-            "channel.follow": "twitch_new_follower",
-            "channel.subscribe": "twitch_new_subscriber",
-            "channel.update": "twitch_channel_update",
-        },
-        "notion": {
-            "page": "notion_page_updated",
-            "database": "notion_database_item_added",
-        },
-    }
-
+    # Use centralized event-to-action mapping
     action_names = []
-    if service_name in action_name_map:
-        action_map = action_name_map[service_name]
+    if service_name in WEBHOOK_EVENT_TO_ACTION:
+        action_map = WEBHOOK_EVENT_TO_ACTION[service_name]
         if event_type in action_map:
             action_names.append(action_map[event_type])
 
@@ -319,6 +280,7 @@ def match_webhook_to_areas(
     # e.g., only trigger for specific repositories, branches, labels, etc.
 
     return list(areas)
+
 
 
 def process_webhook_event(
@@ -353,32 +315,6 @@ def process_webhook_event(
             "status": "error",
             "message": "Could not extract event ID",
         }
-
-    # Handle Twitch EventSub challenge verification
-    if service_name == "twitch":
-        message_type = headers.get("Twitch-Eventsub-Message-Type")
-
-        # Challenge verification (webhook subscription confirmation)
-        if message_type == "webhook_callback_verification":
-            challenge = event_data.get("challenge")
-            logger.info("Twitch EventSub challenge received")
-            return {
-                "status": "challenge",
-                "challenge": challenge,
-            }
-
-        # Revocation notification (subscription cancelled)
-        elif message_type == "revocation":
-            subscription = event_data.get("subscription", {})
-            logger.warning(f"Twitch EventSub revoked: {subscription.get('type')}")
-            return {
-                "status": "revoked",
-                "subscription_type": subscription.get("type"),
-            }
-
-        # Extract actual event type from Twitch payload
-        if "subscription" in event_data:
-            event_type = event_data["subscription"]["type"]
 
     # Match to areas
     matched_areas = match_webhook_to_areas(service_name, event_type, event_data)

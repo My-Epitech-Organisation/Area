@@ -89,10 +89,8 @@ declare -a REQUIRED_VARS=(
     "GITHUB_CLIENT_SECRET"
     "GITHUB_REDIRECT_URI"
 
-    # Webhooks
-    "GITHUB_WEBHOOK_SECRET"
-    "GMAIL_WEBHOOK_SECRET"
-    "WEBHOOK_SECRET"
+    # Webhooks (JSON dictionary format)
+    "WEBHOOK_SECRETS"
 
     # Celery
     "CELERY_TIMEZONE"
