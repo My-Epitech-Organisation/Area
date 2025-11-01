@@ -64,15 +64,6 @@ export interface Area {
   reaction_config: Record<string, unknown>;
   status: 'active' | 'disabled' | 'paused';
   created_at: string;
-  action_service?: string;
-  reaction_service?: string;
-  action_name?: string;
-  reaction_name?: string;
-  webhook_status?: {
-    has_webhook: boolean;
-    status: 'active' | 'polling';
-    event_count: number;
-  } | null;
 }
 
 export interface CreateAreaPayload {
