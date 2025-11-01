@@ -167,7 +167,7 @@ def validate_notion_signature(
     is_valid = hmac.compare_digest(computed_signature, signature_header)
 
     if not is_valid:
-        logger.warning(f"Notion webhook: Invalid signature")
+        logger.warning("Notion webhook: Invalid signature")
 
     return is_valid
 
@@ -203,9 +203,11 @@ def validate_webhook_signature(
 
         # Extract signature from "sha256=<signature>" format
         if not signature_header.startswith("sha256="):
-            logger.warning(f"Notion webhook: Invalid signature format: {signature_header}")
+            logger.warning(
+                f"Notion webhook: Invalid signature format: {signature_header}"
+            )
             return False
-        
+
         expected_signature = signature_header.split("=", 1)[1]
 
         # Validate signature directly against payload
@@ -214,10 +216,10 @@ def validate_webhook_signature(
             msg=payload_body,
             digestmod=hashlib.sha256,
         ).hexdigest()
-        
+
         is_valid = hmac.compare_digest(computed_signature, expected_signature)
         if not is_valid:
-            logger.warning(f"Notion webhook: Invalid signature")
+            logger.warning("Notion webhook: Invalid signature")
         return is_valid
     elif service_name == "gmail":
         return True
@@ -317,7 +319,6 @@ def match_webhook_to_areas(
     # e.g., only trigger for specific repositories, branches, labels, etc.
 
     return list(areas)
-
 
 
 def process_webhook_event(
@@ -495,13 +496,12 @@ def webhook_receiver(request: Request, service: str) -> Response:
     # ===================================================================
     if service == "notion" and "verification_token" in event_data:
         verification_token = event_data.get("verification_token")
-        logger.info(f"✅ Notion webhook verification received")
+        logger.info("✅ Notion webhook verification received")
         logger.info(f"📋 COPY THIS TOKEN TO NOTION: {verification_token}")
         return Response(
             {"verification_token": verification_token},
             status=status.HTTP_200_OK,
         )
-
 
     # Get webhook secret from settings
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
@@ -511,7 +511,9 @@ def webhook_receiver(request: Request, service: str) -> Response:
     if webhook_secret:
         headers_dict = dict(request.headers.items())
 
-        if not validate_webhook_signature(service, raw_body, headers_dict, webhook_secret):
+        if not validate_webhook_signature(
+            service, raw_body, headers_dict, webhook_secret
+        ):
             logger.warning(f"Invalid webhook signature for service: {service}")
             return Response(
                 {"error": "Invalid webhook signature"},
