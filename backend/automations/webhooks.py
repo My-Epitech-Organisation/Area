@@ -195,29 +195,29 @@ def validate_webhook_signature(
     elif service_name == "twitch":
         return validate_twitch_signature(payload_body, headers, secret)
     elif service_name == "notion":
-        # Notion uses X-Notion-Signature header (without timestamp)
+        # Notion uses X-Notion-Signature header with format: sha256=<signature>
         signature_header = headers.get("X-Notion-Signature", "")
         if not signature_header:
             logger.warning("Notion webhook: Missing X-Notion-Signature header")
             return False
 
-        # Debug: log signature details
-        logger.info(f"🔍 Notion received signature: {signature_header[:20]}...")
-        logger.info(f"🔍 Notion secret (first 10 chars): {secret[:10]}...")
-        logger.info(f"🔍 Payload length: {len(payload_body)} bytes")
+        # Extract signature from "sha256=<signature>" format
+        if not signature_header.startswith("sha256="):
+            logger.warning(f"Notion webhook: Invalid signature format: {signature_header}")
+            return False
+        
+        expected_signature = signature_header.split("=", 1)[1]
 
-        # Validate signature directly against payload (no timestamp in Notion's format)
+        # Validate signature directly against payload
         computed_signature = hmac.new(
             key=secret.encode("utf-8"),
             msg=payload_body,
             digestmod=hashlib.sha256,
         ).hexdigest()
-
-        logger.info(f"🔍 Notion computed signature: {computed_signature[:20]}...")
         
-        is_valid = hmac.compare_digest(computed_signature, signature_header)
+        is_valid = hmac.compare_digest(computed_signature, expected_signature)
         if not is_valid:
-            logger.warning(f"Notion webhook: Invalid signature (expected != received)")
+            logger.warning(f"Notion webhook: Invalid signature")
         return is_valid
     elif service_name == "gmail":
         return True
