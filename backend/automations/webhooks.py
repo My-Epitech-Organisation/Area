@@ -131,6 +131,47 @@ def validate_twitch_signature(payload_body: bytes, headers: dict, secret: str) -
     return hmac.compare_digest(computed_signature, expected_signature)
 
 
+def validate_notion_signature(
+    payload_body: bytes, signature_header: str, timestamp_header: str, secret: str
+) -> bool:
+    """
+    Validate Notion webhook signature using HMAC-SHA256.
+
+    Notion sends signature with timestamp for replay attack prevention.
+    Format: HMAC-SHA256(timestamp.payload, secret)
+
+    Args:
+        payload_body: Raw request body as bytes
+        signature_header: Value of Notion-Signature header
+        timestamp_header: Value of Notion-Request-Timestamp header
+        secret: Webhook secret configured in Notion
+
+    Returns:
+        True if signature is valid, False otherwise
+    """
+    if not signature_header or not timestamp_header:
+        logger.warning("Notion webhook: Missing signature or timestamp header")
+        return False
+
+    # Construct message to verify: <timestamp>.<payload>
+    message = f"{timestamp_header}.{payload_body.decode('utf-8')}"
+
+    # Compute HMAC-SHA256
+    computed_signature = hmac.new(
+        key=secret.encode("utf-8"),
+        msg=message.encode("utf-8"),
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+
+    # Constant-time comparison to prevent timing attacks
+    is_valid = hmac.compare_digest(computed_signature, signature_header)
+
+    if not is_valid:
+        logger.warning(f"Notion webhook: Invalid signature")
+    
+    return is_valid
+
+
 def validate_webhook_signature(
     service_name: str, payload_body: bytes, headers: dict, secret: str
 ) -> bool:
@@ -151,6 +192,12 @@ def validate_webhook_signature(
     if service_name == "github":
         signature_header = headers.get("X-Hub-Signature-256", "")
         return validate_github_signature(payload_body, signature_header, secret)
+    elif service_name == "twitch":
+        return validate_twitch_signature(payload_body, headers, secret)
+    elif service_name == "notion":
+        signature_header = headers.get("Notion-Signature", "")
+        timestamp_header = headers.get("Notion-Request-Timestamp", "")
+        return validate_notion_signature(payload_body, signature_header, timestamp_header, secret)
     elif service_name == "gmail":
         return True
     # Unknown service, reject validation
@@ -191,6 +238,25 @@ def extract_event_id(
         message_id = event_data.get("message", {}).get("messageId")
         if message_id:
             return f"gmail_message_{message_id}"
+
+    elif service_name == "notion":
+        # Notion provides event ID and object IDs in webhook payload
+        # Structure: {"event_id": "...", "data": {"object": "page/database", "id": "..."}}
+        event_id = event_data.get("event_id")
+        if event_id:
+            return f"notion_event_{event_id}"
+        
+        # Fallback: use object ID from data
+        data = event_data.get("data", {})
+        object_type = data.get("object")  # "page" or "database"
+        object_id = data.get("id")
+        
+        if object_id and object_type:
+            # Include last_edited_time for better uniqueness
+            last_edited = data.get("last_edited_time", "")
+            return f"notion_{object_type}_{object_id}_{last_edited}"
+        elif object_id:
+            return f"notion_{object_id}"
 
     # Fallback: generate ID from timestamp and hash
     timestamp = timezone.now().isoformat()
