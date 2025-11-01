@@ -344,3 +344,63 @@ def notion_webhook_list(request):
             "total": subscriptions.count(),
         }
     )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def notion_webhook_status_for_area(request, area_id):
+    """
+    Get webhook status for a specific Area.
+    
+    Used by frontend to display webhook status badge for each Area.
+    
+    Args:
+        area_id: ID of the Area to check
+        
+    Returns:
+        {
+            "has_webhook": bool,
+            "webhook_id": str | null,
+            "status": "active" | "inactive" | "pending" | "failed",
+            "event_count": int,
+            "last_event_at": datetime | null,
+            "created_at": datetime | null
+        }
+    """
+    from .models import Area
+    
+    try:
+        # Verify user owns this Area
+        area = Area.objects.get(id=area_id, owner=request.user)
+        
+        # Find webhook associated with this Area
+        webhook = NotionWebhookSubscription.objects.filter(
+            area=area,
+            status=NotionWebhookSubscription.Status.ACTIVE
+        ).first()
+        
+        if webhook:
+            return Response({
+                "has_webhook": True,
+                "webhook_id": webhook.webhook_id,
+                "status": webhook.status,
+                "event_count": webhook.event_count,
+                "last_event_at": webhook.last_event_at.isoformat() if webhook.last_event_at else None,
+                "created_at": webhook.created_at.isoformat(),
+            })
+        else:
+            # No webhook found - Area is in polling mode
+            return Response({
+                "has_webhook": False,
+                "webhook_id": None,
+                "status": "inactive",
+                "event_count": 0,
+                "last_event_at": None,
+                "created_at": None,
+            })
+    
+    except Area.DoesNotExist:
+        return Response(
+            {"error": "Area not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
