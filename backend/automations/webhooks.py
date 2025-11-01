@@ -195,8 +195,12 @@ def validate_webhook_signature(
     elif service_name == "twitch":
         return validate_twitch_signature(payload_body, headers, secret)
     elif service_name == "notion":
+        # Debug: log all headers to understand Notion's format
+        logger.info(f"🔍 Notion headers: {list(headers.keys())}")
         signature_header = headers.get("Notion-Signature", "")
         timestamp_header = headers.get("Notion-Request-Timestamp", "")
+        logger.info(f"🔍 Notion-Signature: {signature_header[:50] if signature_header else 'MISSING'}")
+        logger.info(f"🔍 Notion-Request-Timestamp: {timestamp_header}")
         return validate_notion_signature(payload_body, signature_header, timestamp_header, secret)
     elif service_name == "gmail":
         return True
