@@ -531,6 +531,11 @@ def webhook_receiver(request: Request, service: str) -> Response:
         event_type = request.headers.get("X-GitHub-Event", "unknown")
     elif service == "gmail":
         event_type = event_data.get("eventType", "message")
+    elif service == "notion":
+        # Debug: log payload structure to understand Notion's format
+        logger.info(f"🔍 Notion payload keys: {list(event_data.keys())}")
+        event_type = event_data.get("type", event_data.get("event_type", "unknown"))
+        logger.info(f"🔍 Notion event type: {event_type}")
     else:
         event_type = event_data.get("event_type", "unknown")
 
