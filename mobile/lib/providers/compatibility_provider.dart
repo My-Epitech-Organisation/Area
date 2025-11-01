@@ -28,12 +28,10 @@ class CompatibilityProvider extends ChangeNotifier {
   /// Initialize and load rules from backend (can be called multiple times safely)
   Future<void> loadRules() async {
     if (_isLoaded) {
-      debugPrint('[CompatibilityProvider] Rules already loaded, skipping');
       return;
     }
 
     if (_isLoading) {
-      debugPrint('[CompatibilityProvider] Rules already loading, skipping');
       return;
     }
 
@@ -42,7 +40,6 @@ class CompatibilityProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      debugPrint('[CompatibilityProvider] Fetching rules from backend...');
       final response = await _httpClient.get(
         '${ApiConfig.baseUrl}/api/compatibility-rules/',
       );
@@ -58,9 +55,6 @@ class CompatibilityProvider extends ChangeNotifier {
         });
 
         _isLoaded = true;
-        debugPrint(
-          '[CompatibilityProvider] Loaded ${_rules.length} compatibility rules from backend',
-        );
       } else {
         throw Exception(
           'Failed to load compatibility rules: ${response.statusCode}',
@@ -81,9 +75,6 @@ class CompatibilityProvider extends ChangeNotifier {
     List<String> allReactions,
   ) {
     if (!_isLoaded) {
-      debugPrint(
-        '[CompatibilityProvider] Rules not loaded yet, returning all reactions for $actionName',
-      );
       return allReactions;
     }
 
@@ -103,9 +94,6 @@ class CompatibilityProvider extends ChangeNotifier {
   /// Check if a reaction is compatible with an action
   bool isCompatible(String actionName, String reactionName) {
     if (!_isLoaded) {
-      debugPrint(
-        '[CompatibilityProvider] Rules not loaded yet, allowing compatibility for $actionName → $reactionName',
-      );
       return true;
     }
 
@@ -120,6 +108,5 @@ class CompatibilityProvider extends ChangeNotifier {
     _rules = {};
     _error = null;
     await loadRules();
-    debugPrint('[CompatibilityProvider] Rules refreshed');
   }
 }
