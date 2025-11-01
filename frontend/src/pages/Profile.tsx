@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getStoredUser, getAccessToken, fetchUserData, API_BASE } from '../utils/helper';
+import { useAuthCheck } from '../hooks/useAuthCheck';
 import type { User } from '../types';
 import ProfileModal from '../components/ProfileModal';
 
 const Profile: React.FC = () => {
+  // Verify authentication status on page load
+  useAuthCheck();
+
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
