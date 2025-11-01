@@ -154,8 +154,8 @@ const NotionWebhookSection: React.FC<NotionWebhookSectionProps> = ({ isOAuthConn
                   </a>
                 </li>
                 <li>Select your integration</li>
-                <li>Scroll to "Webhooks" section</li>
-                <li>Click "Add webhook endpoint" and paste the URL above</li>
+                <li>Scroll to &quot;Webhooks&quot; section</li>
+                <li>Click &quot;Add webhook endpoint&quot; and paste the URL above</li>
                 <li>
                   Select API version:{' '}
                   <code className="bg-gray-800 px-2 py-0.5 rounded">2022-06-28</code>
