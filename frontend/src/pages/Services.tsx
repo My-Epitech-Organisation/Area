@@ -74,11 +74,20 @@ const Services: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Load user data
-    const storedUser = getStoredUser();
-    if (storedUser) {
-      setUser(storedUser);
-    }
+    // Load user data - fetch fresh data to ensure email_verified is up-to-date
+    const loadUserData = async () => {
+      const storedUser = getStoredUser();
+      if (storedUser) {
+        // Show stored user temporarily
+        setUser(storedUser);
+      }
+      // Always fetch fresh data
+      const freshUser = await fetchUserData();
+      if (freshUser) {
+        setUser(freshUser);
+      }
+    };
+    loadUserData();
   }, []);
 
   const handleRefreshUserData = async () => {
