@@ -32,8 +32,6 @@ const ServiceDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [notionPageId, setNotionPageId] = useState<string | undefined>(undefined);
-  const [notionDatabaseId, setNotionDatabaseId] = useState<string | undefined>(undefined);
 
   // Verify authentication status on page load
   useAuthCheck();
@@ -50,63 +48,7 @@ const ServiceDetail: React.FC = () => {
     }
   }, []);
 
-  // Fetch user's Notion Areas to extract page_id/database_id for webhook configuration
-  useEffect(() => {
-    const fetchNotionConfig = async () => {
-      if (!user || service?.name.toLowerCase() !== 'notion') return;
-
-      try {
-        const token = localStorage.getItem('access');
-        if (!token) return;
-
-        const response = await fetch(`${API_BASE}/api/areas/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          // Handle both paginated and non-paginated responses
-          const areas = Array.isArray(data) ? data : (data.results || []);
-
-          console.log('[NotionWebhook] Fetched areas:', areas.length);
-
-          // Extract page_id and database_id from Notion Areas
-          for (const area of areas) {
-            // Check if this area uses Notion service (by checking action_service or reaction_service)
-            const isNotionArea =
-              area.action_service?.toLowerCase() === 'notion' ||
-              area.reaction_service?.toLowerCase() === 'notion';
-
-            if (!isNotionArea) continue;
-
-            console.log('[NotionWebhook] Found Notion area:', {
-              id: area.id,
-              name: area.name,
-              action_config: area.action_config,
-              reaction_config: area.reaction_config
-            });
-
-            if (area.action_config?.page_id) {
-              setNotionPageId(area.action_config.page_id);
-              console.log('[NotionWebhook] Set pageId:', area.action_config.page_id);
-            }
-            if (area.action_config?.database_id) {
-              setNotionDatabaseId(area.action_config.database_id);
-              console.log('[NotionWebhook] Set databaseId:', area.action_config.database_id);
-              break; // Use first found database_id
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Failed to fetch Notion configuration:', err);
-      }
-    };
-
-    fetchNotionConfig();
-  }, [user, service]);  // OAuth hooks
+  // OAuth hooks
   const {
     services: connectedServices,
     loading: loadingOAuth,
@@ -392,12 +334,7 @@ const ServiceDetail: React.FC = () => {
 
               {/* Notion Webhook Section - Show only for Notion service */}
               {service.name.toLowerCase() === 'notion' && (
-                <NotionWebhookSection
-                  user={user}
-                  isOAuthConnected={isConnected}
-                  pageId={notionPageId}
-                  databaseId={notionDatabaseId}
-                />
+                <NotionWebhookSection user={user} isOAuthConnected={isConnected} />
               )}
 
               <div className="mt-8 grid gap-8 md:grid-cols-2">
