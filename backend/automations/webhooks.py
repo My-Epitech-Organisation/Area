@@ -464,6 +464,12 @@ def webhook_receiver(request: Request, service: str) -> Response:
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    # DEBUG: Log event data for Notion to understand what we receive
+    if service == "notion":
+        logger.info(f"🔍 Notion webhook event_data keys: {list(event_data.keys())}")
+        logger.info(f"🔍 Notion webhook type field: {event_data.get('type')}")
+        logger.info(f"🔍 Notion webhook full payload: {json.dumps(event_data, indent=2)[:500]}")
+
     # ===================================================================
     # NOTION WEBHOOK VERIFICATION CHALLENGE
     # ===================================================================
