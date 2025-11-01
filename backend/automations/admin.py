@@ -1,6 +1,14 @@
 from django.contrib import admin
 
-from .models import Action, Area, Execution, Reaction, Service
+from .models import (
+    Action,
+    Area,
+    Execution,
+    GitHubAppInstallation,
+    Reaction,
+    Service,
+    WebhookSubscription,
+)
 
 
 @admin.register(Service)
@@ -175,3 +183,117 @@ class ExecutionAdmin(admin.ModelAdmin):
             return True
         # Only allow deletion of terminal executions
         return bool(obj and obj.is_terminal)
+
+
+@admin.register(WebhookSubscription)
+class WebhookSubscriptionAdmin(admin.ModelAdmin):
+    """Admin configuration for WebhookSubscription model."""
+
+    list_display = (
+        "id",
+        "user",
+        "service",
+        "event_type",
+        "status",
+        "event_count",
+        "last_event_at",
+        "created_at",
+    )
+    list_filter = ("service", "status", "event_type")
+    search_fields = (
+        "user__username",
+        "user__email",
+        "service__name",
+        "event_type",
+        "external_subscription_id",
+    )
+    readonly_fields = ("created_at", "updated_at", "event_count", "last_event_at")
+    list_per_page = 25
+
+    fieldsets = (
+        (
+            "Subscription Information",
+            {
+                "fields": (
+                    "user",
+                    "service",
+                    "event_type",
+                    "external_subscription_id",
+                    "status",
+                )
+            },
+        ),
+        ("Configuration", {"fields": ("config",)}),
+        (
+            "Statistics",
+            {
+                "fields": (
+                    "event_count",
+                    "last_event_at",
+                    "created_at",
+                    "updated_at",
+                )
+            },
+        ),
+    )
+
+    def has_add_permission(self, request):
+        """Webhook subscriptions are managed programmatically."""
+        return request.user.is_superuser
+
+
+@admin.register(GitHubAppInstallation)
+class GitHubAppInstallationAdmin(admin.ModelAdmin):
+    """Admin configuration for GitHubAppInstallation model."""
+
+    list_display = (
+        "id",
+        "user",
+        "account_login",
+        "account_type",
+        "installation_id",
+        "is_active",
+        "repository_count",
+        "installed_at",
+    )
+    list_filter = ("account_type", "is_active", "installed_at")
+    search_fields = (
+        "user__username",
+        "user__email",
+        "account_login",
+        "installation_id",
+    )
+    readonly_fields = (
+        "installation_id",
+        "installed_at",
+        "updated_at",
+        "repository_count",
+    )
+    list_per_page = 25
+
+    fieldsets = (
+        (
+            "Installation Information",
+            {
+                "fields": (
+                    "user",
+                    "installation_id",
+                    "account_login",
+                    "account_type",
+                    "is_active",
+                )
+            },
+        ),
+        ("Repositories", {"fields": ("repositories", "repository_count")}),
+        ("Timestamps", {"fields": ("installed_at", "updated_at")}),
+    )
+
+    def repository_count(self, obj):
+        """Display the number of repositories."""
+        return len(obj.repositories) if obj.repositories else 0
+
+    repository_count.short_description = "Repository Count"  # type: ignore
+
+    def has_add_permission(self, request):
+        """GitHub App installations are managed via webhooks."""
+        return False

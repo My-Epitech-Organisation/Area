@@ -474,7 +474,6 @@ class AboutServiceSerializer(serializers.ModelSerializer):
             "webhook": "https://api.iconify.design/mdi/webhook.svg?color=black",
             "weather": "https://api.iconify.design/mdi/weather-partly-cloudy.svg?color=black",
             # External services - Using Wikipedia images (original colors, no border)
-            "teams": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Microsoft_Office_Teams_%282018%E2%80%93present%29.svg",
             "github": "https://upload.wikimedia.org/wikipedia/commons/c/c2/GitHub_Invertocat_Logo.svg",
             "gmail": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg",
             "slack": "https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg",

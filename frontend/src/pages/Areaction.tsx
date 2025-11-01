@@ -11,6 +11,7 @@ import {
 import { findActionByName, findReactionByName, generateAreaName } from '../utils/areaHelpers';
 import { DynamicConfigForm } from '../components/DynamicConfigForm';
 import { API_BASE, getStoredUser, fetchUserData } from '../utils/helper';
+import { useAuthCheck } from '../hooks/useAuthCheck';
 import type { Area } from '../types/api';
 import EmailVerificationBanner from '../components/EmailVerificationBanner';
 import type { User } from '../types';
@@ -39,6 +40,9 @@ const Areaction: React.FC = () => {
   const preselectedService = queryParams.get('service');
   const preselectedAction = queryParams.get('action');
   const preselectedReaction = queryParams.get('reaction');
+
+  // Verify authentication status on page load
+  useAuthCheck();
 
   // User state for email verification
   const [user, setUser] = useState<User | null>(null);
@@ -114,10 +118,19 @@ const Areaction: React.FC = () => {
 
   // Load user data on mount
   useEffect(() => {
-    const storedUser = getStoredUser();
-    if (storedUser) {
-      setUser(storedUser);
-    }
+    const loadUserData = async () => {
+      const storedUser = getStoredUser();
+      if (storedUser) {
+        // Show stored user temporarily
+        setUser(storedUser);
+      }
+      // Always fetch fresh data to ensure email_verified is up-to-date
+      const freshUser = await fetchUserData();
+      if (freshUser) {
+        setUser(freshUser);
+      }
+    };
+    loadUserData();
   }, []);
 
   const handleRefreshUserData = async () => {
@@ -378,6 +391,30 @@ const Areaction: React.FC = () => {
       }, 2000);
     } catch (err: unknown) {
       setMessage(err instanceof Error ? err.message : 'Failed to delete automation');
+      setMessageType('error');
+    }
+  };
+
+  const handleToggleActive = async (area: Area) => {
+    const newStatus = area.status === 'active' ? 'paused' : 'active';
+
+    try {
+      await updateArea(area.id, {
+        status: newStatus,
+      });
+
+      setMessage(
+        `Automation ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`
+      );
+      setMessageType('success');
+      refetchAreas();
+
+      setTimeout(() => {
+        setMessage(null);
+        setMessageType(null);
+      }, 2000);
+    } catch (err: unknown) {
+      setMessage(err instanceof Error ? err.message : 'Failed to toggle automation');
       setMessageType('error');
     }
   };
@@ -1009,17 +1046,32 @@ const Areaction: React.FC = () => {
                             </span>
                           </td>
                           <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                                area.status === 'active'
-                                  ? 'bg-green-600/20 text-green-300'
-                                  : area.status === 'paused'
-                                    ? 'bg-yellow-600/20 text-yellow-300'
-                                    : 'bg-red-600/20 text-red-300'
-                              }`}
-                            >
-                              {area.status.charAt(0).toUpperCase() + area.status.slice(1)}
-                            </span>
+                            <div className="flex items-center gap-3">
+                              <span
+                                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                                  area.status === 'active'
+                                    ? 'bg-green-600/20 text-green-300'
+                                    : area.status === 'paused'
+                                      ? 'bg-yellow-600/20 text-yellow-300'
+                                      : 'bg-red-600/20 text-red-300'
+                                }`}
+                              >
+                                {area.status.charAt(0).toUpperCase() + area.status.slice(1)}
+                              </span>
+                              <button
+                                onClick={() => handleToggleActive(area)}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                                  area.status === 'active' ? 'bg-green-500' : 'bg-gray-400'
+                                }`}
+                                title={area.status === 'active' ? 'Deactivate' : 'Activate'}
+                              >
+                                <span
+                                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                    area.status === 'active' ? 'translate-x-6' : 'translate-x-1'
+                                  }`}
+                                />
+                              </button>
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
