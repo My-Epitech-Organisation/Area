@@ -474,7 +474,8 @@ def webhook_receiver(request: Request, service: str) -> Response:
     if service == "notion" and event_data.get("type") == "url_verification":
         verification_token = event_data.get("token")
         if verification_token:
-            logger.info(f"✅ Notion webhook verification - responding with token")
+            logger.info(f"✅ Notion webhook verification - Token: {verification_token}")
+            logger.info(f"📋 COPY THIS TOKEN TO NOTION: {verification_token}")
             return Response(
                 {"token": verification_token},
                 status=status.HTTP_200_OK,
