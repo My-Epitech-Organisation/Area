@@ -67,15 +67,35 @@ const ServiceDetail: React.FC = () => {
         });
 
         if (response.ok) {
-          const areas = await response.json();
+          const data = await response.json();
+          // Handle both paginated and non-paginated responses
+          const areas = Array.isArray(data) ? data : (data.results || []);
+
+          console.log('[NotionWebhook] Fetched areas:', areas.length);
 
           // Extract page_id and database_id from Notion Areas
           for (const area of areas) {
+            // Check if this area uses Notion service (by checking action_service or reaction_service)
+            const isNotionArea =
+              area.action_service?.toLowerCase() === 'notion' ||
+              area.reaction_service?.toLowerCase() === 'notion';
+
+            if (!isNotionArea) continue;
+
+            console.log('[NotionWebhook] Found Notion area:', {
+              id: area.id,
+              name: area.name,
+              action_config: area.action_config,
+              reaction_config: area.reaction_config
+            });
+
             if (area.action_config?.page_id) {
               setNotionPageId(area.action_config.page_id);
+              console.log('[NotionWebhook] Set pageId:', area.action_config.page_id);
             }
             if (area.action_config?.database_id) {
               setNotionDatabaseId(area.action_config.database_id);
+              console.log('[NotionWebhook] Set databaseId:', area.action_config.database_id);
               break; // Use first found database_id
             }
           }
@@ -86,9 +106,7 @@ const ServiceDetail: React.FC = () => {
     };
 
     fetchNotionConfig();
-  }, [user, service]);
-
-  // OAuth hooks
+  }, [user, service]);  // OAuth hooks
   const {
     services: connectedServices,
     loading: loadingOAuth,
