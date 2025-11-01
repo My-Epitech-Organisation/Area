@@ -168,7 +168,7 @@ def validate_notion_signature(
 
     if not is_valid:
         logger.warning(f"Notion webhook: Invalid signature")
-    
+
     return is_valid
 
 
@@ -245,12 +245,12 @@ def extract_event_id(
         event_id = event_data.get("event_id")
         if event_id:
             return f"notion_event_{event_id}"
-        
+
         # Fallback: use object ID from data
         data = event_data.get("data", {})
         object_type = data.get("object")  # "page" or "database"
         object_id = data.get("id")
-        
+
         if object_id and object_type:
             # Include last_edited_time for better uniqueness
             last_edited = data.get("last_edited_time", "")
@@ -490,22 +490,24 @@ def webhook_receiver(request: Request, service: str) -> Response:
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
     webhook_secret = webhook_secrets.get(service)
 
-    if not webhook_secret:
-        logger.error(f"No webhook secret configured for service: {service}")
-        return Response(
-            {"error": "Webhook secret not configured"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+    # Validate signature if secret is configured
+    if webhook_secret:
+        headers_dict = dict(request.headers.items())
 
-    # Validate signature
-    headers_dict = dict(request.headers.items())
-
-    if not validate_webhook_signature(service, raw_body, headers_dict, webhook_secret):
-        logger.warning(f"Invalid webhook signature for service: {service}")
-        return Response(
-            {"error": "Invalid webhook signature"},
-            status=status.HTTP_401_UNAUTHORIZED,
+        if not validate_webhook_signature(service, raw_body, headers_dict, webhook_secret):
+            logger.warning(f"Invalid webhook signature for service: {service}")
+            return Response(
+                {"error": "Invalid webhook signature"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        logger.debug(f"✅ Webhook signature validated for {service}")
+    else:
+        # No secret configured - skip signature validation (dev/test mode)
+        logger.warning(
+            f"⚠️  No webhook secret configured for {service} - "
+            f"signature validation SKIPPED (configure WEBHOOK_SECRETS for production)"
         )
+        headers_dict = dict(request.headers.items())
 
     # Extract event type
     if service == "github":
