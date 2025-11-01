@@ -204,10 +204,9 @@ GITHUB_CLIENT_ID=your-github-client-id
 GITHUB_CLIENT_SECRET=your-github-client-secret
 GITHUB_REDIRECT_URI=http://localhost:8080/auth/oauth/github/callback/
 
-# Webhook Secrets (Generate with: openssl rand -hex 32)
-GITHUB_WEBHOOK_SECRET=dev_secret_github_123
-GMAIL_WEBHOOK_SECRET=dev_secret_gmail_123
-WEBHOOK_SECRET=dev_secret_webhook_123
+# Webhook Secrets (JSON dictionary format)
+# Generate with: openssl rand -base64 32
+WEBHOOK_SECRETS='{"github":"dev_secret_github_123","slack":"dev_secret_slack_123","gmail":"dev_secret_gmail_123"}'
 
 # Email (for send_email reaction)
 EMAIL_HOST=smtp.gmail.com
@@ -408,7 +407,6 @@ COMPATIBILITY_RULES = {
         "send_email",
         "gmail_send_email",
         "github_issue",
-        "teams_message",
         "log_message",
         "webhook_post",
         "calendar_create_event",

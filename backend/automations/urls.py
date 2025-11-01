@@ -26,7 +26,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from django.urls import include, path
 
-from . import views
+from . import github_app_views, views
 from .webhooks import webhook_receiver
 
 # Create router and register viewsets
@@ -36,6 +36,16 @@ router.register(r"actions", views.ActionViewSet, basename="action")
 router.register(r"reactions", views.ReactionViewSet, basename="reaction")
 router.register(r"areas", views.AreaViewSet, basename="area")
 router.register(r"executions", views.ExecutionViewSet, basename="execution")
+
+# Import webhook views
+try:
+    from . import webhook_views
+
+    router.register(
+        r"webhooks/manage", webhook_views.WebhookManagementViewSet, basename="webhook"
+    )
+except ImportError:
+    pass  # webhook_views may not be available yet
 
 app_name = "automations"
 
@@ -64,6 +74,22 @@ urlpatterns = [
     path("logos/<str:service>/", views.logo_proxy_view, name="logo-proxy"),
     # Webhook receiver endpoint
     path("webhooks/<str:service>/", webhook_receiver, name="webhook-receiver"),
+    # GitHub App endpoints
+    path(
+        "api/github-app/status/",
+        github_app_views.github_app_status,
+        name="github-app-status",
+    ),
+    path(
+        "api/github-app/link-installation/",
+        github_app_views.github_app_link_installation,
+        name="github-app-link",
+    ),
+    path(
+        "api/github-app/repositories/",
+        github_app_views.github_app_repositories,
+        name="github-app-repos",
+    ),
     # Debug endpoints
     path(
         "api/debug/trigger/<int:area_id>/",
