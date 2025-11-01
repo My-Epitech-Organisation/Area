@@ -16,6 +16,7 @@ from typing import Optional
 import requests
 from celery import shared_task
 
+from django.conf import settings
 from django.db import IntegrityError, OperationalError
 from django.utils import timezone
 
@@ -1620,14 +1621,6 @@ def check_slack_actions(self):
         raise self.retry(exc=exc, countdown=300) from None
 
 
-from .helpers.notion_helper import (
-    extract_database_item_title as _extract_database_item_title,
-    extract_page_title as _extract_page_title,
-    find_notion_database_by_name as _find_notion_database_by_name,
-    find_notion_page_by_name as _find_notion_page_by_name,
-)
-
-
 @shared_task(
     name="automations.check_notion_actions",
     bind=True,
@@ -1656,6 +1649,14 @@ def check_notion_actions(self):
     Returns:
         dict: Summary of polling results
     """
+    # Local imports to avoid circular dependencies
+    from .helpers.notion_helper import (
+        extract_database_item_title,
+        extract_page_title,
+        find_notion_database_by_name,
+        find_notion_page_by_name,
+    )
+
     # Check if Notion webhooks are configured
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
     if webhook_secrets.get("notion"):
@@ -1787,7 +1788,7 @@ def check_notion_actions(self):
                         # Create executions for new pages
                         for page in new_pages:
                             page_id = page["id"]
-                            page_title = _extract_page_title(page)
+                            page_title = extract_page_title(page)
                             page_url = page.get("url", "")
                             created_time = page["created_time"]
 
@@ -1890,7 +1891,7 @@ def check_notion_actions(self):
                         # Create executions for updated pages
                         for page in updated_pages:
                             page_id = page["id"]
-                            page_title = _extract_page_title(page)
+                            page_title = extract_page_title(page)
                             page_url = page.get("url", "")
                             last_edited = page["last_edited_time"]
 
@@ -2010,7 +2011,7 @@ def check_notion_actions(self):
                         # Create executions for new items
                         for item in items:
                             item_id = item["id"]
-                            item_title = _extract_database_item_title(item)
+                            item_title = extract_database_item_title(item)
                             item_url = item.get("url", "")
                             created_time = item["created_time"]
 
@@ -2959,7 +2960,7 @@ def _execute_reaction_logic(
         # If UUID extraction failed, treat input as page name and search for it
         if not page_uuid:
             logger.info(f"[REACTION NOTION] Searching for page by name: {page_input}")
-            page_uuid = _find_notion_page_by_name(access_token, page_input)
+            page_uuid = find_notion_page_by_name(access_token, page_input)
             if not page_uuid:
                 raise ValueError(
                     f"Could not find page '{page_input}' in your Notion workspace. Make sure the name is exact and the page is accessible."
@@ -3057,10 +3058,10 @@ def _execute_reaction_logic(
             if properties.strip():  # Only parse non-empty strings
                 try:
                     properties = json.loads(properties)
-                except json.JSONDecodeError:
+                except json.JSONDecodeError as e:
                     raise ValueError(
                         f"Invalid JSON format for properties: {properties}"
-                    )
+                    ) from e
             else:
                 properties = {}
         elif not isinstance(properties, dict):
@@ -3077,7 +3078,7 @@ def _execute_reaction_logic(
             logger.info(
                 f"[REACTION NOTION] Searching for database by name: {database_input}"
             )
-            database_uuid = _find_notion_database_by_name(access_token, database_input)
+            database_uuid = find_notion_database_by_name(access_token, database_input)
             if not database_uuid:
                 raise ValueError(
                     f"Could not find database '{database_input}' in your Notion workspace. Make sure the name is exact and the database is accessible."
