@@ -340,9 +340,21 @@ const NotionWebhookSection: React.FC<NotionWebhookSectionProps> = ({
                   )}
                 </button>
                 {!pageId && !databaseId && (
-                  <p className="mt-2 text-xs text-red-400">
-                    Configure a page or database in your Area settings first
-                  </p>
+                  <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                    <p className="text-xs text-yellow-200 mb-2 font-medium">
+                      ⚠️ No Notion automation configured yet
+                    </p>
+                    <p className="text-xs text-gray-300 mb-2">
+                      To enable webhooks, you need to create an automation with Notion first:
+                    </p>
+                    <ol className="text-xs text-gray-400 space-y-1 ml-4 list-decimal">
+                      <li>Go to <a href="/Areaction?service=notion" className="text-blue-400 hover:underline">Create Automation</a></li>
+                      <li>Select Notion as trigger (e.g., "Database Item Added")</li>
+                      <li>Configure your Notion database ID or page ID</li>
+                      <li>Save your automation</li>
+                      <li>Return here to enable webhooks</li>
+                    </ol>
+                  </div>
                 )}
               </div>
             </div>
