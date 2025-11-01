@@ -651,6 +651,7 @@ const Areaction: React.FC = () => {
                               values={actionConfig}
                               onChange={setActionConfig}
                               title="Action Configuration"
+                              serviceName={selectedActionService || undefined}
                             />
                           </div>
                         )
@@ -821,6 +822,7 @@ const Areaction: React.FC = () => {
                               values={reactionConfig}
                               onChange={setReactionConfig}
                               title="Reaction Configuration"
+                              serviceName={selectedReactionService || undefined}
                             />
                           </div>
                         )
