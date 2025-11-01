@@ -116,7 +116,7 @@ const NotionPageSelector: React.FC<NotionPageSelectorProps> = ({
   const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const pageId = e.target.value;
     const selectedPage = pages.find((p) => p.page_id === pageId);
-    
+
     if (selectedPage) {
       onChange(pageId, selectedPage.page_type, selectedPage.title);
     }
@@ -124,18 +124,16 @@ const NotionPageSelector: React.FC<NotionPageSelectorProps> = ({
 
   const renderIcon = (icon: NotionPage['icon']) => {
     if (!icon) return '📄';
-    
+
     if (icon.type === 'emoji' && icon.emoji) {
       return icon.emoji;
     }
-    
+
     return '📄';
   };
 
   const filteredPages = searchQuery
-    ? pages.filter((p) =>
-        p.title.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? pages.filter((p) => p.title.toLowerCase().includes(searchQuery.toLowerCase()))
     : pages;
 
   if (loading) {
@@ -184,9 +182,7 @@ const NotionPageSelector: React.FC<NotionPageSelectorProps> = ({
           </label>
         )}
         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-          <p className="text-sm text-yellow-200 mb-2">
-            📭 No Notion pages found
-          </p>
+          <p className="text-sm text-yellow-200 mb-2">📭 No Notion pages found</p>
           <p className="text-xs text-gray-400 mb-3">
             You need to share pages/databases with the AREA integration during OAuth authorization.
           </p>
@@ -209,7 +205,7 @@ const NotionPageSelector: React.FC<NotionPageSelectorProps> = ({
           {label} {required && <span className="text-red-400">*</span>}
         </label>
       )}
-      
+
       <div className="space-y-2">
         {/* Search input */}
         {pages.length > 5 && (
@@ -233,11 +229,7 @@ const NotionPageSelector: React.FC<NotionPageSelectorProps> = ({
             {placeholder}
           </option>
           {filteredPages.map((page) => (
-            <option
-              key={page.page_id}
-              value={page.page_id}
-              className="bg-gray-800 text-white"
-            >
+            <option key={page.page_id} value={page.page_id} className="bg-gray-800 text-white">
               {renderIcon(page.icon)} {page.title} ({page.page_type})
             </option>
           ))}
