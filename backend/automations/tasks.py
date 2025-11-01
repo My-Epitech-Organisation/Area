@@ -1621,11 +1621,10 @@ def check_slack_actions(self):
 
 
 from .helpers.notion_helper import (
+    extract_database_item_title as _extract_database_item_title,
+    extract_page_title as _extract_page_title,
     find_notion_database_by_name as _find_notion_database_by_name,
     find_notion_page_by_name as _find_notion_page_by_name,
-    extract_page_title as _extract_page_title,
-    extract_database_title as _extract_database_title,
-    extract_database_item_title as _extract_database_item_title,
 )
 
 
@@ -1723,26 +1722,23 @@ def check_notion_actions(self):
                 if action_name == "notion_page_created":
                     search_payload = {
                         "query": "",
-                        "filter": {
-                            "property": "object",
-                            "value": "page"
-                        },
+                        "filter": {"property": "object", "value": "page"},
                         "sort": {
                             "direction": "descending",
-                            "timestamp": "last_edited_time"
-                        }
+                            "timestamp": "last_edited_time",
+                        },
                     }
 
                     if state.last_checked_at:
                         pass
 
-                    logger.debug(f"Searching for new pages in Notion workspace")
+                    logger.debug("Searching for new pages in Notion workspace")
 
                     response = requests.post(
                         "https://api.notion.com/v1/search",
                         json=search_payload,
                         headers=headers,
-                        timeout=10
+                        timeout=10,
                     )
 
                     if response.status_code == 200:
@@ -1765,13 +1761,15 @@ def check_notion_actions(self):
 
                             if created_time and last_edited_time:
                                 page_created = datetime.fromisoformat(
-                                    created_time.replace('Z', '+00:00')
+                                    created_time.replace("Z", "+00:00")
                                 )
                                 page_edited = datetime.fromisoformat(
-                                    last_edited_time.replace('Z', '+00:00')
+                                    last_edited_time.replace("Z", "+00:00")
                                 )
 
-                                time_diff = abs((page_edited - page_created).total_seconds())
+                                time_diff = abs(
+                                    (page_edited - page_created).total_seconds()
+                                )
                                 is_newly_created = time_diff < 5
 
                                 if page_created <= state.last_checked_at:
@@ -1780,9 +1778,7 @@ def check_notion_actions(self):
                                 if is_newly_created:
                                     new_pages.append(page)
 
-                        logger.info(
-                            f"Area {area.id}: Found {len(new_pages)} new pages"
-                        )
+                        logger.info(f"Area {area.id}: Found {len(new_pages)} new pages")
 
                         current_check_time = timezone.now()
                         state.last_checked_at = current_check_time
@@ -1830,23 +1826,20 @@ def check_notion_actions(self):
                     # Query for recently updated pages
                     search_payload = {
                         "query": "",
-                        "filter": {
-                            "property": "object",
-                            "value": "page"
-                        },
+                        "filter": {"property": "object", "value": "page"},
                         "sort": {
                             "direction": "descending",
-                            "timestamp": "last_edited_time"
-                        }
+                            "timestamp": "last_edited_time",
+                        },
                     }
 
-                    logger.debug(f"Searching for updated pages in Notion workspace")
+                    logger.debug("Searching for updated pages in Notion workspace")
 
                     response = requests.post(
                         "https://api.notion.com/v1/search",
                         json=search_payload,
                         headers=headers,
-                        timeout=10
+                        timeout=10,
                     )
 
                     if response.status_code == 200:
@@ -1869,7 +1862,7 @@ def check_notion_actions(self):
                             last_edited = page.get("last_edited_time")
                             if last_edited:
                                 page_updated = datetime.fromisoformat(
-                                    last_edited.replace('Z', '+00:00')
+                                    last_edited.replace("Z", "+00:00")
                                 )
 
                                 if page_updated <= state.last_checked_at:
@@ -1879,7 +1872,7 @@ def check_notion_actions(self):
                                 created_time = page.get("created_time")
                                 if created_time:
                                     page_created = datetime.fromisoformat(
-                                        created_time.replace('Z', '+00:00')
+                                        created_time.replace("Z", "+00:00")
                                     )
                                     if page_created == page_updated:
                                         continue  # Skip newly created pages
@@ -1901,7 +1894,9 @@ def check_notion_actions(self):
                             page_url = page.get("url", "")
                             last_edited = page["last_edited_time"]
 
-                            event_id = f"notion_page_updated_{area.id}_{page_id}_{last_edited}"
+                            event_id = (
+                                f"notion_page_updated_{area.id}_{page_id}_{last_edited}"
+                            )
 
                             trigger_data = {
                                 "service": "notion",
@@ -1944,14 +1939,21 @@ def check_notion_actions(self):
                         continue
 
                     # Extract UUID from URL or name
-                    from .helpers.notion_helper import extract_notion_uuid, find_notion_database_by_name
+                    from .helpers.notion_helper import (
+                        extract_notion_uuid,
+                        find_notion_database_by_name,
+                    )
 
                     database_id = extract_notion_uuid(database_input)
 
                     # If UUID extraction failed, treat input as database name and search for it
                     if not database_id:
-                        logger.info(f"[ACTION NOTION] Searching for database by name: {database_input}")
-                        database_id = find_notion_database_by_name(access_token, database_input)
+                        logger.info(
+                            f"[ACTION NOTION] Searching for database by name: {database_input}"
+                        )
+                        database_id = find_notion_database_by_name(
+                            access_token, database_input
+                        )
                         if not database_id:
                             logger.error(
                                 f"Area {area.id}: Could not find database '{database_input}' in Notion workspace"
@@ -1962,10 +1964,7 @@ def check_notion_actions(self):
                     # Query database for items
                     query_payload = {
                         "sorts": [
-                            {
-                                "direction": "descending",
-                                "timestamp": "created_time"
-                            }
+                            {"direction": "descending", "timestamp": "created_time"}
                         ]
                     }
 
@@ -1975,7 +1974,7 @@ def check_notion_actions(self):
                             "timestamp": "created_time",
                             "created_time": {
                                 "after": state.last_checked_at.isoformat()
-                            }
+                            },
                         }
 
                     api_url = f"https://api.notion.com/v1/databases/{database_id}/query"
@@ -1983,10 +1982,7 @@ def check_notion_actions(self):
                     logger.debug(f"Querying Notion database {database_id}")
 
                     response = requests.post(
-                        api_url,
-                        json=query_payload,
-                        headers=headers,
-                        timeout=10
+                        api_url, json=query_payload, headers=headers, timeout=10
                     )
 
                     if response.status_code == 200:
@@ -2877,6 +2873,7 @@ def _execute_reaction_logic(
 
         # Extract UUID from parent_id if it's a URL
         from .helpers.notion_helper import extract_notion_uuid
+
         parent_uuid = extract_notion_uuid(parent_page_id) if parent_page_id else None
 
         # Prepare page creation payload
@@ -2884,33 +2881,13 @@ def _execute_reaction_logic(
             # Create page under specified parent
             payload = {
                 "parent": {"page_id": parent_uuid},
-                "properties": {
-                    "title": {
-                        "title": [
-                            {
-                                "text": {
-                                    "content": title
-                                }
-                            }
-                        ]
-                    }
-                }
+                "properties": {"title": {"title": [{"text": {"content": title}}]}},
             }
         else:
             # Create page in workspace root
             payload = {
                 "parent": {"workspace": True},
-                "properties": {
-                    "title": {
-                        "title": [
-                            {
-                                "text": {
-                                    "content": title
-                                }
-                            }
-                        ]
-                    }
-                }
+                "properties": {"title": {"title": [{"text": {"content": title}}]}},
             }
 
         # Add content if provided
@@ -2919,15 +2896,7 @@ def _execute_reaction_logic(
                 {
                     "object": "block",
                     "type": "paragraph",
-                    "paragraph": {
-                        "rich_text": [
-                            {
-                                "text": {
-                                    "content": content
-                                }
-                            }
-                        ]
-                    }
+                    "paragraph": {"rich_text": [{"text": {"content": content}}]},
                 }
             ]
 
@@ -2942,7 +2911,7 @@ def _execute_reaction_logic(
                 "https://api.notion.com/v1/pages",
                 json=payload,
                 headers=headers,
-                timeout=10
+                timeout=10,
             )
 
             if response.status_code == 200:
@@ -2958,7 +2927,9 @@ def _execute_reaction_logic(
                     "title": title,
                 }
             else:
-                error_msg = f"Notion API error: {response.status_code} - {response.text}"
+                error_msg = (
+                    f"Notion API error: {response.status_code} - {response.text}"
+                )
                 logger.error(f"[REACTION NOTION] {error_msg}")
                 raise ValueError(error_msg)
 
@@ -2990,7 +2961,9 @@ def _execute_reaction_logic(
             logger.info(f"[REACTION NOTION] Searching for page by name: {page_input}")
             page_uuid = _find_notion_page_by_name(access_token, page_input)
             if not page_uuid:
-                raise ValueError(f"Could not find page '{page_input}' in your Notion workspace. Make sure the name is exact and the page is accessible.")
+                raise ValueError(
+                    f"Could not find page '{page_input}' in your Notion workspace. Make sure the name is exact and the page is accessible."
+                )
 
         headers = {
             "Authorization": f"Bearer {access_token}",
@@ -3001,17 +2974,7 @@ def _execute_reaction_logic(
         # Update page properties if title provided
         if title:
             properties_payload = {
-                "properties": {
-                    "title": {
-                        "title": [
-                            {
-                                "text": {
-                                    "content": title
-                                }
-                            }
-                        ]
-                    }
-                }
+                "properties": {"title": {"title": [{"text": {"content": title}}]}}
             }
 
             try:
@@ -3019,7 +2982,7 @@ def _execute_reaction_logic(
                     f"https://api.notion.com/v1/pages/{page_uuid}",
                     json=properties_payload,
                     headers=headers,
-                    timeout=10
+                    timeout=10,
                 )
 
                 if response.status_code != 200:
@@ -3037,15 +3000,7 @@ def _execute_reaction_logic(
                     {
                         "object": "block",
                         "type": "paragraph",
-                        "paragraph": {
-                            "rich_text": [
-                                {
-                                    "text": {
-                                        "content": content
-                                    }
-                                }
-                            ]
-                        }
+                        "paragraph": {"rich_text": [{"text": {"content": content}}]},
                     }
                 ]
             }
@@ -3055,7 +3010,7 @@ def _execute_reaction_logic(
                     f"https://api.notion.com/v1/blocks/{page_uuid}/children",
                     json=content_payload,
                     headers=headers,
-                    timeout=10
+                    timeout=10,
                 )
 
                 if response.status_code != 200:
@@ -3098,11 +3053,14 @@ def _execute_reaction_logic(
         elif isinstance(properties, str):
             # Parse JSON string to object
             import json
+
             if properties.strip():  # Only parse non-empty strings
                 try:
                     properties = json.loads(properties)
                 except json.JSONDecodeError:
-                    raise ValueError(f"Invalid JSON format for properties: {properties}")
+                    raise ValueError(
+                        f"Invalid JSON format for properties: {properties}"
+                    )
             else:
                 properties = {}
         elif not isinstance(properties, dict):
@@ -3116,25 +3074,19 @@ def _execute_reaction_logic(
 
         # If UUID extraction failed, treat input as database name and search for it
         if not database_uuid:
-            logger.info(f"[REACTION NOTION] Searching for database by name: {database_input}")
+            logger.info(
+                f"[REACTION NOTION] Searching for database by name: {database_input}"
+            )
             database_uuid = _find_notion_database_by_name(access_token, database_input)
             if not database_uuid:
-                raise ValueError(f"Could not find database '{database_input}' in your Notion workspace. Make sure the name is exact and the database is accessible.")
+                raise ValueError(
+                    f"Could not find database '{database_input}' in your Notion workspace. Make sure the name is exact and the database is accessible."
+                )
 
         # Prepare database item creation payload
         payload = {
             "parent": {"database_id": database_uuid},
-            "properties": {
-                "Name": {
-                    "title": [
-                        {
-                            "text": {
-                                "content": item_name
-                            }
-                        }
-                    ]
-                }
-            }
+            "properties": {"Name": {"title": [{"text": {"content": item_name}}]}},
         }
 
         # Add additional properties if provided
@@ -3143,18 +3095,10 @@ def _execute_reaction_logic(
                 # Handle different property types
                 if isinstance(prop_value, str):
                     payload["properties"][prop_name] = {
-                        "rich_text": [
-                            {
-                                "text": {
-                                    "content": prop_value
-                                }
-                            }
-                        ]
+                        "rich_text": [{"text": {"content": prop_value}}]
                     }
                 elif isinstance(prop_value, bool):
-                    payload["properties"][prop_name] = {
-                        "checkbox": prop_value
-                    }
+                    payload["properties"][prop_name] = {"checkbox": prop_value}
                 # Add more property types as needed
 
         headers = {
@@ -3168,7 +3112,7 @@ def _execute_reaction_logic(
                 "https://api.notion.com/v1/pages",
                 json=payload,
                 headers=headers,
-                timeout=10
+                timeout=10,
             )
 
             if response.status_code == 200:
@@ -3176,7 +3120,9 @@ def _execute_reaction_logic(
                 item_id = item_data["id"]
                 item_url = item_data.get("url", "")
 
-                logger.info(f"[REACTION NOTION] Created database item: {item_name} ({item_url})")
+                logger.info(
+                    f"[REACTION NOTION] Created database item: {item_name} ({item_url})"
+                )
                 return {
                     "success": True,
                     "item_id": item_id,
@@ -3185,7 +3131,9 @@ def _execute_reaction_logic(
                     "database_id": database_uuid,
                 }
             else:
-                error_msg = f"Notion API error: {response.status_code} - {response.text}"
+                error_msg = (
+                    f"Notion API error: {response.status_code} - {response.text}"
+                )
                 logger.error(f"[REACTION NOTION] {error_msg}")
                 raise ValueError(error_msg)
 
