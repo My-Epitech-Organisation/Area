@@ -111,6 +111,11 @@ urlpatterns = [
         notion_webhook_views.notion_webhook_list,
         name="notion-webhook-list",
     ),
+    path(
+        "api/areas/<int:area_id>/notion-webhook-status/",
+        notion_webhook_views.notion_webhook_status_for_area,
+        name="notion-webhook-status-for-area",
+    ),
     # Debug endpoints
     path(
         "api/debug/trigger/<int:area_id>/",
