@@ -480,6 +480,7 @@ class AboutServiceSerializer(serializers.ModelSerializer):
             "google_calendar": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg",
             "spotify": "https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg",
             "discord": "https://upload.wikimedia.org/wikipedia/commons/9/98/Discord_logo_2015.svg",
+            "notion": "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png",
         }
 
         def _normalize_key(s: str) -> str:
