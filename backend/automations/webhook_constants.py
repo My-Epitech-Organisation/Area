@@ -54,6 +54,7 @@ WEBHOOK_EVENT_TO_ACTION = {
     "notion": {
         "page.created": "notion_page_created",
         "page.updated": "notion_page_updated",
+        "page.content_updated": "notion_page_updated",  # Notion actually sends this
         "page.deleted": "notion_page_deleted",
         "database.created": "notion_database_created",
         "database.updated": "notion_database_updated",
