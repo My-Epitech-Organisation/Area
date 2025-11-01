@@ -134,16 +134,12 @@ def get_beat_schedule():
         else:
             print("✅ [CELERY BEAT] PROD: Slack webhooks active, polling disabled")
 
-        if not webhook_secrets.get("notion"):
-            schedule["check-notion-actions"] = {
-                "task": "automations.check_notion_actions",
-                "schedule": 300.0,  # Every 5 minutes
-            }
-            print(
-                "⚠️  [CELERY BEAT] PROD: Notion polling enabled (webhook not configured)"
-            )
-        else:
-            print("✅ [CELERY BEAT] PROD: Notion webhooks active, polling disabled")
+        # Notion: Always use polling (webhooks not supported)
+        schedule["check-notion-actions"] = {
+            "task": "automations.tasks.check_notion_actions",
+            "schedule": 300.0,  # Every 5 minutes
+        }
+        print("✅ [CELERY BEAT] Notion polling enabled (every 5 minutes)")
 
     return schedule
 

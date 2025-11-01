@@ -1647,7 +1647,7 @@ def check_notion_actions(self):
     - notion_page_updated: Existing page updated
     - notion_database_item_added: New item added to database
 
-    Note: For production, Notion webhooks are preferred for real-time events.
+    Note: Notion uses polling for event detection.
 
     Returns:
         dict: Summary of polling results
@@ -2057,7 +2057,7 @@ def check_notion_actions(self):
             "skipped": skipped_count,
             "no_token": no_token_count,
             "checked_areas": len(notion_areas),
-            "note": "Notion webhooks preferred over polling for real-time events",
+            "note": "Notion uses polling every 5 minutes",
         }
 
     except Exception as exc:

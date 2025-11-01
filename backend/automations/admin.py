@@ -5,7 +5,6 @@ from .models import (
     Area,
     Execution,
     GitHubAppInstallation,
-    NotionWebhookSubscription,
     Reaction,
     Service,
     WebhookSubscription,
@@ -297,77 +296,4 @@ class GitHubAppInstallationAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         """GitHub App installations are managed via webhooks."""
-        return False
-
-
-@admin.register(NotionWebhookSubscription)
-class NotionWebhookSubscriptionAdmin(admin.ModelAdmin):
-    """Admin configuration for NotionWebhookSubscription model."""
-
-    list_display = (
-        "id",
-        "user",
-        "webhook_id",
-        "workspace_id",
-        "target_display",
-        "status",
-        "event_count",
-        "created_at",
-    )
-    list_filter = ("status", "created_at")
-    search_fields = (
-        "user__username",
-        "user__email",
-        "webhook_id",
-        "workspace_id",
-        "page_id",
-        "database_id",
-    )
-    readonly_fields = (
-        "webhook_id",
-        "workspace_id",
-        "created_at",
-        "updated_at",
-        "event_count",
-        "last_event_at",
-    )
-    list_per_page = 25
-
-    fieldsets = (
-        (
-            "Webhook Information",
-            {
-                "fields": (
-                    "user",
-                    "webhook_id",
-                    "workspace_id",
-                    "status",
-                )
-            },
-        ),
-        (
-            "Target",
-            {
-                "fields": ("page_id", "database_id", "event_types"),
-                "description": "The Notion page or database being monitored",
-            },
-        ),
-        (
-            "Statistics",
-            {"fields": ("event_count", "last_event_at", "created_at", "updated_at")},
-        ),
-    )
-
-    def target_display(self, obj):
-        """Display the target (page or database) being monitored."""
-        if obj.page_id:
-            return f"Page: {obj.page_id[:16]}..."
-        elif obj.database_id:
-            return f"Database: {obj.database_id[:16]}..."
-        return "Workspace"
-
-    target_display.short_description = "Target"  # type: ignore
-
-    def has_add_permission(self, request):
-        """Notion webhooks are managed via API."""
         return False
