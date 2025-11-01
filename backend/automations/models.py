@@ -530,6 +530,16 @@ class NotionWebhookSubscription(models.Model):
         help_text="AREA user who owns this webhook",
     )
 
+    # Link to Area that triggered this webhook creation
+    area = models.ForeignKey(
+        "Area",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="notion_webhooks",
+        help_text="Area that triggered this webhook creation (for automatic management)",
+    )
+
     webhook_id = models.CharField(
         max_length=255,
         unique=True,
