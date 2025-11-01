@@ -464,6 +464,28 @@ def webhook_receiver(request: Request, service: str) -> Response:
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    # ===================================================================
+    # NOTION WEBHOOK VERIFICATION CHALLENGE
+    # ===================================================================
+    # Notion sends a verification request when setting up webhooks
+    # We must respond with the token to prove we control this endpoint
+    # This happens BEFORE signature validation (no signature on verification)
+    # ===================================================================
+    if service == "notion" and event_data.get("type") == "url_verification":
+        verification_token = event_data.get("token")
+        if verification_token:
+            logger.info(f"✅ Notion webhook verification - responding with token")
+            return Response(
+                {"token": verification_token},
+                status=status.HTTP_200_OK,
+            )
+        else:
+            logger.warning("Notion verification request missing token")
+            return Response(
+                {"error": "Verification token missing"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
     # Get webhook secret from settings
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
     webhook_secret = webhook_secrets.get(service)
