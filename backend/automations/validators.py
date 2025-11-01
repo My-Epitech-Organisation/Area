@@ -16,6 +16,8 @@ def validate_email_format(email):
     """Simple email validation function."""
     email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     return re.match(email_pattern, email) is not None
+
+
 # JSON Schemas pour les Actions
 ACTION_SCHEMAS = {
     "timer_daily": {
