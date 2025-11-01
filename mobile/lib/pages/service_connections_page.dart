@@ -122,9 +122,13 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
 
       try {
         final services = await _oauthService.getConnectedServices();
+        final mappedServiceName = ServiceProviderConfig.mapServiceName(
+          serviceName,
+        );
         final isConnected = services.connectedServices.any(
           (token) =>
-              token.serviceName.toLowerCase() == serviceName.toLowerCase(),
+              token.serviceName.toLowerCase() ==
+              mappedServiceName.toLowerCase(),
         );
 
         if (isConnected) {
