@@ -15,6 +15,7 @@ const Login: React.FC = () => {
   const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [showVerificationAlert, setShowVerificationAlert] = useState(false);
+  const [sessionExpiredMessage, setSessionExpiredMessage] = useState<string | null>(null);
 
   // Check for email verification parameters on component mount
   useEffect(() => {
@@ -22,8 +23,19 @@ const Login: React.FC = () => {
     const message = searchParams.get('message');
     const error = searchParams.get('error');
     const emailParam = searchParams.get('email');
+    const reason = searchParams.get('reason');
 
-    if (verified === 'true' && message) {
+    // Check if redirected due to session expiration
+    if (reason === 'session_expired') {
+      setSessionExpiredMessage(
+        'Your session has expired. Please log in again to continue.'
+      );
+      setShowVerificationAlert(true);
+      // Clear URL parameters after reading them
+      setTimeout(() => {
+        setSearchParams({});
+      }, 100);
+    } else if (verified === 'true' && message) {
       setVerificationMessage(message);
       setShowVerificationAlert(true);
       if (emailParam) {
@@ -129,6 +141,37 @@ const Login: React.FC = () => {
           className="w-full max-w-md bg-white/5 p-8 rounded-xl backdrop-blur-sm border border-white/10"
         >
           <div className="flex flex-col gap-4">
+            {/* Session Expired Alert */}
+            {showVerificationAlert && sessionExpiredMessage && (
+              <div className="text-yellow-400 text-sm p-4 bg-yellow-900/20 rounded-lg border border-yellow-500/30 flex items-start gap-3">
+                <svg
+                  className="w-5 h-5 mt-0.5 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div className="flex-1">
+                  <p className="font-semibold">⚠ Session Expired</p>
+                  <p className="text-yellow-300/90 mt-1">{sessionExpiredMessage}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowVerificationAlert(false);
+                    setSessionExpiredMessage(null);
+                  }}
+                  className="text-yellow-400 hover:text-yellow-300"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
             {/* Email Verification Success Alert */}
             {showVerificationAlert && verificationMessage && (
               <div className="text-green-400 text-sm p-4 bg-green-900/20 rounded-lg border border-green-500/30 flex items-start gap-3">
