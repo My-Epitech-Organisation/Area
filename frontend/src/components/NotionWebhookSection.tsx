@@ -96,9 +96,7 @@ const NotionWebhookSection: React.FC<NotionWebhookSectionProps> = ({ isOAuthConn
         <h3 className="text-lg font-semibold text-white">⚡ Real-time Webhooks</h3>
         <span
           className={`px-3 py-1 rounded-full text-sm font-medium ${
-            webhook_configured
-              ? 'bg-green-900 text-green-200'
-              : 'bg-yellow-900 text-yellow-200'
+            webhook_configured ? 'bg-green-900 text-green-200' : 'bg-yellow-900 text-yellow-200'
           }`}
         >
           {webhook_configured ? '✅ Enabled' : '⚠️ Polling Mode'}
@@ -109,7 +107,9 @@ const NotionWebhookSection: React.FC<NotionWebhookSectionProps> = ({ isOAuthConn
         {/* Status message */}
         <div
           className={`p-4 rounded-lg ${
-            webhook_configured ? 'bg-green-900/20 border border-green-700' : 'bg-yellow-900/20 border border-yellow-700'
+            webhook_configured
+              ? 'bg-green-900/20 border border-green-700'
+              : 'bg-yellow-900/20 border border-yellow-700'
           }`}
         >
           <p className="text-sm text-gray-300">{recommendation}</p>
@@ -155,10 +155,11 @@ const NotionWebhookSection: React.FC<NotionWebhookSectionProps> = ({ isOAuthConn
                 </li>
                 <li>Select your integration</li>
                 <li>Scroll to "Webhooks" section</li>
+                <li>Click "Add webhook endpoint" and paste the URL above</li>
                 <li>
-                  Click "Add webhook endpoint" and paste the URL above
+                  Select API version:{' '}
+                  <code className="bg-gray-800 px-2 py-0.5 rounded">2022-06-28</code>
                 </li>
-                <li>Select API version: <code className="bg-gray-800 px-2 py-0.5 rounded">2022-06-28</code></li>
                 <li>Select events to listen to (see below)</li>
                 <li>Save the webhook and copy the secret key</li>
                 <li>Contact your admin to add the secret to server configuration</li>
