@@ -108,37 +108,24 @@ class AuthService {
   // GOOGLE AUTHENTICATION
   // ============================================
 
-  /// Enable debug logs for Google Sign-In (set to false in production)
-  static const bool _enableGoogleSignInDebugLogs = true;
-
-  void _logDebug(String message) {
-    if (_enableGoogleSignInDebugLogs && kDebugMode) {
-      debugPrint(message);
-    }
-  }
-
   Future<void> _ensureGoogleSignInInitialized() async {
     if (!_isGoogleSignInInitialized) {
-      _logDebug('🔧 Initializing Google Sign-In...');
-
-      await _googleSignIn.initialize();
-
-      _isGoogleSignInInitialized = true;
-      _logDebug('✅ Google Sign-In initialized successfully');
+      try {
+        await _googleSignIn.initialize();
+        _isGoogleSignInInitialized = true;
+      } catch (e) {
+        debugPrint('[OAUTH] ❌ Init failed: $e');
+        rethrow;
+      }
     }
   }
 
   /// Returns user data with tokens if successful, null otherwise
   Future<Map<String, dynamic>?> loginWithGoogle() async {
     try {
-      _logDebug('🚀 Starting Google Sign-In...');
       await _ensureGoogleSignInInitialized();
 
-      _logDebug('🔐 Authenticating with Google...');
       final GoogleSignInAccount account = await _googleSignIn.authenticate();
-
-      _logDebug('✅ Google authentication successful');
-      _logDebug('📧 Account email: ${account.email}');
 
       final GoogleSignInAuthentication auth = account.authentication;
       final String? idToken = auth.idToken;
@@ -147,27 +134,43 @@ class AuthService {
         throw AuthException('No Google ID token received');
       }
 
-      _logDebug('🎫 ID Token received, sending to backend...');
-      final response = await http.post(
-        Uri.parse(ApiConfig.googleLoginUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'id_token': idToken}),
-      );
+      final endpoint = ApiConfig.googleLoginUrl;
+
+      final stopwatch = Stopwatch()..start();
+      final response = await http
+          .post(
+            Uri.parse(endpoint),
+            headers: {
+              'Content-Type': 'application/json',
+              'User-Agent': 'AREA-Mobile/1.0',
+            },
+            body: json.encode({'id_token': idToken}),
+          )
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              throw AuthException('Backend timeout');
+            },
+          );
+      stopwatch.stop();
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        await _storeTokensFromResponse(data);
-        _logDebug('✅ Login successful!');
-        return data;
+        try {
+          final data = json.decode(response.body);
+          await _storeTokensFromResponse(data);
+          debugPrint('[OAUTH] ✅ Login successful!');
+          return data;
+        } catch (e) {
+          debugPrint('[OAUTH] ❌ Parse error: $e');
+          rethrow;
+        }
+      } else {
+        debugPrint('[OAUTH] ❌ Backend error: ${response.statusCode}');
+        final errorMessage = _parseErrorResponse(response);
+        throw AuthException(errorMessage, statusCode: response.statusCode);
       }
-
-      final errorMessage = _parseErrorResponse(response);
-      _logDebug('❌ Backend error: $errorMessage');
-      throw AuthException(errorMessage, statusCode: response.statusCode);
-    } catch (e, stackTrace) {
-      _logDebug('❌ Google sign-in error: $e');
-      _logDebug('📍 Error type: ${e.runtimeType}');
-      _logDebug('📚 Stack trace: $stackTrace');
+    } catch (e) {
+      debugPrint('[OAUTH] ❌ Error: $e');
       if (e is AuthException) rethrow;
       throw AuthException('Google sign-in error: ${e.toString()}');
     }
