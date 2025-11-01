@@ -4,7 +4,6 @@ import '../../providers/service_catalog_provider.dart';
 import '../../providers/connected_services_provider.dart';
 import '../../providers/compatibility_provider.dart';
 import '../../utils/service_icons.dart';
-import '../../config/service_provider_config.dart';
 
 enum SelectorType { trigger, action }
 
@@ -113,7 +112,7 @@ class _ServiceActionSelectorCardState extends State<ServiceActionSelectorCard> {
             if (widget.filterByConnectedServices && _showOnlyConnected) {
               filteredServices = filteredServices.where((service) {
                 // Services that don't require OAuth are always available
-                if (!ServiceProviderConfig.requiresOAuth(service.name)) {
+                if (!service.requiresOAuth) {
                   return true;
                 }
                 // OAuth services must be connected
@@ -262,8 +261,7 @@ class _ServiceActionSelectorCardState extends State<ServiceActionSelectorCard> {
                         items: filteredServices.map((service) {
                           final isConnected = connectedProvider
                               .isServiceConnected(service.name);
-                          final requiresOAuth =
-                              ServiceProviderConfig.requiresOAuth(service.name);
+                          final requiresOAuth = service.requiresOAuth;
 
                           return DropdownMenuItem(
                             value: service.name,
