@@ -22,6 +22,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.utils import timezone
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
@@ -46,39 +47,23 @@ def create_gmail_watch(access_token, webhook_url, user_id=None):
         # {'channel_id': 'uuid...', 'resource_id': 'abc123', 'expiration': datetime}
     """
     try:
-        # Build Gmail API client
-        service = build("gmail", "v1", credentials=None, static_discovery=False)
-        service._http.credentials = type("Credentials", (), {"token": access_token})()
+        # Build Gmail API client with credentials
+        creds = Credentials(token=access_token)
+        service = build("gmail", "v1", credentials=creds, static_discovery=False)
 
         # Generate unique channel ID
         channel_id = str(uuid.uuid4())
 
-        # Create watch request
-        request_body = {
-            "labelIds": ["INBOX"],  # Watch INBOX only
-            "topicName": f"projects/{settings.GOOGLE_CLOUD_PROJECT}/topics/gmail",
-            "labelFilterAction": "include",
-        }
-
-        # For webhook-based notifications (not Pub/Sub)
-        if not hasattr(settings, "GOOGLE_CLOUD_PROJECT"):
-            request_body = {
-                "labelIds": ["INBOX"],
-            }
-
-        # Gmail push notifications using Pub/Sub or direct webhook
-        # Note: Gmail requires Pub/Sub for production, but we'll use direct webhook for simplicity
+        # Gmail watch request body
+        # Note: topicName should be a Cloud Pub/Sub topic, but Gmail also supports direct push
         watch_request = {
-            "topicName": webhook_url,  # This should be a Pub/Sub topic in production
+            "labelIds": ["INBOX"],
+            "topicName": webhook_url,
         }
 
-        # Alternative: Use direct webhook (for testing, requires domain verification)
+        # Create watch
         user = user_id or "me"
-        response = (
-            service.users()
-            .watch(userId=user, body={"labelIds": ["INBOX"], "topicName": webhook_url})
-            .execute()
-        )
+        response = service.users().watch(userId=user, body=watch_request).execute()
 
         # Extract watch info
         history_id = response.get("historyId")
@@ -89,7 +74,7 @@ def create_gmail_watch(access_token, webhook_url, user_id=None):
 
         logger.info(
             f"Gmail watch created successfully: channel={channel_id}, "
-            f"expiration={expiration}"
+            f"historyId={history_id}, expiration={expiration}"
         )
 
         return {
@@ -150,8 +135,9 @@ def create_calendar_watch(access_token, calendar_id, webhook_url, expiration_hou
         None: If watch creation failed
     """
     try:
-        service = build("calendar", "v3", credentials=None, static_discovery=False)
-        service._http.credentials = type("Credentials", (), {"token": access_token})()
+        # Build Calendar API client with credentials
+        creds = Credentials(token=access_token)
+        service = build("calendar", "v3", credentials=creds, static_discovery=False)
 
         # Generate unique channel ID
         channel_id = str(uuid.uuid4())
