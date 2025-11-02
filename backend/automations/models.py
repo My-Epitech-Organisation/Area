@@ -575,7 +575,9 @@ class GoogleWebhookWatch(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.service} watch for {self.user.username} (expires {self.expiration})"
+        return (
+            f"{self.service} watch for {self.user.username} (expires {self.expiration})"
+        )
 
     def is_expiring_soon(self, hours=24):
         """Check if watch expires within N hours."""
