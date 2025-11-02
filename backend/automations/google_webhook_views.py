@@ -428,13 +428,10 @@ def _gmail_message_matches_action(area, message_details):
         if from_email and from_email.lower() not in message_details["from"].lower():
             return False
 
-        if (
+        return not (
             subject_contains
             and subject_contains.lower() not in message_details["subject"].lower()
-        ):
-            return False
-
-        return True
+        )
 
     # gmail_new_from_sender: specific sender
     elif action_name == "gmail_new_from_sender":
@@ -444,7 +441,7 @@ def _gmail_message_matches_action(area, message_details):
     # gmail_new_with_label: specific label
     elif action_name == "gmail_new_with_label":
         required_label = action_config.get("label", "").lower()
-        message_labels = [l.lower() for l in message_details.get("labels", [])]
+        message_labels = [label.lower() for label in message_details.get("labels", [])]
         return required_label in message_labels
 
     # gmail_new_with_subject: subject contains text
