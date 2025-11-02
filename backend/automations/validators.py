@@ -1312,7 +1312,9 @@ def validate_reaction_config(reaction_name, config):
 
     except JsonSchemaValidationError as e:
         # Provide helpful context for common mistakes
-        error_message = f"Invalid configuration for reaction '{reaction_name}': {e.message}"
+        error_message = (
+            f"Invalid configuration for reaction '{reaction_name}': {e.message}"
+        )
 
         # Special handling for Gmail reactions that need message_id
         if reaction_name in ["gmail_mark_read", "gmail_add_label"]:
