@@ -78,9 +78,9 @@ urlpatterns = [
     # Webhook receiver endpoint
     path("webhooks/<str:service>/", webhook_receiver, name="webhook-receiver"),
     # Google webhook endpoints (push notifications)
-    path("api/webhooks/gmail/", gmail_webhook, name="gmail-webhook"),
-    path("api/webhooks/calendar/", calendar_webhook, name="calendar-webhook"),
-    path("api/webhooks/youtube/", youtube_webhook, name="youtube-webhook"),
+    path("webhooks/gmail/", gmail_webhook, name="gmail-webhook"),
+    path("webhooks/calendar/", calendar_webhook, name="calendar-webhook"),
+    path("webhooks/youtube/", youtube_webhook, name="youtube-webhook"),
     # GitHub App endpoints
     path(
         "api/github-app/status/",
