@@ -369,6 +369,57 @@ ACTION_SCHEMAS = {
         "required": ["database_id"],
         "additionalProperties": False,
     },
+    # YouTube Actions
+    "youtube_new_video": {
+        "type": "object",
+        "properties": {
+            "channel_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "YouTube channel ID to monitor",
+            },
+        },
+        "required": ["channel_id"],
+        "additionalProperties": False,
+    },
+    "youtube_channel_stats": {
+        "type": "object",
+        "properties": {
+            "channel_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "YouTube channel ID to monitor",
+            },
+            "threshold_type": {
+                "type": "string",
+                "enum": ["subscribers", "views", "videos"],
+                "description": "Type of metric to monitor",
+            },
+            "threshold_value": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Trigger when metric exceeds this value",
+            },
+        },
+        "required": ["channel_id", "threshold_type", "threshold_value"],
+        "additionalProperties": False,
+    },
+    "youtube_search_videos": {
+        "type": "object",
+        "properties": {
+            "search_query": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Keywords to search for",
+            },
+            "channel_id": {
+                "type": "string",
+                "description": "Limit search to specific channel (optional)",
+            },
+        },
+        "required": ["search_query"],
+        "additionalProperties": False,
+    },
 }
 
 
@@ -880,6 +931,59 @@ REACTION_SCHEMAS = {
         "required": ["database_id", "item_name"],
         "additionalProperties": False,
     },
+    # YouTube Reactions
+    "youtube_post_comment": {
+        "type": "object",
+        "properties": {
+            "video_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "YouTube video ID (automatically provided by trigger or enter manually)",
+            },
+            "comment_text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 10000,
+                "description": "Comment text (supports variables: {video_title}, {channel_name})",
+            },
+        },
+        "required": ["video_id", "comment_text"],
+        "additionalProperties": False,
+    },
+    "youtube_add_to_playlist": {
+        "type": "object",
+        "properties": {
+            "video_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "YouTube video ID (automatically provided by trigger or enter manually)",
+            },
+            "playlist_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "ID of the playlist to add video to",
+            },
+        },
+        "required": ["video_id", "playlist_id"],
+        "additionalProperties": False,
+    },
+    "youtube_rate_video": {
+        "type": "object",
+        "properties": {
+            "video_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "YouTube video ID (automatically provided by trigger or enter manually)",
+            },
+            "rating": {
+                "type": "string",
+                "enum": ["like", "dislike", "none"],
+                "description": "Like, dislike, or remove rating",
+            },
+        },
+        "required": ["video_id", "rating"],
+        "additionalProperties": False,
+    },
 }
 
 
@@ -1103,6 +1207,37 @@ COMPATIBILITY_RULES = {
         "notion_create_page",
         "notion_update_page",
         "notion_create_database_item",
+    ],
+    # YouTube actions - can trigger YouTube reactions and notification reactions
+    "youtube_new_video": [
+        "youtube_post_comment",
+        "youtube_add_to_playlist",
+        "youtube_rate_video",
+        "send_email",
+        "gmail_send_email",
+        "slack_message",
+        "webhook_post",
+        "calendar_create_event",
+        "github_create_issue",
+    ],
+    "youtube_channel_stats": [
+        "send_email",
+        "gmail_send_email",
+        "slack_message",
+        "webhook_post",
+        "calendar_create_event",
+        "github_create_issue",
+    ],
+    "youtube_search_videos": [
+        "youtube_post_comment",
+        "youtube_add_to_playlist",
+        "youtube_rate_video",
+        "send_email",
+        "gmail_send_email",
+        "slack_message",
+        "webhook_post",
+        "calendar_create_event",
+        "github_create_issue",
     ],
 }
 
