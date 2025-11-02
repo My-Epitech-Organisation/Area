@@ -10,14 +10,20 @@ class ApiConfig {
     if (portString.isNotEmpty) {
       _configuredPort = int.tryParse(portString);
       if (_configuredPort != null) {
-        ApiConfig.debugPrint('Backend port configured: $_configuredPort');
+        ApiConfig.debugPrint('✅ Backend port configured: $_configuredPort');
+      } else {
+        ApiConfig.debugPrint('❌ Failed to parse BACKEND_PORT: "$portString"');
       }
+    } else {
+      ApiConfig.debugPrint(
+        '⚠️  BACKEND_PORT is empty, using default: ${AppConfig.defaultPort}',
+      );
     }
   }
 
   static void setPort(int port) {
     _configuredPort = port;
-    ApiConfig.debugPrint('Backend port set to: $port');
+    ApiConfig.debugPrint('✅ Backend port set to: $port');
   }
 
   static String? _overrideBaseUrl;
@@ -26,7 +32,7 @@ class ApiConfig {
 
   static void setBaseUrl(String url) {
     _overrideBaseUrl = url.trim();
-    ApiConfig.debugPrint('Base URL override set to: $_overrideBaseUrl');
+    ApiConfig.debugPrint('✅ Base URL override set to: $_overrideBaseUrl');
   }
 
   static void forceAndroidLocalhost(bool enable) {
@@ -44,21 +50,37 @@ class ApiConfig {
     if (kIsWeb) {
       // Web always uses localhost
       host = AppConfig.defaultHost;
+      ApiConfig.debugPrint('🌐 Detected: Web - using localhost');
     } else if (Platform.isAndroid && !_forceAndroidLocalhost) {
       // Android emulator needs special host IP
       host = AppConfig.androidEmulatorHost;
+      ApiConfig.debugPrint('🌐 Detected: Android emulator - using 10.0.2.2');
     } else {
       // iOS, physical devices, or forced localhost
       host = AppConfig.defaultHost;
+      ApiConfig.debugPrint(
+        '🌐 Detected: Physical device/iOS - using localhost',
+      );
     }
 
-    return _autoDetectedBase = 'http://$host:$port';
+    final baseUrl = 'http://$host:$port';
+    ApiConfig.debugPrint('🌐 Base URL: $baseUrl');
+    return _autoDetectedBase = baseUrl;
   }
 
   static String get baseUrl => _overrideBaseUrl ?? _detectBaseUrl();
 
-  static String get authBaseUrl => '$baseUrl/${AppConfig.authPrefix}';
-  static String get apiBaseUrl => '$baseUrl/${AppConfig.apiPrefix}';
+  static String get authBaseUrl {
+    final url = '$baseUrl/${AppConfig.authPrefix}';
+    ApiConfig.debugPrint('🔐 Auth base URL: $url');
+    return url;
+  }
+
+  static String get apiBaseUrl {
+    final url = '$baseUrl/${AppConfig.apiPrefix}';
+    ApiConfig.debugPrint('📡 API base URL: $url');
+    return url;
+  }
 
   static String get loginUrl => '$authBaseUrl/login/';
   static String get registerUrl => '$authBaseUrl/register/';
@@ -78,9 +100,18 @@ class ApiConfig {
   static String get statisticsUrl => '$authBaseUrl/statistics';
   static String get userStatisticsUrl => '$apiBaseUrl/users/statistics/';
 
-  static String get googleLoginUrl => '$authBaseUrl/google-login/';
+  static String get googleLoginUrl {
+    final url = '$authBaseUrl/google-login/';
+    ApiConfig.debugPrint('🔑 Google Login URL: $url');
+    return url;
+  }
 
-  static String automationUrl(int id) => '$apiBaseUrl/areas/$id/';
+  static String automationUrl(int id) {
+    final url = '$apiBaseUrl/areas/$id/';
+    ApiConfig.debugPrint('📋 Automation URL ($id): $url');
+    return url;
+  }
+
   static String automationDuplicateUrl(int id) =>
       '$apiBaseUrl/areas/$id/duplicate/';
   static String automationPauseUrl(int id) => '$apiBaseUrl/areas/$id/pause/';

@@ -67,15 +67,12 @@ class AppletService {
     final applet = _httpClient.parseResponse<Applet>(response, (data) {
       try {
         return Applet.fromJson(data);
-      } catch (e, stackTrace) {
-        debugPrint('❌ ERROR parsing Applet from JSON: $e');
-        debugPrint('📊 Raw data: $data');
-        debugPrint('📚 Stack trace: $stackTrace');
+      } catch (e) {
+        debugPrint('[APPLETS] ❌ Parse error: $e');
         rethrow;
       }
     });
 
-    // Clear cache to force refresh
     _cache.remove(_cacheKeyPrefix);
     return applet;
   }

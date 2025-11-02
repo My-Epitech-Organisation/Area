@@ -1,15 +1,17 @@
-import '../config/service_provider_config.dart';
-
 /// Model representing a service from the about.json endpoint
 class Service {
   final int id;
   final String name;
+  final bool requiresOAuth;
+  final String? logo;
   final List<ServiceAction> actions;
   final List<ServiceReaction> reactions;
 
   Service({
     required this.id,
     required this.name,
+    required this.requiresOAuth,
+    this.logo,
     required this.actions,
     required this.reactions,
   });
@@ -18,6 +20,8 @@ class Service {
     return Service(
       id: json['id'] as int? ?? 0,
       name: (json['name'] as String?)?.trim() ?? '',
+      requiresOAuth: (json['requires_oauth'] as bool?) ?? false,
+      logo: (json['logo'] as String?),
       actions:
           (json['actions'] as List<dynamic>?)
               ?.map(
@@ -41,6 +45,8 @@ class Service {
     return {
       'id': id,
       'name': name,
+      'requires_oauth': requiresOAuth,
+      'logo': logo,
       'actions': actions.map((action) => action.toJson()).toList(),
       'reactions': reactions.map((reaction) => reaction.toJson()).toList(),
     };
@@ -50,9 +56,7 @@ class Service {
   String get displayName {
     if (name.isEmpty) return 'Unknown Service';
 
-    String mappedName = ServiceProviderConfig.mapServiceName(name);
-
-    return mappedName
+    return name
         .split('_')
         .map((word) {
           if (word.isEmpty) return '';

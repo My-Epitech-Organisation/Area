@@ -59,6 +59,7 @@ void main() {
       final service = Service(
         id: 2,
         name: 'discord',
+        requiresOAuth: true,
         actions: [
           ServiceAction(
             id: 3,
@@ -87,26 +88,40 @@ void main() {
 
     test('Service.displayName should format names correctly', () {
       expect(
-        Service(id: 1, name: 'github', actions: [], reactions: []).displayName,
+        Service(
+          id: 1,
+          name: 'github',
+          requiresOAuth: true,
+          actions: [],
+          reactions: [],
+        ).displayName,
         'Github',
       );
       expect(
         Service(
           id: 2,
           name: 'discord_bot',
+          requiresOAuth: false,
           actions: [],
           reactions: [],
         ).displayName,
         'Discord Bot',
       );
       expect(
-        Service(id: 3, name: '', actions: [], reactions: []).displayName,
+        Service(
+          id: 3,
+          name: '',
+          requiresOAuth: false,
+          actions: [],
+          reactions: [],
+        ).displayName,
         'Unknown Service',
       );
       expect(
         Service(
           id: 4,
           name: 'test_service',
+          requiresOAuth: false,
           actions: [],
           reactions: [],
         ).displayName,
@@ -118,6 +133,7 @@ void main() {
       final service = Service(
         id: 1,
         name: 'github',
+        requiresOAuth: true,
         actions: [],
         reactions: [],
       );

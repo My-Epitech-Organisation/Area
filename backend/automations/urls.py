@@ -101,4 +101,9 @@ urlpatterns = [
         views.DebugExecutionsView.as_view({"get": "list"}),
         name="debug-executions",
     ),
+    path(
+        "api/compatibility-rules/",
+        views.CompatibilityRulesView.as_view({"get": "list"}),
+        name="compatibility-rules",
+    ),
 ]
