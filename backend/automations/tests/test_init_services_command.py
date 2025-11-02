@@ -35,7 +35,8 @@ class InitServicesCommandTest(TestCase):
             "gmail",
             "email",
             "slack",
-            "webhook",
+            "weather",
+            "google_calendar",
         ]
 
         for service_name in expected_services:
@@ -59,7 +60,7 @@ class InitServicesCommandTest(TestCase):
             ("github", "github_new_issue"),
             ("github", "github_new_pr"),
             ("gmail", "gmail_new_email"),
-            ("webhook", "webhook_trigger"),
+            ("weather", "weather_rain_detected"),
         ]
 
         for service_name, action_name in expected_actions:
@@ -79,7 +80,7 @@ class InitServicesCommandTest(TestCase):
             ("github", "github_create_issue"),
             ("email", "send_email"),
             ("slack", "slack_send_message"),
-            ("webhook", "webhook_post"),
+            ("spotify", "spotify_play_track"),
         ]
 
         for service_name, reaction_name in expected_reactions:

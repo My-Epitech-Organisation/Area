@@ -112,7 +112,7 @@ services:
       dockerfile: Dockerfile.dev
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
     ports:
-      - "${FRONTEND_DEV_PORT:-5173}:5173"  # Vite dev server port
+      - "${FRONTEND_PORT:-5173}:5173"  # Vite dev server port
     volumes:
       - ./frontend:/app:z         # HOT RELOAD: Mount source code (z for SELinux)
       - /app/node_modules         # Preserve node_modules from image

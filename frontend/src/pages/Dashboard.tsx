@@ -103,23 +103,42 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     if (!services || services.length === 0) return;
 
-    const internalDefaults = new Set(['timer', 'debug', 'weather', 'webhook', 'email']);
+    const internalDefaults = new Set(['timer', 'debug', 'weather', 'email']);
 
-    const connectedSet = new Set<string>();
+    // Map service names to OAuth provider names
+    const serviceToProviderMap: Record<string, string> = {
+      gmail: 'google',
+      googlecalendar: 'google',
+      youtube: 'google',
+      github: 'github',
+      slack: 'slack',
+      notion: 'notion',
+      spotify: 'spotify',
+      twitch: 'twitch',
+    };
+
+    const connectedProviders = new Set<string>();
     if (connectedServices && connectedServices.length > 0) {
       connectedServices.forEach((c) => {
-        if (!c.is_expired) connectedSet.add(normalizeServiceName(c.service_name));
+        if (!c.is_expired) connectedProviders.add(normalizeServiceName(c.service_name));
       });
     }
 
     const active: string[] = [];
     services.forEach((s) => {
-      const key = normalizeServiceName(s.name);
-      if (internalDefaults.has(key)) {
+      const normalizedServiceName = normalizeServiceName(s.name);
+
+      // Check if it's an internal service (always active)
+      if (internalDefaults.has(normalizedServiceName)) {
         active.push(s.name);
         return;
       }
-      if (connectedSet.has(key)) {
+
+      // Get the OAuth provider for this service
+      const oauthProvider = serviceToProviderMap[normalizedServiceName] || normalizedServiceName;
+
+      // Check if user is connected to the provider
+      if (connectedProviders.has(oauthProvider)) {
         active.push(s.name);
       }
     });
@@ -334,12 +353,7 @@ const Dashboard: React.FC = () => {
           })
         );
         setServices(formattedServices);
-        const generateRandomActiveServices = () => {
-          const randomServices = formattedServices
-            .sort(() => 0.5 - Math.random())
-            .slice(0, Math.floor(Math.random() * 3) + 2);
-          return randomServices.map((s: Service) => s.name);
-        };
+
         const isFullyAuthenticated = () => {
           return (
             storedUser &&
@@ -350,7 +364,8 @@ const Dashboard: React.FC = () => {
         };
         if (isFullyAuthenticated()) {
           try {
-            setActiveServices(generateRandomActiveServices());
+            // Note: activeServices is now managed by the useEffect that watches connectedServices
+            // This ensures the Service Usage chart always reflects real OAuth connections
             const fetchWithTimeout = async (url: string, options: RequestInit, timeout: number) => {
               const controller = new AbortController();
               const { signal } = controller;
@@ -386,43 +401,15 @@ const Dashboard: React.FC = () => {
             if (areasResponse && areasResponse.ok) {
               const areasData = await areasResponse.json();
               setUserAreas(areasData);
-              const activeServiceNames = new Set<string>();
-              areasData.forEach(
-                (area: {
-                  status?: string;
-                  action?: { service?: string };
-                  reaction?: { service?: string };
-                }) => {
-                  if (area.status === 'active' && area.action && area.action.service) {
-                    activeServiceNames.add(area.action.service);
-                  }
-                  if (area.status === 'active' && area.reaction && area.reaction.service) {
-                    activeServiceNames.add(area.reaction.service);
-                  }
-                }
-              );
-              if (activeServiceNames.size > 0) {
-                setActiveServices(Array.from(activeServiceNames));
-              }
+              // Note: We no longer update activeServices here
+              // It's automatically calculated by the useEffect watching connectedServices
             }
           } catch {
-            setActiveServices(generateRandomActiveServices());
+            // Error fetching areas - activeServices is still managed by connectedServices useEffect
           }
-        } else {
-          const internalDefaults = new Set(['timer', 'debug', 'weather', 'webhook', 'email']);
-          const internalActive = formattedServices
-            .map((s: Service) => s.name)
-            .filter((n: string) =>
-              internalDefaults.has(
-                (n || '')
-                  .toString()
-                  .toLowerCase()
-                  .replace(/[^a-z0-9]/g, '')
-              )
-            );
-          if (internalActive.length > 0) setActiveServices(internalActive);
-          else setActiveServices(generateRandomActiveServices());
         }
+        // Note: For non-authenticated users, activeServices will be empty or contain only internal services
+        // This is handled by the useEffect that watches connectedServices
         setError(null);
       } catch (err: unknown) {
         console.error('Failed to fetch services:', err);
@@ -596,7 +583,40 @@ const Dashboard: React.FC = () => {
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                   {sortedServices.map((service) => {
-                    const isActive = activeServices.includes(service.name);
+                    // Check if user is connected to this service
+                    const normalizedServiceName = normalizeServiceName(service.name);
+
+                    // Internal services that don't require OAuth (always active)
+                    const internalServices = new Set(['timer', 'debug', 'weather', 'email']);
+                    const isInternalService = internalServices.has(normalizedServiceName);
+
+                    // Map service names to OAuth provider names
+                    // Gmail, Calendar, YouTube all use "google" OAuth
+                    const serviceToProviderMap: Record<string, string> = {
+                      gmail: 'google',
+                      googlecalendar: 'google', // normalized from google_calendar
+                      youtube: 'google',
+                      github: 'github',
+                      slack: 'slack',
+                      notion: 'notion',
+                      spotify: 'spotify',
+                      twitch: 'twitch',
+                    };
+
+                    // Get the OAuth provider name for this service
+                    const oauthProvider =
+                      serviceToProviderMap[normalizedServiceName] || normalizedServiceName;
+
+                    // Check if service is in connectedServices
+                    const isConnected =
+                      connectedServices?.some(
+                        (c) =>
+                          normalizeServiceName(c.service_name) === oauthProvider && !c.is_expired
+                      ) ?? false;
+
+                    // Service is active if it's internal OR user is connected to it
+                    const isActive = isInternalService || isConnected;
+
                     const logo = getServiceLogo(service);
                     return (
                       <div
@@ -611,7 +631,7 @@ const Dashboard: React.FC = () => {
                               alt={`${service.name} logo`}
                               className="w-12 h-12 object-contain"
                               style={
-                                ['timer', 'debug', 'email', 'webhook', 'weather'].includes(
+                                ['timer', 'debug', 'email', 'weather'].includes(
                                   service.name.toLowerCase()
                                 )
                                   ? {

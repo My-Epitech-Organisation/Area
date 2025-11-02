@@ -121,6 +121,109 @@ sequenceDiagram
 
 ### 1.4 Core Models
 
+#### Class Diagram
+
+```mermaid
+classDiagram
+    class User {
+        +Integer id
+        +String username
+        +String email
+        +Boolean email_verified
+        +DateTime created_at
+        +DateTime updated_at
+        +list~Area~ areas
+        +list~ServiceToken~ tokens
+    }
+
+    class Service {
+        +Integer id
+        +String name
+        +String description
+        +Status status
+        +list~Action~ actions
+        +list~Reaction~ reactions
+    }
+
+    class Action {
+        +Integer id
+        +String name
+        +String description
+        +JSONField config_schema
+        +ForeignKey service
+    }
+
+    class Reaction {
+        +Integer id
+        +String name
+        +String description
+        +JSONField config_schema
+        +ForeignKey service
+    }
+
+    class Area {
+        +Integer id
+        +String name
+        +JSONField action_config
+        +JSONField reaction_config
+        +Status status
+        +DateTime created_at
+        +ForeignKey owner
+        +ForeignKey action
+        +ForeignKey reaction
+        +list~Execution~ executions
+    }
+
+    class Execution {
+        +Integer id
+        +String external_event_id
+        +Status status
+        +JSONField trigger_data
+        +JSONField result_data
+        +String error_message
+        +DateTime created_at
+        +DateTime started_at
+        +DateTime completed_at
+        +Integer retry_count
+        +ForeignKey area
+    }
+
+    class ServiceToken {
+        +Integer id
+        +String access_token
+        +String refresh_token
+        +DateTime expires_at
+        +Boolean is_expired
+        +DateTime last_used_at
+        +DateTime created_at
+        +ForeignKey user
+        +ForeignKey service
+    }
+
+    class ActionState {
+        +Integer id
+        +DateTime last_checked_at
+        +String last_event_id
+        +JSONField metadata
+        +OneToOneField area
+    }
+
+    User "1" --> "*" Area : owns
+    User "1" --> "*" ServiceToken : has
+    Service "1" --> "*" Action : provides
+    Service "1" --> "*" Reaction : provides
+    Service "1" --> "*" ServiceToken : authenticates
+    Area "*" --> "1" Action : triggers_on
+    Area "*" --> "1" Reaction : executes
+    Area "1" --> "*" Execution : creates
+    Area "1" --> "1" ActionState : tracks_state
+    Execution "*" --> "1" Area : belongs_to
+    ServiceToken "*" --> "1" User : belongs_to
+    ServiceToken "*" --> "1" Service : for_service
+```
+
+#### Model Relationships Summary
+
 ```python
 # Simplified model relationships
 Service (name, description, status)
@@ -128,7 +231,8 @@ Service (name, description, status)
   └── Reactions (1-to-many)
 
 Area (user, name, action, reaction, configs, status)
-  └── Executions (1-to-many, with idempotency key)
+  ├── Executions (1-to-many, with idempotency key)
+  └── ActionState (1-to-1, for polling state)
 
 User
   ├── Areas (1-to-many)
@@ -437,6 +541,242 @@ curl http://localhost:8080/api/services/ | jq '.results[] | select(.name=="githu
 - [ ] Service appears in admin panel
 - [ ] Service accessible via API
 - [ ] Documentation updated
+
+### 3.3 Service Implementation Examples
+
+Understanding service complexity helps you choose the right implementation approach:
+
+#### Example 1: Simple Service (No OAuth) - Weather
+
+**Complexity**: ⭐ Low
+
+```python
+{
+    "name": "weather",
+    "description": "Weather data and alerts integration",
+    "status": Service.Status.ACTIVE,
+    "actions": [
+        {
+            "name": "weather_rain_detected",
+            "description": "Triggered when rain is detected",
+            "config_schema": {
+                "location": {
+                    "type": "string",
+                    "label": "Location",
+                    "required": True,
+                    "placeholder": "Paris, France"
+                }
+            }
+        }
+    ],
+    "reactions": []
+}
+```
+
+**Key Points:**
+- ❌ No OAuth required (uses API key in settings)
+- ✅ Actions only (monitoring)
+- ✅ Polling-based (Celery Beat task every 15 minutes)
+- ✅ Simple external API (OpenWeatherMap)
+
+#### Example 2: Medium Service (OAuth + Webhooks) - Notion
+
+**Complexity**: ⭐⭐ Medium
+
+```python
+{
+    "name": "notion",
+    "description": "Note-taking and database management",
+    "status": Service.Status.ACTIVE,
+    "actions": [
+        {
+            "name": "notion_page_created",
+            "description": "Triggered when new page is created",
+            "config_schema": {}
+        },
+        {
+            "name": "notion_database_item_added",
+            "description": "Triggered when item added to database",
+            "config_schema": {
+                "database_id": {
+                    "type": "string",
+                    "label": "Database ID",
+                    "required": True
+                }
+            }
+        }
+    ],
+    "reactions": [
+        {
+            "name": "notion_create_page",
+            "description": "Create a new page in Notion",
+            "config_schema": {
+                "parent_page_id": {"type": "string", "required": True},
+                "title": {"type": "string", "required": True},
+                "content": {"type": "text", "required": False}
+            }
+        }
+    ]
+}
+```
+
+**Key Points:**
+- ✅ OAuth2 required (user authorization)
+- ✅ Webhook support (real-time notifications)
+- ✅ Both actions and reactions
+- ⚠️ Requires webhook configuration in Notion dashboard
+- 📚 Implementation: `backend/users/oauth/notion.py`
+
+#### Example 3: Complex Service (OAuth + EventSub) - Twitch
+
+**Complexity**: ⭐⭐⭐ High
+
+```python
+{
+    "name": "twitch",
+    "description": "Live streaming platform integration",
+    "status": Service.Status.ACTIVE,
+    "actions": [
+        {
+            "name": "twitch_stream_online",
+            "description": "Triggered when stream goes live",
+            "config_schema": {
+                "broadcaster_username": {
+                    "type": "string",
+                    "label": "Streamer Username",
+                    "required": True
+                }
+            }
+        },
+        {
+            "name": "twitch_new_follower",
+            "description": "Triggered when channel gets new follower"
+        }
+    ],
+    "reactions": [
+        {
+            "name": "twitch_send_chat_message",
+            "description": "Send message to chat",
+            "config_schema": {
+                "broadcaster_username": {"type": "string", "required": True},
+                "message": {"type": "string", "required": True}
+            }
+        },
+        {
+            "name": "twitch_create_clip",
+            "description": "Create a clip of current stream"
+        }
+    ]
+}
+```
+
+**Key Points:**
+- ✅ OAuth2 with specific scopes (chat:read, clips:edit, etc.)
+- ✅ EventSub webhooks (Twitch's webhook system)
+- ⚠️ Requires external subscription management
+- ⚠️ Webhook URL must be HTTPS and publicly accessible
+- 🔧 Complex: needs `WebhookSubscription` model tracking
+- 📚 Implementation: `backend/users/oauth/twitch.py` + `backend/automations/webhooks.py`
+
+**EventSub Subscription Flow:**
+
+```python
+# When user connects Twitch OAuth
+1. User authorizes → Get access token
+2. Backend creates EventSub subscriptions:
+   - POST https://api.twitch.tv/helix/eventsub/subscriptions
+   - For each event type (stream.online, channel.follow, etc.)
+3. Twitch sends verification challenge
+4. Backend responds with challenge
+5. Subscription becomes active
+6. Events sent to: https://areaction.app/webhooks/twitch/
+```
+
+#### Example 4: API-Only Service (OAuth, No Webhooks) - Spotify
+
+**Complexity**: ⭐⭐ Medium
+
+```python
+{
+    "name": "spotify",
+    "description": "Music streaming and playback control",
+    "status": Service.Status.ACTIVE,
+    "actions": [],  # No actions - reactions only
+    "reactions": [
+        {
+            "name": "spotify_play_track",
+            "description": "Play a specific track",
+            "config_schema": {
+                "track_uri": {
+                    "type": "string",
+                    "label": "Track URI",
+                    "required": True,
+                    "placeholder": "spotify:track:6rqhFgbbKwnb9MLmUQDhG6"
+                }
+            }
+        },
+        {
+            "name": "spotify_create_playlist",
+            "description": "Create a new playlist",
+            "config_schema": {
+                "name": {"type": "string", "required": True},
+                "description": {"type": "string", "required": False},
+                "public": {"type": "boolean", "default": False}
+            }
+        }
+    ]
+}
+```
+
+**Key Points:**
+- ✅ OAuth2 with refresh tokens
+- ❌ No webhooks (Spotify doesn't provide real-time events)
+- ✅ Reactions only (control playback, manage library)
+- ✅ Token refresh handled automatically by `OAuthManager`
+- 📚 Implementation: `backend/users/oauth/spotify.py`
+
+**Why no actions?** Spotify's API doesn't provide webhook notifications for events like "song played" or "playlist updated". For user activity monitoring, you'd need to poll the API repeatedly, which is rate-limited and inefficient.
+
+#### Example 5: Google Multi-Service (OAuth + PubSub) - Gmail/Calendar/YouTube
+
+**Complexity**: ⭐⭐⭐ High
+
+```python
+# Single OAuth, multiple services
+GOOGLE_OAUTH → gmail, google_calendar, youtube
+
+# Gmail: Push notifications via Google Cloud Pub/Sub
+{
+    "name": "gmail",
+    "actions": [
+        {"name": "gmail_new_email", "description": "Any new email"},
+        {"name": "gmail_new_from_sender", "config": {"sender": "..."}}
+    ],
+    "reactions": [
+        {"name": "gmail_send_email", "config": {"to": "...", "subject": "..."}}
+    ]
+}
+
+# YouTube: PubSubHubbub (WebSub protocol)
+{
+    "name": "youtube",
+    "actions": [
+        {"name": "youtube_new_video", "description": "New upload detected"}
+    ],
+    "reactions": [
+        {"name": "youtube_post_comment", "config": {"video_id": "...", "text": "..."}}
+    ]
+}
+```
+
+**Key Points:**
+- ✅ Single OAuth grants access to all Google services
+- ✅ Gmail: Cloud Pub/Sub webhooks (watch API)
+- ✅ YouTube: PubSubHubbub (WebSub standard)
+- ✅ Calendar: Calendar API push notifications
+- ⚠️ Complex setup (GCP project, webhook URLs)
+- 🔧 Watch renewal required (Gmail watches expire after 7 days)
+- 📚 Implementation: `backend/automations/google_webhook_views.py`
 
 ---
 

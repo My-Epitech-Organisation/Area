@@ -444,6 +444,29 @@ class Command(BaseCommand):
                     {
                         "name": "send_email",
                         "description": "Send an email to specified recipients",
+                        "config_schema": {
+                            "recipient": {
+                                "type": "string",
+                                "label": "Recipient Email",
+                                "description": "Email address of the recipient",
+                                "required": True,
+                                "placeholder": "user@example.com",
+                            },
+                            "subject": {
+                                "type": "string",
+                                "label": "Email Subject",
+                                "description": "Subject line of the email",
+                                "required": True,
+                                "placeholder": "AREA Notification",
+                            },
+                            "body": {
+                                "type": "text",
+                                "label": "Email Body",
+                                "description": "Content of the email message",
+                                "required": True,
+                                "placeholder": "This is an automated notification from your AREA automation.",
+                            },
+                        },
                     },
                 ],
             },
@@ -609,25 +632,6 @@ class Command(BaseCommand):
                                 "placeholder": "Additional context...",
                             },
                         },
-                    },
-                ],
-            },
-            {
-                "name": "webhook",
-                "description": "HTTP webhook integration for custom integrations",
-                "status": Service.Status.ACTIVE,
-                "actions": [
-                    {
-                        "name": "webhook_trigger",
-                        "description": (
-                            "Triggered when a webhook receives an HTTP request"
-                        ),
-                    },
-                ],
-                "reactions": [
-                    {
-                        "name": "webhook_post",
-                        "description": "Send an HTTP POST request to a specified URL",
                     },
                 ],
             },

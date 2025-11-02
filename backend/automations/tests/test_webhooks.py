@@ -180,8 +180,8 @@ class MatchWebhookToAreasTest(TestCase):
         self.github_service = Service.objects.create(
             name="github", description="GitHub service"
         )
-        self.webhook_service = Service.objects.create(
-            name="webhook", description="Webhook service"
+        self.email_service = Service.objects.create(
+            name="email", description="Email service"
         )
 
         # Create actions
@@ -198,9 +198,9 @@ class MatchWebhookToAreasTest(TestCase):
 
         # Create reaction
         self.reaction = Reaction.objects.create(
-            service=self.webhook_service,
-            name="webhook_post",
-            description="Send webhook",
+            service=self.email_service,
+            name="send_email",
+            description="Send an email",
         )
 
     def test_match_github_push_event(self):
@@ -268,8 +268,8 @@ class WebhookReceiverAPITest(TestCase):
         self.github_service = Service.objects.create(
             name="github", description="GitHub service", status=Service.Status.ACTIVE
         )
-        self.webhook_service = Service.objects.create(
-            name="webhook", description="Webhook service", status=Service.Status.ACTIVE
+        self.email_service = Service.objects.create(
+            name="email", description="Email service", status=Service.Status.ACTIVE
         )
 
         # Create action and reaction
@@ -279,9 +279,9 @@ class WebhookReceiverAPITest(TestCase):
             description="GitHub push event",
         )
         self.reaction = Reaction.objects.create(
-            service=self.webhook_service,
-            name="webhook_post",
-            description="Send webhook",
+            service=self.email_service,
+            name="send_email",
+            description="Send an email",
         )
 
         # Create area
