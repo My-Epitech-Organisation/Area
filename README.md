@@ -103,6 +103,149 @@ The script checks:
 
 ---
 
+## 🎯 Available Services
+
+The platform supports **12 integrated services** with **61 total features** (31 actions + 30 reactions):
+
+| Service | Actions | Reactions | OAuth Required | Description |
+|---------|---------|-----------|----------------|-------------|
+| **Timer** | 2 | 0 | ❌ | Time-based scheduling (daily, weekly) |
+| **GitHub** | 2 | 1 | ✅ | Repository automation (issues, PRs) |
+| **Gmail** | 4 | 3 | ✅ | Email automation (read, send, label) |
+| **Google Calendar** | 2 | 2 | ✅ | Event management (create, update) |
+| **Email** | 0 | 1 | ❌ | Generic SMTP email sending |
+| **Slack** | 4 | 3 | ✅ | Team messaging (messages, alerts) |
+| **Weather** | 6 | 0 | ❌ | Weather monitoring (rain, temperature) |
+| **Twitch** | 5 | 6 | ✅ | Streaming platform (chat, clips, titles) |
+| **Debug** | 1 | 1 | ❌ | Testing and debugging tools |
+| **Spotify** | 0 | 7 | ✅ | Music playback control |
+| **Notion** | 3 | 3 | ✅ | Note-taking (pages, databases) |
+| **YouTube** | 2 | 3 | ✅ | Video platform (comments, playlists) |
+
+**Total: 12 services • 31 actions • 30 reactions**
+
+---
+
+## 📚 API Documentation
+
+Once services are running, access interactive API documentation:
+
+- **Swagger UI**: <http://localhost:8080/docs/>
+- **ReDoc**: <http://localhost:8080/redoc/>
+- **OpenAPI Schema**: <http://localhost:8080/api/schema/>
+- **Service Discovery**: <http://localhost:8080/about.json>
+- **Admin Panel**: <http://localhost:8080/admin/>
+- **Celery Monitoring**: <http://localhost:5566>
+
+### Key API Endpoints
+
+#### Authentication
+
+```bash
+# Register new account
+POST /auth/register/
+{
+  "username": "john",
+  "email": "john@example.com",
+  "password": "securepass123"
+}
+
+# Login and get JWT token
+POST /auth/login/
+{
+  "username": "john",
+  "password": "securepass123"
+}
+
+# OAuth initiate (redirects to provider)
+GET /auth/oauth/google/
+GET /auth/oauth/github/
+
+# OAuth callback (handled automatically)
+GET /auth/oauth/{provider}/callback/?code=xxx&state=yyy
+```
+
+#### Services & Automations
+
+```bash
+# List all available services
+GET /api/services/
+
+# List all actions
+GET /api/actions/
+
+# List all reactions
+GET /api/reactions/
+
+# Create new automation (Area)
+POST /api/areas/
+{
+  "name": "GitHub to Slack",
+  "action": 1,  # github_new_issue
+  "reaction": 5,  # slack_send_message
+  "action_config": {"repository": "owner/repo"},
+  "reaction_config": {"channel": "#dev", "message": "New issue: {title}"}
+}
+
+# List user's automations
+GET /api/areas/
+
+# View execution history
+GET /api/executions/
+```
+
+#### Webhooks
+
+```bash
+# Generic webhook receiver
+POST /webhooks/{service}/
+
+# Service-specific webhooks
+POST /webhooks/gmail/      # Gmail push notifications
+POST /webhooks/github/     # GitHub App webhooks
+POST /webhooks/calendar/   # Google Calendar notifications
+POST /webhooks/youtube/    # YouTube PubSubHubbub
+```
+
+### Example: Complete Automation Flow
+
+```bash
+# 1. Register and login
+curl -X POST http://localhost:8080/auth/register/ \
+  -H "Content-Type: application/json" \
+  -d '{"username":"demo","email":"demo@example.com","password":"demo123"}'
+
+# 2. Get JWT token
+TOKEN=$(curl -X POST http://localhost:8080/auth/login/ \
+  -H "Content-Type: application/json" \
+  -d '{"username":"demo","password":"demo123"}' | jq -r '.access')
+
+# 3. Connect GitHub (opens browser)
+open "http://localhost:8080/auth/oauth/github/?next=/profile"
+
+# 4. Create automation
+curl -X POST http://localhost:8080/api/areas/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "New Issue Alert",
+    "action": 1,
+    "reaction": 15,
+    "action_config": {"repository": "My-Epitech-Organisation/Area"},
+    "reaction_config": {
+      "recipient": "admin@example.com",
+      "subject": "New GitHub Issue",
+      "body": "Issue #{issue_number}: {title}"
+    }
+  }'
+
+# 5. View executions
+curl http://localhost:8080/api/executions/ \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+---
+
 ## Frontend
 
 Quick start (frontend)
