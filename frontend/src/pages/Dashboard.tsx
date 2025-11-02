@@ -105,21 +105,40 @@ const Dashboard: React.FC = () => {
 
     const internalDefaults = new Set(['timer', 'debug', 'weather', 'email']);
 
-    const connectedSet = new Set<string>();
+    // Map service names to OAuth provider names
+    const serviceToProviderMap: Record<string, string> = {
+      'gmail': 'google',
+      'googlecalendar': 'google',
+      'youtube': 'google',
+      'github': 'github',
+      'slack': 'slack',
+      'notion': 'notion',
+      'spotify': 'spotify',
+      'twitch': 'twitch',
+    };
+
+    const connectedProviders = new Set<string>();
     if (connectedServices && connectedServices.length > 0) {
       connectedServices.forEach((c) => {
-        if (!c.is_expired) connectedSet.add(normalizeServiceName(c.service_name));
+        if (!c.is_expired) connectedProviders.add(normalizeServiceName(c.service_name));
       });
     }
 
     const active: string[] = [];
     services.forEach((s) => {
-      const key = normalizeServiceName(s.name);
-      if (internalDefaults.has(key)) {
+      const normalizedServiceName = normalizeServiceName(s.name);
+
+      // Check if it's an internal service (always active)
+      if (internalDefaults.has(normalizedServiceName)) {
         active.push(s.name);
         return;
       }
-      if (connectedSet.has(key)) {
+
+      // Get the OAuth provider for this service
+      const oauthProvider = serviceToProviderMap[normalizedServiceName] || normalizedServiceName;
+
+      // Check if user is connected to the provider
+      if (connectedProviders.has(oauthProvider)) {
         active.push(s.name);
       }
     });
