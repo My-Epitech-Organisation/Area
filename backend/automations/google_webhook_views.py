@@ -34,7 +34,6 @@ from .tasks import create_execution_safe, execute_reaction_task
 logger = logging.getLogger(__name__)
 
 
-@csrf_exempt
 @api_view(["GET", "POST"])
 @permission_classes([AllowAny])
 def gmail_webhook(request):
@@ -188,7 +187,6 @@ def gmail_webhook(request):
         return HttpResponse("Internal error", status=500)
 
 
-@csrf_exempt
 @api_view(["GET", "POST"])
 @permission_classes([AllowAny])
 def calendar_webhook(request):
@@ -336,7 +334,6 @@ def calendar_webhook(request):
         return HttpResponse("Internal error", status=500)
 
 
-@csrf_exempt
 @api_view(["GET", "POST"])
 @permission_classes([AllowAny])
 def youtube_webhook(request):
