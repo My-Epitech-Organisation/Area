@@ -596,7 +596,21 @@ const Dashboard: React.FC = () => {
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                   {sortedServices.map((service) => {
-                    const isActive = activeServices.includes(service.name);
+                    // Check if user is connected to this service
+                    const normalizedServiceName = normalizeServiceName(service.name);
+
+                    // Internal services that don't require OAuth (always active)
+                    const internalServices = new Set(['timer', 'debug', 'weather', 'webhook', 'email']);
+                    const isInternalService = internalServices.has(normalizedServiceName);
+
+                    // Check if service is in connectedServices
+                    const isConnected = connectedServices?.some(
+                      (c) => normalizeServiceName(c.service_name) === normalizedServiceName && !c.is_expired
+                    ) ?? false;
+
+                    // Service is active if it's internal OR user is connected to it
+                    const isActive = isInternalService || isConnected;
+
                     const logo = getServiceLogo(service);
                     return (
                       <div
