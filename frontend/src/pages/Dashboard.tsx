@@ -334,12 +334,7 @@ const Dashboard: React.FC = () => {
           })
         );
         setServices(formattedServices);
-        const generateRandomActiveServices = () => {
-          const randomServices = formattedServices
-            .sort(() => 0.5 - Math.random())
-            .slice(0, Math.floor(Math.random() * 3) + 2);
-          return randomServices.map((s: Service) => s.name);
-        };
+        
         const isFullyAuthenticated = () => {
           return (
             storedUser &&
