@@ -688,3 +688,28 @@ class DebugExecutionsView(viewsets.ViewSet):
                 {"error": "Area not found or access denied"},
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+
+# Compatibility Rules View
+# ============================================================================
+
+
+@extend_schema(
+    tags=["Compatibility"],
+    summary="Get action-reaction compatibility rules",
+    description="Returns the compatibility rules mapping actions to compatible reactions. Public endpoint.",
+)
+class CompatibilityRulesView(viewsets.ViewSet):
+    """Returns compatibility rules for action-reaction combinations."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def list(self, request):
+        """
+        Get all compatibility rules.
+
+        GET /api/compatibility-rules/
+        """
+        from .validators import COMPATIBILITY_RULES
+
+        return Response(COMPATIBILITY_RULES, status=status.HTTP_200_OK)

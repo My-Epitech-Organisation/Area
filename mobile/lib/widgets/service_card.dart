@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../models/service.dart';
 import '../utils/service_icons.dart';
 
@@ -20,7 +21,7 @@ class ServiceCard extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              // Service Icon
+              // Service Icon/Logo
               Container(
                 width: 48,
                 height: 48,
@@ -28,11 +29,27 @@ class ServiceCard extends StatelessWidget {
                   color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  ServiceIcons.getServiceIcon(service.name),
-                  color: Theme.of(context).primaryColor,
-                  size: 24,
-                ),
+                child: service.logo != null
+                    ? SvgPicture.network(
+                        service.logo!,
+                        width: 24,
+                        height: 24,
+                        placeholderBuilder: (context) => Icon(
+                          ServiceIcons.getServiceIcon(service.name),
+                          color: Theme.of(context).primaryColor,
+                          size: 24,
+                        ),
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                          ServiceIcons.getServiceIcon(service.name),
+                          color: Theme.of(context).primaryColor,
+                          size: 24,
+                        ),
+                      )
+                    : Icon(
+                        ServiceIcons.getServiceIcon(service.name),
+                        color: Theme.of(context).primaryColor,
+                        size: 24,
+                      ),
               ),
               const SizedBox(width: 16),
 

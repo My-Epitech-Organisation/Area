@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../models/service.dart';
 import '../models/service_token.dart';
 import '../providers/service_catalog_provider.dart';
 import '../services/oauth_service.dart';
-import '../utils/service_icons.dart';
 import '../config/service_provider_config.dart';
+import '../utils/service_icons.dart';
+
+/// Get color filter for logos based on connection status
+ColorFilter? _getLogoColorFilter(bool requiresOAuth, bool isConnected) {
+  if (!requiresOAuth) {
+    return ColorFilter.mode(Colors.green, BlendMode.srcIn);
+  }
+  if (isConnected) {
+    return ColorFilter.mode(Colors.green, BlendMode.srcIn);
+  }
+  return ColorFilter.mode(Colors.blue, BlendMode.srcIn);
+}
 
 class ServiceConnectionsPage extends StatefulWidget {
   const ServiceConnectionsPage({super.key});
@@ -110,9 +122,13 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
 
       try {
         final services = await _oauthService.getConnectedServices();
+        final mappedServiceName = ServiceProviderConfig.mapServiceName(
+          serviceName,
+        );
         final isConnected = services.connectedServices.any(
           (token) =>
-              token.serviceName.toLowerCase() == serviceName.toLowerCase(),
+              token.serviceName.toLowerCase() ==
+              mappedServiceName.toLowerCase(),
         );
 
         if (isConnected) {
@@ -245,11 +261,8 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
 
         final sortedServices = [...allServices]
           ..sort((a, b) {
-            final aRequiresOAuth = ServiceProviderConfig.requiresOAuth(a.name);
-            final bRequiresOAuth = ServiceProviderConfig.requiresOAuth(b.name);
-
-            if (aRequiresOAuth && !bRequiresOAuth) return -1;
-            if (!aRequiresOAuth && bRequiresOAuth) return 1;
+            if (a.requiresOAuth && !b.requiresOAuth) return -1;
+            if (!a.requiresOAuth && b.requiresOAuth) return 1;
             return a.displayName.compareTo(b.displayName);
           });
 
@@ -268,10 +281,7 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
               ),
               const SizedBox(height: 12),
               ...sortedServices
-                  .where(
-                    (service) =>
-                        ServiceProviderConfig.requiresOAuth(service.name),
-                  )
+                  .where((service) => service.requiresOAuth)
                   .map((service) => _buildServiceCard(service)),
 
               const SizedBox(height: 24),
@@ -286,10 +296,7 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
               ),
               const SizedBox(height: 12),
               ...sortedServices
-                  .where(
-                    (service) =>
-                        !ServiceProviderConfig.requiresOAuth(service.name),
-                  )
+                  .where((service) => !service.requiresOAuth)
                   .map((service) => _buildServiceCard(service)),
             ],
           ),
@@ -299,7 +306,7 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
   }
 
   Widget _buildServiceCard(Service service) {
-    final requiresOAuth = ServiceProviderConfig.requiresOAuth(service.name);
+    final requiresOAuth = service.requiresOAuth;
     final isConnected = _isServiceConnected(service.name);
 
     return Card(
@@ -311,20 +318,29 @@ class _ServiceConnectionsPageState extends State<ServiceConnectionsPage> {
                     ? Colors.green.withValues(alpha: 0.2)
                     : Colors.blue.withValues(alpha: 0.2))
               : Colors.green.withValues(alpha: 0.2),
-          child: Image.network(
-            ServiceProviderConfig.getIconUrl(service.name),
-            width: 24,
-            height: 24,
-            errorBuilder: (context, error, stackTrace) {
-              return Icon(
-                ServiceIcons.getServiceIcon(service.name),
-                color: requiresOAuth
-                    ? (isConnected ? Colors.green : Colors.blue)
-                    : Colors.green,
-                size: 20,
-              );
-            },
-          ),
+          child: service.logo != null
+              ? SvgPicture.network(
+                  service.logo!,
+                  width: 24,
+                  height: 24,
+                  placeholderBuilder: (context) =>
+                      const CircularProgressIndicator(strokeWidth: 1),
+                  errorBuilder: (context, error, stackTrace) => Icon(
+                    ServiceIcons.getServiceIcon(service.name),
+                    color: requiresOAuth
+                        ? (isConnected ? Colors.green : Colors.blue)
+                        : Colors.green,
+                    size: 20,
+                  ),
+                  colorFilter: _getLogoColorFilter(requiresOAuth, isConnected),
+                )
+              : Icon(
+                  ServiceIcons.getServiceIcon(service.name),
+                  color: requiresOAuth
+                      ? (isConnected ? Colors.green : Colors.blue)
+                      : Colors.green,
+                  size: 20,
+                ),
         ),
         title: Row(
           children: [

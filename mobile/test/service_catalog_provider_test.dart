@@ -51,6 +51,7 @@ void main() {
       final service = Service(
         id: 1,
         name: 'test',
+        requiresOAuth: false,
         actions: [
           ServiceAction(id: 1, name: 'action1', description: 'Test action'),
         ],

@@ -97,7 +97,6 @@ class HttpClientService {
     String url, {
     Map<String, String>? additionalHeaders,
   }) async {
-    debugPrint('[HTTP-CLIENT] GET: $url');
     return await _retryRequest(() async {
       final headers = await _getHeaders();
       if (additionalHeaders != null) {
@@ -113,17 +112,13 @@ class HttpClientService {
     Map<String, dynamic>? body,
     Map<String, String>? additionalHeaders,
   }) async {
-    debugPrint('[HTTP-CLIENT] POST: $url - Body: ${json.encode(body)}');
+    final bodyJson = body != null ? json.encode(body) : null;
     return await _retryRequest(() async {
       final headers = await _getHeaders();
       if (additionalHeaders != null) {
         headers.addAll(additionalHeaders);
       }
-      return http.post(
-        Uri.parse(url),
-        headers: headers,
-        body: body != null ? json.encode(body) : null,
-      );
+      return http.post(Uri.parse(url), headers: headers, body: bodyJson);
     });
   }
 

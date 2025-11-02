@@ -97,7 +97,13 @@ class _LoginPageState extends State<LoginPage> {
 
     final success = await authProvider.loginWithGoogle();
 
-    if (!mounted) return;
+    if (!mounted) {
+      debugPrint(
+        '🔐 [LoginPage] ⚠️  Widget unmounted before Google login response',
+      );
+      return;
+    }
+
     setState(() => _isGoogleLoading = false);
 
     if (success) {
