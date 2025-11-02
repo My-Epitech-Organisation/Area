@@ -16,11 +16,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "area_project.settings")
 django.setup()
 
-from django.contrib.auth import get_user_model
-from django.utils import timezone
+# Imports must be after django.setup() for Django scripts
+from django.contrib.auth import get_user_model  # noqa: E402
+from django.utils import timezone  # noqa: E402
 
-from automations.models import Area, GoogleWebhookWatch
-from automations.tasks import (
+from automations.models import Area, GoogleWebhookWatch  # noqa: E402
+from automations.tasks import (  # noqa: E402
     renew_google_watches,
     setup_google_watches_for_user,
     setup_youtube_watches,
