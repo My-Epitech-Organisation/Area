@@ -95,10 +95,15 @@ def stop_gmail_watch(access_token, channel_id, resource_id):
     """
     Stop (delete) a Gmail watch.
 
+    NOTE: Gmail API does not support stopping individual watches by channel_id.
+    The users().stop() endpoint stops ALL watches for the user.
+    The channel_id and resource_id parameters are kept for API consistency
+    and logging purposes only.
+
     Args:
         access_token (str): Valid Google OAuth2 access token
-        channel_id (str): Channel ID of the watch to stop
-        resource_id (str): Resource ID returned when watch was created
+        channel_id (str): Channel ID (used for logging only)
+        resource_id (str): Resource ID (used for logging only)
 
     Returns:
         bool: True if stopped successfully, False otherwise
