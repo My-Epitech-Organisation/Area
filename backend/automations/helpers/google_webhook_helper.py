@@ -104,8 +104,8 @@ def stop_gmail_watch(access_token, channel_id, resource_id):
         bool: True if stopped successfully, False otherwise
     """
     try:
-        service = build("gmail", "v1", credentials=None, static_discovery=False)
-        service._http.credentials = type("Credentials", (), {"token": access_token})()
+        creds = Credentials(token=access_token)
+        service = build("gmail", "v1", credentials=creds, static_discovery=False)
 
         service.users().stop(userId="me").execute()
 
@@ -196,8 +196,8 @@ def stop_calendar_watch(access_token, channel_id, resource_id):
         bool: True if stopped successfully, False otherwise
     """
     try:
-        service = build("calendar", "v3", credentials=None, static_discovery=False)
-        service._http.credentials = type("Credentials", (), {"token": access_token})()
+        creds = Credentials(token=access_token)
+        service = build("calendar", "v3", credentials=creds, static_discovery=False)
 
         request_body = {"id": channel_id, "resourceId": resource_id}
 
