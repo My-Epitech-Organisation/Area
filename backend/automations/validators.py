@@ -570,20 +570,20 @@ REACTION_SCHEMAS = {
     "gmail_mark_read": {
         "type": "object",
         "properties": {
-            "email_id": {
+            "message_id": {
                 "type": "string",
-                "description": "Gmail message ID to mark as read",
+                "description": "Gmail message ID to mark as read (automatically provided by Gmail triggers)",
             },
         },
-        "required": ["email_id"],
+        "required": ["message_id"],
         "additionalProperties": False,
     },
     "gmail_add_label": {
         "type": "object",
         "properties": {
-            "email_id": {
+            "message_id": {
                 "type": "string",
-                "description": "Gmail message ID",
+                "description": "Gmail message ID (automatically provided by Gmail triggers)",
             },
             "label": {
                 "type": "string",
@@ -591,7 +591,7 @@ REACTION_SCHEMAS = {
                 "description": "Label name to add",
             },
         },
-        "required": ["email_id", "label"],
+        "required": ["message_id", "label"],
         "additionalProperties": False,
     },
     # Google Calendar Reactions
@@ -1172,9 +1172,21 @@ def validate_reaction_config(reaction_name, config):
                 )
 
     except JsonSchemaValidationError as e:
-        raise serializers.ValidationError(
-            f"Invalid configuration for reaction '{reaction_name}': {e.message}"
-        )
+        # Provide helpful context for common mistakes
+        error_message = f"Invalid configuration for reaction '{reaction_name}': {e.message}"
+        
+        # Special handling for Gmail reactions that need message_id
+        if reaction_name in ["gmail_mark_read", "gmail_add_label"]:
+            if "message_id" in e.message or "email_id" in e.message:
+                error_message = (
+                    f"⚠️ The '{reaction_name}' reaction requires an email's message ID, "
+                    "which can only be provided by Gmail trigger actions (like 'New Email', "
+                    "'Email from Sender', etc.). "
+                    "Please use a Gmail trigger action instead of the current trigger. "
+                    f"Technical details: {e.message}"
+                )
+        
+        raise serializers.ValidationError(error_message)
 
 
 def validate_action_reaction_compatibility(action_name, reaction_name):
@@ -1204,9 +1216,23 @@ def validate_action_reaction_compatibility(action_name, reaction_name):
 
     # Check if the specific reaction is allowed
     if reaction_name not in compatible_reactions:
+        # Provide helpful context for Gmail reactions
+        context_message = ""
+        if reaction_name in ["gmail_mark_read", "gmail_add_label"]:
+            context_message = (
+                " These Gmail reactions require an email trigger (gmail_new_email, "
+                "gmail_new_from_sender, etc.) because they need the email's message ID "
+                "to work. Timer or other non-Gmail triggers cannot provide this information."
+            )
+        elif reaction_name == "github_create_issue":
+            context_message = (
+                " Note: This reaction works with most triggers, but the issue content "
+                "will depend on the data provided by the trigger."
+            )
+        
         raise serializers.ValidationError(
-            f"Action '{action_name}' is not compatible with reaction '{reaction_name}'. "
-            f"Compatible reactions: {', '.join(compatible_reactions)}"
+            f"Action '{action_name}' cannot trigger reaction '{reaction_name}'.{context_message} "
+            f"Compatible reactions for this action: {', '.join(compatible_reactions) if compatible_reactions else 'none available'}"
         )
 
 
