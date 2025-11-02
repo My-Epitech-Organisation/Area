@@ -133,26 +133,45 @@ echo -e "${NC}"
 cd "$BACKEND_DIR"
 echo -e "${CYAN}📂 Working directory: ${NC}$BACKEND_DIR"
 
+# Set environment to test mode BEFORE activating venv
+export DJANGO_ENV=test
+export DJANGO_SETTINGS_MODULE=area_project.settings
+
 # Activate virtual environment if it exists
 if [ -d "$VENV_PATH" ]; then
     echo -e "${CYAN}🐍 Activating virtual environment...${NC}"
-    source "$VENV_PATH/bin/activate"
+
+    # Use the Python binary directly to avoid lib/lib64 issues
+    PYTHON_BIN="$VENV_PATH/bin/python"
+
+    if [ -f "$PYTHON_BIN" ]; then
+        # Export Python path to use venv directly
+        export PATH="$VENV_PATH/bin:$PATH"
+        export VIRTUAL_ENV="$VENV_PATH"
+        # Unset PYTHONHOME to avoid conflicts
+        unset PYTHONHOME
+        echo -e "${GREEN}✅ Virtual environment activated${NC}"
+    else
+        echo -e "${RED}❌ Python binary not found in venv${NC}"
+        exit 1
+    fi
 else
     echo -e "${YELLOW}⚠️  No virtual environment found at $VENV_PATH${NC}"
     echo -e "${YELLOW}   Using system Python...${NC}"
+    PYTHON_BIN="python3"
 fi
 
 # Check if required packages are installed
 echo -e "${CYAN}📦 Checking dependencies...${NC}"
-if ! python -c "import django" 2>/dev/null; then
+if ! $PYTHON_BIN -c "import django" 2>/dev/null; then
     echo -e "${RED}❌ Django not installed${NC}"
     exit 1
 fi
 
 if [ "$SKIP_COVERAGE" = false ]; then
-    if ! python -c "import coverage" 2>/dev/null; then
+    if ! $PYTHON_BIN -c "import coverage" 2>/dev/null; then
         echo -e "${YELLOW}⚠️  Coverage not installed, installing...${NC}"
-        pip install coverage 2>&1 | grep -i "successfully installed" || true
+        $PYTHON_BIN -m pip install coverage 2>&1 | grep -i "successfully installed" || true
     fi
 fi
 
@@ -172,7 +191,7 @@ fi
 echo ""
 
 # Build test command
-TEST_CMD="python manage.py test"
+TEST_CMD="$PYTHON_BIN manage.py test"
 
 if [ -n "$SPECIFIC_TEST" ]; then
     TEST_CMD="$TEST_CMD $SPECIFIC_TEST"
@@ -198,8 +217,8 @@ echo -e "${CYAN}═════════════════════�
 
 if [ "$SKIP_COVERAGE" = false ]; then
     # Run with coverage
-    coverage erase
-    coverage run --source='.' manage.py test \
+    $PYTHON_BIN -m coverage erase
+    $PYTHON_BIN -m coverage run --source='.' manage.py test \
         $([ -n "$SPECIFIC_TEST" ] && echo "$SPECIFIC_TEST") \
         --verbosity=$VERBOSITY \
         $([ "$FAILFAST" = true ] && echo "--failfast") \
@@ -226,16 +245,16 @@ fi
 if [ "$SKIP_COVERAGE" = false ] && [ $TEST_EXIT_CODE -eq 0 ]; then
     echo -e "${BLUE}${BOLD}📊 Coverage Report${NC}"
     echo -e "${CYAN}═══════════════════════════════════════════════════════════${NC}\n"
-
+    
     # Terminal report
-    coverage report --skip-empty
-
+    $PYTHON_BIN -m coverage report --skip-empty
+    
     echo ""
-
+    
     # HTML report if requested
     if [ "$HTML_REPORT" = true ]; then
         echo -e "${CYAN}📄 Generating HTML coverage report...${NC}"
-        coverage html
+        $PYTHON_BIN -m coverage html
         HTML_DIR="$BACKEND_DIR/htmlcov"
         if [ -d "$HTML_DIR" ]; then
             echo -e "${GREEN}✅ HTML report generated at: ${BOLD}$HTML_DIR/index.html${NC}"
@@ -243,13 +262,13 @@ if [ "$SKIP_COVERAGE" = false ] && [ $TEST_EXIT_CODE -eq 0 ]; then
         fi
         echo ""
     fi
-
+    
     # Get coverage percentage
-    COVERAGE_PCT=$(coverage report --skip-empty | grep "TOTAL" | awk '{print $4}')
+    COVERAGE_PCT=$($PYTHON_BIN -m coverage report --skip-empty | grep "TOTAL" | awk '{print $4}')
     if [ -n "$COVERAGE_PCT" ]; then
         COVERAGE_NUM=$(echo "$COVERAGE_PCT" | tr -d '%')
         echo -e "${BOLD}Overall Coverage: ${COVERAGE_PCT}${NC}"
-
+        
         # Color-coded coverage assessment
         if (( $(echo "$COVERAGE_NUM >= 80" | bc -l) )); then
             echo -e "${GREEN}🎉 Excellent coverage!${NC}"
