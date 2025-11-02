@@ -376,50 +376,50 @@ def parse_atom_feed_entry(xml_string: str) -> Optional[Dict]:
         None if parsing fails
     """
     try:
-        
+
         # Parse XML
         root = ET.fromstring(xml_string)
-        
+
         # Atom namespace
         ns = {
             'atom': 'http://www.w3.org/2005/Atom',
             'yt': 'http://www.youtube.com/xml/schemas/2015'
         }
-        
+
         # Find entry element
         entry = root.find('atom:entry', ns)
         if entry is None:
             logger.warning("No entry element found in Atom feed")
             return None
-        
+
         # Extract video ID
         video_id_elem = entry.find('yt:videoId', ns)
         video_id = video_id_elem.text if video_id_elem is not None else ""
-        
+
         # Extract title
         title_elem = entry.find('atom:title', ns)
         title = title_elem.text if title_elem is not None else ""
-        
+
         # Extract channel ID
         channel_id_elem = entry.find('yt:channelId', ns)
         channel_id = channel_id_elem.text if channel_id_elem is not None else ""
-        
+
         # Extract author/channel name
         author_elem = entry.find('atom:author/atom:name', ns)
         channel_title = author_elem.text if author_elem is not None else ""
-        
+
         # Extract published date
         published_elem = entry.find('atom:published', ns)
         published_at = published_elem.text if published_elem is not None else ""
-        
+
         # Extract updated date
         updated_elem = entry.find('atom:updated', ns)
         updated_at = updated_elem.text if updated_elem is not None else ""
-        
+
         # Extract link
         link_elem = entry.find('atom:link[@rel="alternate"]', ns)
         link = link_elem.get('href', '') if link_elem is not None else ""
-        
+
         # Extract thumbnail (media:group/media:thumbnail)
         thumbnail_url = ""
         try:
@@ -429,7 +429,7 @@ def parse_atom_feed_entry(xml_string: str) -> Optional[Dict]:
                 thumbnail_url = thumbnail_elem.get('url', '')
         except:
             pass
-        
+
         video_data = {
             "video_id": video_id,
             "title": title,
@@ -443,7 +443,7 @@ def parse_atom_feed_entry(xml_string: str) -> Optional[Dict]:
 
         logger.debug(f"Parsed Atom feed entry: video_id={video_id}, title={title}")
         return video_data
-        
+
     except ET.ParseError as e:
         logger.error(f"Failed to parse Atom feed XML: {e}")
         return None
