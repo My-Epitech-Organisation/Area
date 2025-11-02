@@ -4280,8 +4280,9 @@ def setup_google_watches_for_user(self, user_id):
 
     # Create Gmail watch
     if gmail_webhook_enabled:
+        backend_url = getattr(settings, "BACKEND_URL", "https://areaction.app")
         gmail_webhook_url = getattr(
-            settings, "GMAIL_WEBHOOK_URL", f"{settings.BACKEND_URL}/webhooks/gmail/"
+            settings, "GMAIL_WEBHOOK_URL", f"{backend_url}/webhooks/gmail/"
         )
 
         # Check if watch already exists
@@ -4312,10 +4313,11 @@ def setup_google_watches_for_user(self, user_id):
 
     # Create Calendar watch
     if calendar_webhook_enabled:
+        backend_url = getattr(settings, "BACKEND_URL", "https://areaction.app")
         calendar_webhook_url = getattr(
             settings,
             "CALENDAR_WEBHOOK_URL",
-            f"{settings.BACKEND_URL}/api/webhooks/calendar/",
+            f"{backend_url}/webhooks/calendar/",
         )
 
         # Check if watch already exists
@@ -4418,20 +4420,22 @@ def renew_google_watches(self):
             if watch.service == GoogleWebhookWatch.Service.GMAIL:
                 from django.conf import settings
 
+                backend_url = getattr(settings, "BACKEND_URL", "https://areaction.app")
                 webhook_url = getattr(
                     settings,
                     "GMAIL_WEBHOOK_URL",
-                    f"{settings.BACKEND_URL}/webhooks/gmail/",
+                    f"{backend_url}/webhooks/gmail/",
                 )
                 new_watch_info = create_gmail_watch(access_token, webhook_url)
 
             elif watch.service == GoogleWebhookWatch.Service.CALENDAR:
                 from django.conf import settings
 
+                backend_url = getattr(settings, "BACKEND_URL", "https://areaction.app")
                 webhook_url = getattr(
                     settings,
                     "CALENDAR_WEBHOOK_URL",
-                    f"{settings.BACKEND_URL}/webhooks/calendar/",
+                    f"{backend_url}/webhooks/calendar/",
                 )
                 calendar_id = watch.resource_uri or "primary"
                 new_watch_info = create_calendar_watch(
@@ -4505,8 +4509,9 @@ def setup_youtube_watches(self):
         logger.info("No active YouTube areas found")
         return {"status": "no_areas", "count": 0}
 
+    backend_url = getattr(settings, "BACKEND_URL", "https://areaction.app")
     youtube_webhook_url = getattr(
-        settings, "YOUTUBE_WEBHOOK_URL", f"{settings.BACKEND_URL}/api/webhooks/youtube/"
+        settings, "YOUTUBE_WEBHOOK_URL", f"{backend_url}/webhooks/youtube/"
     )
 
     created_count = 0
