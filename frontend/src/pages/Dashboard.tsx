@@ -607,7 +607,7 @@ const Dashboard: React.FC = () => {
                     // Gmail, Calendar, YouTube all use "google" OAuth
                     const serviceToProviderMap: Record<string, string> = {
                       'gmail': 'google',
-                      'calendar': 'google',
+                      'google_calendar': 'google',
                       'youtube': 'google',
                       'github': 'github',
                       'slack': 'slack',
