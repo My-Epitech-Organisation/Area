@@ -27,10 +27,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.urls import include, path
 
 from . import github_app_views, views
-from .webhooks import webhook_receiver
 
 # Import Google webhook views
 from .google_webhook_views import calendar_webhook, gmail_webhook, youtube_webhook
+from .webhooks import webhook_receiver
 
 # Create router and register viewsets
 router = DefaultRouter()
