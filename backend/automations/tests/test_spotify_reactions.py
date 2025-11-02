@@ -295,7 +295,7 @@ class SpotifyReactionTests(TestCase):
         mock_get_token.return_value = "test_token"
         mock_create.return_value = {"success": True}
 
-        result = _execute_reaction_logic(
+        _execute_reaction_logic(
             reaction_name="spotify_create_playlist",
             reaction_config={"name": "Test Playlist"},
             trigger_data={},
