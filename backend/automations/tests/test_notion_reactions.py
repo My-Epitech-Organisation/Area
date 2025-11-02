@@ -111,7 +111,9 @@ class NotionReactionTests(TestCase):
         }
         mock_post.return_value = mock_response
 
-        with patch("automations.helpers.notion_helper.extract_notion_uuid") as mock_extract:
+        with patch(
+            "automations.helpers.notion_helper.extract_notion_uuid"
+        ) as mock_extract:
             mock_extract.return_value = "parent_uuid_123"
 
             result = _execute_reaction_logic(
@@ -160,7 +162,9 @@ class NotionReactionTests(TestCase):
         mock_response.status_code = 200
         mock_patch.return_value = mock_response
 
-        with patch("automations.helpers.notion_helper.extract_notion_uuid") as mock_extract:
+        with patch(
+            "automations.helpers.notion_helper.extract_notion_uuid"
+        ) as mock_extract:
             mock_extract.return_value = "page_uuid_123"
 
             result = _execute_reaction_logic(
@@ -200,7 +204,9 @@ class NotionReactionTests(TestCase):
         mock_get_token.return_value = "test_token"
         mock_find_page.return_value = "found_page_uuid"
 
-        with patch("automations.helpers.notion_helper.extract_notion_uuid") as mock_extract:
+        with patch(
+            "automations.helpers.notion_helper.extract_notion_uuid"
+        ) as mock_extract:
             mock_extract.return_value = None  # Simulate URL extraction failing
 
             with patch("automations.tasks.requests.patch") as mock_patch:
@@ -233,7 +239,9 @@ class NotionReactionTests(TestCase):
         }
         mock_post.return_value = mock_response
 
-        with patch("automations.helpers.notion_helper.extract_notion_uuid") as mock_extract:
+        with patch(
+            "automations.helpers.notion_helper.extract_notion_uuid"
+        ) as mock_extract:
             mock_extract.return_value = "database_uuid_123"
 
             result = _execute_reaction_logic(
@@ -271,7 +279,9 @@ class NotionReactionTests(TestCase):
         """Test notion_create_database_item with missing item_name."""
         mock_get_token.return_value = "test_token"
 
-        with patch("automations.helpers.notion_helper.extract_notion_uuid") as mock_extract:
+        with patch(
+            "automations.helpers.notion_helper.extract_notion_uuid"
+        ) as mock_extract:
             mock_extract.return_value = "db_uuid"
 
             with self.assertRaisesMessage(
@@ -303,7 +313,9 @@ class NotionReactionTests(TestCase):
         }
         mock_post.return_value = mock_response
 
-        with patch("automations.helpers.notion_helper.extract_notion_uuid") as mock_extract:
+        with patch(
+            "automations.helpers.notion_helper.extract_notion_uuid"
+        ) as mock_extract:
             mock_extract.return_value = "db_uuid"
 
             result = _execute_reaction_logic(
@@ -337,7 +349,9 @@ class NotionReactionTests(TestCase):
         }
         mock_post.return_value = mock_response
 
-        with patch("automations.helpers.notion_helper.extract_notion_uuid") as mock_extract:
+        with patch(
+            "automations.helpers.notion_helper.extract_notion_uuid"
+        ) as mock_extract:
             mock_extract.return_value = None  # Simulate UUID extraction failing
 
             result = _execute_reaction_logic(
