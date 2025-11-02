@@ -334,7 +334,7 @@ const Dashboard: React.FC = () => {
           })
         );
         setServices(formattedServices);
-        
+
         const isFullyAuthenticated = () => {
           return (
             storedUser &&
