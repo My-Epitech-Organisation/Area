@@ -276,10 +276,12 @@ class AreaSerializer(serializers.ModelSerializer):
                 validate_action_reaction_compatibility(action.name, reaction.name)
             except serializers.ValidationError as e:
                 # Re-raise with better field targeting for frontend display
-                error_message = str(e.detail[0]) if hasattr(e, 'detail') and e.detail else str(e)
-                raise serializers.ValidationError({
-                    "reaction": f"⚠️ Incompatible combination: {error_message}"
-                })
+                error_message = (
+                    str(e.detail[0]) if hasattr(e, "detail") and e.detail else str(e)
+                )
+                raise serializers.ValidationError(
+                    {"reaction": f"⚠️ Incompatible combination: {error_message}"}
+                )
 
             # Validation des configurations si elles sont fournies
             action_config = attrs.get("action_config", {})
