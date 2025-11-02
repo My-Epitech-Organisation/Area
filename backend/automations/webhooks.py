@@ -538,11 +538,15 @@ def webhook_receiver(request: Request, service: str) -> Response:
         hub_topic = request.GET.get("hub.topic")
 
         if hub_mode == "subscribe" and hub_challenge:
-            logger.info(f"✅ YouTube PubSubHubbub subscription verification for topic: {hub_topic}")
+            logger.info(
+                f"✅ YouTube PubSubHubbub subscription verification for topic: {hub_topic}"
+            )
             # Return challenge as plain text
             return HttpResponse(hub_challenge, content_type="text/plain", status=200)
         elif hub_mode == "unsubscribe" and hub_challenge:
-            logger.info(f"✅ YouTube PubSubHubbub unsubscribe verification for topic: {hub_topic}")
+            logger.info(
+                f"✅ YouTube PubSubHubbub unsubscribe verification for topic: {hub_topic}"
+            )
             return HttpResponse(hub_challenge, content_type="text/plain", status=200)
 
     # Get webhook secret from settings
