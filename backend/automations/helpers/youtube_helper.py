@@ -363,8 +363,8 @@ def parse_atom_feed_entry(xml_string: str) -> Optional[Dict]:
         None if parsing fails
     """
     try:
-        # Parse XML
-        root = ET.fromstring(xml_string)
+        # Parse XML (YouTube Atom feeds are trusted sources from youtube.com)
+        root = ET.fromstring(xml_string)  # noqa: S314  # nosec B314
 
         # Atom namespace
         ns = {
@@ -413,8 +413,9 @@ def parse_atom_feed_entry(xml_string: str) -> Optional[Dict]:
             thumbnail_elem = entry.find(".//media:thumbnail", media_ns)
             if thumbnail_elem is not None:
                 thumbnail_url = thumbnail_elem.get("url", "")
-        except:
-            pass
+        except Exception as e:
+            # Thumbnail is optional, ignore parsing errors
+            logger.debug(f"Could not parse thumbnail: {e}")
 
         video_data = {
             "video_id": video_id,
