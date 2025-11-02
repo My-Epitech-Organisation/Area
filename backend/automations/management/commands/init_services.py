@@ -1122,6 +1122,141 @@ class Command(BaseCommand):
                     },
                 ],
             },
+            {
+                "name": "youtube",
+                "description": "YouTube video integration for monitoring and interacting with videos",
+                "status": Service.Status.ACTIVE,
+                "actions": [
+                    {
+                        "name": "youtube_new_video",
+                        "description": "Triggered when a new video is uploaded to a channel",
+                        "config_schema": {
+                            "channel_id": {
+                                "type": "string",
+                                "label": "Channel ID",
+                                "description": "YouTube channel ID to monitor (e.g., UC_x5XG1OV2P6uZZ5FSM9Ttw)",
+                                "required": True,
+                                "placeholder": "UC_x5XG1OV2P6uZZ5FSM9Ttw",
+                            },
+                        },
+                    },
+                    {
+                        "name": "youtube_channel_stats",
+                        "description": "Triggered when channel statistics change (subscribers, views)",
+                        "config_schema": {
+                            "channel_id": {
+                                "type": "string",
+                                "label": "Channel ID",
+                                "description": "YouTube channel ID to monitor",
+                                "required": True,
+                                "placeholder": "UC_x5XG1OV2P6uZZ5FSM9Ttw",
+                            },
+                            "threshold_type": {
+                                "type": "string",
+                                "label": "Threshold Type",
+                                "description": "Type of metric to monitor",
+                                "required": True,
+                                "default": "subscribers",
+                                "enum": ["subscribers", "views", "videos"],
+                            },
+                            "threshold_value": {
+                                "type": "number",
+                                "label": "Threshold Value",
+                                "description": "Trigger when metric exceeds this value",
+                                "required": True,
+                                "default": 1000,
+                                "minimum": 0,
+                            },
+                        },
+                    },
+                    {
+                        "name": "youtube_search_videos",
+                        "description": "Triggered when new videos matching search criteria are found",
+                        "config_schema": {
+                            "search_query": {
+                                "type": "string",
+                                "label": "Search Query",
+                                "description": "Keywords to search for in video titles and descriptions",
+                                "required": True,
+                                "placeholder": "python tutorial",
+                            },
+                            "channel_id": {
+                                "type": "string",
+                                "label": "Channel ID (Optional)",
+                                "description": "Limit search to specific channel (optional)",
+                                "required": False,
+                                "placeholder": "UC_x5XG1OV2P6uZZ5FSM9Ttw",
+                            },
+                        },
+                    },
+                ],
+                "reactions": [
+                    {
+                        "name": "youtube_post_comment",
+                        "description": "Post a comment on a YouTube video",
+                        "config_schema": {
+                            "video_id": {
+                                "type": "string",
+                                "label": "Video ID",
+                                "description": "YouTube video ID (automatically provided by trigger or enter manually)",
+                                "required": True,
+                                "default": "{video_id}",
+                                "placeholder": "{video_id} or dQw4w9WgXcQ",
+                            },
+                            "comment_text": {
+                                "type": "text",
+                                "label": "Comment Text",
+                                "description": "Text content of the comment (supports variables: {video_title}, {channel_name})",
+                                "required": True,
+                                "placeholder": "Great video! Thanks for sharing.",
+                            },
+                        },
+                    },
+                    {
+                        "name": "youtube_add_to_playlist",
+                        "description": "Add a video to a YouTube playlist",
+                        "config_schema": {
+                            "video_id": {
+                                "type": "string",
+                                "label": "Video ID",
+                                "description": "YouTube video ID (automatically provided by trigger or enter manually)",
+                                "required": True,
+                                "default": "{video_id}",
+                                "placeholder": "{video_id} or dQw4w9WgXcQ",
+                            },
+                            "playlist_id": {
+                                "type": "string",
+                                "label": "Playlist ID",
+                                "description": "ID of the playlist to add video to",
+                                "required": True,
+                                "placeholder": "PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf",
+                            },
+                        },
+                    },
+                    {
+                        "name": "youtube_rate_video",
+                        "description": "Like or dislike a YouTube video",
+                        "config_schema": {
+                            "video_id": {
+                                "type": "string",
+                                "label": "Video ID",
+                                "description": "YouTube video ID (automatically provided by trigger or enter manually)",
+                                "required": True,
+                                "default": "{video_id}",
+                                "placeholder": "{video_id} or dQw4w9WgXcQ",
+                            },
+                            "rating": {
+                                "type": "string",
+                                "label": "Rating",
+                                "description": "Like, dislike, or remove rating",
+                                "required": True,
+                                "default": "like",
+                                "enum": ["like", "dislike", "none"],
+                            },
+                        },
+                    },
+                ],
+            },
         ]
 
         # Create services
