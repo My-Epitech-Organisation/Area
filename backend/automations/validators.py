@@ -346,6 +346,29 @@ ACTION_SCHEMAS = {
         "properties": {},
         "additionalProperties": False,
     },
+    # Notion Actions
+    "notion_page_created": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
+    "notion_page_updated": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
+    "notion_database_item_added": {
+        "type": "object",
+        "properties": {
+            "database_id": {
+                "type": "string",
+                "pattern": "^(https://www\\.notion\\.so/.*[a-f0-9]{32}(\\?.*)?|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}|[a-f0-9]{32}|.+)$",
+                "description": "Notion database name, ID (UUID format), or full Notion database URL",
+            },
+        },
+        "required": ["database_id"],
+        "additionalProperties": False,
+    },
 }
 
 
@@ -791,6 +814,72 @@ REACTION_SCHEMAS = {
         "required": ["name"],
         "additionalProperties": False,
     },
+    # Notion Reactions
+    "notion_create_page": {
+        "type": "object",
+        "properties": {
+            "parent_id": {
+                "type": "string",
+                "pattern": "^(https://www\\.notion\\.so/.*[a-f0-9]{32}(\\?.*)?|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}|[a-f0-9]{32})$",
+                "description": "Parent page or database ID (UUID format) or full Notion URL. If not provided, page will be created in workspace root.",
+            },
+            "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Title of the new page",
+            },
+            "content": {
+                "type": "string",
+                "description": "Initial content for the page (optional)",
+            },
+        },
+        "required": ["title"],
+        "additionalProperties": False,
+    },
+    "notion_update_page": {
+        "type": "object",
+        "properties": {
+            "page_id": {
+                "type": "string",
+                "pattern": "^(https://www\\.notion\\.so/.*[a-f0-9]{32}(\\?.*)?|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}|[a-f0-9]{32}|.+)$",
+                "description": "Page name, ID (UUID format), or full Notion page URL",
+            },
+            "title": {
+                "type": "string",
+                "maxLength": 200,
+                "description": "New title for the page (optional)",
+            },
+            "content": {
+                "type": "string",
+                "description": "New content to append (optional)",
+            },
+        },
+        "required": ["page_id"],
+        "additionalProperties": False,
+    },
+    "notion_create_database_item": {
+        "type": "object",
+        "properties": {
+            "database_id": {
+                "type": "string",
+                "pattern": "^(https://www\\.notion\\.so/.*[a-f0-9]{32}(\\?.*)?|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}|[a-f0-9]{32}|.+)$",
+                "description": "Database name, ID (UUID format), or full Notion database URL",
+            },
+            "item_name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Name/title of the new database item",
+            },
+            "properties": {
+                "type": "string",
+                "description": "Additional database properties as JSON string (optional)",
+                "additionalProperties": True,
+            },
+        },
+        "required": ["database_id", "item_name"],
+        "additionalProperties": False,
+    },
 }
 
 
@@ -980,6 +1069,40 @@ COMPATIBILITY_RULES = {
         "webhook_post",
         "calendar_create_event",
         "github_create_issue",
+    ],
+    # Notion actions - can trigger notification reactions
+    "notion_page_created": [
+        "send_email",
+        "gmail_send_email",
+        "slack_message",
+        "webhook_post",
+        "calendar_create_event",
+        "github_create_issue",
+        "notion_create_page",
+        "notion_update_page",
+        "notion_create_database_item",
+    ],
+    "notion_page_updated": [
+        "send_email",
+        "gmail_send_email",
+        "slack_message",
+        "webhook_post",
+        "calendar_create_event",
+        "github_create_issue",
+        "notion_create_page",
+        "notion_update_page",
+        "notion_create_database_item",
+    ],
+    "notion_database_item_added": [
+        "send_email",
+        "gmail_send_email",
+        "slack_message",
+        "webhook_post",
+        "calendar_create_event",
+        "github_create_issue",
+        "notion_create_page",
+        "notion_update_page",
+        "notion_create_database_item",
     ],
 }
 

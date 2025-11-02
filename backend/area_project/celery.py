@@ -89,10 +89,14 @@ def get_beat_schedule():
                     "task": "automations.check_slack_actions",
                     "schedule": 120.0,  # Every 2 minutes
                 },
+                "check-notion-actions": {
+                    "task": "automations.check_notion_actions",
+                    "schedule": 300.0,  # Every 5 minutes
+                },
             }
         )
         print(
-            f"🔧 [CELERY BEAT] DEV MODE ({environment}): Polling enabled for GitHub, Twitch, Slack"
+            f"🔧 [CELERY BEAT] DEV MODE ({environment}): Polling enabled for GitHub, Twitch, Slack, Notion"
         )
 
     # PROD MODE: Only enable polling if webhooks are NOT configured
@@ -129,6 +133,13 @@ def get_beat_schedule():
             )
         else:
             print("✅ [CELERY BEAT] PROD: Slack webhooks active, polling disabled")
+
+        # Notion: Always use polling (webhooks not supported)
+        schedule["check-notion-actions"] = {
+            "task": "automations.tasks.check_notion_actions",
+            "schedule": 300.0,  # Every 5 minutes
+        }
+        print("✅ [CELERY BEAT] Notion polling enabled (every 5 minutes)")
 
     return schedule
 
