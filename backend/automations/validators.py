@@ -1174,7 +1174,7 @@ def validate_reaction_config(reaction_name, config):
     except JsonSchemaValidationError as e:
         # Provide helpful context for common mistakes
         error_message = f"Invalid configuration for reaction '{reaction_name}': {e.message}"
-        
+
         # Special handling for Gmail reactions that need message_id
         if reaction_name in ["gmail_mark_read", "gmail_add_label"]:
             if "message_id" in e.message or "email_id" in e.message:
@@ -1185,7 +1185,7 @@ def validate_reaction_config(reaction_name, config):
                     "Please use a Gmail trigger action instead of the current trigger. "
                     f"Technical details: {e.message}"
                 )
-        
+
         raise serializers.ValidationError(error_message)
 
 
@@ -1229,7 +1229,7 @@ def validate_action_reaction_compatibility(action_name, reaction_name):
                 " Note: This reaction works with most triggers, but the issue content "
                 "will depend on the data provided by the trigger."
             )
-        
+
         raise serializers.ValidationError(
             f"Action '{action_name}' cannot trigger reaction '{reaction_name}'.{context_message} "
             f"Compatible reactions for this action: {', '.join(compatible_reactions) if compatible_reactions else 'none available'}"
