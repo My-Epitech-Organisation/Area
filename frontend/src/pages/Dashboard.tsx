@@ -107,14 +107,14 @@ const Dashboard: React.FC = () => {
 
     // Map service names to OAuth provider names
     const serviceToProviderMap: Record<string, string> = {
-      'gmail': 'google',
-      'googlecalendar': 'google',
-      'youtube': 'google',
-      'github': 'github',
-      'slack': 'slack',
-      'notion': 'notion',
-      'spotify': 'spotify',
-      'twitch': 'twitch',
+      gmail: 'google',
+      googlecalendar: 'google',
+      youtube: 'google',
+      github: 'github',
+      slack: 'slack',
+      notion: 'notion',
+      spotify: 'spotify',
+      twitch: 'twitch',
     };
 
     const connectedProviders = new Set<string>();
@@ -593,23 +593,26 @@ const Dashboard: React.FC = () => {
                     // Map service names to OAuth provider names
                     // Gmail, Calendar, YouTube all use "google" OAuth
                     const serviceToProviderMap: Record<string, string> = {
-                      'gmail': 'google',
-                      'googlecalendar': 'google',  // normalized from google_calendar
-                      'youtube': 'google',
-                      'github': 'github',
-                      'slack': 'slack',
-                      'notion': 'notion',
-                      'spotify': 'spotify',
-                      'twitch': 'twitch',
+                      gmail: 'google',
+                      googlecalendar: 'google', // normalized from google_calendar
+                      youtube: 'google',
+                      github: 'github',
+                      slack: 'slack',
+                      notion: 'notion',
+                      spotify: 'spotify',
+                      twitch: 'twitch',
                     };
 
                     // Get the OAuth provider name for this service
-                    const oauthProvider = serviceToProviderMap[normalizedServiceName] || normalizedServiceName;
+                    const oauthProvider =
+                      serviceToProviderMap[normalizedServiceName] || normalizedServiceName;
 
                     // Check if service is in connectedServices
-                    const isConnected = connectedServices?.some(
-                      (c) => normalizeServiceName(c.service_name) === oauthProvider && !c.is_expired
-                    ) ?? false;
+                    const isConnected =
+                      connectedServices?.some(
+                        (c) =>
+                          normalizeServiceName(c.service_name) === oauthProvider && !c.is_expired
+                      ) ?? false;
 
                     // Service is active if it's internal OR user is connected to it
                     const isActive = isInternalService || isConnected;
