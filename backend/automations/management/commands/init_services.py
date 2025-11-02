@@ -636,25 +636,6 @@ class Command(BaseCommand):
                 ],
             },
             {
-                "name": "webhook",
-                "description": "HTTP webhook integration for custom integrations",
-                "status": Service.Status.ACTIVE,
-                "actions": [
-                    {
-                        "name": "webhook_trigger",
-                        "description": (
-                            "Triggered when a webhook receives an HTTP request"
-                        ),
-                    },
-                ],
-                "reactions": [
-                    {
-                        "name": "webhook_post",
-                        "description": "Send an HTTP POST request to a specified URL",
-                    },
-                ],
-            },
-            {
                 "name": "weather",
                 "description": "Weather data and alerts integration",
                 "status": Service.Status.ACTIVE,
