@@ -75,12 +75,12 @@ urlpatterns = [
     path("about.json", views.about_json_view, name="about"),
     # Logo proxy endpoint
     path("logos/<str:service>/", views.logo_proxy_view, name="logo-proxy"),
-    # Webhook receiver endpoint
-    path("webhooks/<str:service>/", webhook_receiver, name="webhook-receiver"),
-    # Google webhook endpoints (push notifications)
+    # Google webhook endpoints (push notifications) - MUST be before generic webhook
     path("webhooks/gmail/", gmail_webhook, name="gmail-webhook"),
     path("webhooks/calendar/", calendar_webhook, name="calendar-webhook"),
     path("webhooks/youtube/", youtube_webhook, name="youtube-webhook"),
+    # Webhook receiver endpoint (generic, catches all other services)
+    path("webhooks/<str:service>/", webhook_receiver, name="webhook-receiver"),
     # GitHub App endpoints
     path(
         "api/github-app/status/",
