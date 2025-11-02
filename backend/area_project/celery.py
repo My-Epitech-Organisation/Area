@@ -59,6 +59,10 @@ def get_beat_schedule():
             "task": "automations.check_gmail_actions",
             "schedule": 180.0,  # Every 3 minutes (no webhook support yet)
         },
+        "check-google-calendar-actions": {
+            "task": "automations.check_google_calendar_actions",
+            "schedule": 180.0,  # Every 3 minutes (no webhook support)
+        },
         "check-youtube-actions": {
             "task": "automations.check_youtube_actions",
             "schedule": 300.0,  # Every 5 minutes (polling + webhook support)
