@@ -304,14 +304,10 @@ full_update() {
     echo -e "${BLUE}Recent changes:${NC}"
     git log -3 --oneline
 
-    # Rebuild with no-cache for frontend and backend to ensure all code changes are applied
-    echo -e "${YELLOW}Rebuilding containers (no-cache for frontend and backend)...${NC}"
-    echo -e "${BLUE}→ Building client_web (React/Vite with VITE_API_BASE=${VITE_API_BASE})...${NC}"
-    docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache client_web
-    echo -e "${BLUE}→ Building server (Django)...${NC}"
-    docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache server
-    echo -e "${BLUE}→ Building worker and beat...${NC}"
-    docker-compose -f docker-compose.yml -f docker-compose.prod.yml build worker beat
+    # Rebuild all containers with no-cache to ensure all code changes are applied
+    echo -e "${YELLOW}Rebuilding all containers (no-cache)...${NC}"
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache
+    echo -e "${GREEN}Rebuild complete${NC}"
 
     # Stop services
     echo -e "${YELLOW}Stopping services...${NC}"
