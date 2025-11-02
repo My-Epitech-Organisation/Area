@@ -148,7 +148,7 @@ def get_beat_schedule():
             "schedule": 300.0,  # Every 5 minutes
         }
         print("✅ [CELERY BEAT] Notion polling enabled (every 5 minutes)")
-        
+
         # Google services: Webhooks active
         print("✅ [CELERY BEAT] Google Calendar webhooks active, polling disabled")
         print("✅ [CELERY BEAT] YouTube webhooks active, polling disabled")
