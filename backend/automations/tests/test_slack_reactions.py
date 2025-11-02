@@ -132,7 +132,9 @@ class SlackReactionTests(TestCase):
 
     @patch("users.oauth.manager.OAuthManager.get_valid_token")
     @patch("automations.helpers.slack_helper.post_message")
-    def test_slack_send_message_default_message(self, mock_post_message, mock_get_token):
+    def test_slack_send_message_default_message(
+        self, mock_post_message, mock_get_token
+    ):
         """Test slack_send_message uses default message when not provided."""
         mock_get_token.return_value = "test_token"
         mock_post_message.return_value = {"ts": "1234567890.123456"}
