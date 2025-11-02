@@ -3963,7 +3963,7 @@ def check_youtube_actions(self):
 
                     from django.utils import timezone
 
-                    action_state = get_or_create_action_state(area)
+                    action_state, _ = ActionState.objects.get_or_create(area=area)
                     published_after = None
 
                     if action_state.last_checked_at:
@@ -4084,7 +4084,7 @@ def check_youtube_actions(self):
                     
                     from django.utils import timezone
 
-                    action_state = get_or_create_action_state(area)
+                    action_state, _ = ActionState.objects.get_or_create(area=area)
                     published_after = None
                     
                     if action_state.last_checked_at:
