@@ -533,6 +533,7 @@ class AboutServiceSerializer(serializers.ModelSerializer):
         service_oauth_map = {
             "gmail": "google",
             "google_calendar": "google",
+            "youtube": "google",
         }
 
         mapped_oauth = service_oauth_map.get(obj.name)
