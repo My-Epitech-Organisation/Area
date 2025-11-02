@@ -314,7 +314,7 @@ const Debug: React.FC = () => {
                     </button>
                   ) : (
                     <div className="text-sm text-gray-400 italic">
-                      Triggered by external events (webhooks)
+                      Triggered by external events
                     </div>
                   )}
                 </div>
