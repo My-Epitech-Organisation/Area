@@ -59,14 +59,16 @@ def get_beat_schedule():
             "task": "automations.check_gmail_actions",
             "schedule": 180.0,  # Every 3 minutes (polling fallback)
         },
-        "check-google-calendar-actions": {
-            "task": "automations.check_google_calendar_actions",
-            "schedule": 180.0,  # Every 3 minutes (polling fallback)
-        },
-        "check-youtube-actions": {
-            "task": "automations.check_youtube_actions",
-            "schedule": 300.0,  # Every 5 minutes (polling fallback)
-        },
+        # Google Calendar: Webhooks enabled, polling disabled
+        # "check-google-calendar-actions": {
+        #     "task": "automations.check_google_calendar_actions",
+        #     "schedule": 180.0,  # Every 3 minutes (polling fallback)
+        # },
+        # YouTube: Webhooks enabled, polling disabled
+        # "check-youtube-actions": {
+        #     "task": "automations.check_youtube_actions",
+        #     "schedule": 300.0,  # Every 5 minutes (polling fallback)
+        # },
         "check-weather-actions": {
             "task": "automations.check_weather_actions",
             "schedule": 300.0,  # Every 5 minutes (no webhook support)
