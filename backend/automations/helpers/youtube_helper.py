@@ -8,6 +8,7 @@
 """YouTube Data API v3 helper functions for actions and reactions."""
 
 import logging
+import xml.etree.ElementTree as ET
 from typing import Dict, List, Optional
 
 from google.oauth2.credentials import Credentials
@@ -363,26 +364,89 @@ def rate_video(access_token: str, video_id: str, rating: str) -> bool:
         raise
 
 
-def parse_atom_feed_entry(feed_entry: Dict) -> Dict:
+def parse_atom_feed_entry(xml_string: str) -> Optional[Dict]:
     """
-    Parse YouTube PubSubHubbub Atom feed entry into structured data.
+    Parse YouTube PubSubHubbub Atom feed XML into structured data.
 
     Args:
-        feed_entry: Parsed Atom feed entry dict
+        xml_string: Raw XML string from YouTube PubSubHubbub notification
 
     Returns:
-        Dict with video details (video_id, title, channel_id, published_at)
+        Dict with video details (video_id, title, channel_id, published_at, etc.)
+        None if parsing fails
     """
-    # Extract data from feed entry
-    video_data = {
-        "video_id": feed_entry.get("yt:videoId", ""),
-        "title": feed_entry.get("title", ""),
-        "channel_id": feed_entry.get("yt:channelId", ""),
-        "channel_title": feed_entry.get("author", {}).get("name", ""),
-        "published_at": feed_entry.get("published", ""),
-        "updated_at": feed_entry.get("updated", ""),
-        "link": feed_entry.get("link", {}).get("@href", ""),
-    }
+    try:
+        
+        # Parse XML
+        root = ET.fromstring(xml_string)
+        
+        # Atom namespace
+        ns = {
+            'atom': 'http://www.w3.org/2005/Atom',
+            'yt': 'http://www.youtube.com/xml/schemas/2015'
+        }
+        
+        # Find entry element
+        entry = root.find('atom:entry', ns)
+        if entry is None:
+            logger.warning("No entry element found in Atom feed")
+            return None
+        
+        # Extract video ID
+        video_id_elem = entry.find('yt:videoId', ns)
+        video_id = video_id_elem.text if video_id_elem is not None else ""
+        
+        # Extract title
+        title_elem = entry.find('atom:title', ns)
+        title = title_elem.text if title_elem is not None else ""
+        
+        # Extract channel ID
+        channel_id_elem = entry.find('yt:channelId', ns)
+        channel_id = channel_id_elem.text if channel_id_elem is not None else ""
+        
+        # Extract author/channel name
+        author_elem = entry.find('atom:author/atom:name', ns)
+        channel_title = author_elem.text if author_elem is not None else ""
+        
+        # Extract published date
+        published_elem = entry.find('atom:published', ns)
+        published_at = published_elem.text if published_elem is not None else ""
+        
+        # Extract updated date
+        updated_elem = entry.find('atom:updated', ns)
+        updated_at = updated_elem.text if updated_elem is not None else ""
+        
+        # Extract link
+        link_elem = entry.find('atom:link[@rel="alternate"]', ns)
+        link = link_elem.get('href', '') if link_elem is not None else ""
+        
+        # Extract thumbnail (media:group/media:thumbnail)
+        thumbnail_url = ""
+        try:
+            media_ns = {'media': 'http://search.yahoo.com/mrss/'}
+            thumbnail_elem = entry.find('.//media:thumbnail', media_ns)
+            if thumbnail_elem is not None:
+                thumbnail_url = thumbnail_elem.get('url', '')
+        except:
+            pass
+        
+        video_data = {
+            "video_id": video_id,
+            "title": title,
+            "channel_id": channel_id,
+            "channel_title": channel_title,
+            "published_at": published_at,
+            "updated_at": updated_at,
+            "link": link,
+            "thumbnail_url": thumbnail_url,
+        }
 
-    logger.debug(f"Parsed Atom feed entry: {video_data}")
-    return video_data
+        logger.debug(f"Parsed Atom feed entry: video_id={video_id}, title={title}")
+        return video_data
+        
+    except ET.ParseError as e:
+        logger.error(f"Failed to parse Atom feed XML: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error parsing Atom feed: {e}", exc_info=True)
+        return None
