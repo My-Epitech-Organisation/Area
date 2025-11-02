@@ -250,9 +250,7 @@ class OAuthCallbackView(APIView):
 
                     # Trigger async task to create Gmail/Calendar watches
                     setup_google_watches_for_user.delay(user.id)
-                    logger.info(
-                        f"Triggered Google webhook setup for user {user.email}"
-                    )
+                    logger.info(f"Triggered Google webhook setup for user {user.email}")
                 except Exception as e:
                     # Don't fail the OAuth flow if watch setup fails
                     logger.error(
