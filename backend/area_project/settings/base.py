@@ -213,6 +213,8 @@ OAUTH2_PROVIDERS = {
             "https://www.googleapis.com/auth/gmail.modify",
             "https://www.googleapis.com/auth/calendar.readonly",
             "https://www.googleapis.com/auth/calendar.events",
+            "https://www.googleapis.com/auth/youtube.readonly",
+            "https://www.googleapis.com/auth/youtube.force-ssl",
         ],
         "requires_refresh": True,
     },
