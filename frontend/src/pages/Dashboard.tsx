@@ -603,9 +603,25 @@ const Dashboard: React.FC = () => {
                     const internalServices = new Set(['timer', 'debug', 'weather', 'webhook', 'email']);
                     const isInternalService = internalServices.has(normalizedServiceName);
 
+                    // Map service names to OAuth provider names
+                    // Gmail, Calendar, YouTube all use "google" OAuth
+                    const serviceToProviderMap: Record<string, string> = {
+                      'gmail': 'google',
+                      'calendar': 'google',
+                      'youtube': 'google',
+                      'github': 'github',
+                      'slack': 'slack',
+                      'notion': 'notion',
+                      'spotify': 'spotify',
+                      'twitch': 'twitch',
+                    };
+
+                    // Get the OAuth provider name for this service
+                    const oauthProvider = serviceToProviderMap[normalizedServiceName] || normalizedServiceName;
+
                     // Check if service is in connectedServices
                     const isConnected = connectedServices?.some(
-                      (c) => normalizeServiceName(c.service_name) === normalizedServiceName && !c.is_expired
+                      (c) => normalizeServiceName(c.service_name) === oauthProvider && !c.is_expired
                     ) ?? false;
 
                     // Service is active if it's internal OR user is connected to it
