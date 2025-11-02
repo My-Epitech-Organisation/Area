@@ -938,6 +938,7 @@ REACTION_SCHEMAS = {
             "video_id": {
                 "type": "string",
                 "minLength": 1,
+                "default": "{video_id}",
                 "description": "YouTube video ID (automatically provided by trigger or enter manually)",
             },
             "comment_text": {
@@ -947,7 +948,7 @@ REACTION_SCHEMAS = {
                 "description": "Comment text (supports variables: {video_title}, {channel_name})",
             },
         },
-        "required": ["video_id", "comment_text"],
+        "required": ["comment_text"],
         "additionalProperties": False,
     },
     "youtube_add_to_playlist": {
@@ -956,6 +957,7 @@ REACTION_SCHEMAS = {
             "video_id": {
                 "type": "string",
                 "minLength": 1,
+                "default": "{video_id}",
                 "description": "YouTube video ID (automatically provided by trigger or enter manually)",
             },
             "playlist_id": {
@@ -964,7 +966,7 @@ REACTION_SCHEMAS = {
                 "description": "ID of the playlist to add video to",
             },
         },
-        "required": ["video_id", "playlist_id"],
+        "required": ["playlist_id"],
         "additionalProperties": False,
     },
     "youtube_rate_video": {
@@ -973,15 +975,17 @@ REACTION_SCHEMAS = {
             "video_id": {
                 "type": "string",
                 "minLength": 1,
+                "default": "{video_id}",
                 "description": "YouTube video ID (automatically provided by trigger or enter manually)",
             },
             "rating": {
                 "type": "string",
                 "enum": ["like", "dislike", "none"],
+                "default": "like",
                 "description": "Like, dislike, or remove rating",
             },
         },
-        "required": ["video_id", "rating"],
+        "required": [],
         "additionalProperties": False,
     },
 }
