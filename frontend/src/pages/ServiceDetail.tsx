@@ -6,6 +6,7 @@ import { useAuthCheck } from '../hooks/useAuthCheck';
 import Notification from '../components/Notification';
 import GitHubAppSection from '../components/GitHubAppSection';
 import NotionWebhookSection from '../components/NotionWebhookSection';
+import GoogleWebhookBanner from '../components/GoogleWebhookBanner';
 import { API_BASE, getStoredUser } from '../utils/helper';
 import type { User } from '../types';
 
@@ -336,6 +337,12 @@ const ServiceDetail: React.FC = () => {
               {/* Notion Webhook Section - Show only for Notion service */}
               {service.name.toLowerCase() === 'notion' && (
                 <NotionWebhookSection isOAuthConnected={isConnected} />
+              )}
+
+              {/* Google Webhook Banner - Show for Calendar and YouTube services */}
+              {(service.name.toLowerCase() === 'google_calendar' ||
+                service.name.toLowerCase() === 'youtube') && (
+                <GoogleWebhookBanner serviceName={service.name} isOAuthConnected={isConnected} />
               )}
 
               <div className="mt-8 grid gap-8 md:grid-cols-2">
