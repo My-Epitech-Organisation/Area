@@ -20,11 +20,11 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 
-from django.conf import settings
-from django.utils import timezone
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -156,9 +156,7 @@ def create_calendar_watch(access_token, calendar_id, webhook_url, expiration_hou
 
         # Create the watch
         response = (
-            service.events()
-            .watch(calendarId=calendar_id, body=request_body)
-            .execute()
+            service.events().watch(calendarId=calendar_id, body=request_body).execute()
         )
 
         # Extract watch info
@@ -238,7 +236,9 @@ def create_youtube_watch(channel_id, webhook_url):
         hub_url = "https://pubsubhubbub.appspot.com/subscribe"
 
         # Topic URL (channel feed)
-        topic_url = f"https://www.youtube.com/xml/feeds/videos.xml?channel_id={channel_id}"
+        topic_url = (
+            f"https://www.youtube.com/xml/feeds/videos.xml?channel_id={channel_id}"
+        )
 
         # Subscribe request
         data = {
