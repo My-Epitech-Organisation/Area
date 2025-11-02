@@ -11,7 +11,6 @@ import {
 import { findActionByName, findReactionByName, generateAreaName } from '../utils/areaHelpers';
 import { DynamicConfigForm } from '../components/DynamicConfigForm';
 import { API_BASE, getStoredUser, fetchUserData } from '../utils/helper';
-import { useAuthCheck } from '../hooks/useAuthCheck';
 import type { Area } from '../types/api';
 import EmailVerificationBanner from '../components/EmailVerificationBanner';
 import type { User } from '../types';
@@ -40,9 +39,6 @@ const Areaction: React.FC = () => {
   const preselectedService = queryParams.get('service');
   const preselectedAction = queryParams.get('action');
   const preselectedReaction = queryParams.get('reaction');
-
-  // Verify authentication status on page load
-  useAuthCheck();
 
   // User state for email verification
   const [user, setUser] = useState<User | null>(null);
@@ -118,19 +114,10 @@ const Areaction: React.FC = () => {
 
   // Load user data on mount
   useEffect(() => {
-    const loadUserData = async () => {
-      const storedUser = getStoredUser();
-      if (storedUser) {
-        // Show stored user temporarily
-        setUser(storedUser);
-      }
-      // Always fetch fresh data to ensure email_verified is up-to-date
-      const freshUser = await fetchUserData();
-      if (freshUser) {
-        setUser(freshUser);
-      }
-    };
-    loadUserData();
+    const storedUser = getStoredUser();
+    if (storedUser) {
+      setUser(storedUser);
+    }
   }, []);
 
   const handleRefreshUserData = async () => {

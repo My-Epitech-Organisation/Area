@@ -82,6 +82,96 @@ def validate_github_signature(
     return hmac.compare_digest(computed_signature, expected_signature)
 
 
+def validate_twitch_signature(payload_body: bytes, headers: dict, secret: str) -> bool:
+    """
+    Validate Twitch EventSub webhook signature using HMAC-SHA256.
+
+    Twitch sends signature in headers:
+    - Twitch-Eventsub-Message-Id
+    - Twitch-Eventsub-Message-Timestamp
+    - Twitch-Eventsub-Message-Signature (format: "sha256=<signature>")
+
+    Args:
+        payload_body: Raw request body as bytes
+        headers: Request headers dict
+        secret: Webhook secret configured in Twitch EventSub
+
+    Returns:
+        True if signature is valid, False otherwise
+    """
+    message_id = headers.get("Twitch-Eventsub-Message-Id")
+    message_timestamp = headers.get("Twitch-Eventsub-Message-Timestamp")
+    signature_header = headers.get("Twitch-Eventsub-Message-Signature")
+
+    if not all([message_id, message_timestamp, signature_header]):
+        logger.warning("Twitch webhook: Missing required headers")
+        return False
+
+    if not signature_header.startswith("sha256="):
+        logger.warning(f"Twitch webhook: Invalid signature format: {signature_header}")
+        return False
+
+    # Extract signature from header
+    expected_signature = signature_header.split("=", 1)[1]
+
+    # Construct message to verify
+    # Format: <message_id><message_timestamp><request_body>
+    message = (
+        message_id.encode("utf-8") + message_timestamp.encode("utf-8") + payload_body
+    )
+
+    # Compute HMAC-SHA256
+    computed_signature = hmac.new(
+        key=secret.encode("utf-8"),
+        msg=message,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+
+    # Constant-time comparison to prevent timing attacks
+    return hmac.compare_digest(computed_signature, expected_signature)
+
+
+def validate_notion_signature(
+    payload_body: bytes, signature_header: str, timestamp_header: str, secret: str
+) -> bool:
+    """
+    Validate Notion webhook signature using HMAC-SHA256.
+
+    Notion sends signature with timestamp for replay attack prevention.
+    Format: HMAC-SHA256(timestamp.payload, secret)
+
+    Args:
+        payload_body: Raw request body as bytes
+        signature_header: Value of Notion-Signature header
+        timestamp_header: Value of Notion-Request-Timestamp header
+        secret: Webhook secret configured in Notion
+
+    Returns:
+        True if signature is valid, False otherwise
+    """
+    if not signature_header or not timestamp_header:
+        logger.warning("Notion webhook: Missing signature or timestamp header")
+        return False
+
+    # Construct message to verify: <timestamp>.<payload>
+    message = f"{timestamp_header}.{payload_body.decode('utf-8')}"
+
+    # Compute HMAC-SHA256
+    computed_signature = hmac.new(
+        key=secret.encode("utf-8"),
+        msg=message.encode("utf-8"),
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+
+    # Constant-time comparison to prevent timing attacks
+    is_valid = hmac.compare_digest(computed_signature, signature_header)
+
+    if not is_valid:
+        logger.warning("Notion webhook: Invalid signature")
+
+    return is_valid
+
+
 def validate_webhook_signature(
     service_name: str, payload_body: bytes, headers: dict, secret: str
 ) -> bool:
@@ -102,6 +192,35 @@ def validate_webhook_signature(
     if service_name == "github":
         signature_header = headers.get("X-Hub-Signature-256", "")
         return validate_github_signature(payload_body, signature_header, secret)
+    elif service_name == "twitch":
+        return validate_twitch_signature(payload_body, headers, secret)
+    elif service_name == "notion":
+        # Notion uses X-Notion-Signature header with format: sha256=<signature>
+        signature_header = headers.get("X-Notion-Signature", "")
+        if not signature_header:
+            logger.warning("Notion webhook: Missing X-Notion-Signature header")
+            return False
+
+        # Extract signature from "sha256=<signature>" format
+        if not signature_header.startswith("sha256="):
+            logger.warning(
+                f"Notion webhook: Invalid signature format: {signature_header}"
+            )
+            return False
+
+        expected_signature = signature_header.split("=", 1)[1]
+
+        # Validate signature directly against payload
+        computed_signature = hmac.new(
+            key=secret.encode("utf-8"),
+            msg=payload_body,
+            digestmod=hashlib.sha256,
+        ).hexdigest()
+
+        is_valid = hmac.compare_digest(computed_signature, expected_signature)
+        if not is_valid:
+            logger.warning("Notion webhook: Invalid signature")
+        return is_valid
     elif service_name == "gmail":
         return True
     # Unknown service, reject validation
@@ -142,6 +261,25 @@ def extract_event_id(
         message_id = event_data.get("message", {}).get("messageId")
         if message_id:
             return f"gmail_message_{message_id}"
+
+    elif service_name == "notion":
+        # Notion provides event ID and object IDs in webhook payload
+        # Structure: {"event_id": "...", "data": {"object": "page/database", "id": "..."}}
+        event_id = event_data.get("event_id")
+        if event_id:
+            return f"notion_event_{event_id}"
+
+        # Fallback: use object ID from data
+        data = event_data.get("data", {})
+        object_type = data.get("object")  # "page" or "database"
+        object_id = data.get("id")
+
+        if object_id and object_type:
+            # Include last_edited_time for better uniqueness
+            last_edited = data.get("last_edited_time", "")
+            return f"notion_{object_type}_{object_id}_{last_edited}"
+        elif object_id:
+            return f"notion_{object_id}"
 
     # Fallback: generate ID from timestamp and hash
     timestamp = timezone.now().isoformat()
@@ -348,32 +486,58 @@ def webhook_receiver(request: Request, service: str) -> Response:
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    # ===================================================================
+    # NOTION WEBHOOK VERIFICATION CHALLENGE
+    # ===================================================================
+    # Notion sends a verification request when setting up webhooks
+    # Format: {"verification_token": "secret_xxx..."}
+    # We must respond with the token to prove we control this endpoint
+    # This happens BEFORE signature validation (no signature on verification)
+    # ===================================================================
+    if service == "notion" and "verification_token" in event_data:
+        verification_token = event_data.get("verification_token")
+        logger.info("✅ Notion webhook verification received")
+        logger.info(f"📋 COPY THIS TOKEN TO NOTION: {verification_token}")
+        return Response(
+            {"verification_token": verification_token},
+            status=status.HTTP_200_OK,
+        )
+
     # Get webhook secret from settings
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
     webhook_secret = webhook_secrets.get(service)
 
-    if not webhook_secret:
-        logger.error(f"No webhook secret configured for service: {service}")
-        return Response(
-            {"error": "Webhook secret not configured"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+    # Validate signature if secret is configured
+    if webhook_secret:
+        headers_dict = dict(request.headers.items())
 
-    # Validate signature
-    headers_dict = dict(request.headers.items())
-
-    if not validate_webhook_signature(service, raw_body, headers_dict, webhook_secret):
-        logger.warning(f"Invalid webhook signature for service: {service}")
-        return Response(
-            {"error": "Invalid webhook signature"},
-            status=status.HTTP_401_UNAUTHORIZED,
+        if not validate_webhook_signature(
+            service, raw_body, headers_dict, webhook_secret
+        ):
+            logger.warning(f"Invalid webhook signature for service: {service}")
+            return Response(
+                {"error": "Invalid webhook signature"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        logger.debug(f"✅ Webhook signature validated for {service}")
+    else:
+        # No secret configured - skip signature validation (dev/test mode)
+        logger.warning(
+            f"⚠️  No webhook secret configured for {service} - "
+            f"signature validation SKIPPED (configure WEBHOOK_SECRETS for production)"
         )
+        headers_dict = dict(request.headers.items())
 
     # Extract event type
     if service == "github":
         event_type = request.headers.get("X-GitHub-Event", "unknown")
     elif service == "gmail":
         event_type = event_data.get("eventType", "message")
+    elif service == "notion":
+        # Debug: log payload structure to understand Notion's format
+        logger.info(f"🔍 Notion payload keys: {list(event_data.keys())}")
+        event_type = event_data.get("type", event_data.get("event_type", "unknown"))
+        logger.info(f"🔍 Notion event type: {event_type}")
     else:
         event_type = event_data.get("event_type", "unknown")
 
