@@ -354,8 +354,12 @@ except json.JSONDecodeError as e:
 # =============================================================================
 # Configuration for Gmail, Calendar, and YouTube webhooks
 GMAIL_WEBHOOK_ENABLED = os.getenv("GMAIL_WEBHOOK_ENABLED", "false").lower() == "true"
-CALENDAR_WEBHOOK_ENABLED = os.getenv("CALENDAR_WEBHOOK_ENABLED", "false").lower() == "true"
-YOUTUBE_WEBHOOK_ENABLED = os.getenv("YOUTUBE_WEBHOOK_ENABLED", "false").lower() == "true"
+CALENDAR_WEBHOOK_ENABLED = (
+    os.getenv("CALENDAR_WEBHOOK_ENABLED", "false").lower() == "true"
+)
+YOUTUBE_WEBHOOK_ENABLED = (
+    os.getenv("YOUTUBE_WEBHOOK_ENABLED", "false").lower() == "true"
+)
 
 # Webhook URLs (must be set in environment variables)
 GMAIL_WEBHOOK_URL = os.getenv("GMAIL_WEBHOOK_URL", "")
@@ -363,7 +367,9 @@ CALENDAR_WEBHOOK_URL = os.getenv("CALENDAR_WEBHOOK_URL", "")
 YOUTUBE_WEBHOOK_URL = os.getenv("YOUTUBE_WEBHOOK_URL", "")
 
 # Watch renewal interval (in seconds) - default 6 days
-GOOGLE_WATCH_RENEWAL_INTERVAL = int(os.getenv("GOOGLE_WATCH_RENEWAL_INTERVAL", "518400"))
+GOOGLE_WATCH_RENEWAL_INTERVAL = int(
+    os.getenv("GOOGLE_WATCH_RENEWAL_INTERVAL", "518400")
+)
 
 # Security Settings (base - extended per environment)
 SECURE_BROWSER_XSS_FILTER = True
