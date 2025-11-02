@@ -57,19 +57,28 @@ def get_beat_schedule():
         },
         "check-gmail-actions": {
             "task": "automations.check_gmail_actions",
-            "schedule": 180.0,  # Every 3 minutes (no webhook support yet)
+            "schedule": 180.0,  # Every 3 minutes (polling fallback)
         },
         "check-google-calendar-actions": {
             "task": "automations.check_google_calendar_actions",
-            "schedule": 180.0,  # Every 3 minutes (no webhook support)
+            "schedule": 180.0,  # Every 3 minutes (polling fallback)
         },
         "check-youtube-actions": {
             "task": "automations.check_youtube_actions",
-            "schedule": 300.0,  # Every 5 minutes (polling + webhook support)
+            "schedule": 300.0,  # Every 5 minutes (polling fallback)
         },
         "check-weather-actions": {
             "task": "automations.check_weather_actions",
             "schedule": 300.0,  # Every 5 minutes (no webhook support)
+        },
+        # Google Push Notification (Watch) Management
+        "renew-google-watches": {
+            "task": "automations.renew_google_watches",
+            "schedule": 3600.0,  # Every hour - auto-renew expiring watches
+        },
+        "setup-youtube-watches": {
+            "task": "automations.setup_youtube_watches",
+            "schedule": 7200.0,  # Every 2 hours - ensure YouTube subscriptions active
         },
         "collect-execution-metrics": {
             "task": "automations.collect_execution_metrics",

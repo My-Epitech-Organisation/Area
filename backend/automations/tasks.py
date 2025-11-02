@@ -4081,12 +4081,12 @@ def check_youtube_actions(self):
 
                     # Get published_after from last check or 24 hours ago
                     from datetime import timedelta
-                    
+
                     from django.utils import timezone
 
                     action_state, _ = ActionState.objects.get_or_create(area=area)
                     published_after = None
-                    
+
                     if action_state.last_checked_at:
                         # Check videos published after last check
                         published_after = action_state.last_checked_at.isoformat()
@@ -4103,7 +4103,7 @@ def check_youtube_actions(self):
                         channel_id=channel_id,
                         published_after=published_after,
                     )
-                    
+
                     # Update last checked time
                     action_state.last_checked_at = timezone.now()
                     action_state.save()
@@ -4218,3 +4218,345 @@ def test_execution_flow(area_id: int):
     except Exception as e:
         logger.error(f"Error in test_execution_flow: {e}", exc_info=True)
         return {"status": "error", "message": str(e)}
+
+
+# ============================================================================
+# GOOGLE WEBHOOK (PUSH NOTIFICATION) MANAGEMENT
+# ============================================================================
+
+
+@shared_task(
+    name="automations.setup_google_watches_for_user",
+    bind=True,
+    max_retries=3,
+    autoretry_for=RECOVERABLE_EXCEPTIONS,
+)
+def setup_google_watches_for_user(self, user_id):
+    """
+    Set up Google push notification watches for a user.
+
+    This task is called after a user connects their Google account.
+    It creates watches for Gmail and Calendar to receive real-time notifications.
+
+    Args:
+        user_id: User ID to set up watches for
+
+    Returns:
+        dict: Summary of created watches
+    """
+    from django.conf import settings
+    from django.contrib.auth import get_user_model
+
+    from users.oauth.manager import OAuthManager
+
+    from .helpers.google_webhook_helper import (
+        create_calendar_watch,
+        create_gmail_watch,
+    )
+    from .models import GoogleWebhookWatch
+
+    User = get_user_model()
+
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        logger.error(f"User #{user_id} not found")
+        return {"status": "error", "message": "User not found"}
+
+    logger.info(f"Setting up Google watches for user {user.username}")
+
+    # Get valid Google OAuth token
+    access_token = OAuthManager.get_valid_token(user, "google")
+
+    if not access_token:
+        logger.warning(f"No valid Google token for user {user.username}")
+        return {"status": "no_token", "user": user.username}
+
+    results = {"user": user.username, "watches_created": []}
+
+    # Check if webhooks are enabled
+    gmail_webhook_enabled = getattr(settings, "GMAIL_WEBHOOK_ENABLED", False)
+    calendar_webhook_enabled = getattr(settings, "CALENDAR_WEBHOOK_ENABLED", False)
+
+    # Create Gmail watch
+    if gmail_webhook_enabled:
+        gmail_webhook_url = getattr(
+            settings, "GMAIL_WEBHOOK_URL", f"{settings.BACKEND_URL}/api/webhooks/gmail/"
+        )
+
+        # Check if watch already exists
+        existing_gmail = GoogleWebhookWatch.objects.filter(
+            user=user, service=GoogleWebhookWatch.Service.GMAIL
+        ).first()
+
+        if not existing_gmail or existing_gmail.is_expiring_soon(hours=48):
+            # Create new watch
+            watch_info = create_gmail_watch(access_token, gmail_webhook_url)
+
+            if watch_info:
+                # Save watch to database
+                watch, created = GoogleWebhookWatch.objects.update_or_create(
+                    user=user,
+                    service=GoogleWebhookWatch.Service.GMAIL,
+                    defaults={
+                        "channel_id": watch_info["channel_id"],
+                        "resource_id": watch_info["resource_id"],
+                        "expiration": watch_info["expiration"],
+                    },
+                )
+
+                results["watches_created"].append("gmail")
+                logger.info(
+                    f"Gmail watch created for {user.username}: {watch.channel_id}"
+                )
+
+    # Create Calendar watch
+    if calendar_webhook_enabled:
+        calendar_webhook_url = getattr(
+            settings,
+            "CALENDAR_WEBHOOK_URL",
+            f"{settings.BACKEND_URL}/api/webhooks/calendar/",
+        )
+
+        # Check if watch already exists
+        existing_calendar = GoogleWebhookWatch.objects.filter(
+            user=user, service=GoogleWebhookWatch.Service.CALENDAR
+        ).first()
+
+        if not existing_calendar or existing_calendar.is_expiring_soon(hours=48):
+            # Create new watch
+            watch_info = create_calendar_watch(
+                access_token, "primary", calendar_webhook_url
+            )
+
+            if watch_info:
+                # Save watch to database
+                watch, created = GoogleWebhookWatch.objects.update_or_create(
+                    user=user,
+                    service=GoogleWebhookWatch.Service.CALENDAR,
+                    resource_uri="primary",
+                    defaults={
+                        "channel_id": watch_info["channel_id"],
+                        "resource_id": watch_info["resource_id"],
+                        "expiration": watch_info["expiration"],
+                    },
+                )
+
+                results["watches_created"].append("calendar")
+                logger.info(
+                    f"Calendar watch created for {user.username}: {watch.channel_id}"
+                )
+
+    results["status"] = "success"
+    results["count"] = len(results["watches_created"])
+
+    return results
+
+
+@shared_task(
+    name="automations.renew_google_watches",
+    bind=True,
+    max_retries=3,
+    autoretry_for=RECOVERABLE_EXCEPTIONS,
+)
+def renew_google_watches(self):
+    """
+    Renew Google push notification watches that are expiring soon.
+
+    This task runs periodically (every hour) to check for watches
+    that expire within 24 hours and renews them automatically.
+
+    Returns:
+        dict: Summary of renewed watches
+    """
+    from django.utils import timezone
+
+    from users.oauth.manager import OAuthManager
+
+    from .helpers.google_webhook_helper import (
+        create_calendar_watch,
+        create_gmail_watch,
+    )
+    from .models import GoogleWebhookWatch
+
+    logger.info("Checking for expiring Google watches...")
+
+    # Find watches expiring in next 24 hours
+    expiring_threshold = timezone.now() + timezone.timedelta(hours=24)
+
+    expiring_watches = GoogleWebhookWatch.objects.filter(
+        expiration__lte=expiring_threshold
+    ).select_related("user")
+
+    if not expiring_watches:
+        logger.info("No Google watches expiring soon")
+        return {"status": "no_action", "count": 0}
+
+    renewed_count = 0
+    failed_count = 0
+
+    for watch in expiring_watches:
+        try:
+            logger.info(
+                f"Renewing {watch.service} watch for {watch.user.username} "
+                f"(expires {watch.expiration})"
+            )
+
+            # Get valid token
+            access_token = OAuthManager.get_valid_token(watch.user, "google")
+
+            if not access_token:
+                logger.warning(
+                    f"No valid token for {watch.user.username}, skipping renewal"
+                )
+                failed_count += 1
+                continue
+
+            # Renew based on service type
+            new_watch_info = None
+
+            if watch.service == GoogleWebhookWatch.Service.GMAIL:
+                from django.conf import settings
+
+                webhook_url = getattr(
+                    settings,
+                    "GMAIL_WEBHOOK_URL",
+                    f"{settings.BACKEND_URL}/api/webhooks/gmail/",
+                )
+                new_watch_info = create_gmail_watch(access_token, webhook_url)
+
+            elif watch.service == GoogleWebhookWatch.Service.CALENDAR:
+                from django.conf import settings
+
+                webhook_url = getattr(
+                    settings,
+                    "CALENDAR_WEBHOOK_URL",
+                    f"{settings.BACKEND_URL}/api/webhooks/calendar/",
+                )
+                calendar_id = watch.resource_uri or "primary"
+                new_watch_info = create_calendar_watch(
+                    access_token, calendar_id, webhook_url
+                )
+
+            if new_watch_info:
+                # Update watch in database
+                watch.channel_id = new_watch_info["channel_id"]
+                watch.resource_id = new_watch_info["resource_id"]
+                watch.expiration = new_watch_info["expiration"]
+                watch.save()
+
+                renewed_count += 1
+                logger.info(
+                    f"Renewed {watch.service} watch for {watch.user.username}"
+                )
+            else:
+                failed_count += 1
+                logger.error(
+                    f"Failed to renew {watch.service} watch for {watch.user.username}"
+                )
+
+        except Exception as e:
+            logger.error(
+                f"Error renewing watch for {watch.user.username}: {e}", exc_info=True
+            )
+            failed_count += 1
+
+    logger.info(
+        f"Google watch renewal complete: {renewed_count} renewed, {failed_count} failed"
+    )
+
+    return {
+        "status": "success",
+        "renewed": renewed_count,
+        "failed": failed_count,
+        "total": len(expiring_watches),
+    }
+
+
+@shared_task(
+    name="automations.setup_youtube_watches",
+    bind=True,
+    max_retries=3,
+    autoretry_for=RECOVERABLE_EXCEPTIONS,
+)
+def setup_youtube_watches(self):
+    """
+    Set up YouTube PubSubHubbub subscriptions for all active youtube_new_video areas.
+
+    YouTube uses PubSubHubbub instead of the watch API. Subscriptions expire
+    after 10 days and need to be renewed.
+
+    Returns:
+        dict: Summary of created subscriptions
+    """
+    from django.conf import settings
+
+    from .helpers.google_webhook_helper import create_youtube_watch
+    from .models import Area, GoogleWebhookWatch
+
+    logger.info("Setting up YouTube PubSubHubbub subscriptions...")
+
+    # Get all active youtube_new_video areas
+    youtube_areas = Area.objects.filter(
+        status=Area.Status.ACTIVE, action__name="youtube_new_video"
+    ).select_related("owner", "action")
+
+    if not youtube_areas:
+        logger.info("No active YouTube areas found")
+        return {"status": "no_areas", "count": 0}
+
+    youtube_webhook_url = getattr(
+        settings, "YOUTUBE_WEBHOOK_URL", f"{settings.BACKEND_URL}/api/webhooks/youtube/"
+    )
+
+    created_count = 0
+    skipped_count = 0
+
+    # Group by channel_id to avoid duplicate subscriptions
+    channels_by_id = {}
+    for area in youtube_areas:
+        channel_id = area.action_config.get("channel_id")
+        if channel_id:
+            if channel_id not in channels_by_id:
+                channels_by_id[channel_id] = []
+            channels_by_id[channel_id].append(area)
+
+    for channel_id, areas in channels_by_id.items():
+        # Check if subscription already exists and is not expiring
+        existing_watch = GoogleWebhookWatch.objects.filter(
+            service=GoogleWebhookWatch.Service.YOUTUBE, resource_uri=channel_id
+        ).first()
+
+        if existing_watch and not existing_watch.is_expiring_soon(hours=48):
+            logger.debug(f"YouTube subscription for channel {channel_id} already active")
+            skipped_count += 1
+            continue
+
+        # Create subscription
+        watch_info = create_youtube_watch(channel_id, youtube_webhook_url)
+
+        if watch_info:
+            # Use first area's owner for the watch (any user watching this channel)
+            user = areas[0].owner
+
+            # Save watch to database
+            watch, created = GoogleWebhookWatch.objects.update_or_create(
+                user=user,
+                service=GoogleWebhookWatch.Service.YOUTUBE,
+                resource_uri=channel_id,
+                defaults={
+                    "channel_id": channel_id,  # Use channel_id as unique identifier
+                    "resource_id": watch_info["resource_id"],
+                    "expiration": watch_info["expiration"],
+                },
+            )
+
+            created_count += 1
+            logger.info(f"YouTube subscription created for channel {channel_id}")
+
+    logger.info(
+        f"YouTube subscriptions setup complete: {created_count} created, "
+        f"{skipped_count} skipped"
+    )
+
+    return {"status": "success", "created": created_count, "skipped": skipped_count}

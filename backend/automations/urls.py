@@ -29,6 +29,9 @@ from django.urls import include, path
 from . import github_app_views, views
 from .webhooks import webhook_receiver
 
+# Import Google webhook views
+from .google_webhook_views import calendar_webhook, gmail_webhook, youtube_webhook
+
 # Create router and register viewsets
 router = DefaultRouter()
 router.register(r"services", views.ServiceViewSet, basename="service")
@@ -74,6 +77,10 @@ urlpatterns = [
     path("logos/<str:service>/", views.logo_proxy_view, name="logo-proxy"),
     # Webhook receiver endpoint
     path("webhooks/<str:service>/", webhook_receiver, name="webhook-receiver"),
+    # Google webhook endpoints (push notifications)
+    path("api/webhooks/gmail/", gmail_webhook, name="gmail-webhook"),
+    path("api/webhooks/calendar/", calendar_webhook, name="calendar-webhook"),
+    path("api/webhooks/youtube/", youtube_webhook, name="youtube-webhook"),
     # GitHub App endpoints
     path(
         "api/github-app/status/",
