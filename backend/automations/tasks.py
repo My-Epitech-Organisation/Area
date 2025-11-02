@@ -888,7 +888,10 @@ def check_google_calendar_actions(self):
                         )
 
                         # Only trigger for events created after last check
-                        if state.last_checked_at and created_dt <= state.last_checked_at:
+                        if (
+                            state.last_checked_at
+                            and created_dt <= state.last_checked_at
+                        ):
                             continue
 
                         # Create unique event ID
@@ -3976,7 +3979,10 @@ def check_youtube_actions(self):
 
                     # Fetch latest videos
                     videos = get_latest_videos(
-                        access_token, channel_id, max_results=5, published_after=published_after
+                        access_token,
+                        channel_id,
+                        max_results=5,
+                        published_after=published_after,
                     )
 
                     # Update last checked time
@@ -4027,7 +4033,9 @@ def check_youtube_actions(self):
                     stats = get_channel_statistics(access_token, channel_id)
 
                     if not stats:
-                        logger.warning(f"Could not fetch stats for channel {channel_id}")
+                        logger.warning(
+                            f"Could not fetch stats for channel {channel_id}"
+                        )
                         skipped_count += 1
                         continue
 
@@ -4450,9 +4458,7 @@ def renew_google_watches(self):
                 watch.save()
 
                 renewed_count += 1
-                logger.info(
-                    f"Renewed {watch.service} watch for {watch.user.username}"
-                )
+                logger.info(f"Renewed {watch.service} watch for {watch.user.username}")
             else:
                 failed_count += 1
                 logger.error(
@@ -4533,7 +4539,9 @@ def setup_youtube_watches(self):
         ).first()
 
         if existing_watch and not existing_watch.is_expiring_soon(hours=48):
-            logger.debug(f"YouTube subscription for channel {channel_id} already active")
+            logger.debug(
+                f"YouTube subscription for channel {channel_id} already active"
+            )
             skipped_count += 1
             continue
 
