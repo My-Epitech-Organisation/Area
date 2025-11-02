@@ -8,6 +8,7 @@ Run with: python scripts/test_google_webhooks.py
 
 import os
 import sys
+
 import django
 
 # Setup Django environment
@@ -17,10 +18,11 @@ django.setup()
 
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from automations.models import GoogleWebhookWatch, Area
+
+from automations.models import Area, GoogleWebhookWatch
 from automations.tasks import (
-    setup_google_watches_for_user,
     renew_google_watches,
+    setup_google_watches_for_user,
     setup_youtube_watches,
 )
 
@@ -126,12 +128,12 @@ def test_helpers():
 
     try:
         from automations.helpers.google_webhook_helper import (
-            create_gmail_watch,
-            stop_gmail_watch,
             create_calendar_watch,
-            stop_calendar_watch,
+            create_gmail_watch,
             create_youtube_watch,
             renew_youtube_watch,
+            stop_calendar_watch,
+            stop_gmail_watch,
         )
 
         helpers = [
@@ -159,8 +161,8 @@ def test_views():
 
     try:
         from automations.google_webhook_views import (
-            gmail_webhook,
             calendar_webhook,
+            gmail_webhook,
             youtube_webhook,
         )
 
@@ -216,8 +218,10 @@ def show_active_watches():
     for watch in watches:
         expiring = watch.is_expiring_soon(hours=24)
         status = "⏰ EXPIRING SOON" if expiring else "✅ Active"
-        print(f"   {status} | {watch.user.username} | {watch.service} | "
-              f"expires {watch.expiration.strftime('%Y-%m-%d %H:%M')}")
+        print(
+            f"   {status} | {watch.user.username} | {watch.service} | "
+            f"expires {watch.expiration.strftime('%Y-%m-%d %H:%M')}"
+        )
 
 
 def show_youtube_areas():
@@ -281,7 +285,9 @@ def main():
         print("\n📝 Next steps:")
         print("   1. Deploy to production: ./deployment/manage.sh update")
         print("   2. Verify domain on Google Search Console (required for Gmail)")
-        print("   3. Test with real events (send email, create calendar event, upload video)")
+        print(
+            "   3. Test with real events (send email, create calendar event, upload video)"
+        )
         return 0
     else:
         print("❌ Some tests failed. Fix errors before deploying.")
