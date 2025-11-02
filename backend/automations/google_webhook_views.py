@@ -11,19 +11,13 @@ Google uses different notification mechanisms:
 - YouTube: PubSubHubbub with hub.challenge verification
 """
 
-import base64
 import json
 import logging
-from xml.etree import ElementTree as ET
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 
 from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
 
 from .helpers.calendar_helper import list_upcoming_events
 from .helpers.gmail_helper import get_history, get_message_details
@@ -249,7 +243,9 @@ def calendar_webhook(request):
         # Fetch recent calendar events
         try:
             calendar_id = watch.resource_uri or "primary"
-            events = list_upcoming_events(access_token, calendar_id=calendar_id, max_results=10)
+            events = list_upcoming_events(
+                access_token, calendar_id=calendar_id, max_results=10
+            )
 
             if not events:
                 logger.debug(f"No calendar events for user {watch.user.username}")
@@ -296,13 +292,19 @@ def calendar_webhook(request):
                                     "event_title": event.get("summary", ""),
                                     "event_description": event.get("description", ""),
                                     "event_location": event.get("location", ""),
-                                    "start_time": event.get("start", {}).get("dateTime", ""),
-                                    "end_time": event.get("end", {}).get("dateTime", ""),
+                                    "start_time": event.get("start", {}).get(
+                                        "dateTime", ""
+                                    ),
+                                    "end_time": event.get("end", {}).get(
+                                        "dateTime", ""
+                                    ),
                                     "attendees": [
                                         a.get("email", "")
                                         for a in event.get("attendees", [])
                                     ],
-                                    "organizer": event.get("organizer", {}).get("email", ""),
+                                    "organizer": event.get("organizer", {}).get(
+                                        "email", ""
+                                    ),
                                     "created": created_str,
                                 }
 
@@ -347,7 +349,7 @@ def youtube_webhook(request):
         # Hub verification
         challenge = request.GET.get("hub.challenge")
         if challenge:
-            logger.info(f"YouTube webhook verification: responding with challenge")
+            logger.info("YouTube webhook verification: responding with challenge")
             return HttpResponse(challenge, content_type="text/plain", status=200)
         return HttpResponse("OK", status=200)
 
@@ -363,9 +365,7 @@ def youtube_webhook(request):
         video_id = video_data["video_id"]
         channel_id = video_data["channel_id"]
 
-        logger.info(
-            f"YouTube webhook: new video {video_id} from channel {channel_id}"
-        )
+        logger.info(f"YouTube webhook: new video {video_id} from channel {channel_id}")
 
         # Find users watching this channel
         youtube_areas = Area.objects.filter(
@@ -428,7 +428,10 @@ def _gmail_message_matches_action(area, message_details):
         if from_email and from_email.lower() not in message_details["from"].lower():
             return False
 
-        if subject_contains and subject_contains.lower() not in message_details["subject"].lower():
+        if (
+            subject_contains
+            and subject_contains.lower() not in message_details["subject"].lower()
+        ):
             return False
 
         return True
