@@ -54,7 +54,7 @@ def get_latest_videos(
     """
     try:
         service = get_youtube_service(access_token)
-        
+
         # Build search parameters
         search_params = {
             "part": "id,snippet",
@@ -63,7 +63,7 @@ def get_latest_videos(
             "order": "date",
             "maxResults": min(max_results, 50),
         }
-        
+
         if published_after:
             search_params["publishedAfter"] = published_after
 
@@ -116,7 +116,7 @@ def get_channel_statistics(access_token: str, channel_id: str) -> Dict:
     """
     try:
         service = get_youtube_service(access_token)
-        
+
         results = (
             service.channels()
             .list(part="statistics", id=channel_id)
@@ -170,7 +170,7 @@ def search_videos(
     """
     try:
         service = get_youtube_service(access_token)
-        
+
         # Build search parameters
         search_params = {
             "part": "id,snippet",
@@ -179,7 +179,7 @@ def search_videos(
             "order": "relevance",
             "maxResults": min(max_results, 50),
         }
-        
+
         if channel_id:
             search_params["channelId"] = channel_id
         if published_after:
@@ -231,7 +231,7 @@ def post_comment(
     """
     try:
         service = get_youtube_service(access_token)
-        
+
         # Build comment resource
         comment_resource = {
             "snippet": {
@@ -288,7 +288,7 @@ def add_video_to_playlist(
     """
     try:
         service = get_youtube_service(access_token)
-        
+
         # Build playlist item resource
         playlist_item = {
             "snippet": {
@@ -348,7 +348,7 @@ def rate_video(access_token: str, video_id: str, rating: str) -> bool:
 
     try:
         service = get_youtube_service(access_token)
-        
+
         # Rate the video
         service.videos().rate(id=video_id, rating=rating).execute()
 
