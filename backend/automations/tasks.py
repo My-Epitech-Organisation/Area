@@ -3540,6 +3540,90 @@ def _execute_reaction_logic(
             logger.error(f"[REACTION SPOTIFY] Failed to create playlist: {e}")
             raise ValueError(f"Spotify create_playlist failed: {str(e)}") from e
 
+    elif reaction_name == "youtube_post_comment":
+        # Post a comment on a YouTube video
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.youtube_helper import post_comment
+
+        access_token = OAuthManager.get_valid_token(area.owner, "google")
+        if not access_token:
+            raise ValueError(f"No valid Google token for user {area.owner.username}")
+
+        video_id = reaction_config.get("video_id") or trigger_data.get("video_id")
+        comment_text = reaction_config.get("comment_text")
+
+        if not video_id or not comment_text:
+            raise ValueError(
+                "Video ID and comment text required for youtube_post_comment"
+            )
+
+        try:
+            result = post_comment(access_token, video_id, comment_text)
+
+            logger.info(f"[REACTION YOUTUBE] Posted comment on video {video_id}")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION YOUTUBE] Failed to post comment: {e}")
+            raise ValueError(f"YouTube post_comment failed: {str(e)}") from e
+
+    elif reaction_name == "youtube_add_to_playlist":
+        # Add video to playlist
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.youtube_helper import add_video_to_playlist
+
+        access_token = OAuthManager.get_valid_token(area.owner, "google")
+        if not access_token:
+            raise ValueError(f"No valid Google token for user {area.owner.username}")
+
+        video_id = reaction_config.get("video_id") or trigger_data.get("video_id")
+        playlist_id = reaction_config.get("playlist_id")
+
+        if not video_id or not playlist_id:
+            raise ValueError(
+                "Video ID and playlist ID required for youtube_add_to_playlist"
+            )
+
+        try:
+            result = add_video_to_playlist(access_token, video_id, playlist_id)
+
+            logger.info(
+                f"[REACTION YOUTUBE] Added video {video_id} to playlist {playlist_id}"
+            )
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION YOUTUBE] Failed to add to playlist: {e}")
+            raise ValueError(f"YouTube add_to_playlist failed: {str(e)}") from e
+
+    elif reaction_name == "youtube_rate_video":
+        # Rate a video (like/dislike)
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.youtube_helper import rate_video
+
+        access_token = OAuthManager.get_valid_token(area.owner, "google")
+        if not access_token:
+            raise ValueError(f"No valid Google token for user {area.owner.username}")
+
+        video_id = reaction_config.get("video_id") or trigger_data.get("video_id")
+        rating = reaction_config.get("rating", "like")
+
+        if not video_id:
+            raise ValueError("Video ID required for youtube_rate_video")
+
+        try:
+            rate_video(access_token, video_id, rating)
+
+            logger.info(f"[REACTION YOUTUBE] Rated video {video_id} as '{rating}'")
+            return {"success": True, "video_id": video_id, "rating": rating}
+
+        except Exception as e:
+            logger.error(f"[REACTION YOUTUBE] Failed to rate video: {e}")
+            raise ValueError(f"YouTube rate_video failed: {str(e)}") from e
+
     else:
         # Unknown reaction - log and continue
         logger.warning(
@@ -3551,6 +3635,261 @@ def _execute_reaction_logic(
             "reaction": reaction_name,
             "note": f"Reaction '{reaction_name}' not yet implemented",
         }
+
+
+# ==================== YouTube Polling Task ====================
+
+
+@shared_task(
+    name="automations.check_youtube_actions",
+    bind=True,
+    max_retries=3,
+    autoretry_for=RECOVERABLE_EXCEPTIONS,
+)
+def check_youtube_actions(self):
+    """
+    Poll YouTube for new videos and channel statistics.
+
+    Checks all active Areas with YouTube actions and triggers executions
+    when matching videos are found or thresholds are exceeded.
+
+    Supported actions:
+    - youtube_new_video: New video uploaded to channel
+    - youtube_channel_stats: Channel stats exceed threshold
+    - youtube_search_videos: New videos matching search query
+
+    Returns:
+        dict: Summary of polling results
+    """
+    from users.oauth.manager import OAuthManager
+
+    from .helpers.youtube_helper import (
+        get_channel_statistics,
+        get_latest_videos,
+        search_videos,
+    )
+
+    logger.info("Checking YouTube actions...")
+
+    try:
+        # Get all active Areas with YouTube actions
+        youtube_areas = get_active_areas(
+            [
+                "youtube_new_video",
+                "youtube_channel_stats",
+                "youtube_search_videos",
+            ]
+        )
+
+        if not youtube_areas:
+            logger.info("No active YouTube areas found")
+            return {"status": "no_areas", "checked": 0}
+
+        triggered_count = 0
+        skipped_count = 0
+        no_token_count = 0
+
+        for area in youtube_areas:
+            try:
+                # Get valid Google token (YouTube uses Google OAuth)
+                access_token = OAuthManager.get_valid_token(area.owner, "google")
+
+                if not access_token:
+                    logger.warning(
+                        f"No valid Google token for user {area.owner.username} "
+                        f"(area #{area.pk})"
+                    )
+                    no_token_count += 1
+                    continue
+
+                action_name = area.action.name
+                action_config = area.action_config or {}
+
+                # ===== YOUTUBE NEW VIDEO =====
+                if action_name == "youtube_new_video":
+                    channel_id = action_config.get("channel_id")
+
+                    if not channel_id:
+                        logger.warning(
+                            f"No channel_id configured for area #{area.pk}, skipping"
+                        )
+                        skipped_count += 1
+                        continue
+
+                    # Get published_after from updated_at minus 1 hour or None
+                    published_after = None
+                    if area.updated_at:
+                        from datetime import timedelta
+                        one_hour_ago = area.updated_at - timedelta(hours=1)
+                        published_after = one_hour_ago.isoformat()
+
+                    # Fetch latest videos
+                    videos = get_latest_videos(
+                        access_token, channel_id, max_results=5, published_after=published_after
+                    )
+
+                    # Create execution for each new video
+                    for video in videos:
+                        event_id = f"youtube_new_video_{video['video_id']}_{area.pk}"
+
+                        trigger_data = {
+                            "video_id": video["video_id"],
+                            "video_title": video["title"],
+                            "video_description": video["description"],
+                            "channel_id": video["channel_id"],
+                            "channel_name": video["channel_title"],
+                            "published_at": video["published_at"],
+                            "thumbnail_url": video["thumbnail_url"],
+                        }
+
+                        execution, created = create_execution_safe(
+                            area=area,
+                            external_event_id=event_id,
+                            trigger_data=trigger_data,
+                        )
+
+                        if created and execution:
+                            execute_reaction_task.delay(execution.pk)
+                            triggered_count += 1
+                            logger.info(
+                                f"Triggered area #{area.pk} for new video: {video['title']}"
+                            )
+
+                # ===== YOUTUBE CHANNEL STATS =====
+                elif action_name == "youtube_channel_stats":
+                    channel_id = action_config.get("channel_id")
+                    threshold_type = action_config.get("threshold_type", "subscribers")
+                    threshold_value = int(action_config.get("threshold_value", 1000))
+
+                    if not channel_id:
+                        logger.warning(
+                            f"No channel_id configured for area #{area.pk}, skipping"
+                        )
+                        skipped_count += 1
+                        continue
+
+                    # Get channel statistics
+                    stats = get_channel_statistics(access_token, channel_id)
+
+                    if not stats:
+                        logger.warning(f"Could not fetch stats for channel {channel_id}")
+                        skipped_count += 1
+                        continue
+
+                    # Check threshold
+                    metric_map = {
+                        "subscribers": stats["subscriber_count"],
+                        "views": stats["view_count"],
+                        "videos": stats["video_count"],
+                    }
+
+                    current_value = metric_map.get(threshold_type, 0)
+
+                    if current_value >= threshold_value:
+                        event_id = f"youtube_channel_stats_{channel_id}_{threshold_type}_{threshold_value}_{area.pk}"
+
+                        trigger_data = {
+                            "channel_id": channel_id,
+                            "threshold_type": threshold_type,
+                            "threshold_value": threshold_value,
+                            "current_value": current_value,
+                            "subscriber_count": stats["subscriber_count"],
+                            "view_count": stats["view_count"],
+                            "video_count": stats["video_count"],
+                        }
+
+                        execution, created = create_execution_safe(
+                            area=area,
+                            external_event_id=event_id,
+                            trigger_data=trigger_data,
+                        )
+
+                        if created and execution:
+                            execute_reaction_task.delay(execution.pk)
+                            triggered_count += 1
+                            logger.info(
+                                f"Triggered area #{area.pk}: {threshold_type} "
+                                f"reached {current_value} (threshold: {threshold_value})"
+                            )
+
+                # ===== YOUTUBE SEARCH VIDEOS =====
+                elif action_name == "youtube_search_videos":
+                    search_query = action_config.get("search_query")
+                    channel_id = action_config.get("channel_id")  # Optional
+
+                    if not search_query:
+                        logger.warning(
+                            f"No search_query configured for area #{area.pk}, skipping"
+                        )
+                        skipped_count += 1
+                        continue
+
+                    # Get published_after from updated_at minus 1 hour or None
+                    published_after = None
+                    if area.updated_at:
+                        from datetime import timedelta
+                        one_hour_ago = area.updated_at - timedelta(hours=1)
+                        published_after = one_hour_ago.isoformat()
+
+                    # Search for videos
+                    videos = search_videos(
+                        access_token,
+                        search_query,
+                        max_results=5,
+                        channel_id=channel_id,
+                        published_after=published_after,
+                    )
+
+                    # Create execution for each matching video
+                    for video in videos:
+                        event_id = f"youtube_search_{video['video_id']}_{area.pk}"
+
+                        trigger_data = {
+                            "video_id": video["video_id"],
+                            "video_title": video["title"],
+                            "video_description": video["description"],
+                            "channel_id": video["channel_id"],
+                            "channel_name": video["channel_title"],
+                            "published_at": video["published_at"],
+                            "thumbnail_url": video["thumbnail_url"],
+                            "search_query": search_query,
+                        }
+
+                        execution, created = create_execution_safe(
+                            area=area,
+                            external_event_id=event_id,
+                            trigger_data=trigger_data,
+                        )
+
+                        if created and execution:
+                            execute_reaction_task.delay(execution.pk)
+                            triggered_count += 1
+                            logger.info(
+                                f"Triggered area #{area.pk} for search result: {video['title']}"
+                            )
+
+            except Exception as e:
+                logger.error(
+                    f"Error processing YouTube area #{area.pk}: {e}", exc_info=True
+                )
+                continue
+
+        logger.info(
+            f"YouTube polling complete: {triggered_count} triggered, "
+            f"{skipped_count} skipped, {no_token_count} no token"
+        )
+
+        return {
+            "status": "success",
+            "checked": len(youtube_areas),
+            "triggered": triggered_count,
+            "skipped": skipped_count,
+            "no_token": no_token_count,
+        }
+
+    except Exception as e:
+        logger.error(f"Error in check_youtube_actions: {e}", exc_info=True)
+        raise
 
 
 # ==================== Admin/Debug Tasks ====================
