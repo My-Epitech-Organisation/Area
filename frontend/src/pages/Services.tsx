@@ -19,7 +19,7 @@ const Services: React.FC = () => {
   useAuthCheck();
 
   const isInternalService = (serviceName: string) => {
-    return ['timer', 'debug', 'email', 'webhook', 'weather'].includes(serviceName.toLowerCase());
+    return ['timer', 'debug', 'email', 'weather'].includes(serviceName.toLowerCase());
   };
 
   const wheelRef = useRef<HTMLDivElement>(null);

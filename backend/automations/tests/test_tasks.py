@@ -214,7 +214,7 @@ class CheckTimerActionsTest(TestCase):
         )
 
     @freeze_time("2024-01-15 14:30:00")
-    @patch("automations.tasks.execute_reaction")
+    @patch("automations.tasks.execute_reaction_task")
     def test_check_timer_actions_triggers_at_correct_time(self, mock_execute):
         """Test that timer triggers at configured time."""
         # Create area for 14:30
@@ -227,7 +227,7 @@ class CheckTimerActionsTest(TestCase):
             status=Area.Status.ACTIVE,
         )
 
-        # Mock execute_reaction to prevent actual execution
+        # Mock execute_reaction_task to prevent actual execution
         mock_execute.delay.return_value = MagicMock(id="task-123")
 
         # Run the task
@@ -242,7 +242,7 @@ class CheckTimerActionsTest(TestCase):
         self.assertEqual(executions.count(), 1)
 
     @freeze_time("2024-01-15 14:30:00")
-    @patch("automations.tasks.execute_reaction")
+    @patch("automations.tasks.execute_reaction_task")
     def test_check_timer_actions_idempotency(self, mock_execute):
         """Test that running twice at same time doesn't create duplicates."""
         # Create area for 14:30
@@ -255,7 +255,7 @@ class CheckTimerActionsTest(TestCase):
             status=Area.Status.ACTIVE,
         )
 
-        # Mock execute_reaction
+        # Mock execute_reaction_task
         mock_execute.delay.return_value = MagicMock(id="task-123")
 
         # Run task twice
@@ -401,10 +401,10 @@ class TestExecutionFlowTest(TestCase):
             status=Area.Status.ACTIVE,
         )
 
-    @patch("automations.tasks.execute_reaction")
+    @patch("automations.tasks.execute_reaction_task")
     def test_test_execution_flow_success(self, mock_execute):
         """Test manual test execution flow."""
-        # Mock execute_reaction to prevent actual execution
+        # Mock execute_reaction_task to prevent actual execution
         mock_execute.delay.return_value = MagicMock(id="task-123")
 
         result = test_execution_flow(self.area.pk)

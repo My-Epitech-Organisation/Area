@@ -124,8 +124,8 @@ class HandleTimerActionTest(TestCase):
         self.timer_service = Service.objects.create(
             name="timer", description="Timer service"
         )
-        self.webhook_service = Service.objects.create(
-            name="webhook", description="Webhook service"
+        self.email_service = Service.objects.create(
+            name="email", description="Email service"
         )
 
         # Create actions and reactions
@@ -140,9 +140,9 @@ class HandleTimerActionTest(TestCase):
             description="Trigger at specific time weekly",
         )
         self.reaction = Reaction.objects.create(
-            service=self.webhook_service,
-            name="webhook_post",
-            description="Send HTTP POST webhook",
+            service=self.email_service,
+            name="send_email",
+            description="Send an email",
         )
 
     @freeze_time("2024-01-15 14:30:00")
@@ -339,8 +339,8 @@ class TimerActionIntegrationTest(TestCase):
         self.timer_service = Service.objects.create(
             name="timer", description="Timer service"
         )
-        self.webhook_service = Service.objects.create(
-            name="webhook", description="Webhook service"
+        self.email_service = Service.objects.create(
+            name="email", description="Email service"
         )
 
         # Create actions and reactions
@@ -350,9 +350,9 @@ class TimerActionIntegrationTest(TestCase):
             description="Trigger at specific time daily",
         )
         self.reaction = Reaction.objects.create(
-            service=self.webhook_service,
-            name="webhook_post",
-            description="Send HTTP POST webhook",
+            service=self.email_service,
+            name="send_email",
+            description="Send an email",
         )
 
     @freeze_time("2024-01-15 09:00:00")

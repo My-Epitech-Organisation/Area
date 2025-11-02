@@ -109,7 +109,7 @@ skips = ["B101"]  # Skip assert_used test only
 # Note: settings and tests directories completely excluded from security scans
 
 [tool.coverage.run]
-source = "."
+source = ["."]
 omit = [
     "*/migrations/*",
     "*/venv/*",

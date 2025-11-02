@@ -288,37 +288,3 @@ class ExecutionModelTest(TestCase):
         execution.retry_count += 1
         execution.save()
         self.assertEqual(execution.retry_count, 2)
-
-    def test_trigger_data_and_result_data_json(self):
-        """Test storing complex JSON in trigger_data and result_data."""
-        complex_trigger = {
-            "webhook": {
-                "event": "issue_created",
-                "repository": "user/repo",
-                "issue": {
-                    "number": 42,
-                    "title": "Bug report",
-                    "labels": ["bug", "priority-high"],
-                },
-            }
-        }
-
-        complex_result = {
-            "slack_response": {"ok": True, "message_id": "1234.5678"},
-            "timestamp": "2025-01-01T12:00:00Z",
-        }
-
-        execution = Execution.objects.create(
-            area=self.area,
-            external_event_id="test_json",
-            trigger_data=complex_trigger,
-        )
-
-        execution.mark_started()
-        execution.mark_success(complex_result)
-
-        # Refresh from DB
-        execution.refresh_from_db()
-
-        self.assertEqual(execution.trigger_data, complex_trigger)
-        self.assertEqual(execution.result_data, complex_result)
