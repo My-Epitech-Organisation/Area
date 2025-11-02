@@ -12,6 +12,7 @@
 *.ref
 my_refs(do_not_delete)
 backend/staticfiles/
+*htmlcov*
 
 node_modules/
 
