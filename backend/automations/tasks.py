@@ -799,6 +799,248 @@ def check_gmail_actions(self):
 
 
 @shared_task(
+    name="automations.check_google_calendar_actions",
+    bind=True,
+    max_retries=3,
+    autoretry_for=RECOVERABLE_EXCEPTIONS,
+)
+def check_google_calendar_actions(self):
+    """
+    Poll Google Calendar for events matching user's action criteria.
+
+    Checks all active Areas with Calendar actions and triggers executions
+    when matching events are found.
+
+    Supported actions:
+    - calendar_new_event: New event created
+    - calendar_event_starting_soon: Event starting within X minutes
+
+    Returns:
+        dict: Summary of polling results
+    """
+    from datetime import datetime, timedelta
+
+    from users.oauth.manager import OAuthManager
+
+    from .helpers.calendar_helper import list_upcoming_events
+
+    logger.info("Checking Google Calendar actions...")
+
+    try:
+        # Get all active Areas with Calendar actions
+        calendar_areas = get_active_areas(
+            [
+                "calendar_new_event",
+                "calendar_event_starting_soon",
+            ]
+        )
+
+        if not calendar_areas:
+            logger.info("No active Calendar areas found")
+            return {"status": "no_areas", "checked": 0}
+
+        triggered_count = 0
+        skipped_count = 0
+        no_token_count = 0
+
+        for area in calendar_areas:
+            try:
+                # Get valid Google token
+                access_token = OAuthManager.get_valid_token(area.owner, "google")
+
+                if not access_token:
+                    logger.warning(
+                        f"No valid Google token for user {area.owner.username}, "
+                        f"area '{area.name}'"
+                    )
+                    no_token_count += 1
+                    continue
+
+                action_name = area.action.name
+                action_config = area.action_config or {}
+
+                # Get last checked state
+                state, _ = ActionState.objects.get_or_create(area=area)
+
+                # ===== CALENDAR NEW EVENT =====
+                if action_name == "calendar_new_event":
+                    # Fetch events created since last check (or last 1 hour)
+                    time_min = state.last_checked_at or (
+                        timezone.now() - timedelta(hours=1)
+                    )
+                    time_min_str = time_min.isoformat()
+
+                    events = list_upcoming_events(
+                        access_token, max_results=10, time_min=time_min_str
+                    )
+
+                    # Filter for events created recently (check created timestamp)
+                    for event in events:
+                        event_id = event.get("id")
+                        created_time = event.get("created")
+                        
+                        if not event_id or not created_time:
+                            continue
+
+                        # Parse created timestamp
+                        created_dt = datetime.fromisoformat(
+                            created_time.replace("Z", "+00:00")
+                        )
+
+                        # Only trigger for events created after last check
+                        if state.last_checked_at and created_dt <= state.last_checked_at:
+                            continue
+
+                        # Create unique event ID
+                        event_external_id = f"calendar_new_event_{event_id}_{area.pk}"
+
+                        # Prepare trigger data
+                        start_time = event.get("start", {}).get(
+                            "dateTime", event.get("start", {}).get("date", "")
+                        )
+                        end_time = event.get("end", {}).get(
+                            "dateTime", event.get("end", {}).get("date", "")
+                        )
+
+                        trigger_data = {
+                            "service": "google_calendar",
+                            "action": action_name,
+                            "event_id": event_id,
+                            "event_title": event.get("summary", "Untitled"),
+                            "event_description": event.get("description", ""),
+                            "event_location": event.get("location", ""),
+                            "start_time": start_time,
+                            "end_time": end_time,
+                            "created": created_time,
+                            "organizer": event.get("organizer", {}).get("email", ""),
+                            "attendees": [
+                                attendee.get("email", "")
+                                for attendee in event.get("attendees", [])
+                            ],
+                        }
+
+                        execution, created = create_execution_safe(
+                            area=area,
+                            external_event_id=event_external_id,
+                            trigger_data=trigger_data,
+                        )
+
+                        if created and execution:
+                            logger.info(
+                                f"Calendar new_event triggered for area '{area.name}': "
+                                f"{trigger_data['event_title']}"
+                            )
+                            execute_reaction_task.delay(execution.pk)
+                            triggered_count += 1
+
+                # ===== CALENDAR EVENT STARTING SOON =====
+                elif action_name == "calendar_event_starting_soon":
+                    minutes_before = int(action_config.get("minutes_before", 15))
+
+                    # Calculate time window
+                    now = timezone.now()
+                    target_time_min = now
+                    target_time_max = now + timedelta(minutes=minutes_before + 5)
+
+                    # Fetch upcoming events
+                    events = list_upcoming_events(
+                        access_token,
+                        max_results=20,
+                        time_min=target_time_min.isoformat(),
+                    )
+
+                    for event in events:
+                        event_id = event.get("id")
+                        start = event.get("start", {})
+                        start_time_str = start.get("dateTime") or start.get("date")
+
+                        if not event_id or not start_time_str:
+                            continue
+
+                        # Parse start time
+                        if "T" in start_time_str:  # DateTime
+                            start_dt = datetime.fromisoformat(
+                                start_time_str.replace("Z", "+00:00")
+                            )
+                        else:  # All-day event (date only)
+                            start_dt = datetime.fromisoformat(
+                                start_time_str + "T00:00:00+00:00"
+                            )
+
+                        # Calculate minutes until event
+                        time_until_event = (start_dt - now).total_seconds() / 60
+
+                        # Check if within notification window
+                        if 0 <= time_until_event <= minutes_before:
+                            # Create unique event ID (include timestamp to avoid duplicates)
+                            event_external_id = (
+                                f"calendar_event_starting_soon_{event_id}_"
+                                f"{minutes_before}m_{area.pk}"
+                            )
+
+                            # Prepare trigger data
+                            end = event.get("end", {})
+                            end_time = end.get("dateTime") or end.get("date", "")
+
+                            trigger_data = {
+                                "service": "google_calendar",
+                                "action": action_name,
+                                "event_id": event_id,
+                                "event_title": event.get("summary", "Untitled"),
+                                "event_description": event.get("description", ""),
+                                "event_location": event.get("location", ""),
+                                "start_time": start_time_str,
+                                "end_time": end_time,
+                                "minutes_until_start": int(time_until_event),
+                                "minutes_before_trigger": minutes_before,
+                            }
+
+                            execution, created = create_execution_safe(
+                                area=area,
+                                external_event_id=event_external_id,
+                                trigger_data=trigger_data,
+                            )
+
+                            if created and execution:
+                                logger.info(
+                                    f"Calendar event_starting_soon triggered for area '{area.name}': "
+                                    f"{trigger_data['event_title']} "
+                                    f"(in {int(time_until_event)} minutes)"
+                                )
+                                execute_reaction_task.delay(execution.pk)
+                                triggered_count += 1
+
+                # Update state
+                state.last_checked_at = timezone.now()
+                state.save()
+
+            except Exception as e:
+                logger.error(
+                    f"Error checking Calendar for area '{area.name}': {e}",
+                    exc_info=True,
+                )
+                skipped_count += 1
+                continue
+
+        logger.info(
+            f"Calendar check complete: {triggered_count} triggered, "
+            f"{skipped_count} skipped, {no_token_count} no token"
+        )
+
+        return {
+            "status": "success",
+            "triggered": triggered_count,
+            "skipped": skipped_count,
+            "no_token": no_token_count,
+            "checked_areas": len(calendar_areas),
+        }
+
+    except Exception as exc:
+        logger.error(f"Error in check_google_calendar_actions: {exc}", exc_info=True)
+        raise self.retry(exc=exc, countdown=300) from None
+
+
+@shared_task(
     name="automations.check_weather_actions",
     bind=True,
     max_retries=3,
