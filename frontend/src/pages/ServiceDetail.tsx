@@ -165,7 +165,7 @@ const ServiceDetail: React.FC = () => {
   // For gmail and google_calendar, check if 'google' OAuth is connected
   const getOAuthServiceName = (serviceName: string) => {
     const lower = serviceName.toLowerCase();
-    if (lower === 'gmail' || lower === 'google_calendar') {
+    if (lower === 'gmail' || lower === 'google_calendar' || lower === 'youtube') {
       return 'google';
     }
     return lower;
