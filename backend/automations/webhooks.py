@@ -292,11 +292,11 @@ def extract_event_id(
         entry = event_data.get("entry", {})
         video_id = entry.get("yt:videoId") or entry.get("video_id")
         published = entry.get("published", "")
-        
+
         if video_id:
             # Include published timestamp for uniqueness
             return f"youtube_video_{video_id}_{published}"
-        
+
         # Fallback: use link if available
         link = entry.get("link", {}).get("href", "")
         if link and "watch?v=" in link:
@@ -536,7 +536,7 @@ def webhook_receiver(request: Request, service: str) -> Response:
         hub_mode = request.GET.get("hub.mode")
         hub_challenge = request.GET.get("hub.challenge")
         hub_topic = request.GET.get("hub.topic")
-        
+
         if hub_mode == "subscribe" and hub_challenge:
             logger.info(f"✅ YouTube PubSubHubbub subscription verification for topic: {hub_topic}")
             # Return challenge as plain text
