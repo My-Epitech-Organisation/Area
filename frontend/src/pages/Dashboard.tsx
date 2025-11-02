@@ -350,7 +350,8 @@ const Dashboard: React.FC = () => {
         };
         if (isFullyAuthenticated()) {
           try {
-            setActiveServices(generateRandomActiveServices());
+            // Note: activeServices is now managed by the useEffect that watches connectedServices
+            // This ensures the Service Usage chart always reflects real OAuth connections
             const fetchWithTimeout = async (url: string, options: RequestInit, timeout: number) => {
               const controller = new AbortController();
               const { signal } = controller;
@@ -386,43 +387,15 @@ const Dashboard: React.FC = () => {
             if (areasResponse && areasResponse.ok) {
               const areasData = await areasResponse.json();
               setUserAreas(areasData);
-              const activeServiceNames = new Set<string>();
-              areasData.forEach(
-                (area: {
-                  status?: string;
-                  action?: { service?: string };
-                  reaction?: { service?: string };
-                }) => {
-                  if (area.status === 'active' && area.action && area.action.service) {
-                    activeServiceNames.add(area.action.service);
-                  }
-                  if (area.status === 'active' && area.reaction && area.reaction.service) {
-                    activeServiceNames.add(area.reaction.service);
-                  }
-                }
-              );
-              if (activeServiceNames.size > 0) {
-                setActiveServices(Array.from(activeServiceNames));
-              }
+              // Note: We no longer update activeServices here
+              // It's automatically calculated by the useEffect watching connectedServices
             }
           } catch {
-            setActiveServices(generateRandomActiveServices());
+            // Error fetching areas - activeServices is still managed by connectedServices useEffect
           }
-        } else {
-          const internalDefaults = new Set(['timer', 'debug', 'weather', 'email']);
-          const internalActive = formattedServices
-            .map((s: Service) => s.name)
-            .filter((n: string) =>
-              internalDefaults.has(
-                (n || '')
-                  .toString()
-                  .toLowerCase()
-                  .replace(/[^a-z0-9]/g, '')
-              )
-            );
-          if (internalActive.length > 0) setActiveServices(internalActive);
-          else setActiveServices(generateRandomActiveServices());
         }
+        // Note: For non-authenticated users, activeServices will be empty or contain only internal services
+        // This is handled by the useEffect that watches connectedServices
         setError(null);
       } catch (err: unknown) {
         console.error('Failed to fetch services:', err);
