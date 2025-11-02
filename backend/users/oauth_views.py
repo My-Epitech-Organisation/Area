@@ -243,7 +243,22 @@ class OAuthCallbackView(APIView):
                     f"{user.email}/{provider}"
                 )
 
-            # Step 5: Redirect to frontend with success
+            # Step 5: Setup Google webhooks automatically if provider is Google
+            if provider == "google":
+                try:
+                    from automations.tasks import setup_google_watches_for_user
+
+                    # Trigger async task to create Gmail/Calendar watches
+                    setup_google_watches_for_user.delay(user.id)
+                    logger.info(f"Triggered Google webhook setup for user {user.email}")
+                except Exception as e:
+                    # Don't fail the OAuth flow if watch setup fails
+                    logger.error(
+                        f"Failed to trigger Google watch setup for {user.email}: {e}",
+                        exc_info=True,
+                    )
+
+            # Step 6: Redirect to frontend with success
             return self._redirect_with_success(
                 callback_base, provider, created, expires_at
             )

@@ -33,7 +33,10 @@ def get_calendar_service(access_token: str):
 
 
 def list_upcoming_events(
-    access_token: str, max_results: int = 10, time_min: Optional[str] = None
+    access_token: str,
+    max_results: int = 10,
+    time_min: Optional[str] = None,
+    calendar_id: str = "primary",
 ) -> List[Dict]:
     """
     List upcoming calendar events.
@@ -42,6 +45,7 @@ def list_upcoming_events(
         access_token: Valid Google OAuth token
         max_results: Max events to return (default: 10)
         time_min: RFC3339 timestamp for earliest event (default: now)
+        calendar_id: Calendar ID to query (default: "primary")
 
     Returns:
         List of event dicts with id, summary, start, end
@@ -58,7 +62,7 @@ def list_upcoming_events(
         events_result = (
             service.events()
             .list(
-                calendarId="primary",
+                calendarId=calendar_id,
                 timeMin=time_min,
                 maxResults=max_results,
                 singleEvents=True,

@@ -276,10 +276,12 @@ class AreaSerializer(serializers.ModelSerializer):
                 validate_action_reaction_compatibility(action.name, reaction.name)
             except serializers.ValidationError as e:
                 # Re-raise with better field targeting for frontend display
-                error_message = str(e.detail[0]) if hasattr(e, 'detail') and e.detail else str(e)
-                raise serializers.ValidationError({
-                    "reaction": f"⚠️ Incompatible combination: {error_message}"
-                })
+                error_message = (
+                    str(e.detail[0]) if hasattr(e, "detail") and e.detail else str(e)
+                )
+                raise serializers.ValidationError(
+                    {"reaction": f"⚠️ Incompatible combination: {error_message}"}
+                )
 
             # Validation des configurations si elles sont fournies
             action_config = attrs.get("action_config", {})
@@ -483,6 +485,7 @@ class AboutServiceSerializer(serializers.ModelSerializer):
             "slack": "https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg",
             "twitch": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Twitch_Glitch_Logo_Purple.svg",
             "google_calendar": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg",
+            "youtube": "https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg",
             "spotify": "https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg",
             "discord": "https://upload.wikimedia.org/wikipedia/commons/9/98/Discord_logo_2015.svg",
             "notion": "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png",
@@ -533,6 +536,7 @@ class AboutServiceSerializer(serializers.ModelSerializer):
         service_oauth_map = {
             "gmail": "google",
             "google_calendar": "google",
+            "youtube": "google",
         }
 
         mapped_oauth = service_oauth_map.get(obj.name)
