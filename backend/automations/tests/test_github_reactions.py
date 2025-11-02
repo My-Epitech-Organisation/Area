@@ -130,9 +130,7 @@ class GitHubReactionTests(TestCase):
         mock_response.text = "Bad credentials"
         mock_post.return_value = mock_response
 
-        with self.assertRaisesMessage(
-            ValueError, "GitHub authentication failed"
-        ):
+        with self.assertRaisesMessage(ValueError, "GitHub authentication failed"):
             _execute_reaction_logic(
                 reaction_name="github_create_issue",
                 reaction_config={
