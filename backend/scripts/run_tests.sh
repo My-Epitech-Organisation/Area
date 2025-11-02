@@ -245,12 +245,12 @@ fi
 if [ "$SKIP_COVERAGE" = false ] && [ $TEST_EXIT_CODE -eq 0 ]; then
     echo -e "${BLUE}${BOLD}📊 Coverage Report${NC}"
     echo -e "${CYAN}═══════════════════════════════════════════════════════════${NC}\n"
-    
+
     # Terminal report
     $PYTHON_BIN -m coverage report --skip-empty
-    
+
     echo ""
-    
+
     # HTML report if requested
     if [ "$HTML_REPORT" = true ]; then
         echo -e "${CYAN}📄 Generating HTML coverage report...${NC}"
@@ -262,13 +262,13 @@ if [ "$SKIP_COVERAGE" = false ] && [ $TEST_EXIT_CODE -eq 0 ]; then
         fi
         echo ""
     fi
-    
+
     # Get coverage percentage
     COVERAGE_PCT=$($PYTHON_BIN -m coverage report --skip-empty | grep "TOTAL" | awk '{print $4}')
     if [ -n "$COVERAGE_PCT" ]; then
         COVERAGE_NUM=$(echo "$COVERAGE_PCT" | tr -d '%')
         echo -e "${BOLD}Overall Coverage: ${COVERAGE_PCT}${NC}"
-        
+
         # Color-coded coverage assessment
         if (( $(echo "$COVERAGE_NUM >= 80" | bc -l) )); then
             echo -e "${GREEN}🎉 Excellent coverage!${NC}"
