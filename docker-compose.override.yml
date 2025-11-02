@@ -110,7 +110,13 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
-    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    command:
+      - /bin/sh
+      - -c
+      - |
+        mkdir -p /app/public
+        ln -sf /shared/client.apk /app/public/client.apk
+        npm run dev -- --host 0.0.0.0
     ports:
       - "${FRONTEND_PORT:-5173}:5173"  # Vite dev server port
     volumes:

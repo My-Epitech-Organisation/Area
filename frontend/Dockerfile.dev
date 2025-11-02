@@ -12,6 +12,10 @@ RUN npm install
 # Copy source code
 COPY . .
 
+# Create public directory and symlink for APK
+RUN mkdir -p /app/public && \
+    ln -sf /shared/client.apk /app/public/client.apk
+
 # Expose Vite's default port
 EXPOSE 5173
 
