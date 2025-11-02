@@ -2658,16 +2658,38 @@ def _execute_reaction_logic(
         return {"logged": True, "message": message}
 
     elif reaction_name == "send_email":
-        # Placeholder for email sending
+        # Real implementation: Send email via Django's email backend (SendGrid)
+        from django.core.mail import send_mail
+        from django.conf import settings
+
         recipient = reaction_config.get("recipient")
         subject = reaction_config.get("subject", "AREA Notification")
-        logger.info(f"[REACTION EMAIL] Would send to {recipient}: {subject}")
-        return {
-            "sent": True,
-            "recipient": recipient,
-            "subject": subject,
-            "note": "Email sending not yet implemented",
-        }
+        body = reaction_config.get("body", "This is an automated notification from your AREA automation.")
+
+        if not recipient:
+            raise ValueError("Recipient email is required for send_email")
+
+        try:
+            # Send email using Django's configured email backend (SendGrid SMTP)
+            send_mail(
+                subject=subject,
+                message=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[recipient],
+                fail_silently=False,
+            )
+
+            logger.info(f"[REACTION EMAIL] ✅ Sent email to {recipient}: {subject}")
+            return {
+                "sent": True,
+                "recipient": recipient,
+                "subject": subject,
+                "from": settings.DEFAULT_FROM_EMAIL,
+            }
+
+        except Exception as e:
+            logger.error(f"[REACTION EMAIL] ❌ Failed to send email to {recipient}: {e}")
+            raise ValueError(f"Email sending failed: {str(e)}") from e
 
     elif reaction_name == "slack_message":
         # Placeholder for Slack message
