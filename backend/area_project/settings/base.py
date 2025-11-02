@@ -548,6 +548,11 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@areaction.app")
 # In production: https://your-frontend-domain.com
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
+# Backend URL for webhook callbacks
+# In development: http://localhost:8000
+# In production: https://your-backend-domain.com
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+
 # CORS Configuration
 # Base allowed origins (extended per environment)
 CORS_ALLOWED_ORIGINS = [
