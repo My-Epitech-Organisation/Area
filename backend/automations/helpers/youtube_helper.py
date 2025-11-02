@@ -118,11 +118,7 @@ def get_channel_statistics(access_token: str, channel_id: str) -> Dict:
     try:
         service = get_youtube_service(access_token)
 
-        results = (
-            service.channels()
-            .list(part="statistics", id=channel_id)
-            .execute()
-        )
+        results = service.channels().list(part="statistics", id=channel_id).execute()
 
         if not results.get("items"):
             logger.warning(f"Channel not found: {channel_id}")
@@ -213,9 +209,7 @@ def search_videos(
         raise
 
 
-def post_comment(
-    access_token: str, video_id: str, comment_text: str
-) -> Dict:
+def post_comment(access_token: str, video_id: str, comment_text: str) -> Dict:
     """
     Post a comment on a YouTube video.
 
@@ -237,11 +231,7 @@ def post_comment(
         comment_resource = {
             "snippet": {
                 "videoId": video_id,
-                "topLevelComment": {
-                    "snippet": {
-                        "textOriginal": comment_text
-                    }
-                }
+                "topLevelComment": {"snippet": {"textOriginal": comment_text}},
             }
         }
 
@@ -255,7 +245,9 @@ def post_comment(
         comment_data = {
             "comment_id": result["id"],
             "text": result["snippet"]["topLevelComment"]["snippet"]["textDisplay"],
-            "published_at": result["snippet"]["topLevelComment"]["snippet"]["publishedAt"],
+            "published_at": result["snippet"]["topLevelComment"]["snippet"][
+                "publishedAt"
+            ],
             "video_id": video_id,
         }
 
@@ -270,9 +262,7 @@ def post_comment(
         raise
 
 
-def add_video_to_playlist(
-    access_token: str, video_id: str, playlist_id: str
-) -> Dict:
+def add_video_to_playlist(access_token: str, video_id: str, playlist_id: str) -> Dict:
     """
     Add a video to a YouTube playlist.
 
@@ -294,18 +284,13 @@ def add_video_to_playlist(
         playlist_item = {
             "snippet": {
                 "playlistId": playlist_id,
-                "resourceId": {
-                    "kind": "youtube#video",
-                    "videoId": video_id
-                }
+                "resourceId": {"kind": "youtube#video", "videoId": video_id},
             }
         }
 
         # Insert playlist item
         result = (
-            service.playlistItems()
-            .insert(part="snippet", body=playlist_item)
-            .execute()
+            service.playlistItems().insert(part="snippet", body=playlist_item).execute()
         )
 
         item_data = {
@@ -345,7 +330,9 @@ def rate_video(access_token: str, video_id: str, rating: str) -> bool:
         ValueError: If rating is not 'like', 'dislike', or 'none'
     """
     if rating not in ["like", "dislike", "none"]:
-        raise ValueError(f"Invalid rating: {rating}. Must be 'like', 'dislike', or 'none'")
+        raise ValueError(
+            f"Invalid rating: {rating}. Must be 'like', 'dislike', or 'none'"
+        )
 
     try:
         service = get_youtube_service(access_token)
@@ -376,57 +363,56 @@ def parse_atom_feed_entry(xml_string: str) -> Optional[Dict]:
         None if parsing fails
     """
     try:
-
         # Parse XML
         root = ET.fromstring(xml_string)
 
         # Atom namespace
         ns = {
-            'atom': 'http://www.w3.org/2005/Atom',
-            'yt': 'http://www.youtube.com/xml/schemas/2015'
+            "atom": "http://www.w3.org/2005/Atom",
+            "yt": "http://www.youtube.com/xml/schemas/2015",
         }
 
         # Find entry element
-        entry = root.find('atom:entry', ns)
+        entry = root.find("atom:entry", ns)
         if entry is None:
             logger.warning("No entry element found in Atom feed")
             return None
 
         # Extract video ID
-        video_id_elem = entry.find('yt:videoId', ns)
+        video_id_elem = entry.find("yt:videoId", ns)
         video_id = video_id_elem.text if video_id_elem is not None else ""
 
         # Extract title
-        title_elem = entry.find('atom:title', ns)
+        title_elem = entry.find("atom:title", ns)
         title = title_elem.text if title_elem is not None else ""
 
         # Extract channel ID
-        channel_id_elem = entry.find('yt:channelId', ns)
+        channel_id_elem = entry.find("yt:channelId", ns)
         channel_id = channel_id_elem.text if channel_id_elem is not None else ""
 
         # Extract author/channel name
-        author_elem = entry.find('atom:author/atom:name', ns)
+        author_elem = entry.find("atom:author/atom:name", ns)
         channel_title = author_elem.text if author_elem is not None else ""
 
         # Extract published date
-        published_elem = entry.find('atom:published', ns)
+        published_elem = entry.find("atom:published", ns)
         published_at = published_elem.text if published_elem is not None else ""
 
         # Extract updated date
-        updated_elem = entry.find('atom:updated', ns)
+        updated_elem = entry.find("atom:updated", ns)
         updated_at = updated_elem.text if updated_elem is not None else ""
 
         # Extract link
         link_elem = entry.find('atom:link[@rel="alternate"]', ns)
-        link = link_elem.get('href', '') if link_elem is not None else ""
+        link = link_elem.get("href", "") if link_elem is not None else ""
 
         # Extract thumbnail (media:group/media:thumbnail)
         thumbnail_url = ""
         try:
-            media_ns = {'media': 'http://search.yahoo.com/mrss/'}
-            thumbnail_elem = entry.find('.//media:thumbnail', media_ns)
+            media_ns = {"media": "http://search.yahoo.com/mrss/"}
+            thumbnail_elem = entry.find(".//media:thumbnail", media_ns)
             if thumbnail_elem is not None:
-                thumbnail_url = thumbnail_elem.get('url', '')
+                thumbnail_url = thumbnail_elem.get("url", "")
         except:
             pass
 
