@@ -103,7 +103,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     if (!services || services.length === 0) return;
 
-    const internalDefaults = new Set(['timer', 'debug', 'weather', 'webhook', 'email']);
+    const internalDefaults = new Set(['timer', 'debug', 'weather', 'email']);
 
     const connectedSet = new Set<string>();
     if (connectedServices && connectedServices.length > 0) {
@@ -409,7 +409,7 @@ const Dashboard: React.FC = () => {
             setActiveServices(generateRandomActiveServices());
           }
         } else {
-          const internalDefaults = new Set(['timer', 'debug', 'weather', 'webhook', 'email']);
+          const internalDefaults = new Set(['timer', 'debug', 'weather', 'email']);
           const internalActive = formattedServices
             .map((s: Service) => s.name)
             .filter((n: string) =>
@@ -600,7 +600,7 @@ const Dashboard: React.FC = () => {
                     const normalizedServiceName = normalizeServiceName(service.name);
 
                     // Internal services that don't require OAuth (always active)
-                    const internalServices = new Set(['timer', 'debug', 'weather', 'webhook', 'email']);
+                    const internalServices = new Set(['timer', 'debug', 'weather', 'email']);
                     const isInternalService = internalServices.has(normalizedServiceName);
 
                     // Map service names to OAuth provider names
@@ -641,7 +641,7 @@ const Dashboard: React.FC = () => {
                               alt={`${service.name} logo`}
                               className="w-12 h-12 object-contain"
                               style={
-                                ['timer', 'debug', 'email', 'webhook', 'weather'].includes(
+                                ['timer', 'debug', 'email', 'weather'].includes(
                                   service.name.toLowerCase()
                                 )
                                   ? {
