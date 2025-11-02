@@ -33,8 +33,8 @@ def get_calendar_service(access_token: str):
 
 
 def list_upcoming_events(
-    access_token: str, 
-    max_results: int = 10, 
+    access_token: str,
+    max_results: int = 10,
     time_min: Optional[str] = None,
     calendar_id: str = "primary"
 ) -> List[Dict]:
