@@ -42,7 +42,7 @@ def create_gmail_watch(access_token, webhook_url, user_id=None):
         None: If watch creation failed
 
     Example:
-        watch = create_gmail_watch(token, "https://areaction.app/api/webhooks/gmail/")
+        watch = create_gmail_watch(token, "https://areaction.app/webhooks/gmail/")
         # {'channel_id': 'uuid...', 'resource_id': 'abc123', 'expiration': datetime}
     """
     try:

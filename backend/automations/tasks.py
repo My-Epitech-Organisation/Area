@@ -4281,7 +4281,7 @@ def setup_google_watches_for_user(self, user_id):
     # Create Gmail watch
     if gmail_webhook_enabled:
         gmail_webhook_url = getattr(
-            settings, "GMAIL_WEBHOOK_URL", f"{settings.BACKEND_URL}/api/webhooks/gmail/"
+            settings, "GMAIL_WEBHOOK_URL", f"{settings.BACKEND_URL}/webhooks/gmail/"
         )
 
         # Check if watch already exists
@@ -4421,7 +4421,7 @@ def renew_google_watches(self):
                 webhook_url = getattr(
                     settings,
                     "GMAIL_WEBHOOK_URL",
-                    f"{settings.BACKEND_URL}/api/webhooks/gmail/",
+                    f"{settings.BACKEND_URL}/webhooks/gmail/",
                 )
                 new_watch_info = create_gmail_watch(access_token, webhook_url)
 
@@ -4431,7 +4431,7 @@ def renew_google_watches(self):
                 webhook_url = getattr(
                     settings,
                     "CALENDAR_WEBHOOK_URL",
-                    f"{settings.BACKEND_URL}/api/webhooks/calendar/",
+                    f"{settings.BACKEND_URL}/webhooks/calendar/",
                 )
                 calendar_id = watch.resource_uri or "primary"
                 new_watch_info = create_calendar_watch(
