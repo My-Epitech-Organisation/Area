@@ -131,17 +131,6 @@ def get_beat_schedule():
         else:
             print("✅ [CELERY BEAT] PROD: GitHub webhooks active, polling disabled")
 
-        if not webhook_secrets.get("twitch"):
-            schedule["check-twitch-actions"] = {
-                "task": "automations.check_twitch_actions",
-                "schedule": 60.0,  # Every minute
-            }
-            print(
-                "⚠️  [CELERY BEAT] PROD: Twitch polling enabled (webhook not configured)"
-            )
-        else:
-            print("✅ [CELERY BEAT] PROD: Twitch webhooks active, polling disabled")
-
         if not webhook_secrets.get("slack"):
             schedule["check-slack-actions"] = {
                 "task": "automations.check_slack_actions",
@@ -159,6 +148,10 @@ def get_beat_schedule():
             "schedule": 300.0,  # Every 5 minutes
         }
         print("✅ [CELERY BEAT] Notion polling enabled (every 5 minutes)")
+        
+        # Google services: Webhooks active
+        print("✅ [CELERY BEAT] Google Calendar webhooks active, polling disabled")
+        print("✅ [CELERY BEAT] YouTube webhooks active, polling disabled")
 
     return schedule
 
