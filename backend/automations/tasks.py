@@ -943,7 +943,6 @@ def check_google_calendar_actions(self):
                     # Calculate time window
                     now = timezone.now()
                     target_time_min = now
-                    target_time_max = now + timedelta(minutes=minutes_before + 5)
 
                     # Fetch upcoming events
                     events = list_upcoming_events(
