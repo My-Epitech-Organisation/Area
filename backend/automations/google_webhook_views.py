@@ -18,7 +18,8 @@ from xml.etree import ElementTree as ET
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -34,7 +35,8 @@ logger = logging.getLogger(__name__)
 
 
 @csrf_exempt
-@require_http_methods(["GET", "POST"])
+@api_view(["GET", "POST"])
+@permission_classes([AllowAny])
 def gmail_webhook(request):
     """
     Handle Gmail push notifications.
@@ -187,7 +189,8 @@ def gmail_webhook(request):
 
 
 @csrf_exempt
-@require_http_methods(["GET", "POST"])
+@api_view(["GET", "POST"])
+@permission_classes([AllowAny])
 def calendar_webhook(request):
     """
     Handle Google Calendar push notifications.
@@ -334,7 +337,8 @@ def calendar_webhook(request):
 
 
 @csrf_exempt
-@require_http_methods(["GET", "POST"])
+@api_view(["GET", "POST"])
+@permission_classes([AllowAny])
 def youtube_webhook(request):
     """
     Handle YouTube PubSubHubbub notifications.
