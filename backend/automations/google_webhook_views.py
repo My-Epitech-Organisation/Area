@@ -108,12 +108,12 @@ def gmail_webhook(request):
         try:
             history = get_history(access_token, start_history_id=history_id)
 
-            if not history:
+            if not history.get('history'):
                 logger.debug(f"No Gmail history changes for user {watch.user.username}")
                 return HttpResponse("OK", status=200)
 
             # Process history changes
-            for history_item in history:
+            for history_item in history.get('history', []):
                 messages_added = history_item.get("messagesAdded", [])
 
                 for msg_info in messages_added:
