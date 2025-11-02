@@ -72,6 +72,49 @@ def list_messages(
         raise
 
 
+def get_history(access_token: str, start_history_id: str) -> Dict:
+    """
+    Get Gmail history changes since a specific historyId.
+
+    Used by Gmail push notifications to fetch changes since last notification.
+
+    Args:
+        access_token: Valid Google OAuth token
+        start_history_id: History ID to start from
+
+    Returns:
+        dict with "history" (list of changes) and "historyId" (current)
+
+    Raises:
+        HttpError: If Gmail API request fails
+    """
+    try:
+        service = get_gmail_service(access_token)
+        results = (
+            service.users()
+            .history()
+            .list(userId="me", startHistoryId=start_history_id)
+            .execute()
+        )
+
+        history = results.get("history", [])
+        logger.info(
+            f"Gmail history fetched: {len(history)} changes since {start_history_id}"
+        )
+
+        return results
+
+    except HttpError as e:
+        if e.resp.status == 404:
+            logger.warning(f"History ID {start_history_id} no longer valid")
+            return {"history": [], "historyId": start_history_id}
+        logger.error(f"Gmail get_history failed: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in get_history: {e}")
+        raise
+
+
 def get_message_details(access_token: str, message_id: str) -> Dict:
     """
     Get full message details including headers and body.

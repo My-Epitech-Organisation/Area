@@ -213,6 +213,8 @@ OAUTH2_PROVIDERS = {
             "https://www.googleapis.com/auth/gmail.modify",
             "https://www.googleapis.com/auth/calendar.readonly",
             "https://www.googleapis.com/auth/calendar.events",
+            "https://www.googleapis.com/auth/youtube.readonly",
+            "https://www.googleapis.com/auth/youtube.force-ssl",
         ],
         "requires_refresh": True,
     },
@@ -346,6 +348,28 @@ except json.JSONDecodeError as e:
     logger.error(f"Failed to parse WEBHOOK_SECRETS JSON: {e}")
     logger.debug(f"Raw value: {webhook_secrets_raw[:50]}...")
     WEBHOOK_SECRETS = {}
+
+# =============================================================================
+# GOOGLE PUSH NOTIFICATIONS (WEBHOOKS)
+# =============================================================================
+# Configuration for Gmail, Calendar, and YouTube webhooks
+GMAIL_WEBHOOK_ENABLED = os.getenv("GMAIL_WEBHOOK_ENABLED", "false").lower() == "true"
+CALENDAR_WEBHOOK_ENABLED = (
+    os.getenv("CALENDAR_WEBHOOK_ENABLED", "false").lower() == "true"
+)
+YOUTUBE_WEBHOOK_ENABLED = (
+    os.getenv("YOUTUBE_WEBHOOK_ENABLED", "false").lower() == "true"
+)
+
+# Webhook URLs (must be set in environment variables)
+GMAIL_WEBHOOK_URL = os.getenv("GMAIL_WEBHOOK_URL", "")
+CALENDAR_WEBHOOK_URL = os.getenv("CALENDAR_WEBHOOK_URL", "")
+YOUTUBE_WEBHOOK_URL = os.getenv("YOUTUBE_WEBHOOK_URL", "")
+
+# Watch renewal interval (in seconds) - default 6 days
+GOOGLE_WATCH_RENEWAL_INTERVAL = int(
+    os.getenv("GOOGLE_WATCH_RENEWAL_INTERVAL", "518400")
+)
 
 # Security Settings (base - extended per environment)
 SECURE_BROWSER_XSS_FILTER = True
@@ -529,6 +553,11 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@areaction.app")
 # In development: http://localhost:5173 (Vite dev server)
 # In production: https://your-frontend-domain.com
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
+# Backend URL for webhook callbacks
+# In development: http://localhost:8000
+# In production: https://your-backend-domain.com
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 # CORS Configuration
 # Base allowed origins (extended per environment)

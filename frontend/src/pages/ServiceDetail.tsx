@@ -6,6 +6,7 @@ import { useAuthCheck } from '../hooks/useAuthCheck';
 import Notification from '../components/Notification';
 import GitHubAppSection from '../components/GitHubAppSection';
 import NotionWebhookSection from '../components/NotionWebhookSection';
+import GoogleWebhookBanner from '../components/GoogleWebhookBanner';
 import { API_BASE, getStoredUser } from '../utils/helper';
 import type { User } from '../types';
 
@@ -149,12 +150,13 @@ const ServiceDetail: React.FC = () => {
   const logo = resolveLogo(service.logo, service.name);
 
   // Check if this service requires OAuth and if it's connected
-  // Google Calendar and Gmail use the same OAuth as Google
+  // Google Calendar, Gmail and YouTube use the same OAuth as Google
   const oauthProviders = [
     'github',
     'google',
     'gmail',
     'google_calendar',
+    'youtube',
     'twitch',
     'slack',
     'spotify',
@@ -162,10 +164,10 @@ const ServiceDetail: React.FC = () => {
   ];
   const requiresOAuth = service && oauthProviders.includes(service.name.toLowerCase());
 
-  // For gmail and google_calendar, check if 'google' OAuth is connected
+  // For gmail, google_calendar and youtube, check if 'google' OAuth is connected
   const getOAuthServiceName = (serviceName: string) => {
     const lower = serviceName.toLowerCase();
-    if (lower === 'gmail' || lower === 'google_calendar') {
+    if (lower === 'gmail' || lower === 'google_calendar' || lower === 'youtube') {
       return 'google';
     }
     return lower;
@@ -335,6 +337,12 @@ const ServiceDetail: React.FC = () => {
               {/* Notion Webhook Section - Show only for Notion service */}
               {service.name.toLowerCase() === 'notion' && (
                 <NotionWebhookSection isOAuthConnected={isConnected} />
+              )}
+
+              {/* Google Webhook Banner - Show for Calendar and YouTube services */}
+              {(service.name.toLowerCase() === 'google_calendar' ||
+                service.name.toLowerCase() === 'youtube') && (
+                <GoogleWebhookBanner serviceName={service.name} isOAuthConnected={isConnected} />
               )}
 
               <div className="mt-8 grid gap-8 md:grid-cols-2">

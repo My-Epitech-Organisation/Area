@@ -27,6 +27,9 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.urls import include, path
 
 from . import github_app_views, views
+
+# Import Google webhook views
+from .google_webhook_views import calendar_webhook, gmail_webhook, youtube_webhook
 from .webhooks import webhook_receiver
 
 # Create router and register viewsets
@@ -72,7 +75,11 @@ urlpatterns = [
     path("about.json", views.about_json_view, name="about"),
     # Logo proxy endpoint
     path("logos/<str:service>/", views.logo_proxy_view, name="logo-proxy"),
-    # Webhook receiver endpoint
+    # Google webhook endpoints (push notifications) - MUST be before generic webhook
+    path("webhooks/gmail/", gmail_webhook, name="gmail-webhook"),
+    path("webhooks/calendar/", calendar_webhook, name="calendar-webhook"),
+    path("webhooks/youtube/", youtube_webhook, name="youtube-webhook"),
+    # Webhook receiver endpoint (generic, catches all other services)
     path("webhooks/<str:service>/", webhook_receiver, name="webhook-receiver"),
     # GitHub App endpoints
     path(

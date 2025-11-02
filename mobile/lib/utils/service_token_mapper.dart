@@ -8,6 +8,7 @@ class ServiceTokenMapper {
   static const Map<String, String> _tokenMap = {
     'gmail': 'google',
     'google_calendar': 'google',
+    'youtube': 'google',
   };
 
   /// Get the actual token service name to query in the database

@@ -799,6 +799,250 @@ def check_gmail_actions(self):
 
 
 @shared_task(
+    name="automations.check_google_calendar_actions",
+    bind=True,
+    max_retries=3,
+    autoretry_for=RECOVERABLE_EXCEPTIONS,
+)
+def check_google_calendar_actions(self):
+    """
+    Poll Google Calendar for events matching user's action criteria.
+
+    Checks all active Areas with Calendar actions and triggers executions
+    when matching events are found.
+
+    Supported actions:
+    - calendar_new_event: New event created
+    - calendar_event_starting_soon: Event starting within X minutes
+
+    Returns:
+        dict: Summary of polling results
+    """
+    from datetime import datetime, timedelta
+
+    from users.oauth.manager import OAuthManager
+
+    from .helpers.calendar_helper import list_upcoming_events
+
+    logger.info("Checking Google Calendar actions...")
+
+    try:
+        # Get all active Areas with Calendar actions
+        calendar_areas = get_active_areas(
+            [
+                "calendar_new_event",
+                "calendar_event_starting_soon",
+            ]
+        )
+
+        if not calendar_areas:
+            logger.info("No active Calendar areas found")
+            return {"status": "no_areas", "checked": 0}
+
+        triggered_count = 0
+        skipped_count = 0
+        no_token_count = 0
+
+        for area in calendar_areas:
+            try:
+                # Get valid Google token
+                access_token = OAuthManager.get_valid_token(area.owner, "google")
+
+                if not access_token:
+                    logger.warning(
+                        f"No valid Google token for user {area.owner.username}, "
+                        f"area '{area.name}'"
+                    )
+                    no_token_count += 1
+                    continue
+
+                action_name = area.action.name
+                action_config = area.action_config or {}
+
+                # Get last checked state
+                state, _ = ActionState.objects.get_or_create(area=area)
+
+                # ===== CALENDAR NEW EVENT =====
+                if action_name == "calendar_new_event":
+                    # Fetch events created since last check (or last 1 hour)
+                    time_min = state.last_checked_at or (
+                        timezone.now() - timedelta(hours=1)
+                    )
+                    time_min_str = time_min.isoformat()
+
+                    events = list_upcoming_events(
+                        access_token, max_results=10, time_min=time_min_str
+                    )
+
+                    # Filter for events created recently (check created timestamp)
+                    for event in events:
+                        event_id = event.get("id")
+                        created_time = event.get("created")
+
+                        if not event_id or not created_time:
+                            continue
+
+                        # Parse created timestamp
+                        created_dt = datetime.fromisoformat(
+                            created_time.replace("Z", "+00:00")
+                        )
+
+                        # Only trigger for events created after last check
+                        if (
+                            state.last_checked_at
+                            and created_dt <= state.last_checked_at
+                        ):
+                            continue
+
+                        # Create unique event ID
+                        event_external_id = f"calendar_new_event_{event_id}_{area.pk}"
+
+                        # Prepare trigger data
+                        start_time = event.get("start", {}).get(
+                            "dateTime", event.get("start", {}).get("date", "")
+                        )
+                        end_time = event.get("end", {}).get(
+                            "dateTime", event.get("end", {}).get("date", "")
+                        )
+
+                        trigger_data = {
+                            "service": "google_calendar",
+                            "action": action_name,
+                            "event_id": event_id,
+                            "event_title": event.get("summary", "Untitled"),
+                            "event_description": event.get("description", ""),
+                            "event_location": event.get("location", ""),
+                            "start_time": start_time,
+                            "end_time": end_time,
+                            "created": created_time,
+                            "organizer": event.get("organizer", {}).get("email", ""),
+                            "attendees": [
+                                attendee.get("email", "")
+                                for attendee in event.get("attendees", [])
+                            ],
+                        }
+
+                        execution, created = create_execution_safe(
+                            area=area,
+                            external_event_id=event_external_id,
+                            trigger_data=trigger_data,
+                        )
+
+                        if created and execution:
+                            logger.info(
+                                f"Calendar new_event triggered for area '{area.name}': "
+                                f"{trigger_data['event_title']}"
+                            )
+                            execute_reaction_task.delay(execution.pk)
+                            triggered_count += 1
+
+                # ===== CALENDAR EVENT STARTING SOON =====
+                elif action_name == "calendar_event_starting_soon":
+                    minutes_before = int(action_config.get("minutes_before", 15))
+
+                    # Calculate time window
+                    now = timezone.now()
+                    target_time_min = now
+
+                    # Fetch upcoming events
+                    events = list_upcoming_events(
+                        access_token,
+                        max_results=20,
+                        time_min=target_time_min.isoformat(),
+                    )
+
+                    for event in events:
+                        event_id = event.get("id")
+                        start = event.get("start", {})
+                        start_time_str = start.get("dateTime") or start.get("date")
+
+                        if not event_id or not start_time_str:
+                            continue
+
+                        # Parse start time
+                        if "T" in start_time_str:  # DateTime
+                            start_dt = datetime.fromisoformat(
+                                start_time_str.replace("Z", "+00:00")
+                            )
+                        else:  # All-day event (date only)
+                            start_dt = datetime.fromisoformat(
+                                start_time_str + "T00:00:00+00:00"
+                            )
+
+                        # Calculate minutes until event
+                        time_until_event = (start_dt - now).total_seconds() / 60
+
+                        # Check if within notification window
+                        if 0 <= time_until_event <= minutes_before:
+                            # Create unique event ID (include timestamp to avoid duplicates)
+                            event_external_id = (
+                                f"calendar_event_starting_soon_{event_id}_"
+                                f"{minutes_before}m_{area.pk}"
+                            )
+
+                            # Prepare trigger data
+                            end = event.get("end", {})
+                            end_time = end.get("dateTime") or end.get("date", "")
+
+                            trigger_data = {
+                                "service": "google_calendar",
+                                "action": action_name,
+                                "event_id": event_id,
+                                "event_title": event.get("summary", "Untitled"),
+                                "event_description": event.get("description", ""),
+                                "event_location": event.get("location", ""),
+                                "start_time": start_time_str,
+                                "end_time": end_time,
+                                "minutes_until_start": int(time_until_event),
+                                "minutes_before_trigger": minutes_before,
+                            }
+
+                            execution, created = create_execution_safe(
+                                area=area,
+                                external_event_id=event_external_id,
+                                trigger_data=trigger_data,
+                            )
+
+                            if created and execution:
+                                logger.info(
+                                    f"Calendar event_starting_soon triggered for area '{area.name}': "
+                                    f"{trigger_data['event_title']} "
+                                    f"(in {int(time_until_event)} minutes)"
+                                )
+                                execute_reaction_task.delay(execution.pk)
+                                triggered_count += 1
+
+                # Update state
+                state.last_checked_at = timezone.now()
+                state.save()
+
+            except Exception as e:
+                logger.error(
+                    f"Error checking Calendar for area '{area.name}': {e}",
+                    exc_info=True,
+                )
+                skipped_count += 1
+                continue
+
+        logger.info(
+            f"Calendar check complete: {triggered_count} triggered, "
+            f"{skipped_count} skipped, {no_token_count} no token"
+        )
+
+        return {
+            "status": "success",
+            "triggered": triggered_count,
+            "skipped": skipped_count,
+            "no_token": no_token_count,
+            "checked_areas": len(calendar_areas),
+        }
+
+    except Exception as exc:
+        logger.error(f"Error in check_google_calendar_actions: {exc}", exc_info=True)
+        raise self.retry(exc=exc, countdown=300) from None
+
+
+@shared_task(
     name="automations.check_weather_actions",
     bind=True,
     max_retries=3,
@@ -3540,6 +3784,90 @@ def _execute_reaction_logic(
             logger.error(f"[REACTION SPOTIFY] Failed to create playlist: {e}")
             raise ValueError(f"Spotify create_playlist failed: {str(e)}") from e
 
+    elif reaction_name == "youtube_post_comment":
+        # Post a comment on a YouTube video
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.youtube_helper import post_comment
+
+        access_token = OAuthManager.get_valid_token(area.owner, "google")
+        if not access_token:
+            raise ValueError(f"No valid Google token for user {area.owner.username}")
+
+        video_id = reaction_config.get("video_id") or trigger_data.get("video_id")
+        comment_text = reaction_config.get("comment_text")
+
+        if not video_id or not comment_text:
+            raise ValueError(
+                "Video ID and comment text required for youtube_post_comment"
+            )
+
+        try:
+            result = post_comment(access_token, video_id, comment_text)
+
+            logger.info(f"[REACTION YOUTUBE] Posted comment on video {video_id}")
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION YOUTUBE] Failed to post comment: {e}")
+            raise ValueError(f"YouTube post_comment failed: {str(e)}") from e
+
+    elif reaction_name == "youtube_add_to_playlist":
+        # Add video to playlist
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.youtube_helper import add_video_to_playlist
+
+        access_token = OAuthManager.get_valid_token(area.owner, "google")
+        if not access_token:
+            raise ValueError(f"No valid Google token for user {area.owner.username}")
+
+        video_id = reaction_config.get("video_id") or trigger_data.get("video_id")
+        playlist_id = reaction_config.get("playlist_id")
+
+        if not video_id or not playlist_id:
+            raise ValueError(
+                "Video ID and playlist ID required for youtube_add_to_playlist"
+            )
+
+        try:
+            result = add_video_to_playlist(access_token, video_id, playlist_id)
+
+            logger.info(
+                f"[REACTION YOUTUBE] Added video {video_id} to playlist {playlist_id}"
+            )
+            return result
+
+        except Exception as e:
+            logger.error(f"[REACTION YOUTUBE] Failed to add to playlist: {e}")
+            raise ValueError(f"YouTube add_to_playlist failed: {str(e)}") from e
+
+    elif reaction_name == "youtube_rate_video":
+        # Rate a video (like/dislike)
+        from users.oauth.manager import OAuthManager
+
+        from .helpers.youtube_helper import rate_video
+
+        access_token = OAuthManager.get_valid_token(area.owner, "google")
+        if not access_token:
+            raise ValueError(f"No valid Google token for user {area.owner.username}")
+
+        video_id = reaction_config.get("video_id") or trigger_data.get("video_id")
+        rating = reaction_config.get("rating", "like")
+
+        if not video_id:
+            raise ValueError("Video ID required for youtube_rate_video")
+
+        try:
+            rate_video(access_token, video_id, rating)
+
+            logger.info(f"[REACTION YOUTUBE] Rated video {video_id} as '{rating}'")
+            return {"success": True, "video_id": video_id, "rating": rating}
+
+        except Exception as e:
+            logger.error(f"[REACTION YOUTUBE] Failed to rate video: {e}")
+            raise ValueError(f"YouTube rate_video failed: {str(e)}") from e
+
     else:
         # Unknown reaction - log and continue
         logger.warning(
@@ -3551,6 +3879,292 @@ def _execute_reaction_logic(
             "reaction": reaction_name,
             "note": f"Reaction '{reaction_name}' not yet implemented",
         }
+
+
+# ==================== YouTube Polling Task ====================
+
+
+@shared_task(
+    name="automations.check_youtube_actions",
+    bind=True,
+    max_retries=3,
+    autoretry_for=RECOVERABLE_EXCEPTIONS,
+)
+def check_youtube_actions(self):
+    """
+    Poll YouTube for new videos and channel statistics.
+
+    Checks all active Areas with YouTube actions and triggers executions
+    when matching videos are found or thresholds are exceeded.
+
+    Supported actions:
+    - youtube_new_video: New video uploaded to channel
+    - youtube_channel_stats: Channel stats exceed threshold
+    - youtube_search_videos: New videos matching search query
+
+    Returns:
+        dict: Summary of polling results
+    """
+    from users.oauth.manager import OAuthManager
+
+    from .helpers.youtube_helper import (
+        get_channel_statistics,
+        get_latest_videos,
+        search_videos,
+    )
+
+    logger.info("Checking YouTube actions...")
+
+    try:
+        # Get all active Areas with YouTube actions
+        youtube_areas = get_active_areas(
+            [
+                "youtube_new_video",
+                "youtube_channel_stats",
+                "youtube_search_videos",
+            ]
+        )
+
+        if not youtube_areas:
+            logger.info("No active YouTube areas found")
+            return {"status": "no_areas", "checked": 0}
+
+        triggered_count = 0
+        skipped_count = 0
+        no_token_count = 0
+
+        for area in youtube_areas:
+            try:
+                # Get valid Google token (YouTube uses Google OAuth)
+                access_token = OAuthManager.get_valid_token(area.owner, "google")
+
+                if not access_token:
+                    logger.warning(
+                        f"No valid Google token for user {area.owner.username} "
+                        f"(area #{area.pk})"
+                    )
+                    no_token_count += 1
+                    continue
+
+                action_name = area.action.name
+                action_config = area.action_config or {}
+
+                # ===== YOUTUBE NEW VIDEO =====
+                if action_name == "youtube_new_video":
+                    channel_id = action_config.get("channel_id")
+
+                    if not channel_id:
+                        logger.warning(
+                            f"No channel_id configured for area #{area.pk}, skipping"
+                        )
+                        skipped_count += 1
+                        continue
+
+                    # Get published_after from last check or 24 hours ago
+                    from datetime import timedelta
+
+                    from django.utils import timezone
+
+                    action_state, _ = ActionState.objects.get_or_create(area=area)
+                    published_after = None
+
+                    if action_state.last_checked_at:
+                        # Check videos published after last check
+                        published_after = action_state.last_checked_at.isoformat()
+                    else:
+                        # First check: only get videos from last 24 hours
+                        one_day_ago = timezone.now() - timedelta(hours=24)
+                        published_after = one_day_ago.isoformat()
+
+                    # Fetch latest videos
+                    videos = get_latest_videos(
+                        access_token,
+                        channel_id,
+                        max_results=5,
+                        published_after=published_after,
+                    )
+
+                    # Update last checked time
+                    action_state.last_checked_at = timezone.now()
+                    action_state.save()
+
+                    # Create execution for each new video
+                    for video in videos:
+                        event_id = f"youtube_new_video_{video['video_id']}_{area.pk}"
+
+                        trigger_data = {
+                            "video_id": video["video_id"],
+                            "video_title": video["title"],
+                            "video_description": video["description"],
+                            "channel_id": video["channel_id"],
+                            "channel_name": video["channel_title"],
+                            "published_at": video["published_at"],
+                            "thumbnail_url": video["thumbnail_url"],
+                        }
+
+                        execution, created = create_execution_safe(
+                            area=area,
+                            external_event_id=event_id,
+                            trigger_data=trigger_data,
+                        )
+
+                        if created and execution:
+                            execute_reaction_task.delay(execution.pk)
+                            triggered_count += 1
+                            logger.info(
+                                f"Triggered area #{area.pk} for new video: {video['title']}"
+                            )
+
+                # ===== YOUTUBE CHANNEL STATS =====
+                elif action_name == "youtube_channel_stats":
+                    channel_id = action_config.get("channel_id")
+                    threshold_type = action_config.get("threshold_type", "subscribers")
+                    threshold_value = int(action_config.get("threshold_value", 1000))
+
+                    if not channel_id:
+                        logger.warning(
+                            f"No channel_id configured for area #{area.pk}, skipping"
+                        )
+                        skipped_count += 1
+                        continue
+
+                    # Get channel statistics
+                    stats = get_channel_statistics(access_token, channel_id)
+
+                    if not stats:
+                        logger.warning(
+                            f"Could not fetch stats for channel {channel_id}"
+                        )
+                        skipped_count += 1
+                        continue
+
+                    # Check threshold
+                    metric_map = {
+                        "subscribers": stats["subscriber_count"],
+                        "views": stats["view_count"],
+                        "videos": stats["video_count"],
+                    }
+
+                    current_value = metric_map.get(threshold_type, 0)
+
+                    if current_value >= threshold_value:
+                        event_id = f"youtube_channel_stats_{channel_id}_{threshold_type}_{threshold_value}_{area.pk}"
+
+                        trigger_data = {
+                            "channel_id": channel_id,
+                            "threshold_type": threshold_type,
+                            "threshold_value": threshold_value,
+                            "current_value": current_value,
+                            "subscriber_count": stats["subscriber_count"],
+                            "view_count": stats["view_count"],
+                            "video_count": stats["video_count"],
+                        }
+
+                        execution, created = create_execution_safe(
+                            area=area,
+                            external_event_id=event_id,
+                            trigger_data=trigger_data,
+                        )
+
+                        if created and execution:
+                            execute_reaction_task.delay(execution.pk)
+                            triggered_count += 1
+                            logger.info(
+                                f"Triggered area #{area.pk}: {threshold_type} "
+                                f"reached {current_value} (threshold: {threshold_value})"
+                            )
+
+                # ===== YOUTUBE SEARCH VIDEOS =====
+                elif action_name == "youtube_search_videos":
+                    search_query = action_config.get("search_query")
+                    channel_id = action_config.get("channel_id")  # Optional
+
+                    if not search_query:
+                        logger.warning(
+                            f"No search_query configured for area #{area.pk}, skipping"
+                        )
+                        skipped_count += 1
+                        continue
+
+                    # Get published_after from last check or 24 hours ago
+                    from datetime import timedelta
+
+                    from django.utils import timezone
+
+                    action_state, _ = ActionState.objects.get_or_create(area=area)
+                    published_after = None
+
+                    if action_state.last_checked_at:
+                        # Check videos published after last check
+                        published_after = action_state.last_checked_at.isoformat()
+                    else:
+                        # First check: only get videos from last 24 hours
+                        one_day_ago = timezone.now() - timedelta(hours=24)
+                        published_after = one_day_ago.isoformat()
+
+                    # Search for videos
+                    videos = search_videos(
+                        access_token,
+                        search_query,
+                        max_results=5,
+                        channel_id=channel_id,
+                        published_after=published_after,
+                    )
+
+                    # Update last checked time
+                    action_state.last_checked_at = timezone.now()
+                    action_state.save()
+
+                    # Create execution for each matching video
+                    for video in videos:
+                        event_id = f"youtube_search_{video['video_id']}_{area.pk}"
+
+                        trigger_data = {
+                            "video_id": video["video_id"],
+                            "video_title": video["title"],
+                            "video_description": video["description"],
+                            "channel_id": video["channel_id"],
+                            "channel_name": video["channel_title"],
+                            "published_at": video["published_at"],
+                            "thumbnail_url": video["thumbnail_url"],
+                            "search_query": search_query,
+                        }
+
+                        execution, created = create_execution_safe(
+                            area=area,
+                            external_event_id=event_id,
+                            trigger_data=trigger_data,
+                        )
+
+                        if created and execution:
+                            execute_reaction_task.delay(execution.pk)
+                            triggered_count += 1
+                            logger.info(
+                                f"Triggered area #{area.pk} for search result: {video['title']}"
+                            )
+
+            except Exception as e:
+                logger.error(
+                    f"Error processing YouTube area #{area.pk}: {e}", exc_info=True
+                )
+                continue
+
+        logger.info(
+            f"YouTube polling complete: {triggered_count} triggered, "
+            f"{skipped_count} skipped, {no_token_count} no token"
+        )
+
+        return {
+            "status": "success",
+            "checked": len(youtube_areas),
+            "triggered": triggered_count,
+            "skipped": skipped_count,
+            "no_token": no_token_count,
+        }
+
+    except Exception as e:
+        logger.error(f"Error in check_youtube_actions: {e}", exc_info=True)
+        raise
 
 
 # ==================== Admin/Debug Tasks ====================
@@ -3611,3 +4225,350 @@ def test_execution_flow(area_id: int):
     except Exception as e:
         logger.error(f"Error in test_execution_flow: {e}", exc_info=True)
         return {"status": "error", "message": str(e)}
+
+
+# ============================================================================
+# GOOGLE WEBHOOK (PUSH NOTIFICATION) MANAGEMENT
+# ============================================================================
+
+
+@shared_task(
+    name="automations.setup_google_watches_for_user",
+    bind=True,
+    max_retries=3,
+    autoretry_for=RECOVERABLE_EXCEPTIONS,
+)
+def setup_google_watches_for_user(self, user_id):
+    """
+    Set up Google push notification watches for a user.
+
+    This task is called after a user connects their Google account.
+    It creates watches for Gmail and Calendar to receive real-time notifications.
+
+    Args:
+        user_id: User ID to set up watches for
+
+    Returns:
+        dict: Summary of created watches
+    """
+    from django.conf import settings
+    from django.contrib.auth import get_user_model
+
+    from users.oauth.manager import OAuthManager
+
+    from .helpers.google_webhook_helper import (
+        create_calendar_watch,
+        create_gmail_watch,
+    )
+    from .models import GoogleWebhookWatch
+
+    User = get_user_model()
+
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        logger.error(f"User #{user_id} not found")
+        return {"status": "error", "message": "User not found"}
+
+    logger.info(f"Setting up Google watches for user {user.username}")
+
+    # Get valid Google OAuth token
+    access_token = OAuthManager.get_valid_token(user, "google")
+
+    if not access_token:
+        logger.warning(f"No valid Google token for user {user.username}")
+        return {"status": "no_token", "user": user.username}
+
+    results = {"user": user.username, "watches_created": []}
+
+    # Check if webhooks are enabled
+    gmail_webhook_enabled = getattr(settings, "GMAIL_WEBHOOK_ENABLED", False)
+    calendar_webhook_enabled = getattr(settings, "CALENDAR_WEBHOOK_ENABLED", False)
+
+    # Create Gmail watch
+    if gmail_webhook_enabled:
+        backend_url = getattr(settings, "BACKEND_URL", "https://areaction.app")
+        gmail_webhook_url = getattr(
+            settings, "GMAIL_WEBHOOK_URL", f"{backend_url}/webhooks/gmail/"
+        )
+
+        # Check if watch already exists
+        existing_gmail = GoogleWebhookWatch.objects.filter(
+            user=user, service=GoogleWebhookWatch.Service.GMAIL
+        ).first()
+
+        if not existing_gmail or existing_gmail.is_expiring_soon(hours=48):
+            # Create new watch
+            watch_info = create_gmail_watch(access_token, gmail_webhook_url)
+
+            if watch_info:
+                # Save watch to database
+                watch, created = GoogleWebhookWatch.objects.update_or_create(
+                    user=user,
+                    service=GoogleWebhookWatch.Service.GMAIL,
+                    defaults={
+                        "channel_id": watch_info["channel_id"],
+                        "resource_id": watch_info["resource_id"],
+                        "expiration": watch_info["expiration"],
+                    },
+                )
+
+                results["watches_created"].append("gmail")
+                logger.info(
+                    f"Gmail watch created for {user.username}: {watch.channel_id}"
+                )
+
+    # Create Calendar watch
+    if calendar_webhook_enabled:
+        backend_url = getattr(settings, "BACKEND_URL", "https://areaction.app")
+        calendar_webhook_url = getattr(
+            settings,
+            "CALENDAR_WEBHOOK_URL",
+            f"{backend_url}/webhooks/calendar/",
+        )
+
+        # Check if watch already exists
+        existing_calendar = GoogleWebhookWatch.objects.filter(
+            user=user, service=GoogleWebhookWatch.Service.CALENDAR
+        ).first()
+
+        if not existing_calendar or existing_calendar.is_expiring_soon(hours=48):
+            # Create new watch
+            watch_info = create_calendar_watch(
+                access_token, "primary", calendar_webhook_url
+            )
+
+            if watch_info:
+                # Save watch to database
+                watch, created = GoogleWebhookWatch.objects.update_or_create(
+                    user=user,
+                    service=GoogleWebhookWatch.Service.CALENDAR,
+                    resource_uri="primary",
+                    defaults={
+                        "channel_id": watch_info["channel_id"],
+                        "resource_id": watch_info["resource_id"],
+                        "expiration": watch_info["expiration"],
+                    },
+                )
+
+                results["watches_created"].append("calendar")
+                logger.info(
+                    f"Calendar watch created for {user.username}: {watch.channel_id}"
+                )
+
+    results["status"] = "success"
+    results["count"] = len(results["watches_created"])
+
+    return results
+
+
+@shared_task(
+    name="automations.renew_google_watches",
+    bind=True,
+    max_retries=3,
+    autoretry_for=RECOVERABLE_EXCEPTIONS,
+)
+def renew_google_watches(self):
+    """
+    Renew Google push notification watches that are expiring soon.
+
+    This task runs periodically (every hour) to check for watches
+    that expire within 24 hours and renews them automatically.
+
+    Returns:
+        dict: Summary of renewed watches
+    """
+    from django.utils import timezone
+
+    from users.oauth.manager import OAuthManager
+
+    from .helpers.google_webhook_helper import (
+        create_calendar_watch,
+        create_gmail_watch,
+    )
+    from .models import GoogleWebhookWatch
+
+    logger.info("Checking for expiring Google watches...")
+
+    # Find watches expiring in next 24 hours
+    expiring_threshold = timezone.now() + timezone.timedelta(hours=24)
+
+    expiring_watches = GoogleWebhookWatch.objects.filter(
+        expiration__lte=expiring_threshold
+    ).select_related("user")
+
+    if not expiring_watches:
+        logger.info("No Google watches expiring soon")
+        return {"status": "no_action", "count": 0}
+
+    renewed_count = 0
+    failed_count = 0
+
+    for watch in expiring_watches:
+        try:
+            logger.info(
+                f"Renewing {watch.service} watch for {watch.user.username} "
+                f"(expires {watch.expiration})"
+            )
+
+            # Get valid token
+            access_token = OAuthManager.get_valid_token(watch.user, "google")
+
+            if not access_token:
+                logger.warning(
+                    f"No valid token for {watch.user.username}, skipping renewal"
+                )
+                failed_count += 1
+                continue
+
+            # Renew based on service type
+            new_watch_info = None
+
+            if watch.service == GoogleWebhookWatch.Service.GMAIL:
+                from django.conf import settings
+
+                backend_url = getattr(settings, "BACKEND_URL", "https://areaction.app")
+                webhook_url = getattr(
+                    settings,
+                    "GMAIL_WEBHOOK_URL",
+                    f"{backend_url}/webhooks/gmail/",
+                )
+                new_watch_info = create_gmail_watch(access_token, webhook_url)
+
+            elif watch.service == GoogleWebhookWatch.Service.CALENDAR:
+                from django.conf import settings
+
+                backend_url = getattr(settings, "BACKEND_URL", "https://areaction.app")
+                webhook_url = getattr(
+                    settings,
+                    "CALENDAR_WEBHOOK_URL",
+                    f"{backend_url}/webhooks/calendar/",
+                )
+                calendar_id = watch.resource_uri or "primary"
+                new_watch_info = create_calendar_watch(
+                    access_token, calendar_id, webhook_url
+                )
+
+            if new_watch_info:
+                # Update watch in database
+                watch.channel_id = new_watch_info["channel_id"]
+                watch.resource_id = new_watch_info["resource_id"]
+                watch.expiration = new_watch_info["expiration"]
+                watch.save()
+
+                renewed_count += 1
+                logger.info(f"Renewed {watch.service} watch for {watch.user.username}")
+            else:
+                failed_count += 1
+                logger.error(
+                    f"Failed to renew {watch.service} watch for {watch.user.username}"
+                )
+
+        except Exception as e:
+            logger.error(
+                f"Error renewing watch for {watch.user.username}: {e}", exc_info=True
+            )
+            failed_count += 1
+
+    logger.info(
+        f"Google watch renewal complete: {renewed_count} renewed, {failed_count} failed"
+    )
+
+    return {
+        "status": "success",
+        "renewed": renewed_count,
+        "failed": failed_count,
+        "total": len(expiring_watches),
+    }
+
+
+@shared_task(
+    name="automations.setup_youtube_watches",
+    bind=True,
+    max_retries=3,
+    autoretry_for=RECOVERABLE_EXCEPTIONS,
+)
+def setup_youtube_watches(self):
+    """
+    Set up YouTube PubSubHubbub subscriptions for all active youtube_new_video areas.
+
+    YouTube uses PubSubHubbub instead of the watch API. Subscriptions expire
+    after 10 days and need to be renewed.
+
+    Returns:
+        dict: Summary of created subscriptions
+    """
+    from django.conf import settings
+
+    from .helpers.google_webhook_helper import create_youtube_watch
+    from .models import Area, GoogleWebhookWatch
+
+    logger.info("Setting up YouTube PubSubHubbub subscriptions...")
+
+    # Get all active youtube_new_video areas
+    youtube_areas = Area.objects.filter(
+        status=Area.Status.ACTIVE, action__name="youtube_new_video"
+    ).select_related("owner", "action")
+
+    if not youtube_areas:
+        logger.info("No active YouTube areas found")
+        return {"status": "no_areas", "count": 0}
+
+    backend_url = getattr(settings, "BACKEND_URL", "https://areaction.app")
+    youtube_webhook_url = getattr(
+        settings, "YOUTUBE_WEBHOOK_URL", f"{backend_url}/webhooks/youtube/"
+    )
+
+    created_count = 0
+    skipped_count = 0
+
+    # Group by channel_id to avoid duplicate subscriptions
+    channels_by_id = {}
+    for area in youtube_areas:
+        channel_id = area.action_config.get("channel_id")
+        if channel_id:
+            if channel_id not in channels_by_id:
+                channels_by_id[channel_id] = []
+            channels_by_id[channel_id].append(area)
+
+    for channel_id, areas in channels_by_id.items():
+        # Check if subscription already exists and is not expiring
+        existing_watch = GoogleWebhookWatch.objects.filter(
+            service=GoogleWebhookWatch.Service.YOUTUBE, resource_uri=channel_id
+        ).first()
+
+        if existing_watch and not existing_watch.is_expiring_soon(hours=48):
+            logger.debug(
+                f"YouTube subscription for channel {channel_id} already active"
+            )
+            skipped_count += 1
+            continue
+
+        # Create subscription
+        watch_info = create_youtube_watch(channel_id, youtube_webhook_url)
+
+        if watch_info:
+            # Use first area's owner for the watch (any user watching this channel)
+            user = areas[0].owner
+
+            # Save watch to database
+            watch, created = GoogleWebhookWatch.objects.update_or_create(
+                user=user,
+                service=GoogleWebhookWatch.Service.YOUTUBE,
+                resource_uri=channel_id,
+                defaults={
+                    "channel_id": channel_id,  # Use channel_id as unique identifier
+                    "resource_id": watch_info["resource_id"],
+                    "expiration": watch_info["expiration"],
+                },
+            )
+
+            created_count += 1
+            logger.info(f"YouTube subscription created for channel {channel_id}")
+
+    logger.info(
+        f"YouTube subscriptions setup complete: {created_count} created, "
+        f"{skipped_count} skipped"
+    )
+
+    return {"status": "success", "created": created_count, "skipped": skipped_count}

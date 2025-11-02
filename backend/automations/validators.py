@@ -369,6 +369,57 @@ ACTION_SCHEMAS = {
         "required": ["database_id"],
         "additionalProperties": False,
     },
+    # YouTube Actions
+    "youtube_new_video": {
+        "type": "object",
+        "properties": {
+            "channel_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "YouTube channel ID to monitor",
+            },
+        },
+        "required": ["channel_id"],
+        "additionalProperties": False,
+    },
+    "youtube_channel_stats": {
+        "type": "object",
+        "properties": {
+            "channel_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "YouTube channel ID to monitor",
+            },
+            "threshold_type": {
+                "type": "string",
+                "enum": ["subscribers", "views", "videos"],
+                "description": "Type of metric to monitor",
+            },
+            "threshold_value": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Trigger when metric exceeds this value",
+            },
+        },
+        "required": ["channel_id", "threshold_type", "threshold_value"],
+        "additionalProperties": False,
+    },
+    "youtube_search_videos": {
+        "type": "object",
+        "properties": {
+            "search_query": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Keywords to search for",
+            },
+            "channel_id": {
+                "type": "string",
+                "description": "Limit search to specific channel (optional)",
+            },
+        },
+        "required": ["search_query"],
+        "additionalProperties": False,
+    },
 }
 
 
@@ -570,20 +621,20 @@ REACTION_SCHEMAS = {
     "gmail_mark_read": {
         "type": "object",
         "properties": {
-            "email_id": {
+            "message_id": {
                 "type": "string",
-                "description": "Gmail message ID to mark as read",
+                "description": "Gmail message ID to mark as read (automatically provided by Gmail triggers)",
             },
         },
-        "required": ["email_id"],
+        "required": ["message_id"],
         "additionalProperties": False,
     },
     "gmail_add_label": {
         "type": "object",
         "properties": {
-            "email_id": {
+            "message_id": {
                 "type": "string",
-                "description": "Gmail message ID",
+                "description": "Gmail message ID (automatically provided by Gmail triggers)",
             },
             "label": {
                 "type": "string",
@@ -591,7 +642,7 @@ REACTION_SCHEMAS = {
                 "description": "Label name to add",
             },
         },
-        "required": ["email_id", "label"],
+        "required": ["message_id", "label"],
         "additionalProperties": False,
     },
     # Google Calendar Reactions
@@ -880,6 +931,63 @@ REACTION_SCHEMAS = {
         "required": ["database_id", "item_name"],
         "additionalProperties": False,
     },
+    # YouTube Reactions
+    "youtube_post_comment": {
+        "type": "object",
+        "properties": {
+            "video_id": {
+                "type": "string",
+                "minLength": 1,
+                "default": "{video_id}",
+                "description": "YouTube video ID (automatically provided by trigger or enter manually)",
+            },
+            "comment_text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 10000,
+                "description": "Comment text (supports variables: {video_title}, {channel_name})",
+            },
+        },
+        "required": ["comment_text"],
+        "additionalProperties": False,
+    },
+    "youtube_add_to_playlist": {
+        "type": "object",
+        "properties": {
+            "video_id": {
+                "type": "string",
+                "minLength": 1,
+                "default": "{video_id}",
+                "description": "YouTube video ID (automatically provided by trigger or enter manually)",
+            },
+            "playlist_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "ID of the playlist to add video to",
+            },
+        },
+        "required": ["playlist_id"],
+        "additionalProperties": False,
+    },
+    "youtube_rate_video": {
+        "type": "object",
+        "properties": {
+            "video_id": {
+                "type": "string",
+                "minLength": 1,
+                "default": "{video_id}",
+                "description": "YouTube video ID (automatically provided by trigger or enter manually)",
+            },
+            "rating": {
+                "type": "string",
+                "enum": ["like", "dislike", "none"],
+                "default": "like",
+                "description": "Like, dislike, or remove rating",
+            },
+        },
+        "required": [],
+        "additionalProperties": False,
+    },
 }
 
 
@@ -1104,6 +1212,37 @@ COMPATIBILITY_RULES = {
         "notion_update_page",
         "notion_create_database_item",
     ],
+    # YouTube actions - can trigger YouTube reactions and notification reactions
+    "youtube_new_video": [
+        "youtube_post_comment",
+        "youtube_add_to_playlist",
+        "youtube_rate_video",
+        "send_email",
+        "gmail_send_email",
+        "slack_message",
+        "webhook_post",
+        "calendar_create_event",
+        "github_create_issue",
+    ],
+    "youtube_channel_stats": [
+        "send_email",
+        "gmail_send_email",
+        "slack_message",
+        "webhook_post",
+        "calendar_create_event",
+        "github_create_issue",
+    ],
+    "youtube_search_videos": [
+        "youtube_post_comment",
+        "youtube_add_to_playlist",
+        "youtube_rate_video",
+        "send_email",
+        "gmail_send_email",
+        "slack_message",
+        "webhook_post",
+        "calendar_create_event",
+        "github_create_issue",
+    ],
 }
 
 
@@ -1172,9 +1311,23 @@ def validate_reaction_config(reaction_name, config):
                 )
 
     except JsonSchemaValidationError as e:
-        raise serializers.ValidationError(
+        # Provide helpful context for common mistakes
+        error_message = (
             f"Invalid configuration for reaction '{reaction_name}': {e.message}"
         )
+
+        # Special handling for Gmail reactions that need message_id
+        if reaction_name in ["gmail_mark_read", "gmail_add_label"]:
+            if "message_id" in e.message or "email_id" in e.message:
+                error_message = (
+                    f"⚠️ The '{reaction_name}' reaction requires an email's message ID, "
+                    "which can only be provided by Gmail trigger actions (like 'New Email', "
+                    "'Email from Sender', etc.). "
+                    "Please use a Gmail trigger action instead of the current trigger. "
+                    f"Technical details: {e.message}"
+                )
+
+        raise serializers.ValidationError(error_message)
 
 
 def validate_action_reaction_compatibility(action_name, reaction_name):
@@ -1204,9 +1357,23 @@ def validate_action_reaction_compatibility(action_name, reaction_name):
 
     # Check if the specific reaction is allowed
     if reaction_name not in compatible_reactions:
+        # Provide helpful context for Gmail reactions
+        context_message = ""
+        if reaction_name in ["gmail_mark_read", "gmail_add_label"]:
+            context_message = (
+                " These Gmail reactions require an email trigger (gmail_new_email, "
+                "gmail_new_from_sender, etc.) because they need the email's message ID "
+                "to work. Timer or other non-Gmail triggers cannot provide this information."
+            )
+        elif reaction_name == "github_create_issue":
+            context_message = (
+                " Note: This reaction works with most triggers, but the issue content "
+                "will depend on the data provided by the trigger."
+            )
+
         raise serializers.ValidationError(
-            f"Action '{action_name}' is not compatible with reaction '{reaction_name}'. "
-            f"Compatible reactions: {', '.join(compatible_reactions)}"
+            f"Action '{action_name}' cannot trigger reaction '{reaction_name}'.{context_message} "
+            f"Compatible reactions for this action: {', '.join(compatible_reactions) if compatible_reactions else 'none available'}"
         )
 
 
