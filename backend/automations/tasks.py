@@ -878,7 +878,7 @@ def check_google_calendar_actions(self):
                     for event in events:
                         event_id = event.get("id")
                         created_time = event.get("created")
-                        
+
                         if not event_id or not created_time:
                             continue
 
@@ -3958,17 +3958,30 @@ def check_youtube_actions(self):
                         skipped_count += 1
                         continue
 
-                    # Get published_after from updated_at minus 1 hour or None
+                    # Get published_after from last check or 24 hours ago
+                    from datetime import timedelta
+
+                    from django.utils import timezone
+
+                    action_state = get_or_create_action_state(area)
                     published_after = None
-                    if area.updated_at:
-                        from datetime import timedelta
-                        one_hour_ago = area.updated_at - timedelta(hours=1)
-                        published_after = one_hour_ago.isoformat()
+
+                    if action_state.last_checked_at:
+                        # Check videos published after last check
+                        published_after = action_state.last_checked_at.isoformat()
+                    else:
+                        # First check: only get videos from last 24 hours
+                        one_day_ago = timezone.now() - timedelta(hours=24)
+                        published_after = one_day_ago.isoformat()
 
                     # Fetch latest videos
                     videos = get_latest_videos(
                         access_token, channel_id, max_results=5, published_after=published_after
                     )
+
+                    # Update last checked time
+                    action_state.last_checked_at = timezone.now()
+                    action_state.save()
 
                     # Create execution for each new video
                     for video in videos:
@@ -4066,12 +4079,21 @@ def check_youtube_actions(self):
                         skipped_count += 1
                         continue
 
-                    # Get published_after from updated_at minus 1 hour or None
+                    # Get published_after from last check or 24 hours ago
+                    from datetime import timedelta
+                    
+                    from django.utils import timezone
+
+                    action_state = get_or_create_action_state(area)
                     published_after = None
-                    if area.updated_at:
-                        from datetime import timedelta
-                        one_hour_ago = area.updated_at - timedelta(hours=1)
-                        published_after = one_hour_ago.isoformat()
+                    
+                    if action_state.last_checked_at:
+                        # Check videos published after last check
+                        published_after = action_state.last_checked_at.isoformat()
+                    else:
+                        # First check: only get videos from last 24 hours
+                        one_day_ago = timezone.now() - timedelta(hours=24)
+                        published_after = one_day_ago.isoformat()
 
                     # Search for videos
                     videos = search_videos(
@@ -4081,6 +4103,10 @@ def check_youtube_actions(self):
                         channel_id=channel_id,
                         published_after=published_after,
                     )
+                    
+                    # Update last checked time
+                    action_state.last_checked_at = timezone.now()
+                    action_state.save()
 
                     # Create execution for each matching video
                     for video in videos:
