@@ -34,6 +34,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from django.conf import settings
+from django.http import HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
@@ -223,6 +224,10 @@ def validate_webhook_signature(
         return is_valid
     elif service_name == "gmail":
         return True
+    elif service_name == "youtube":
+        # YouTube PubSubHubbub doesn't require signature validation
+        # The hub.challenge verification is handled separately
+        return True
     # Unknown service, reject validation
     logger.warning(f"Webhook signature validation not supported for: {service_name}")
     return False
@@ -280,6 +285,23 @@ def extract_event_id(
             return f"notion_{object_type}_{object_id}_{last_edited}"
         elif object_id:
             return f"notion_{object_id}"
+
+    elif service_name == "youtube":
+        # YouTube PubSubHubbub provides video ID in feed entry
+        # Extract from feed entry (XML parsed to dict)
+        entry = event_data.get("entry", {})
+        video_id = entry.get("yt:videoId") or entry.get("video_id")
+        published = entry.get("published", "")
+        
+        if video_id:
+            # Include published timestamp for uniqueness
+            return f"youtube_video_{video_id}_{published}"
+        
+        # Fallback: use link if available
+        link = entry.get("link", {}).get("href", "")
+        if link and "watch?v=" in link:
+            vid_id = link.split("watch?v=")[1].split("&")[0]
+            return f"youtube_video_{vid_id}"
 
     # Fallback: generate ID from timestamp and hash
     timestamp = timezone.now().isoformat()
@@ -503,6 +525,26 @@ def webhook_receiver(request: Request, service: str) -> Response:
             status=status.HTTP_200_OK,
         )
 
+    # ===================================================================
+    # YOUTUBE PUBSUBHUBBUB VERIFICATION CHALLENGE
+    # ===================================================================
+    # YouTube/PubSubHubbub sends verification via GET with hub.challenge
+    # We must echo back hub.challenge to confirm subscription
+    # Format: GET /webhooks/youtube?hub.mode=subscribe&hub.challenge=XXXX
+    # ===================================================================
+    if service == "youtube" and request.method == "GET":
+        hub_mode = request.GET.get("hub.mode")
+        hub_challenge = request.GET.get("hub.challenge")
+        hub_topic = request.GET.get("hub.topic")
+        
+        if hub_mode == "subscribe" and hub_challenge:
+            logger.info(f"✅ YouTube PubSubHubbub subscription verification for topic: {hub_topic}")
+            # Return challenge as plain text
+            return HttpResponse(hub_challenge, content_type="text/plain", status=200)
+        elif hub_mode == "unsubscribe" and hub_challenge:
+            logger.info(f"✅ YouTube PubSubHubbub unsubscribe verification for topic: {hub_topic}")
+            return HttpResponse(hub_challenge, content_type="text/plain", status=200)
+
     # Get webhook secret from settings
     webhook_secrets = getattr(settings, "WEBHOOK_SECRETS", {})
     webhook_secret = webhook_secrets.get(service)
@@ -533,6 +575,11 @@ def webhook_receiver(request: Request, service: str) -> Response:
         event_type = request.headers.get("X-GitHub-Event", "unknown")
     elif service == "gmail":
         event_type = event_data.get("eventType", "message")
+    elif service == "youtube":
+        # YouTube PubSubHubbub sends Atom feed updates
+        # Event type is always "new_video" for feed notifications
+        event_type = "new_video"
+        logger.info("🎥 YouTube webhook: New video notification")
     elif service == "notion":
         # Debug: log payload structure to understand Notion's format
         logger.info(f"🔍 Notion payload keys: {list(event_data.keys())}")
